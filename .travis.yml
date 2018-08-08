@@ -1,0 +1,13 @@
+language: rust
+rust:
+  - nightly
+
+before_script: |
+  rustup component add rustfmt-preview &&
+  cargo install clippy -f
+script: |
+  cargo fmt -- --check &&
+  cargo clippy -- -D clippy &&
+  cargo build --verbose &&
+  cargo test  --verbose
+cache: cargo

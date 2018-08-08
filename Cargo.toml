@@ -1,0 +1,13 @@
+[package]
+name = "rise"
+version = "0.1.0"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/yoshuawuyts/rise"
+documentation = "https://docs.rs/rise"
+description = "WIP modular web framework"
+authors = ["Yoshua Wuyts <yoshuawuyts@gmail.com>"]
+readme = "README.md"
+
+[dependencies]
+
+[dev-dependencies]
