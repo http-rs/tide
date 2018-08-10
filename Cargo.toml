@@ -1,9 +1,9 @@
 [package]
-name = "rise"
+name = "tide"
 version = "0.1.0"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/yoshuawuyts/rise"
-documentation = "https://docs.rs/rise"
+repository = "https://github.com/yoshuawuyts/tide"
+documentation = "https://docs.rs/tide"
 description = "WIP modular web framework"
 authors = ["Yoshua Wuyts <yoshuawuyts@gmail.com>"]
 readme = "README.md"
