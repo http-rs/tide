@@ -8,6 +8,7 @@ Read about the design here:
 
 - [Rising Tide: building a modular web framework in the open](https://rust-lang-nursery.github.io/wg-net/2018/09/11/tide.html)
 - [Routing and extraction in Tide: a first sketch](https://rust-lang-nursery.github.io/wg-net/2018/10/16/tide-routing.html)
+- [Middleware in Tide](https://rust-lang-nursery.github.io/wg-net/2018/11/07/tide-middleware.html)
 
 ## License
 
