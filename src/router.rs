@@ -64,6 +64,11 @@ impl<Data> Resource<Data> {
         self.method(http::Method::GET, ep)
     }
 
+    /// Add an endpoint for `HEAD` requests
+    pub fn head<T: Endpoint<Data, U>, U>(&mut self, ep: T) {
+        self.method(http::Method::HEAD, ep)
+    }
+
     /// Add an endpoint for `PUT` requests
     pub fn put<T: Endpoint<Data, U>, U>(&mut self, ep: T) {
         self.method(http::Method::PUT, ep)
