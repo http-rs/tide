@@ -1,13 +1,28 @@
 [package]
-name = "tide"
-version = "0.0.0"
-license = "MIT OR Apache-2.0"
-repository = "https://github.com/yoshuawuyts/tide"
-documentation = "https://docs.rs/tide"
+authors = [
+    "Aaron Turon <aturon@mozilla.com>",
+    "Yoshua Wuyts <yoshuawuyts@gmail.com>",
+]
 description = "WIP modular web framework"
-authors = ["Yoshua Wuyts <yoshuawuyts@gmail.com>"]
+documentation = "https://docs.rs/tide"
+edition = "2018"
+license = "MIT OR Apache-2.0"
+name = "tide"
 readme = "README.md"
+repository = "https://github.com/yoshuawuyts/tide"
+version = "0.0.0"
 
 [dependencies]
+http = "0.1"
+hyper = "0.12.0"
+pin-utils = "0.1.0-alpha.3"
+serde = "1.0.80"
+serde_derive = "1.0.80"
+serde_json = "1.0.32"
+typemap = "0.3.3"
+
+[dependencies.futures-preview]
+features = ["compat"]
+version = "0.3.0-alpha.9"
 
 [dev-dependencies]
