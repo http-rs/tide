@@ -131,7 +131,7 @@ impl<T: Send + serde::de::DeserializeOwned + 'static, S: 'static> Extract<S> for
         FutureObj::new(Box::new(async move { 
             fn mk_err<T>(_: T) -> Response { StatusCode::BAD_REQUEST.into_response() }
             let body = await!(body.to_vec()).map_err(mk_err)?;            
-            let json: T = serde_json::from_reader(&body[..]).map_err(mk_err)?;
+            let json: T = serde_json::from_slice(&body).map_err(mk_err)?;
             Ok(Json(json))
         }))
     }
