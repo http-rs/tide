@@ -10,14 +10,14 @@ use crate::{
     router::{Resource, Router},
     Request,
     extract::Extract,
-    RouteMatch, 
-    Response, 
+    RouteMatch,
+    Response,
     body::Body,
     Middleware,
 };
 
 /// The top-level type for setting up a Tide application.
-/// 
+///
 /// Apps are equipped with a handle to their own state (`Data`), which is available to all endpoints.
 /// This is a "handle" because it must be `Clone`, and endpoints are invoked with a fresh clone.
 /// They also hold a top-level router.
@@ -57,7 +57,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
     }
 
     /// Start serving the app at the given address.
-    /// 
+    ///
     /// Blocks the calling thread indefinitely.
     pub fn serve<A: std::net::ToSocketAddrs>(self, addr: A) {
         let server: Server<Data> = self.into_server();
@@ -66,7 +66,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         let addr = addr.to_socket_addrs().unwrap().next().unwrap();
 
         let server = hyper::Server::bind(&addr).serve(move || {
-            let res: Result<_, std::io::Error> = Ok(server.clone());            
+            let res: Result<_, std::io::Error> = Ok(server.clone());
             res
         }).compat().map(|_| {
             let res: Result<(), ()> = Ok(());
@@ -94,17 +94,17 @@ impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
         let router = self.router.clone();
         let middleware = self.middleware.clone();
 
-        let mut req = req.map(Body::from);            
+        let mut req = req.map(Body::from);
         let path = req.uri().path().to_owned();
         let method = req.method().to_owned();
 
-        FutureObj::new(Box::new(async move {            
-            if let Some((endpoint, params)) = router.route(&path, &method) {                
+        FutureObj::new(Box::new(async move {
+            if let Some((endpoint, params)) = router.route(&path, &method) {
                 for m in middleware.iter() {
                     match await!(m.request(&mut data, req, &params)) {
                         Ok(new_req) => req = new_req,
                         Err(resp) => return Ok(resp.map(Into::into)),
-                    }                    
+                    }
                 }
 
                 let (head, mut resp) = await!(endpoint.call(data.clone(), req, params));
@@ -122,7 +122,7 @@ impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
 }
 
 /// An extractor for accessing app data.
-/// 
+///
 /// Endpoints can use `AppData<T>` to gain a handle to the data (of type `T`) originally injected into their app.
 pub struct AppData<T>(pub T);
 
