@@ -76,9 +76,9 @@ pub trait NamedComponent: Send + 'static + std::str::FromStr {
 /// An extractor for named path components
 ///
 /// Allows routes to access named path components (`{foo}`). Each `Named<T>` extracts a single 
-/// component. T must impliment the `NamedComponent` trait - to provide the component name - and the 
+/// component. `T` must implement the `NamedComponent` trait - to provide the component name - and the 
 /// FromStr trait. Fails with a `BAD_REQUEST` response if the component is not found, fails to
-/// parse or if multiple identically named compoents exist.
+/// parse or if multiple identically named components exist.
 pub struct Named<T: NamedComponent>(pub T);
 
 impl<T: NamedComponent, S: 'static> Extract<S> for Named<T> {
