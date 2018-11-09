@@ -9,5 +9,6 @@ script: |
   cargo fmt -- --check &&
   cargo clippy -- -D clippy &&
   cargo build --verbose &&
-  cargo test  --verbose
+  cargo test  --verbose &&
+  cargo build --verbose --no-default-features
 cache: cargo

@@ -1,10 +1,11 @@
 use futures::{
     compat::{Compat, Future01CompatExt},
     future::{self, FutureObj},
+    task::Spawn,
     prelude::*,
 };
 use hyper::service::Service;
-use std::{sync::Arc, ops::{Deref, DerefMut}};
+use std::{sync::Arc, ops::{Deref, DerefMut}, marker::Unpin};
 
 use crate::{
     router::{Resource, Router},
@@ -48,7 +49,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         self
     }
 
-    fn into_server(self) -> Server<Data> {
+    fn into_service(self) -> Server<Data> {
         Server {
             data: self.data,
             router: Arc::new(self.router),
@@ -57,22 +58,51 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
     }
 
     /// Start serving the app at the given address.
-    /// 
+    ///
     /// Blocks the calling thread indefinitely.
+    #[cfg(feature = "tokio-runtime")]
     pub fn serve<A: std::net::ToSocketAddrs>(self, addr: A) {
-        let server: Server<Data> = self.into_server();
+        let service = self.into_service();
 
         // TODO: be more robust
         let addr = addr.to_socket_addrs().unwrap().next().unwrap();
 
         let server = hyper::Server::bind(&addr).serve(move || {
-            let res: Result<_, std::io::Error> = Ok(server.clone());            
+            let res: Result<_, std::io::Error> = Ok(service.clone());            
             res
         }).compat().map(|_| {
             let res: Result<(), ()> = Ok(());
             res
         }).compat();
         hyper::rt::run(server);
+    }
+
+    /// Start serving the app on a stream of incoming connections.
+    ///
+    /// This function provides support for running the server on
+    /// non-Tokio executors. If using the Tokio runtime, `serve`
+    /// should be used instead.
+    pub fn serve_incoming<St, Sp>(
+        self,
+        incoming_stream: St,
+        spawn: Sp,
+    ) -> impl Future<Output = Result<(), impl std::error::Error + Send + Sync + 'static>>
+    where
+        St: TryStream + Unpin + 'static,
+        St::Ok: AsyncRead + AsyncWrite + Send + 'static,
+        St::Error: Into<Box<dyn std::error::Error + Send + Sync>>,
+        Sp: Send + Clone + 'static,
+        for<'a> &'a Sp: Spawn,
+    {
+        let service = self.into_service();
+        hyper::Server::builder(
+            incoming_stream
+                .map_ok(|con| con.compat())
+                .compat()
+        )
+            .executor(Compat::new(spawn))
+            .serve(move || Ok::<_, std::io::Error>(service.clone()))
+            .compat()
     }
 }
 
