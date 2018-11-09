@@ -1,5 +1,5 @@
 //! Types for working directly with the bodies of requests and responses.
-//! 
+//!
 //! This module includes types like `Json`, which can be used to automatically (de)serialize bodies
 //! using `serde_json`.
 
@@ -10,9 +10,9 @@ use http::status::StatusCode;
 use crate::{Extract, IntoResponse, RouteMatch, Request, Response};
 
 /// The raw contents of an http request or response.
-/// 
+///
 /// A body is a stream of `BodyChunk`s, which are essentially `Vec<u8>` values.
-/// Both `Body` and `BodyChunk` values can be easily created from standard byte buffer types, 
+/// Both `Body` and `BodyChunk` values can be easily created from standard byte buffer types,
 /// using the `From` trait.
 pub struct Body {
     inner: BodyInner,
@@ -54,8 +54,8 @@ impl Body {
     }
 
     /// Collect the full contents of the body into a vector.
-    /// 
-    /// This method is asynchronous because, in general, it requires reading an async 
+    ///
+    /// This method is asynchronous because, in general, it requires reading an async
     /// stream of `BodyChunk` values.
     pub async fn to_vec(&mut self) -> Result<Vec<u8>, Error> {
         match &mut self.inner {
@@ -113,7 +113,7 @@ impl Into<hyper::Body> for Body {
 }
 
 /// A wrapper for json (de)serialization of bodies.
-/// 
+///
 /// This type is usable both as an extractor (argument to an endpoint) and as a response
 /// (return value from an endpoint).
 pub struct Json<T>(pub T);
@@ -128,9 +128,9 @@ impl<T: Send + serde::de::DeserializeOwned + 'static, S: 'static> Extract<S> for
         params: &RouteMatch<'_>,
     ) -> Self::Fut {
         let mut body = std::mem::replace(req.body_mut(), Body::empty());
-        FutureObj::new(Box::new(async move { 
+        FutureObj::new(Box::new(async move {
             fn mk_err<T>(_: T) -> Response { StatusCode::BAD_REQUEST.into_response() }
-            let body = await!(body.to_vec()).map_err(mk_err)?;            
+            let body = await!(body.to_vec()).map_err(mk_err)?;
             let json: T = serde_json::from_slice(&body).map_err(mk_err)?;
             Ok(Json(json))
         }))
@@ -147,3 +147,42 @@ impl<T: 'static + Send + serde::Serialize> IntoResponse for Json<T> {
             .unwrap()
     }
 }
+
+impl <S: 'static> Extract<S> for String {
+  type Fut = FutureObj<'static, Result<Self, Response>>;
+
+  fn extract(
+    data: &mut S,
+    req: &mut Request,
+    params: &RouteMatch<'_>,
+  ) -> Self::Fut {
+    let mut body = std::mem::replace(req.body_mut(), Body::empty());
+
+    FutureObj::new(Box::new(async move {
+      fn mk_err<T>(_: T) -> Response { StatusCode::BAD_REQUEST.into_response() }
+      let body = await!(body.to_vec().map_err(mk_err))?;
+      let string = String::from_utf8(body).map_err(mk_err)?;
+      Ok(string)
+    }))
+  }
+}
+
+impl <S: 'static> Extract<S> for Vec<u8> {
+  type Fut = FutureObj<'static, Result<Self, Response>>;
+
+  fn extract(
+    data: &mut S,
+    req: &mut Request,
+    params: &RouteMatch<'_>,
+  ) -> Self::Fut {
+    let mut body = std::mem::replace(req.body_mut(), Body::empty());
+
+    FutureObj::new(Box::new(async move {
+      fn mk_err<T>(_: T) -> Response { StatusCode::BAD_REQUEST.into_response() }
+      let body = await!(body.to_vec().map_err(mk_err))?;
+      Ok(body)
+    }))
+  }
+}
+
+
