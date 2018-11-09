@@ -148,7 +148,7 @@ impl<T: 'static + Send + serde::Serialize> IntoResponse for Json<T> {
     }
 }
 
-impl <S: 'static> Extract<S> for String {
+impl<S: 'static> Extract<S> for String {
   type Fut = FutureObj<'static, Result<Self, Response>>;
 
   fn extract(
@@ -167,7 +167,7 @@ impl <S: 'static> Extract<S> for String {
   }
 }
 
-impl <S: 'static> Extract<S> for Vec<u8> {
+impl<S: 'static> Extract<S> for Vec<u8> {
   type Fut = FutureObj<'static, Result<Self, Response>>;
 
   fn extract(
