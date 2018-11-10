@@ -56,13 +56,7 @@ macro_rules! call_f {
 }
 
 macro_rules! end_point_impl_raw {
-    (with_head; $($X:ident),*) => {
-        end_point_impl_raw!(<$($X),*> Head);
-    };
-    (without_head; $($X:ident),*) => {
-        end_point_impl_raw!(<$($X),*>);
-    };
-    (<$($X:ident),*> $($head:ty)*) => {
+    ($([$head:ty])* $($X:ident),*) => {
         impl<T, Data, Fut, $($X),*> Endpoint<Data, (Ty<Fut>, $($head,)* $(Ty<$X>),*)> for T
         where
             T: Send + Sync + Clone + 'static + Fn($($head,)* $($X),*) -> Fut,
@@ -97,8 +91,8 @@ macro_rules! end_point_impl_raw {
 
 macro_rules! end_point_impl {
     ($($X:ident),*) => {
-        end_point_impl_raw!(with_head; $($X),*);
-        end_point_impl_raw!(without_head; $($X),*);
+        end_point_impl_raw!([Head] $($X),*);
+        end_point_impl_raw!($($X),*);
     }
 }
 
