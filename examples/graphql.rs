@@ -53,11 +53,14 @@ async fn handle_graphql(
     let response = request.execute(&Schema::new(Query, Mutation), &ctx);
 
     // `response` has the lifetime of `request`, so we can't use `IntoResponse` directly.
-    let body_vec = serde_json::to_vec(&response)
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let body_vec = serde_json::to_vec(&response).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     http::Response::builder()
-        .status(if response.is_ok() { StatusCode::OK } else { StatusCode::BAD_REQUEST })
+        .status(if response.is_ok() {
+            StatusCode::OK
+        } else {
+            StatusCode::BAD_REQUEST
+        })
         .header("Content-Type", "application/json")
         .body(body::Body::from(body_vec))
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
