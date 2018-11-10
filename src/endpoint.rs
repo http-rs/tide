@@ -46,46 +46,20 @@ impl<Data> BoxedEndpoint<Data> {
 #[doc(hidden)]
 pub struct Ty<T>(T);
 
-macro_rules! end_point_impl_with_head {
-    ($($X:ident),*) => {
-        impl<T, Data, Fut, $($X),*> Endpoint<Data, (Ty<Fut>, Head, $(Ty<$X>),*)> for T
-        where
-            T: Send + Sync + Clone + 'static + Fn(Head, $($X),*) -> Fut,
-            Data: Clone + Send + Sync + 'static,
-            Fut: Future + Send + 'static,
-            Fut::Output: IntoResponse,
-            $(
-                $X: Extract<Data>
-            ),*
-        {
-            type Fut = FutureObj<'static, (Head, Response)>;
-
-            #[allow(unused_mut, non_snake_case)]
-            fn call(&self, mut data: Data, mut req: Request, params: RouteMatch<'_>) -> Self::Fut {
-                let f = self.clone();
-                $(let $X = $X::extract(&mut data, &mut req, &params);)*
-                FutureObj::new(Box::new(async move {
-                    let (parts, _) = req.into_parts();
-                    let head = Head::from(parts);
-                    $(let $X = match await!($X) {
-                        Ok(x) => x,
-                        Err(resp) => return (head, resp),
-                    };)*
-                    let res = await!(f(head.clone(), $($X),*));
-
-                    (head, res.into_response())
-                }))
-            }
-        }
+macro_rules! call_f {
+    ($head_ty:ty; ($f:ident, $head:ident); $($X:ident),*) => {
+        $f($head.clone(), $($X),*)
+    };
+    (($f:ident, $head:ident); $($X:ident),*) => {
+        $f($($X),*)
     };
 }
 
-// TODO: refactor to share code with the above macro
-macro_rules! end_point_impl_no_head {
-    ($($X:ident),*) => {
-        impl<T, Data, Fut, $($X),*> Endpoint<Data, (Ty<Fut>, $(Ty<$X>),*)> for T
+macro_rules! end_point_impl_raw {
+    ($([$head:ty])* $($X:ident),*) => {
+        impl<T, Data, Fut, $($X),*> Endpoint<Data, (Ty<Fut>, $($head,)* $(Ty<$X>),*)> for T
         where
-            T: Send + Sync + Clone + 'static + Fn($($X),*) -> Fut,
+            T: Send + Sync + Clone + 'static + Fn($($head,)* $($X),*) -> Fut,
             Data: Clone + Send + Sync + 'static,
             Fut: Future + Send + 'static,
             Fut::Output: IntoResponse,
@@ -106,7 +80,7 @@ macro_rules! end_point_impl_no_head {
                         Ok(x) => x,
                         Err(resp) => return (head, resp),
                     };)*
-                    let res = await!(f($($X),*));
+                    let res = await!(call_f!($($head;)* (f, head); $($X),*));
 
                     (head, res.into_response())
                 }))
@@ -117,8 +91,8 @@ macro_rules! end_point_impl_no_head {
 
 macro_rules! end_point_impl {
     ($($X:ident),*) => {
-        end_point_impl_with_head!($($X),*);
-        end_point_impl_no_head!($($X),*);
+        end_point_impl_raw!([Head] $($X),*);
+        end_point_impl_raw!($($X),*);
     }
 }
 
