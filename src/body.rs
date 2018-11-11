@@ -57,7 +57,7 @@ impl Body {
     ///
     /// This method is asynchronous because, in general, it requires reading an async
     /// stream of `BodyChunk` values.
-    pub async fn to_vec(&mut self) -> Result<Vec<u8>, Error> {
+    pub async fn read_to_vec(&mut self) -> Result<Vec<u8>, Error> {
         match &mut self.inner {
             BodyInner::Streaming(s) => {
                 let mut bytes = Vec::new();
@@ -131,7 +131,7 @@ impl<T: Send + serde::de::DeserializeOwned + 'static, S: 'static> Extract<S> for
         let mut body = std::mem::replace(req.body_mut(), Body::empty());
         FutureObj::new(Box::new(
             async move {
-                let body = await!(body.to_vec()).map_err(mk_err)?;
+                let body = await!(body.read_to_vec()).map_err(mk_err)?;
                 let json: T = serde_json::from_slice(&body).map_err(mk_err)?;
                 Ok(Json(json))
             },
@@ -160,7 +160,7 @@ impl<S: 'static> Extract<S> for Str {
 
         FutureObj::new(Box::new(
             async move {
-                let body = await!(body.to_vec().map_err(mk_err))?;
+                let body = await!(body.read_to_vec().map_err(mk_err))?;
                 let string = String::from_utf8(body).map_err(mk_err)?;
                 Ok(Str(string))
             },
@@ -178,7 +178,7 @@ impl<S: 'static> Extract<S> for StrLossy {
 
         FutureObj::new(Box::new(
             async move {
-                let body = await!(body.to_vec().map_err(mk_err))?;
+                let body = await!(body.read_to_vec().map_err(mk_err))?;
                 let string = String::from_utf8_lossy(&body).to_string();
                 Ok(StrLossy(string))
             },
@@ -196,7 +196,7 @@ impl<S: 'static> Extract<S> for Bytes {
 
         FutureObj::new(Box::new(
             async move {
-                let body = await!(body.to_vec().map_err(mk_err))?;
+                let body = await!(body.read_to_vec().map_err(mk_err))?;
                 Ok(Bytes(body))
             },
         ))

@@ -50,13 +50,11 @@ impl<Data> Default for Resource<Data> {
 impl<Data> Resource<Data> {
     /// Add an endpoint for the given HTTP method
     pub fn method<T: Endpoint<Data, U>, U>(&mut self, method: http::Method, ep: T) {
-        let old_ep = self
-            .endpoints
-            .insert(method.clone(), BoxedEndpoint::new(ep));
-
-        if old_ep.is_some() {
+        if self.endpoints.contains_key(&method) {
             panic!("A {} endpoint already exists for this path", method)
         }
+
+        self.endpoints.insert(method, BoxedEndpoint::new(ep));
     }
 
     /// Add an endpoint for `GET` requests

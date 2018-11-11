@@ -1,6 +1,6 @@
 #![feature(async_await, futures_api)]
 
-use tide::head::{NamedComponent, Named};
+use tide::head::{Named, NamedComponent};
 
 struct Number(i32);
 

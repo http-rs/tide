@@ -26,3 +26,4 @@ features = ["compat"]
 version = "0.3.0-alpha.9"
 
 [dev-dependencies]
+juniper = "0.10.0"
