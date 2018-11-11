@@ -3,11 +3,11 @@
 //! This module includes types like `Json`, which can be used to automatically (de)serialize bodies
 //! using `serde_json`.
 
-use futures::{compat::Compat01As03, prelude::*, future::FutureObj, stream::StreamObj};
-use pin_utils::pin_mut;
+use futures::{compat::Compat01As03, future::FutureObj, prelude::*, stream::StreamObj};
 use http::status::StatusCode;
+use pin_utils::pin_mut;
 
-use crate::{Extract, IntoResponse, RouteMatch, Request, Response};
+use crate::{Extract, IntoResponse, Request, Response, RouteMatch};
 
 /// The raw contents of an http request or response.
 ///
@@ -57,7 +57,7 @@ impl Body {
     ///
     /// This method is asynchronous because, in general, it requires reading an async
     /// stream of `BodyChunk` values.
-    pub async fn to_vec(&mut self) -> Result<Vec<u8>, Error> {
+    pub async fn read_to_vec(&mut self) -> Result<Vec<u8>, Error> {
         match &mut self.inner {
             BodyInner::Streaming(s) => {
                 let mut bytes = Vec::new();
@@ -122,18 +122,18 @@ impl<T: Send + serde::de::DeserializeOwned + 'static, S: 'static> Extract<S> for
     // Note: cannot use `existential type` here due to ICE
     type Fut = FutureObj<'static, Result<Self, Response>>;
 
-    fn extract(
-        data: &mut S,
-        req: &mut Request,
-        params: &RouteMatch<'_>,
-    ) -> Self::Fut {
+    fn extract(data: &mut S, req: &mut Request, params: &RouteMatch<'_>) -> Self::Fut {
         let mut body = std::mem::replace(req.body_mut(), Body::empty());
-        FutureObj::new(Box::new(async move {
-            fn mk_err<T>(_: T) -> Response { StatusCode::BAD_REQUEST.into_response() }
-            let body = await!(body.to_vec()).map_err(mk_err)?;
-            let json: T = serde_json::from_slice(&body).map_err(mk_err)?;
-            Ok(Json(json))
-        }))
+        FutureObj::new(Box::new(
+            async move {
+                fn mk_err<T>(_: T) -> Response {
+                    StatusCode::BAD_REQUEST.into_response()
+                }
+                let body = await!(body.read_to_vec()).map_err(mk_err)?;
+                let json: T = serde_json::from_slice(&body).map_err(mk_err)?;
+                Ok(Json(json))
+            },
+        ))
     }
 }
 

@@ -102,7 +102,7 @@ impl<R: Default> UrlTable<R> {
                 }
 
                 match table.wildcard_mut().unwrap() {
-                    Wildcard { name: n, .. } if &name != n => {
+                    Wildcard { name: n, .. } if name != n => {
                         panic!("Route {} segment `{{{}}}` conflicts with existing wildcard segment `{{{}}}`", path, name, n);
                     }
                     Wildcard { table: t, .. } => {
@@ -113,7 +113,7 @@ impl<R: Default> UrlTable<R> {
                 table = table
                     .next
                     .entry(segment.to_string())
-                    .or_insert(UrlTable::new());
+                    .or_insert_with(UrlTable::new);
             }
         }
 

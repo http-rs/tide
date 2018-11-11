@@ -75,8 +75,8 @@ pub trait NamedComponent: Send + 'static + std::str::FromStr {
 
 /// An extractor for named path components
 ///
-/// Allows routes to access named path components (`{foo}`). Each `Named<T>` extracts a single 
-/// component. `T` must implement the `NamedComponent` trait - to provide the component name - and the 
+/// Allows routes to access named path components (`{foo}`). Each `Named<T>` extracts a single
+/// component. `T` must implement the `NamedComponent` trait - to provide the component name - and the
 /// FromStr trait. Fails with a `BAD_REQUEST` response if the component is not found, fails to
 /// parse or if multiple identically named components exist.
 pub struct Named<T: NamedComponent>(pub T);
@@ -85,10 +85,13 @@ impl<T: NamedComponent, S: 'static> Extract<S> for Named<T> {
     type Fut = future::Ready<Result<Self, Response>>;
 
     fn extract(data: &mut S, req: &mut Request, params: &RouteMatch<'_>) -> Self::Fut {
-        params.map.get(T::NAME)
+        params
+            .map
+            .get(T::NAME)
             .and_then(|component| component.parse().ok())
-            .map_or(future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
-                    |t| future::ok(Named(t)))
+            .map_or(
+                future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
+                |t| future::ok(Named(t)),
+            )
     }
 }
-
