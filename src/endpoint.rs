@@ -14,10 +14,11 @@ pub trait Endpoint<Data, Kind>: Send + Sync + 'static {
     fn call(&self, data: Data, req: Request, params: RouteMatch<'_>) -> Self::Fut;
 }
 
+type BoxedEndpointFn<Data> =
+    dyn Fn(Data, Request, RouteMatch) -> FutureObj<'static, (Head, Response)> + Send + Sync;
+
 pub(crate) struct BoxedEndpoint<Data> {
-    endpoint: Box<
-        dyn Fn(Data, Request, RouteMatch) -> FutureObj<'static, (Head, Response)> + Send + Sync,
-    >,
+    endpoint: Box<BoxedEndpointFn<Data>>,
 }
 
 impl<Data> BoxedEndpoint<Data> {
