@@ -57,7 +57,7 @@ impl Body {
     ///
     /// This method is asynchronous because, in general, it requires reading an async
     /// stream of `BodyChunk` values.
-    pub async fn to_vec(&mut self) -> Result<Vec<u8>, Error> {
+    pub async fn read_to_vec(&mut self) -> Result<Vec<u8>, Error> {
         match &mut self.inner {
             BodyInner::Streaming(s) => {
                 let mut bytes = Vec::new();
@@ -129,7 +129,7 @@ impl<T: Send + serde::de::DeserializeOwned + 'static, S: 'static> Extract<S> for
                 fn mk_err<T>(_: T) -> Response {
                     StatusCode::BAD_REQUEST.into_response()
                 }
-                let body = await!(body.to_vec()).map_err(mk_err)?;
+                let body = await!(body.read_to_vec()).map_err(mk_err)?;
                 let json: T = serde_json::from_slice(&body).map_err(mk_err)?;
                 Ok(Json(json))
             },
