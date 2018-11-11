@@ -54,9 +54,7 @@ impl<Data> Resource<Data> {
             panic!("A {} endpoint already exists for this path", method)
         }
 
-        self
-            .endpoints
-            .insert(method, BoxedEndpoint::new(ep));
+        self.endpoints.insert(method, BoxedEndpoint::new(ep));
     }
 
     /// Add an endpoint for `GET` requests
