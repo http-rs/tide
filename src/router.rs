@@ -25,7 +25,7 @@ impl<Data> Router<Data> {
         path: &'a str,
         method: &http::Method,
     ) -> Option<(&'a BoxedEndpoint<Data>, RouteMatch<'a>)> {
-        let route = self.table.route(path).unwrap();
+        let route = self.table.route(path)?;
         // If it is a HTTP HEAD request then check if there is a callback in the endpoints map
         // if not then fallback to the behavior of HTTP GET else proceed as usual
         if method == http::Method::HEAD && !route.0.endpoints.contains_key(&http::Method::HEAD) {
