@@ -7,20 +7,12 @@ use http::{
 
 use crate::{head::Head, Middleware, Response};
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct DefaultHeaders {
     headers: HeaderMap,
 }
 
 // type KeyValues = [&'static str; 2];
-
-impl Default for DefaultHeaders {
-    fn default() -> Self {
-        DefaultHeaders {
-            headers: HeaderMap::new(),
-        }
-    }
-}
 
 impl DefaultHeaders {
     pub fn new() -> DefaultHeaders {
@@ -60,10 +52,12 @@ impl<Data> Middleware<Data> for DefaultHeaders {
         head: &Head,
         mut resp: Response,
     ) -> FutureObj<'static, Response> {
+        let headers = resp.headers_mut();
         for (key, value) in self.headers.iter() {
-            if !resp.headers().contains_key(key) {
-                resp.headers_mut().insert(key, value.clone());
-            }
+            // if !resp.headers().contains_key(key) {
+            //     resp.headers_mut().insert(key, value.clone());
+            // }
+            headers.entry(key).unwrap().or_insert(value.clone());
         }
         FutureObj::new(Box::new(async { resp }))
     }
