@@ -17,7 +17,7 @@ pub mod body;
 mod endpoint;
 mod extract;
 pub mod head;
-mod middleware;
+pub mod middleware;
 mod request;
 mod response;
 mod router;
