@@ -28,6 +28,7 @@ impl DefaultHeaders {
     }
 
     #[inline]
+    #[cfg_attr(feature = "cargo-clippy", allow(clippy::match_wild_err_arm))]
     pub fn header<K, V>(mut self, key: K, value: V) -> Self
     where
         K: IntoHeaderName,
@@ -45,7 +46,7 @@ impl DefaultHeaders {
 
     // #[inline]
     // pub fn headers<K, V>(self, key_values_pairs: Vec<KeyValues>) -> Self {
-    //     for [key, value] in key_values_pairs.iter() {
+    //     for [key, value] in key_values_pairs {
     //         self.header(key, value);
     //     }
     //     self
