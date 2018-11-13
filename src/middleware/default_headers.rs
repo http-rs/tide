@@ -54,10 +54,7 @@ impl<Data> Middleware<Data> for DefaultHeaders {
     ) -> FutureObj<'static, Response> {
         let headers = resp.headers_mut();
         for (key, value) in self.headers.iter() {
-            // if !resp.headers().contains_key(key) {
-            //     resp.headers_mut().insert(key, value.clone());
-            // }
-            headers.entry(key).unwrap().or_insert(value.clone());
+            headers.entry(key).unwrap().or_insert_with(|| value.clone());
         }
         FutureObj::new(Box::new(async { resp }))
     }
