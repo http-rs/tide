@@ -95,3 +95,21 @@ impl<T: NamedComponent, S: 'static> Extract<S> for Named<T> {
             )
     }
 }
+
+/// An extractor for query string in URL
+///
+pub struct UrlQuery<T>(pub T);
+
+impl<S, T> Extract<S> for UrlQuery<T>
+where
+    T: Send + std::str::FromStr + 'static,
+    S: 'static,
+{
+    type Fut = future::Ready<Result<Self, Response>>;
+    fn extract(data: &mut S, req: &mut Request, params: &RouteMatch<'_>) -> Self::Fut {
+        req.uri().query().and_then(|q| q.parse().ok()).map_or(
+            future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
+            |q| future::ok(UrlQuery(q)),
+        )
+    }
+}
