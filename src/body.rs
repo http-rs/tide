@@ -112,6 +112,11 @@ impl Into<hyper::Body> for Body {
     }
 }
 
+// Small utility function to return a stamped error when we cannot parse a request body
+fn mk_err<T>(_: T) -> Response {
+    StatusCode::BAD_REQUEST.into_response()
+}
+
 /// A wrapper for json (de)serialization of bodies.
 ///
 /// This type is usable both as an extractor (argument to an endpoint) and as a response
@@ -126,9 +131,6 @@ impl<T: Send + serde::de::DeserializeOwned + 'static, S: 'static> Extract<S> for
         let mut body = std::mem::replace(req.body_mut(), Body::empty());
         FutureObj::new(Box::new(
             async move {
-                fn mk_err<T>(_: T) -> Response {
-                    StatusCode::BAD_REQUEST.into_response()
-                }
                 let body = await!(body.read_to_vec()).map_err(mk_err)?;
                 let json: T = serde_json::from_slice(&body).map_err(mk_err)?;
                 Ok(Json(json))
@@ -145,5 +147,58 @@ impl<T: 'static + Send + serde::Serialize> IntoResponse for Json<T> {
             .header("Content-Type", "Application/json")
             .body(Body::from(serde_json::to_vec(&self.0).unwrap()))
             .unwrap()
+    }
+}
+
+pub struct Str(pub String);
+
+impl<S: 'static> Extract<S> for Str {
+    type Fut = FutureObj<'static, Result<Self, Response>>;
+
+    fn extract(data: &mut S, req: &mut Request, params: &RouteMatch<'_>) -> Self::Fut {
+        let mut body = std::mem::replace(req.body_mut(), Body::empty());
+
+        FutureObj::new(Box::new(
+            async move {
+                let body = await!(body.read_to_vec().map_err(mk_err))?;
+                let string = String::from_utf8(body).map_err(mk_err)?;
+                Ok(Str(string))
+            },
+        ))
+    }
+}
+
+pub struct StrLossy(pub String);
+
+impl<S: 'static> Extract<S> for StrLossy {
+    type Fut = FutureObj<'static, Result<Self, Response>>;
+
+    fn extract(data: &mut S, req: &mut Request, params: &RouteMatch<'_>) -> Self::Fut {
+        let mut body = std::mem::replace(req.body_mut(), Body::empty());
+
+        FutureObj::new(Box::new(
+            async move {
+                let body = await!(body.read_to_vec().map_err(mk_err))?;
+                let string = String::from_utf8_lossy(&body).to_string();
+                Ok(StrLossy(string))
+            },
+        ))
+    }
+}
+
+pub struct Bytes(pub Vec<u8>);
+
+impl<S: 'static> Extract<S> for Bytes {
+    type Fut = FutureObj<'static, Result<Self, Response>>;
+
+    fn extract(data: &mut S, req: &mut Request, params: &RouteMatch<'_>) -> Self::Fut {
+        let mut body = std::mem::replace(req.body_mut(), Body::empty());
+
+        FutureObj::new(Box::new(
+            async move {
+                let body = await!(body.read_to_vec().map_err(mk_err))?;
+                Ok(Bytes(body))
+            },
+        ))
     }
 }
