@@ -12,8 +12,6 @@ pub struct DefaultHeaders {
     headers: HeaderMap,
 }
 
-// type KeyValues = [&'static str; 2];
-
 impl DefaultHeaders {
     pub fn new() -> DefaultHeaders {
         DefaultHeaders::default()
@@ -30,19 +28,13 @@ impl DefaultHeaders {
             Ok(value) => {
                 self.headers.append(key, value);
             }
-            Err(_) => panic!("Cannot create header key value pair"),
+            Err(_) => {
+                panic!("Cannot create default header. Please check your default header values.")
+            }
         }
 
         self
     }
-
-    // #[inline]
-    // pub fn headers<K, V>(self, key_values_pairs: Vec<KeyValues>) -> Self {
-    //     for [key, value] in key_values_pairs {
-    //         self.header(key, value);
-    //     }
-    //     self
-    // }
 }
 
 impl<Data> Middleware<Data> for DefaultHeaders {
