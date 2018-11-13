@@ -25,13 +25,13 @@ impl<Data> Router<Data> {
         path: &'a str,
         method: &http::Method,
     ) -> Option<(&'a BoxedEndpoint<Data>, RouteMatch<'a>)> {
-        let route = self.table.route(path)?;
+        let (route,route_match) = self.table.route(path)?;
         // If it is a HTTP HEAD request then check if there is a callback in the endpoints map
         // if not then fallback to the behavior of HTTP GET else proceed as usual
-        if method == http::Method::HEAD && !route.0.endpoints.contains_key(&http::Method::HEAD) {
-            Some((route.0.endpoints.get(&http::Method::GET)?, route.1))
+        if method == http::Method::HEAD && !route.endpoints.contains_key(&http::Method::HEAD) {
+            Some((route.endpoints.get(&http::Method::GET)?, route_match))
         } else {
-            Some((route.0.endpoints.get(method)?, route.1))
+            Some((route.endpoints.get(method)?, route_match))
         }
     }
 }
