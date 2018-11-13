@@ -18,20 +18,16 @@ impl DefaultHeaders {
     }
 
     #[inline]
-    #[cfg_attr(feature = "cargo-clippy", allow(clippy::match_wild_err_arm))]
     pub fn header<K, V>(mut self, key: K, value: V) -> Self
     where
         K: IntoHeaderName,
         HeaderValue: HttpTryFrom<V>,
     {
-        match HeaderValue::try_from(value) {
-            Ok(value) => {
-                self.headers.append(key, value);
-            }
-            Err(_) => {
-                panic!("Cannot create default header. Please check your default header values.")
-            }
-        }
+        let value = HeaderValue::try_from(value)
+            .map_err(|_| ())
+            .expect("Cannot create default header. Please check your default header values.");
+
+        self.headers.append(key, value);
 
         self
     }
