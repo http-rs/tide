@@ -83,7 +83,10 @@ impl<R: Default> UrlTable<R> {
                 ResolveResult::Segment(next_table) => {
                     table = next_table;
                 }
-                ResolveResult::Wildcard { name, table: next_table } => {
+                ResolveResult::Wildcard {
+                    name,
+                    table: next_table,
+                } => {
                     params.push(segment);
 
                     if !name.is_empty() {

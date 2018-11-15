@@ -38,9 +38,8 @@ impl<Data> Router<Data> {
     ) -> Option<(
         &'a BoxedEndpoint<Data>,
         RouteMatch<'a>,
-        Vec<&'a (Middleware<Data> + Send + Sync)>
-    )>
-    {
+        Vec<&'a (Middleware<Data> + Send + Sync)>,
+    )> {
         let mut table = &self.table;
         let mut params = Vec::new();
         let mut param_map = HashMap::new();
@@ -52,7 +51,10 @@ impl<Data> Router<Data> {
                 ResolveResult::Segment(next_table) => {
                     table = next_table;
                 }
-                ResolveResult::Wildcard { name, table: next_table } => {
+                ResolveResult::Wildcard {
+                    name,
+                    table: next_table,
+                } => {
                     params.push(segment);
 
                     if !name.is_empty() {
@@ -79,16 +81,19 @@ impl<Data> Router<Data> {
         let endpoints = match &resource.0 {
             ResourceKind::Empty => return None,
             ResourceKind::Endpoint(endpoints) => endpoints,
-            ResourceKind::Nested(router) => unreachable!("Router::route should enter subroutes eagerly"),
+            ResourceKind::Nested(router) => {
+                unreachable!("Router::route should enter subroutes eagerly");
+            }
         };
 
         // If it is a HTTP HEAD request then check if there is a callback in the endpoints map
         // if not then fallback to the behavior of HTTP GET else proceed as usual
-        let endpoint = if method == http::Method::HEAD && !endpoints.contains_key(&http::Method::HEAD) {
-            endpoints.get(&http::Method::GET)
-        } else {
-            endpoints.get(method)
-        }?;
+        let endpoint =
+            if method == http::Method::HEAD && !endpoints.contains_key(&http::Method::HEAD) {
+                endpoints.get(&http::Method::GET)
+            } else {
+                endpoints.get(method)
+            }?;
 
         Some((endpoint, route_match, middlewares))
     }
@@ -120,7 +125,10 @@ impl<Data> Default for ResourceKind<Data> {
 
 impl<Data> Resource<Data> {
     /// Nest a router in this path.
-    pub fn nest<F>(&mut self, builder: F) where F: FnOnce(&mut Router<Data>) {
+    pub fn nest<F>(&mut self, builder: F)
+    where
+        F: FnOnce(&mut Router<Data>),
+    {
         if self.is_nested() {
             panic!("This path already has a router mounted");
         }
