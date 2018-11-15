@@ -23,6 +23,14 @@ struct Wildcard<R> {
     table: UrlTable<R>,
 }
 
+pub enum ResolveResult<'a, R> {
+    Segment(&'a UrlTable<R>),
+    Wildcard {
+        name: &'a str,
+        table: &'a UrlTable<R>,
+    },
+}
+
 /// For a successful match, this structure says how any wildcard components were matched.
 ///
 /// The `vec` field places the matches in the order they appeared in the URL.
@@ -42,6 +50,27 @@ impl<R: Default> UrlTable<R> {
         }
     }
 
+    /// TODO: Document `resolve_segment`
+    pub fn resolve_segment<'a>(&'a self, segment: &'a str) -> Option<ResolveResult<'a, R>> {
+        let result = if segment.is_empty() {
+            ResolveResult::Segment(self)
+        } else if let Some(next_table) = self.next.get(segment) {
+            ResolveResult::Segment(next_table)
+        } else if let Some(wildcard) = &self.wildcard {
+            ResolveResult::Wildcard {
+                name: &*wildcard.name,
+                table: &wildcard.table,
+            }
+        } else {
+            return None;
+        };
+        Some(result)
+    }
+
+    pub fn root(&self) -> Option<&R> {
+        self.accept.as_ref()
+    }
+
     /// Determine which resource, if any, the conrete `path` should be routed to.
     pub fn route<'a>(&'a self, path: &'a str) -> Option<(&'a R, RouteMatch<'a>)> {
         let mut table = self;
@@ -49,22 +78,20 @@ impl<R: Default> UrlTable<R> {
         let mut param_map = HashMap::new();
 
         for segment in path.split('/') {
-            if segment.is_empty() {
-                continue;
-            }
-
-            if let Some(next_table) = table.next.get(segment) {
-                table = next_table;
-            } else if let Some(wildcard) = &table.wildcard {
-                params.push(segment);
-
-                if !wildcard.name.is_empty() {
-                    param_map.insert(&*wildcard.name, segment);
+            let result = table.resolve_segment(segment)?;
+            match result {
+                ResolveResult::Segment(next_table) => {
+                    table = next_table;
                 }
+                ResolveResult::Wildcard { name, table: next_table } => {
+                    params.push(segment);
 
-                table = &wildcard.table;
-            } else {
-                return None;
+                    if !name.is_empty() {
+                        param_map.insert(name, segment);
+                    }
+
+                    table = next_table;
+                }
             }
         }
 
