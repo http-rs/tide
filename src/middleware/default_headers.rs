@@ -24,8 +24,8 @@ impl DefaultHeaders {
         HeaderValue: HttpTryFrom<V>,
     {
         let value = HeaderValue::try_from(value)
-            .map_err(|_| ())
-            .expect("Cannot create default header. Please check your default header values.");
+            .map_err(Into::into)
+            .expect("Cannot create default header");
 
         self.headers.append(key, value);
 
