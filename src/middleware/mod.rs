@@ -2,6 +2,10 @@ use futures::future::FutureObj;
 
 use crate::{head::Head, Request, Response, RouteMatch};
 
+mod default_headers;
+
+pub use self::default_headers::DefaultHeaders;
+
 /// Middleware for an app with state of type `Data`
 pub trait Middleware<Data>: Send + Sync {
     /// Asynchronously transform the incoming request, or abort further handling by immediately
@@ -11,7 +15,9 @@ pub trait Middleware<Data>: Send + Sync {
         data: &mut Data,
         req: Request,
         params: &RouteMatch<'_>,
-    ) -> FutureObj<'static, Result<Request, Response>>;
+    ) -> FutureObj<'static, Result<Request, Response>> {
+        FutureObj::new(Box::new(async { Ok(req) }))
+    }
 
     /// Asynchronously transform the outgoing response.
     fn response(
@@ -19,7 +25,9 @@ pub trait Middleware<Data>: Send + Sync {
         data: &mut Data,
         head: &Head,
         resp: Response,
-    ) -> FutureObj<'static, Response>;
+    ) -> FutureObj<'static, Response> {
+        FutureObj::new(Box::new(async { resp }))
+    }
 
     // TODO: provide the following, intended to fire *after* the body has been fully sent
 
