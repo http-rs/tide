@@ -12,7 +12,7 @@ use std::{
 use crate::{
     body::Body,
     extract::Extract,
-    router::{Resource, Router},
+    router::{EndpointInfo, ResourceHandle, Router},
     Middleware, Request, Response, RouteMatch,
 };
 
@@ -41,7 +41,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
     }
 
     /// Add a new resource at `path`.
-    pub fn at<'a>(&'a mut self, path: &'a str) -> &mut Resource<Data> {
+    pub fn at<'a>(&'a mut self, path: &'a str) -> ResourceHandle<'a, Router<Data>> {
         self.router.at(path)
     }
 
@@ -104,7 +104,12 @@ impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
 
         FutureObj::new(Box::new(
             async move {
-                if let Some((endpoint, params, middleware)) = router.route(&path, &method) {
+                if let Some(EndpointInfo {
+                    endpoint,
+                    params,
+                    middleware,
+                }) = router.route(&path, &method)
+                {
                     for m in middleware.iter() {
                         match await!(m.request(&mut data, req, &params)) {
                             Ok(new_req) => req = new_req,
