@@ -89,6 +89,10 @@ impl<'a, Data> ResourceHandle<'a, Data> {
     where
         F: FnOnce(&mut Router<Data>),
     {
+        if self.table.resource().is_some() {
+            panic!("This path already has a resource");
+        }
+
         let mut subrouter = Router {
             table: UrlTable::new(),
             middleware: self.middleware.to_vec(),
