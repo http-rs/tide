@@ -32,7 +32,7 @@ pub struct RouteMatch<'a> {
     pub map: HashMap<&'a str, &'a str>,
 }
 
-impl<R: Default> UrlTable<R> {
+impl<R> UrlTable<R> {
     /// Create an empty routing table.
     pub fn new() -> UrlTable<R> {
         UrlTable {
@@ -40,6 +40,16 @@ impl<R: Default> UrlTable<R> {
             next: HashMap::new(),
             wildcard: None,
         }
+    }
+
+    /// Get the resource of current path.
+    pub fn resource(&self) -> Option<&R> {
+        self.accept.as_ref()
+    }
+
+    /// Retrieve a mutable reference of the resource.
+    pub fn resource_mut(&mut self) -> &mut Option<R> {
+        &mut self.accept
     }
 
     /// Determine which resource, if any, the conrete `path` should be routed to.
@@ -83,8 +93,10 @@ impl<R: Default> UrlTable<R> {
         self.wildcard.as_mut().map(|b| &mut **b)
     }
 
-    /// Add or access a new resource at the given routing path (which may contain wildcards).
-    pub fn setup(&mut self, path: &str) -> &mut R {
+    /// Return the table of the given routing path (which may contain wildcards).
+    ///
+    /// If it doesn't already exist, this will make a new one.
+    pub fn setup_table(&mut self, path: &str) -> &mut UrlTable<R> {
         let mut table = self;
         for segment in path.split('/') {
             if segment.is_empty() {
@@ -116,6 +128,15 @@ impl<R: Default> UrlTable<R> {
                     .or_insert_with(UrlTable::new);
             }
         }
+
+        table
+    }
+}
+
+impl<R: Default> UrlTable<R> {
+    /// Add or access a new resource at the given routing path (which may contain wildcards).
+    pub fn setup(&mut self, path: &str) -> &mut R {
+        let table = self.setup_table(path);
 
         if table.accept.is_none() {
             table.accept = Some(R::default())
