@@ -5,7 +5,9 @@
 
 use futures::{compat::Compat01As03, future::FutureObj, prelude::*, stream::StreamObj};
 use http::status::StatusCode;
+use multipart::server::Multipart;
 use pin_utils::pin_mut;
+use std::io::Cursor;
 
 use crate::{Extract, IntoResponse, Request, Response, RouteMatch};
 
@@ -115,6 +117,39 @@ impl Into<hyper::Body> for Body {
 // Small utility function to return a stamped error when we cannot parse a request body
 fn mk_err<T>(_: T) -> Response {
     StatusCode::BAD_REQUEST.into_response()
+}
+
+/// A wrapper for multipart form
+///
+/// This type is useable as an extractor (argument to an endpoint) for getting
+/// a Multipart type defined in the multipart crate
+pub struct MultipartForm(pub Multipart<Cursor<Vec<u8>>>);
+
+impl<S: 'static> Extract<S> for MultipartForm {
+    // Note: cannot use `existential type` here due to ICE
+    type Fut = FutureObj<'static, Result<Self, Response>>;
+
+    fn extract(data: &mut S, req: &mut Request, params: &RouteMatch<'_>) -> Self::Fut {
+        // https://stackoverflow.com/questions/43424982/how-to-parse-multipart-forms-using-abonander-multipart-with-rocket
+
+        const BOUNDARY: &str = "boundary=";
+        let boundary = req.headers().get("content-type").and_then(|ct| {
+            let ct = ct.to_str().ok()?;
+            let idx = ct.find(BOUNDARY)?;
+            Some(ct[idx + BOUNDARY.len()..].to_string())
+        });
+
+        let mut body = std::mem::replace(req.body_mut(), Body::empty());
+
+        FutureObj::new(Box::new(
+            async move {
+                let body = await!(body.read_to_vec()).map_err(mk_err)?;
+                let boundary = boundary.ok_or(()).map_err(mk_err)?;
+                let mp = Multipart::with_body(Cursor::new(body), boundary);
+                Ok(MultipartForm(mp))
+            },
+        ))
+    }
 }
 
 /// A wrapper for json (de)serialization of bodies.
