@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use crate::{
     endpoint::{BoxedEndpoint, Endpoint},
@@ -11,17 +12,31 @@ pub use crate::url_table::ResourceHandle;
 pub(crate) struct EndpointInfo<'a, Data> {
     pub(crate) endpoint: &'a BoxedEndpoint<Data>,
     pub(crate) params: RouteMatch<'a>,
-    pub(crate) middleware: Vec<&'a (Middleware<Data> + Send + Sync)>,
+    pub(crate) middleware: &'a [Arc<Middleware<Data> + Send + Sync>],
 }
 
 /// TODO: Write documentation for `Router`
 pub struct Router<Data> {
     table: UrlTable<Router<Data>>,
-    middleware: Vec<Box<dyn Middleware<Data> + Send + Sync>>,
+    middleware: Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
 }
 
 impl<Data> crate::url_table::Router for Router<Data> {
     type Resource = Resource<Data>;
+
+    fn subrouter(&self) -> Router<Data> {
+        Router {
+            table: UrlTable::new(),
+            middleware: self.middleware.clone(),
+        }
+    }
+
+    fn resource(&self) -> Resource<Data> {
+        Resource {
+            endpoints: HashMap::new(),
+            middleware: self.middleware.clone(),
+        }
+    }
 
     fn table(&self) -> &UrlTable<Self> {
         &self.table
@@ -34,7 +49,7 @@ impl<Data> crate::url_table::Router for Router<Data> {
 
 impl<Data> Default for Router<Data> {
     fn default() -> Router<Data> {
-        Self::new()
+        Router::new()
     }
 }
 
@@ -42,7 +57,7 @@ impl<Data> Router<Data> {
     pub fn new() -> Router<Data> {
         Router {
             table: UrlTable::new(),
-            middleware: vec![],
+            middleware: Vec::new(),
         }
     }
 
@@ -53,7 +68,7 @@ impl<Data> Router<Data> {
 
     /// Apply `middleware` to this router.
     pub fn middleware(&mut self, middleware: impl Middleware<Data> + 'static) -> &mut Self {
-        self.middleware.push(Box::new(middleware));
+        self.middleware.push(Arc::new(middleware));
         self
     }
 
@@ -66,11 +81,7 @@ impl<Data> Router<Data> {
 
         let resource = route_result.resource;
         let params = route_result.route_match;
-        let middleware: Vec<_> = route_result
-            .routers
-            .into_iter()
-            .flat_map(|router| router.middleware.iter().map(|m| &**m))
-            .collect();
+        let middleware = &*resource.middleware;
 
         let endpoints = &resource.endpoints;
 
@@ -97,14 +108,7 @@ impl<Data> Router<Data> {
 /// the `Resource` type can be used to establish endpoints for various HTTP methods at that path.
 pub struct Resource<Data> {
     endpoints: HashMap<http::Method, BoxedEndpoint<Data>>,
-}
-
-impl<Data> Default for Resource<Data> {
-    fn default() -> Self {
-        Resource {
-            endpoints: HashMap::new(),
-        }
-    }
+    middleware: Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
 }
 
 impl<Data> Resource<Data> {

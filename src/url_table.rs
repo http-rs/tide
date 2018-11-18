@@ -4,153 +4,83 @@
 
 use std::collections::HashMap;
 
-pub trait Router: Default {
-    type Resource: Default;
+pub trait Router: Sized {
+    type Resource;
 
+    fn subrouter(&self) -> Self;
+    fn resource(&self) -> Self::Resource;
     fn table(&self) -> &UrlTable<Self>;
     fn table_mut(&mut self) -> &mut UrlTable<Self>;
 
-    fn route<'a>(&'a self, path: &'a str) -> Option<RouteResult<'a, Self>> {
+    fn route<'a>(&'a self, path: &'a str) -> Option<RouteResult<'a, Self::Resource>> {
         let mut params = Vec::new();
         let mut param_map = HashMap::new();
-        let mut routers = vec![self];
 
-        let mut table = &self.table().0;
+        let mut table = self.table();
 
         for segment in path.split('/') {
-            while let UrlTableInner::Subrouter(router) = table {
-                routers.push(&*router);
-                table = &router.table().0;
-            }
-
             if segment.is_empty() {
                 continue;
             }
 
-            match table {
-                UrlTableInner::Node { next, wildcard, .. } => {
-                    if let Some(next_table) = next.get(segment) {
-                        table = next_table;
-                    } else if let Some(wildcard) = &wildcard {
-                        params.push(segment);
+            let UrlTable { next, wildcard, .. } = table;
 
-                        if !wildcard.name.is_empty() {
-                            param_map.insert(&*wildcard.name, segment);
-                        }
+            if let Some(next_table) = next.get(segment) {
+                table = next_table;
+            } else if let Some(wildcard) = wildcard {
+                params.push(segment);
 
-                        table = &wildcard.table;
-                    } else {
-                        return None;
-                    }
+                if !wildcard.name.is_empty() {
+                    param_map.insert(&*wildcard.name, segment);
                 }
-                UrlTableInner::Subrouter(_) => {
-                    unreachable!();
-                }
+
+                table = &wildcard.table;
+            } else {
+                return None;
             }
         }
 
-        let accept = loop {
-            match table {
-                UrlTableInner::Node { accept, .. } => {
-                    break accept;
-                }
-                UrlTableInner::Subrouter(router) => {
-                    routers.push(&*router);
-                    table = &router.table().0;
-                }
-            }
-        };
-
-        accept.as_ref().map(|resource| RouteResult {
+        table.accept.as_ref().map(|resource| RouteResult {
             resource,
             route_match: RouteMatch {
                 vec: params,
                 map: param_map,
             },
-            routers,
         })
     }
 
     /// Add a new resource at `path`.
     fn at<'a>(&'a mut self, path: &'a str) -> ResourceHandle<'a, Self> {
-        let mut table = &mut self.table_mut().0;
-
-        for segment in path.split('/') {
-            if segment.is_empty() {
-                continue;
-            }
-
-            let (next, wildcard) = match table {
-                UrlTableInner::Subrouter(_) => {
-                    // TODO: proper panic message
-                    panic!();
-                }
-                UrlTableInner::Node { next, wildcard, .. } => (next, wildcard),
-            };
-
-            if segment.starts_with('{') && segment.ends_with('}') {
-                let name = &segment[1..segment.len() - 1];
-
-                if wildcard.is_none() {
-                    *wildcard = Some(Box::new(Wildcard {
-                        name: name.to_string(),
-                        table: UrlTableInner::new(),
-                    }));
-                }
-
-                match &mut **wildcard.as_mut().unwrap() {
-                    Wildcard { name: n, .. } if name != n => {
-                        panic!("Route {} segment `{{{}}}` conflicts with existing wildcard segment `{{{}}}`", path, name, n);
-                    }
-                    Wildcard { table: t, .. } => {
-                        table = t;
-                    }
-                }
-            } else {
-                table = next
-                    .entry(segment.to_string())
-                    .or_insert_with(UrlTableInner::new);
-            }
-        }
-
-        ResourceHandle(table)
+        self.table_mut().setup(path);
+        ResourceHandle { router: self, path }
     }
 }
 
-pub struct RouteResult<'a, R: Router> {
-    pub resource: &'a R::Resource,
+pub struct RouteResult<'a, R> {
+    pub resource: &'a R,
     pub route_match: RouteMatch<'a>,
-    /// Subrouters encountered during routing, including self.
-    pub routers: Vec<&'a R>,
 }
 
-pub struct ResourceHandle<'a, R: Router>(&'a mut UrlTableInner<R>);
+pub struct ResourceHandle<'a, R: Router> {
+    router: &'a mut R,
+    path: &'a str,
+}
 
 impl<'a, R: Router> ResourceHandle<'a, R> {
-    pub fn nest<F>(&mut self, builder: F)
+    pub fn nest<F>(self, builder: F)
     where
         F: FnOnce(&mut R),
     {
-        match &mut self.0 {
-            UrlTableInner::Node {
-                accept: Some(_), ..
-            } => {
-                panic!("This path has a resource");
-            }
-            UrlTableInner::Node { next, wildcard, .. }
-                if !next.is_empty() || wildcard.is_some() =>
-            {
-                panic!("This path has child resources");
-            }
-            UrlTableInner::Subrouter(..) => {
-                panic!("This path is already mounted");
-            }
-            UrlTableInner::Node { .. } => {
-                let mut router = R::default();
-                builder(&mut router);
-                *self.0 = UrlTableInner::Subrouter(Box::new(router));
-            }
+        let mut subrouter = self.router.subrouter();
+        let table = self.router.table_mut().setup(self.path);
+        if table.accept.is_some() {
+            panic!("This path has a resource");
         }
+        if !table.next.is_empty() || table.wildcard.is_some() {
+            panic!("This path has child resources");
+        }
+        builder(&mut subrouter);
+        std::mem::swap(table, subrouter.table_mut());
     }
 }
 
@@ -158,60 +88,43 @@ impl<'a, R: Router> std::ops::Deref for ResourceHandle<'a, R> {
     type Target = R::Resource;
 
     fn deref(&self) -> &Self::Target {
-        match &self.0 {
-            UrlTableInner::Node {
-                accept: Some(res), ..
-            } => res,
-            UrlTableInner::Node { .. } => {
-                panic!("Resource for this path is not initialized");
-            }
-            UrlTableInner::Subrouter(..) => {
-                panic!("The path is a subrouter");
-            }
+        let res = self.router.table().find(self.path);
+        if let Some(res) = res {
+            res
+        } else {
+            panic!("The resource for this path has not been initialized");
         }
     }
 }
 
 impl<'a, R: Router> std::ops::DerefMut for ResourceHandle<'a, R> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        match &mut self.0 {
-            UrlTableInner::Node {
-                accept: Some(res), ..
-            } => res,
-            UrlTableInner::Node { accept, .. } => {
-                *accept = Some(R::Resource::default());
-                accept.as_mut().unwrap()
-            }
-            UrlTableInner::Subrouter(..) => {
-                panic!("The path is a subrouter");
-            }
+        let new_resource = self.router.resource();
+        let table = self.router.table_mut().setup(self.path);
+        if table.accept.is_none() {
+            table.accept = Some(new_resource);
         }
+        table.accept.as_mut().unwrap()
     }
 }
 
 /// A generic URL routing table of router `R`.
-///
-/// This is a thin wrapper around internal routing table, which contains all routing information.
-pub struct UrlTable<R: Router>(UrlTableInner<R>);
-
+//
 // The implementation uses a very simple-minded tree structure. `UrlTable` is a node,
 // with branches corresponding to the next path segment. For concrete segments, the
 // `next` table gives the available string matches. For the (at most one) wildcard match,
 // the `wildcard` field contains the branch.
 //
 // If the current URL itself is a route, the `accept` field says what resource it contains.
-enum UrlTableInner<R: Router> {
-    Node {
-        accept: Option<R::Resource>,
-        next: HashMap<String, UrlTableInner<R>>,
-        wildcard: Option<Box<Wildcard<R>>>,
-    },
-    Subrouter(Box<R>),
+pub struct UrlTable<R: Router> {
+    accept: Option<R::Resource>,
+    next: HashMap<String, UrlTable<R>>,
+    wildcard: Option<Box<Wildcard<R>>>,
 }
 
 struct Wildcard<R: Router> {
     name: String,
-    table: UrlTableInner<R>,
+    table: UrlTable<R>,
 }
 
 /// For a successful match, this structure says how any wildcard components were matched.
@@ -232,23 +145,79 @@ impl<R: Router> Default for UrlTable<R> {
 impl<R: Router> UrlTable<R> {
     /// Create an empty routing table.
     pub fn new() -> UrlTable<R> {
-        UrlTable(UrlTableInner::new())
-    }
-}
-
-impl<R: Router> Default for UrlTableInner<R> {
-    fn default() -> UrlTableInner<R> {
-        Self::new()
-    }
-}
-
-impl<R: Router> UrlTableInner<R> {
-    pub fn new() -> UrlTableInner<R> {
-        UrlTableInner::Node {
+        UrlTable {
             accept: None,
             next: HashMap::new(),
             wildcard: None,
         }
+    }
+
+    fn find<'a>(&'a self, path: &'a str) -> Option<&'a R::Resource> {
+        let mut table = self;
+
+        for segment in path.split('/') {
+            if segment.is_empty() {
+                continue;
+            }
+
+            let UrlTable { next, wildcard, .. } = table;
+
+            if segment.starts_with('{') && segment.ends_with('}') {
+                let wildcard = wildcard.as_ref()?;
+                let name = &segment[1..segment.len() - 1];
+
+                match &**wildcard {
+                    Wildcard { name: n, .. } if name != n => {
+                        panic!("Route {} segment `{{{}}}` conflicts with existing wildcard segment `{{{}}}`", path, name, n);
+                    }
+                    Wildcard { table: t, .. } => {
+                        table = t;
+                    }
+                }
+            } else {
+                table = next.get(segment)?;
+            }
+        }
+
+        table.accept.as_ref()
+    }
+
+    fn setup<'a>(&'a mut self, path: &'a str) -> &'a mut UrlTable<R> {
+        let mut table = self;
+
+        for segment in path.split('/') {
+            if segment.is_empty() {
+                continue;
+            }
+
+            let UrlTable { next, wildcard, .. } = table;
+
+            if segment.starts_with('{') && segment.ends_with('}') {
+                let name = &segment[1..segment.len() - 1];
+
+                if wildcard.is_none() {
+                    *wildcard = Some(Box::new(Wildcard {
+                        name: name.to_string(),
+                        table: UrlTable::new(),
+                    }));
+                }
+
+                match &mut **wildcard.as_mut().unwrap() {
+                    Wildcard { name: n, .. } if name != n => {
+                        panic!("Route {} segment `{{{}}}` conflicts with existing wildcard segment `{{{}}}`", path, name, n);
+                    }
+                    Wildcard { table: t, .. } => {
+                        table = t;
+                    }
+                }
+            } else {
+                table = next
+                    .entry(segment.to_string())
+                    .or_insert_with(UrlTable::new);
+            }
+        }
+
+        table
     }
 }
 
@@ -257,6 +226,14 @@ pub struct GenericRouter<R: Default>(UrlTable<GenericRouter<R>>);
 
 impl<R: Default> Router for GenericRouter<R> {
     type Resource = R;
+
+    fn subrouter(&self) -> GenericRouter<R> {
+        GenericRouter::default()
+    }
+
+    fn resource(&self) -> R {
+        R::default()
+    }
 
     fn table(&self) -> &UrlTable<Self> {
         &self.0
