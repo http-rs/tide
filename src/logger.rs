@@ -11,19 +11,19 @@ use crate::{head::Head, Middleware, Request, Response, RouteMatch};
 /// Root logger for Tide. Wraps over logger provided by slog.SimpleLogger
 ///
 /// Only used internally for now.
-struct Logger {
+struct RootLogger {
     // drain: dyn slog::Drain,
     inner_logger: slog::Logger,
 }
 
-impl Logger {
-    fn new() -> Logger {
+impl RootLogger {
+    fn new() -> RootLogger {
         let decorator = slog_term::TermDecorator::new().build();
         let drain = slog_term::CompactFormat::new(decorator).build().fuse();
         let drain = slog_async::Async::new(drain).build().fuse();
 
         let log = slog::Logger::root(drain, o!());
-        Logger { inner_logger: log }
+        RootLogger { inner_logger: log }
     }
 }
 
@@ -37,7 +37,7 @@ struct SimpleLogData {
 /// Only internal to crate
 pub(crate) struct SimpleLogger {
     data: RwLock<SimpleLogData>,
-    logger: Logger,
+    logger: RootLogger,
 }
 
 impl SimpleLogger {
@@ -47,7 +47,7 @@ impl SimpleLogger {
                 path: String::new(),
                 method: String::new(),
             }),
-            logger: Logger::new(),
+            logger: RootLogger::new(),
         }
     }
 }
@@ -72,7 +72,7 @@ impl<Data> Middleware<Data> for SimpleLogger {
         &self,
         data: &mut Data,
         head: &Head,
-        mut resp: Response,
+        resp: Response,
     ) -> FutureObj<'static, Response> {
         let status = resp.status();
         let data = self.data.read().unwrap();
