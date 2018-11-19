@@ -118,6 +118,10 @@ impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
                         resp = await!(m.response(&mut data, &head, resp))
                     }
 
+                    if method == http::Method::HEAD {
+                        resp = resp.map(|_| Body::empty())
+                    }
+
                     Ok(resp.map(Into::into))
                 } else {
                     Ok(http::Response::builder()
