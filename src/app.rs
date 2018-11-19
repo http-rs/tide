@@ -15,6 +15,7 @@ use crate::{
     middleware::RequestContext,
     router::{Resource, RouteResult, Router},
     Middleware, Request, Response, RouteMatch,
+    logger::SimpleLogger
 };
 
 /// The top-level type for setting up a Tide application.
@@ -30,9 +31,11 @@ pub struct App<Data> {
 impl<Data: Clone + Send + Sync + 'static> App<Data> {
     /// Set up a new app with some initial `data`.
     pub fn new(data: Data) -> App<Data> {
+        let logger = SimpleLogger::new();
         App {
             data,
             router: Router::new(),
+            middleware: vec![Box::new(logger)],
         }
     }
 

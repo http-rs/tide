@@ -21,6 +21,8 @@ pub mod middleware;
 mod request;
 mod response;
 mod router;
+mod url_table;
+mod logger;
 
 pub use crate::{
     app::{App, AppData},
