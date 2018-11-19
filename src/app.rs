@@ -12,7 +12,7 @@ use std::{
 use crate::{
     body::Body,
     extract::Extract,
-    router::{ResourceHandle, RouteResult, Router},
+    router::{Resource, RouteResult, Router},
     Middleware, Request, Response, RouteMatch,
 };
 
@@ -43,7 +43,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
     /// Add a new resource at `path`.
     ///
     /// Middlewares added before will be applied to the resource.
-    pub fn at<'a>(&'a mut self, path: &'a str) -> ResourceHandle<Data> {
+    pub fn at<'a>(&'a mut self, path: &'a str) -> Resource<Data> {
         self.router.at(path)
     }
 

@@ -9,7 +9,7 @@ use crate::{
 
 /// TODO: Document `Router`
 pub struct Router<Data> {
-    table: UrlTable<Resource<Data>>,
+    table: UrlTable<ResourceData<Data>>,
     middleware: Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
 }
 
@@ -36,10 +36,10 @@ impl<Data> Router<Data> {
     /// Add a new resource at `path`, relative to this router.
     ///
     /// Middlewares added before will be applied to the resource.
-    pub fn at<'a>(&'a mut self, path: &'a str) -> ResourceHandle<'a, Data> {
+    pub fn at<'a>(&'a mut self, path: &'a str) -> Resource<'a, Data> {
         let table = self.table.setup_table(path);
         let middleware = &*self.middleware;
-        ResourceHandle { table, middleware }
+        Resource { table, middleware }
     }
 
     /// Add `middleware` to this router.
@@ -72,78 +72,55 @@ impl<Data> Router<Data> {
     }
 }
 
-/// A struct representing specific path of a router.
+/// A handle to a resource (identified by a URL).
 ///
-/// The struct implements `Deref` and `DerefMut` into `Resource`. You can use this to add a
-/// resource to the path.
+/// All HTTP requests are made against resources. After using `App::at` to establish a resource path,
+/// the `Resource` type can be used to establish endpoints for various HTTP methods at that path.
 ///
-/// Also, using `nest`, you can set up a subrouter for the path.
-pub struct ResourceHandle<'a, Data> {
-    table: &'a mut UrlTable<Resource<Data>>,
+/// Also, the `Resource` type can be used to set up a subrouter using `nest`.
+pub struct Resource<'a, Data> {
+    table: &'a mut UrlTable<ResourceData<Data>>,
     middleware: &'a [Arc<dyn Middleware<Data> + Send + Sync>],
 }
 
-impl<'a, Data> ResourceHandle<'a, Data> {
+struct ResourceData<Data> {
+    endpoints: HashMap<http::Method, BoxedEndpoint<Data>>,
+    middleware: Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
+}
+
+impl<'a, Data> Resource<'a, Data> {
     /// "Nest" a subrouter to the path.
+    ///
+    /// If resources are already present at current path and its descendents, they will be discarded.
     pub fn nest<F>(self, builder: F)
     where
         F: FnOnce(&mut Router<Data>),
     {
-        if self.table.resource().is_some() {
-            panic!("This path already has a resource");
-        }
-
         let mut subrouter = Router {
             table: UrlTable::new(),
             middleware: self.middleware.to_vec(),
         };
         builder(&mut subrouter);
-        std::mem::swap(self.table, &mut subrouter.table);
+        *self.table = subrouter.table;
     }
-}
 
-impl<'a, Data> std::ops::Deref for ResourceHandle<'a, Data> {
-    type Target = Resource<Data>;
-
-    fn deref(&self) -> &Resource<Data> {
-        self.table
-            .resource()
-            .expect("Resource of this path has not been initialized.")
-    }
-}
-
-impl<'a, Data> std::ops::DerefMut for ResourceHandle<'a, Data> {
-    fn deref_mut(&mut self) -> &mut Resource<Data> {
+    /// Add an endpoint for the given HTTP method
+    pub fn method<T: Endpoint<Data, U>, U>(&mut self, method: http::Method, ep: T) {
         let resource = self.table.resource_mut();
         if resource.is_none() {
-            let new_resource = Resource {
+            let new_resource = ResourceData {
                 endpoints: HashMap::new(),
                 middleware: self.middleware.to_vec(),
             };
             *resource = Some(new_resource);
         }
+        let resource = resource.as_mut().unwrap();
 
-        resource.as_mut().unwrap()
-    }
-}
-
-/// A resource (identified by a URL).
-///
-/// All HTTP requests are made against resources. After using `App::at` to establish a resource path,
-/// the `Resource` type can be used to establish endpoints for various HTTP methods at that path.
-pub struct Resource<Data> {
-    endpoints: HashMap<http::Method, BoxedEndpoint<Data>>,
-    middleware: Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
-}
-
-impl<Data> Resource<Data> {
-    /// Add an endpoint for the given HTTP method
-    pub fn method<T: Endpoint<Data, U>, U>(&mut self, method: http::Method, ep: T) {
-        if self.endpoints.contains_key(&method) {
+        if resource.endpoints.contains_key(&method) {
             panic!("A {} endpoint already exists for this path", method)
         }
 
-        self.endpoints.insert(method, BoxedEndpoint::new(ep));
+        resource.endpoints.insert(method, BoxedEndpoint::new(ep));
     }
 
     /// Add an endpoint for `GET` requests
