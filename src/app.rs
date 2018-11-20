@@ -14,8 +14,8 @@ use crate::{
     extract::Extract,
     middleware::RequestContext,
     router::{Resource, RouteResult, Router},
+    logger::RootLogger,
     Middleware, Request, Response, RouteMatch,
-    logger::RootLogger
 };
 
 /// The top-level type for setting up a Tide application.
