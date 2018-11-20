@@ -9,8 +9,9 @@ use crate::{
 
 /// TODO: Document `Router`
 pub struct Router<Data> {
+    idx: usize,
     table: UrlTable<ResourceData<Data>>,
-    middleware: Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
+    middleware_list: Vec<Vec<Arc<dyn Middleware<Data> + Send + Sync>>>,
 }
 
 pub(crate) struct RouteResult<'a, Data> {
@@ -26,10 +27,12 @@ impl<Data> Default for Router<Data> {
 }
 
 impl<Data> Router<Data> {
+    /// Create a new top-level router.
     pub(crate) fn new() -> Router<Data> {
         Router {
+            idx: 0,
             table: UrlTable::new(),
-            middleware: Vec::new(),
+            middleware_list: vec![Vec::new()],
         }
     }
 
@@ -38,13 +41,21 @@ impl<Data> Router<Data> {
     /// Middlewares added before will be applied to the resource.
     pub fn at<'a>(&'a mut self, path: &'a str) -> Resource<'a, Data> {
         let table = self.table.setup_table(path);
-        let middleware = &*self.middleware;
-        Resource { table, middleware }
+        let next_router_idx = self.idx + self.middleware_list.len();
+        Resource {
+            router_idx: self.idx,
+            next_router_idx,
+            table,
+            middleware_list: &mut self.middleware_list,
+        }
     }
 
     /// Add `middleware` to this router.
     pub fn middleware(&mut self, middleware: impl Middleware<Data> + 'static) -> &mut Self {
-        self.middleware.push(Arc::new(middleware));
+        let middleware = Arc::new(middleware);
+        for middleware_list_item in self.middleware_list.iter_mut() {
+            middleware_list_item.push(middleware.clone());
+        }
         self
     }
 
@@ -62,7 +73,7 @@ impl<Data> Router<Data> {
             } else {
                 route.endpoints.get(method)?
             };
-        let middleware = &*route.middleware;
+        let middleware = &*self.middleware_list[route.router_idx];
 
         Some(RouteResult {
             endpoint,
@@ -79,13 +90,15 @@ impl<Data> Router<Data> {
 ///
 /// Also, the `Resource` type can be used to set up a subrouter using `nest`.
 pub struct Resource<'a, Data> {
+    router_idx: usize,
+    next_router_idx: usize,
     table: &'a mut UrlTable<ResourceData<Data>>,
-    middleware: &'a [Arc<dyn Middleware<Data> + Send + Sync>],
+    middleware_list: &'a mut Vec<Vec<Arc<dyn Middleware<Data> + Send + Sync>>>,
 }
 
 struct ResourceData<Data> {
     endpoints: HashMap<http::Method, BoxedEndpoint<Data>>,
-    middleware: Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
+    router_idx: usize,
 }
 
 impl<'a, Data> Resource<'a, Data> {
@@ -97,11 +110,13 @@ impl<'a, Data> Resource<'a, Data> {
         F: FnOnce(&mut Router<Data>),
     {
         let mut subrouter = Router {
+            idx: self.next_router_idx,
             table: UrlTable::new(),
-            middleware: self.middleware.to_vec(),
+            middleware_list: vec![self.middleware_list[0].clone()],
         };
         builder(&mut subrouter);
         *self.table = subrouter.table;
+        self.middleware_list.extend(subrouter.middleware_list);
     }
 
     /// Add an endpoint for the given HTTP method
@@ -110,7 +125,7 @@ impl<'a, Data> Resource<'a, Data> {
         if resource.is_none() {
             let new_resource = ResourceData {
                 endpoints: HashMap::new(),
-                middleware: self.middleware.to_vec(),
+                router_idx: self.router_idx,
             };
             *resource = Some(new_resource);
         }
