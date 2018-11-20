@@ -163,3 +163,224 @@ impl<'a, Data> Resource<'a, Data> {
         self.method(http::Method::DELETE, ep)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use futures::{executor::block_on, future::FutureObj};
+
+    use super::*;
+    use crate::{body::Body, AppData, Request, Response};
+
+    async fn simulate_request<'a, Data: Default + Clone>(
+        router: &'a Router<Data>,
+        path: &'a str,
+        method: &'a http::Method,
+    ) -> Option<Response> {
+        let RouteResult {
+            endpoint,
+            params,
+            middleware,
+        } = router.route(path, method)?;
+
+        let mut data = Data::default();
+        let mut req = Request::new(Body::empty());
+        for m in middleware.iter() {
+            match await!(m.request(&mut data, req, &params)) {
+                Ok(new_req) => req = new_req,
+                Err(resp) => return Some(resp.map(Into::into)),
+            }
+        }
+
+        let (head, mut resp) = await!(endpoint.call(data.clone(), req, params));
+
+        for m in middleware.iter() {
+            resp = await!(m.response(&mut data, &head, resp))
+        }
+
+        Some(resp.map(Into::into))
+    }
+
+    fn route_middleware_count<Data>(
+        router: &Router<Data>,
+        path: &str,
+        method: &http::Method,
+    ) -> Option<usize> {
+        let route_result = router.route(path, method)?;
+        Some(route_result.middleware.len())
+    }
+
+    #[test]
+    fn simple_static() {
+        let mut router: Router<()> = Router::new();
+        router.at("/").get(async || "/");
+        router.at("/foo").get(async || "/foo");
+        router.at("/foo/bar").get(async || "/foo/bar");
+
+        for path in &["/", "/foo", "/foo/bar"] {
+            let res =
+                if let Some(res) = block_on(simulate_request(&router, path, &http::Method::GET)) {
+                    res
+                } else {
+                    panic!("Routing of path `{}` failed", path);
+                };
+            let body =
+                block_on(res.into_body().read_to_vec()).expect("Reading body should succeed");
+            assert_eq!(&*body, path.as_bytes());
+        }
+    }
+
+    #[test]
+    fn nested_static() {
+        let mut router: Router<()> = Router::new();
+        router.at("/a").get(async || "/a");
+        router.at("/b").nest(|router| {
+            router.at("/").get(async || "/b");
+            router.at("/a").get(async || "/b/a");
+            router.at("/b").get(async || "/b/b");
+            router.at("/c").nest(|router| {
+                router.at("/a").get(async || "/b/c/a");
+                router.at("/b").get(async || "/b/c/b");
+            });
+            router.at("/d").get(async || "/b/d");
+        });
+        router.at("/a/a").nest(|router| {
+            router.at("/a").get(async || "/a/a/a");
+            router.at("/b").get(async || "/a/a/b");
+        });
+        router.at("/a/b").nest(|router| {
+            router.at("/").get(async || "/a/b");
+        });
+
+        for failing_path in &["/", "/a/a", "/a/b/a"] {
+            if block_on(simulate_request(&router, failing_path, &http::Method::GET)).is_some() {
+                panic!(
+                    "Routing of path `{}` should fail, but was successful",
+                    failing_path
+                );
+            };
+        }
+
+        for path in &[
+            "/a", "/a/a/a", "/a/a/b", "/a/b", "/b", "/b/a", "/b/b", "/b/c/a", "/b/c/b", "/b/d",
+        ] {
+            let res =
+                if let Some(res) = block_on(simulate_request(&router, path, &http::Method::GET)) {
+                    res
+                } else {
+                    panic!("Routing of path `{}` failed", path);
+                };
+            let body =
+                block_on(res.into_body().read_to_vec()).expect("Reading body should succeed");
+            assert_eq!(&*body, path.as_bytes());
+        }
+    }
+
+    #[test]
+    fn multiple_methods() {
+        let mut router: Router<()> = Router::new();
+        router
+            .at("/a")
+            .nest(|router| router.at("/b").get(async || "/a/b GET"));
+        router.at("/a/b").post(async || "/a/b POST");
+
+        for (path, method) in &[("/a/b", http::Method::GET), ("/a/b", http::Method::POST)] {
+            let res = if let Some(res) = block_on(simulate_request(&router, path, &method)) {
+                res
+            } else {
+                panic!("Routing of {} `{}` failed", method, path);
+            };
+            let body =
+                block_on(res.into_body().read_to_vec()).expect("Reading body should succeed");
+            assert_eq!(&*body, format!("{} {}", path, method).as_bytes());
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn duplicate_endpoint_fails() {
+        let mut router: Router<()> = Router::new();
+        router
+            .at("/a")
+            .nest(|router| router.at("/b").get(async || "")); // flattened into /a/b
+        router.at("/a/b").get(async || "duplicate");
+    }
+
+    #[test]
+    fn simple_middleware() {
+        struct A;
+        impl Middleware<()> for A {}
+
+        let mut router: Router<()> = Router::new();
+        router.middleware(A);
+        router.at("/").get(async || "/");
+        router.at("/b").nest(|router| {
+            router.at("/").get(async || "/b");
+            router.middleware(A);
+        });
+
+        assert_eq!(
+            route_middleware_count(&router, "/", &http::Method::GET),
+            Some(1)
+        );
+        assert_eq!(
+            route_middleware_count(&router, "/b", &http::Method::GET),
+            Some(2)
+        );
+    }
+
+    #[test]
+    fn middleware_apply_order() {
+        #[derive(Default, Clone, Debug)]
+        struct Data(Vec<usize>);
+        struct Pusher(usize);
+        impl Middleware<Data> for Pusher {
+            fn request(
+                &self,
+                data: &mut Data,
+                req: Request,
+                _: &RouteMatch<'_>,
+            ) -> FutureObj<'static, Result<Request, Response>> {
+                data.0.push(self.0);
+                FutureObj::new(Box::new(async { Ok(req) }))
+            }
+        }
+
+        // The order of endpoint and middleware does not matter
+        // The order of subrouter and middleware DOES matter
+        let mut router: Router<Data> = Router::new();
+        router.middleware(Pusher(0));
+        router.at("/").get(async move |data: AppData<Data>| {
+            if (data.0).0 == [0, 2] {
+                http::StatusCode::OK
+            } else {
+                http::StatusCode::INTERNAL_SERVER_ERROR
+            }
+        });
+        router.at("/a").nest(|router| {
+            router.at("/").get(async move |data: AppData<Data>| {
+                if (data.0).0 == [0, 1, 2] {
+                    http::StatusCode::OK
+                } else {
+                    http::StatusCode::INTERNAL_SERVER_ERROR
+                }
+            });
+            router.middleware(Pusher(1));
+        });
+        router.middleware(Pusher(2));
+        router.at("/b").nest(|router| {
+            router.at("/").get(async move |data: AppData<Data>| {
+                if (data.0).0 == [0, 2, 1] {
+                    http::StatusCode::OK
+                } else {
+                    http::StatusCode::INTERNAL_SERVER_ERROR
+                }
+            });
+            router.middleware(Pusher(1));
+        });
+
+        for path in &["/", "/a", "/b"] {
+            let res = block_on(simulate_request(&router, path, &http::Method::GET)).unwrap();
+            assert_eq!(res.status(), 200);
+        }
+    }
+}

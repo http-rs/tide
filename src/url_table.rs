@@ -32,6 +32,40 @@ pub struct RouteMatch<'a> {
     pub map: HashMap<&'a str, &'a str>,
 }
 
+impl<R> std::fmt::Debug for UrlTable<R> {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+        struct Children<'a, R>(&'a HashMap<String, UrlTable<R>>, Option<&'a Wildcard<R>>);
+        impl<'a, R> std::fmt::Debug for Children<'a, R> {
+            fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+                let mut dbg = fmt.debug_map();
+                dbg.entries(self.0.iter());
+                if let Some(wildcard) = self.1 {
+                    dbg.entry(&format!("{{{}}}", wildcard.name), &wildcard.table);
+                }
+                dbg.finish()
+            }
+        }
+
+        fmt.debug_struct("UrlTable")
+            .field(
+                "resource",
+                &format_args!(
+                    "{}",
+                    if self.accept.is_some() {
+                        "Some"
+                    } else {
+                        "None"
+                    }
+                ),
+            )
+            .field(
+                "children",
+                &Children(&self.next, self.wildcard.as_ref().map(|x| &**x)),
+            )
+            .finish()
+    }
+}
+
 impl<R> UrlTable<R> {
     /// Create an empty routing table.
     pub fn new() -> UrlTable<R> {
@@ -43,6 +77,7 @@ impl<R> UrlTable<R> {
     }
 
     /// Get the resource of current path.
+    #[allow(dead_code)]
     pub fn resource(&self) -> Option<&R> {
         self.accept.as_ref()
     }
@@ -135,6 +170,7 @@ impl<R> UrlTable<R> {
 
 impl<R: Default> UrlTable<R> {
     /// Add or access a new resource at the given routing path (which may contain wildcards).
+    #[allow(dead_code)]
     pub fn setup(&mut self, path: &str) -> &mut R {
         let table = self.setup_table(path);
 
