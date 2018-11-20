@@ -30,6 +30,6 @@ pub use crate::{
     middleware::Middleware,
     request::Request,
     response::{IntoResponse, Response},
-    router::Router,
+    router::{Resource, Router},
     url_table::RouteMatch,
 };
