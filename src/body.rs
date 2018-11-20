@@ -144,7 +144,7 @@ impl<T: 'static + Send + serde::Serialize> IntoResponse for Json<T> {
         // TODO: think about how to handle errors
         http::Response::builder()
             .status(http::status::StatusCode::OK)
-            .header("Content-Type", "Application/json")
+            .header("Content-Type", "application/json")
             .body(Body::from(serde_json::to_vec(&self.0).unwrap()))
             .unwrap()
     }
@@ -178,7 +178,7 @@ impl<T: 'static + Send + serde::Serialize> IntoResponse for Form<T> {
         // TODO: think about how to handle errors
         http::Response::builder()
             .status(http::status::StatusCode::OK)
-            .header("Content-Type", "Application/x-www-form-urlencoded")
+            .header("Content-Type", "application/x-www-form-urlencoded")
             .body(Body::from(
                 serde_qs::to_string(&self.0).unwrap().into_bytes(),
             ))
