@@ -7,7 +7,9 @@ use crate::{
     Middleware,
 };
 
-/// TODO: Document `Router`
+/// A core type for routing.
+///
+/// The `Router` type can be used to set up routes and resources, and to apply middleware.
 pub struct Router<Data> {
     idx: usize,
     table: UrlTable<ResourceData<Data>>,
@@ -18,12 +20,6 @@ pub(crate) struct RouteResult<'a, Data> {
     pub(crate) endpoint: &'a BoxedEndpoint<Data>,
     pub(crate) params: RouteMatch<'a>,
     pub(crate) middleware: &'a [Arc<dyn Middleware<Data> + Send + Sync>],
-}
-
-impl<Data> Default for Router<Data> {
-    fn default() -> Router<Data> {
-        Router::new()
-    }
 }
 
 impl<Data> Router<Data> {
@@ -37,8 +33,6 @@ impl<Data> Router<Data> {
     }
 
     /// Add a new resource at `path`, relative to this router.
-    ///
-    /// Middlewares added before will be applied to the resource.
     pub fn at<'a>(&'a mut self, path: &'a str) -> Resource<'a, Data> {
         let table = self.table.setup_table(path);
         let next_router_idx = self.idx + self.middleware_list.len();
@@ -50,7 +44,30 @@ impl<Data> Router<Data> {
         }
     }
 
-    /// Add `middleware` to this router.
+    /// Apply `middleware` to this router.
+    ///
+    /// Note that the order of nesting subrouters and applying middleware matters. If there are
+    /// nested subrouters *before* the method call, the given middleware will be applied *after*
+    /// the subrouter middleware.
+    ///
+    /// ```
+    /// # #![feature(futures_api, async_await)]
+    /// # struct A;
+    /// # impl tide::Middleware<()> for A {}
+    /// # struct B;
+    /// # impl tide::Middleware<()> for B {}
+    /// # let mut app = tide::App::new(());
+    /// # let router = app.router();
+    /// router.at("a1").nest(|router| {
+    ///     router.middleware(A);
+    ///     router.at("").get(async || "A then B");
+    /// });
+    /// router.middleware(B);
+    /// router.at("a2").nest(|router| {
+    ///     router.middleware(A);
+    ///     router.at("").get(async || "B then A");
+    /// });
+    /// ```
     pub fn middleware(&mut self, middleware: impl Middleware<Data> + 'static) -> &mut Self {
         let middleware = Arc::new(middleware);
         for middleware_list_item in self.middleware_list.iter_mut() {
@@ -85,10 +102,9 @@ impl<Data> Router<Data> {
 
 /// A handle to a resource (identified by a URL).
 ///
-/// All HTTP requests are made against resources. After using `App::at` to establish a resource path,
-/// the `Resource` type can be used to establish endpoints for various HTTP methods at that path.
-///
-/// Also, the `Resource` type can be used to set up a subrouter using `nest`.
+/// All HTTP requests are made against resources. After using `Router::at` (or `App::at`) to
+/// establish a resource path, the `Resource` type can be used to establish endpoints for various
+/// HTTP methods at that path. Also, using `nest`, it can be used to set up a subrouter.
 pub struct Resource<'a, Data> {
     router_idx: usize,
     next_router_idx: usize,
@@ -104,7 +120,11 @@ struct ResourceData<Data> {
 impl<'a, Data> Resource<'a, Data> {
     /// "Nest" a subrouter to the path.
     ///
-    /// If resources are already present at current path and its descendents, they will be discarded.
+    /// This method will build a fresh `Router` and give a mutable reference to it to the builder
+    /// function. Builder can set up a subrouter using the `Router`. All middleware applied inside
+    /// the builder will be local to the subrouter and its descendents.
+    ///
+    /// If resources are already present, they will be discarded.
     pub fn nest<F>(self, builder: F)
     where
         F: FnOnce(&mut Router<Data>),

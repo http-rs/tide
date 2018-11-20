@@ -41,13 +41,12 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
     }
 
     /// Add a new resource at `path`.
-    ///
-    /// Middlewares added before will be applied to the resource.
     pub fn at<'a>(&'a mut self, path: &'a str) -> Resource<Data> {
         self.router.at(path)
     }
 
-    /// Apply `middleware` to the whole app.
+    /// Apply `middleware` to the whole app. Note that the order of nesting subrouters and applying
+    /// middleware matters; see `Router` for details.
     pub fn middleware(&mut self, middleware: impl Middleware<Data> + 'static) -> &mut Self {
         self.router.middleware(middleware);
         self
