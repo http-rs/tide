@@ -125,10 +125,7 @@ impl<'a, Data> Resource<'a, Data> {
     /// the builder will be local to the subrouter and its descendents.
     ///
     /// If resources are already present, they will be discarded.
-    pub fn nest<F>(self, builder: F)
-    where
-        F: FnOnce(&mut Router<Data>),
-    {
+    pub fn nest(self, builder: impl FnOnce(&mut Router<Data>)) {
         let mut subrouter = Router {
             idx: self.next_router_idx,
             table: UrlTable::new(),
