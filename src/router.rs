@@ -86,4 +86,24 @@ impl<Data> Resource<Data> {
     pub fn delete<T: Endpoint<Data, U>, U>(&mut self, ep: T) {
         self.method(http::Method::DELETE, ep)
     }
+
+    /// Add an endpoint for `OPTIONS` requests
+    pub fn options<T: Endpoint<Data, U>, U>(&mut self, ep: T) {
+        self.method(http::Method::OPTIONS, ep)
+    }
+
+    /// Add an endpoint for `CONNECT` requests
+    pub fn connect<T: Endpoint<Data, U>, U>(&mut self, ep: T) {
+        self.method(http::Method::CONNECT, ep)
+    }
+
+    /// Add an endpoint for `PATCH` requests
+    pub fn patch<T: Endpoint<Data, U>, U>(&mut self, ep: T) {
+        self.method(http::Method::PATCH, ep)
+    }
+
+    /// Add an endpoint for `TRACE` requests
+    pub fn trace<T: Endpoint<Data, U>, U>(&mut self, ep: T) {
+        self.method(http::Method::TRACE, ep)
+    }
 }
