@@ -144,8 +144,44 @@ impl<T: 'static + Send + serde::Serialize> IntoResponse for Json<T> {
         // TODO: think about how to handle errors
         http::Response::builder()
             .status(http::status::StatusCode::OK)
-            .header("Content-Type", "Application/json")
+            .header("Content-Type", "application/json")
             .body(Body::from(serde_json::to_vec(&self.0).unwrap()))
+            .unwrap()
+    }
+}
+
+/// A wrapper for form encoded (application/x-www-form-urlencoded) (de)serialization of bodies.
+///
+/// This type is usable both as an extractor (argument to an endpoint) and as a response
+/// (return value from an endpoint), though returning a response with form data is uncommon
+/// and probably not good practice.
+pub struct Form<T>(pub T);
+
+impl<T: Send + serde::de::DeserializeOwned + 'static, S: 'static> Extract<S> for Form<T> {
+    // Note: cannot use `existential type` here due to ICE
+    type Fut = FutureObj<'static, Result<Self, Response>>;
+
+    fn extract(data: &mut S, req: &mut Request, params: &RouteMatch<'_>) -> Self::Fut {
+        let mut body = std::mem::replace(req.body_mut(), Body::empty());
+        FutureObj::new(Box::new(
+            async move {
+                let body = await!(body.read_to_vec()).map_err(mk_err)?;
+                let data: T = serde_qs::from_bytes(&body).map_err(mk_err)?;
+                Ok(Form(data))
+            },
+        ))
+    }
+}
+
+impl<T: 'static + Send + serde::Serialize> IntoResponse for Form<T> {
+    fn into_response(self) -> Response {
+        // TODO: think about how to handle errors
+        http::Response::builder()
+            .status(http::status::StatusCode::OK)
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(Body::from(
+                serde_qs::to_string(&self.0).unwrap().into_bytes(),
+            ))
             .unwrap()
     }
 }

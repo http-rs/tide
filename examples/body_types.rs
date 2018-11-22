@@ -32,11 +32,18 @@ async fn echo_json(msg: body::Json<Message>) -> body::Json<Message> {
     msg
 }
 
+async fn echo_form(msg: body::Form<Message>) -> body::Form<Message> {
+    println!("Form: {:?}", msg.0);
+
+    msg
+}
+
 fn main() {
     let mut app = tide::App::new(());
     app.at("/echo/string").post(echo_string);
     app.at("/echo/string_lossy").post(echo_string_lossy);
     app.at("/echo/vec").post(echo_vec);
     app.at("/echo/json").post(echo_json);
+    app.at("/echo/form").post(echo_form);
     app.serve("127.0.0.1:8000");
 }
