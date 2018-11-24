@@ -200,7 +200,10 @@ mod tests {
         } = router.route(path, method)?;
 
         let mut data = Data::default();
-        let mut req = Request::new(Body::empty());
+        let mut req = http::Request::builder()
+            .method(method)
+            .body(Body::empty())
+            .unwrap();
         for m in middleware.iter() {
             match await!(m.request(&mut data, req, &params)) {
                 Ok(new_req) => req = new_req,
