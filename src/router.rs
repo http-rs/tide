@@ -225,16 +225,15 @@ mod tests {
             .body(Body::empty())
             .unwrap();
         for m in middleware.iter() {
-            match await!(m.request(&mut data, req, &params)) {
-                Ok(new_req) => req = new_req,
-                Err(resp) => return Some(resp.map(Into::into)),
+            if let Err(resp) = await!(m.request(&mut data, &mut req, &params)) {
+                return Some(resp.map(Into::into));
             }
         }
 
         let (head, mut resp) = await!(endpoint.call(data.clone(), req, params));
 
         for m in middleware.iter() {
-            resp = await!(m.response(&mut data, &head, resp))
+            await!(m.response(&mut data, &head, &mut resp))
         }
 
         Some(resp.map(Into::into))
@@ -377,11 +376,11 @@ mod tests {
             fn request(
                 &self,
                 data: &mut Data,
-                req: Request,
+                req: &mut Request,
                 _: &RouteMatch<'_>,
-            ) -> FutureObj<'static, Result<Request, Response>> {
+            ) -> FutureObj<'static, Result<(), Response>> {
                 data.0.push(self.0);
-                FutureObj::new(Box::new(async { Ok(req) }))
+                FutureObj::new(Box::new(async { Ok(()) }))
             }
         }
 
