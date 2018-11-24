@@ -34,16 +34,19 @@ impl DefaultHeaders {
 }
 
 impl<Data> Middleware<Data> for DefaultHeaders {
-    fn response(
-        &self,
-        data: &mut Data,
-        head: &Head,
-        mut resp: Response,
-    ) -> FutureObj<'static, Response> {
-        let headers = resp.headers_mut();
-        for (key, value) in self.headers.iter() {
-            headers.entry(key).unwrap().or_insert_with(|| value.clone());
-        }
-        FutureObj::new(Box::new(async { resp }))
+    fn response<'a>(
+        &'a self,
+        data: &'a mut Data,
+        head: &'a Head,
+        resp: &'a mut Response,
+    ) -> FutureObj<'a, ()> {
+        FutureObj::new(Box::new(
+            async move {
+                let headers = resp.headers_mut();
+                for (key, value) in self.headers.iter() {
+                    headers.entry(key).unwrap().or_insert_with(|| value.clone());
+                }
+            },
+        ))
     }
 }
