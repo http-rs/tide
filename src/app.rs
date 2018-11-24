@@ -12,7 +12,7 @@ use std::{
 use crate::{
     body::Body,
     extract::Extract,
-    router::{Resource, Router},
+    router::{Resource, RouteResult, Router},
     Middleware, Request, Response, RouteMatch,
 };
 
@@ -24,7 +24,6 @@ use crate::{
 pub struct App<Data> {
     data: Data,
     router: Router<Data>,
-    middleware: Vec<Box<dyn Middleware<Data> + Send + Sync>>,
 }
 
 impl<Data: Clone + Send + Sync + 'static> App<Data> {
@@ -33,18 +32,23 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         App {
             data,
             router: Router::new(),
-            middleware: Vec::new(),
         }
     }
 
+    /// Get the top-level router.
+    pub fn router(&mut self) -> &mut Router<Data> {
+        &mut self.router
+    }
+
     /// Add a new resource at `path`.
-    pub fn at<'a>(&'a mut self, path: &'a str) -> &mut Resource<Data> {
+    pub fn at<'a>(&'a mut self, path: &'a str) -> Resource<'a, Data> {
         self.router.at(path)
     }
 
-    /// Apply `middleware` to the whole app.
+    /// Apply `middleware` to the whole app. Note that the order of nesting subrouters and applying
+    /// middleware matters; see `Router` for details.
     pub fn middleware(&mut self, middleware: impl Middleware<Data> + 'static) -> &mut Self {
-        self.middleware.push(Box::new(middleware));
+        self.router.middleware(middleware);
         self
     }
 
@@ -52,7 +56,6 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         Server {
             data: self.data,
             router: Arc::new(self.router),
-            middleware: Arc::new(self.middleware),
         }
     }
 
@@ -84,7 +87,6 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
 struct Server<Data> {
     data: Data,
     router: Arc<Router<Data>>,
-    middleware: Arc<Vec<Box<dyn Middleware<Data> + Send + Sync>>>,
 }
 
 impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
@@ -96,7 +98,6 @@ impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
     fn call(&mut self, req: http::Request<hyper::Body>) -> Self::Future {
         let mut data = self.data.clone();
         let router = self.router.clone();
-        let middleware = self.middleware.clone();
 
         let mut req = req.map(Body::from);
         let path = req.uri().path().to_owned();
@@ -104,7 +105,12 @@ impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
 
         FutureObj::new(Box::new(
             async move {
-                if let Some((endpoint, params)) = router.route(&path, &method) {
+                if let Some(RouteResult {
+                    endpoint,
+                    params,
+                    middleware,
+                }) = router.route(&path, &method)
+                {
                     for m in middleware.iter() {
                         if let Err(resp) = await!(m.request(&mut data, &mut req, &params)) {
                             return Ok(resp.map(Into::into));

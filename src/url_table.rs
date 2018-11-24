@@ -32,7 +32,41 @@ pub struct RouteMatch<'a> {
     pub map: HashMap<&'a str, &'a str>,
 }
 
-impl<R: Default> UrlTable<R> {
+impl<R> std::fmt::Debug for UrlTable<R> {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+        struct Children<'a, R>(&'a HashMap<String, UrlTable<R>>, Option<&'a Wildcard<R>>);
+        impl<'a, R> std::fmt::Debug for Children<'a, R> {
+            fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+                let mut dbg = fmt.debug_map();
+                dbg.entries(self.0.iter());
+                if let Some(wildcard) = self.1 {
+                    dbg.entry(&format!("{{{}}}", wildcard.name), &wildcard.table);
+                }
+                dbg.finish()
+            }
+        }
+
+        fmt.debug_struct("UrlTable")
+            .field(
+                "resource",
+                &format_args!(
+                    "{}",
+                    if self.accept.is_some() {
+                        "Some"
+                    } else {
+                        "None"
+                    }
+                ),
+            )
+            .field(
+                "children",
+                &Children(&self.next, self.wildcard.as_ref().map(|x| &**x)),
+            )
+            .finish()
+    }
+}
+
+impl<R> UrlTable<R> {
     /// Create an empty routing table.
     pub fn new() -> UrlTable<R> {
         UrlTable {
@@ -40,6 +74,28 @@ impl<R: Default> UrlTable<R> {
             next: HashMap::new(),
             wildcard: None,
         }
+    }
+
+    /// Get the resource of current path.
+    #[allow(dead_code)]
+    pub fn resource(&self) -> Option<&R> {
+        self.accept.as_ref()
+    }
+
+    /// Retrieve a mutable reference of the resource.
+    pub fn resource_mut(&mut self) -> &mut Option<R> {
+        &mut self.accept
+    }
+
+    /// Return an iterator of all resources.
+    #[allow(dead_code)]
+    pub fn resources(&self) -> Resources<R> {
+        Resources { stack: vec![self] }
+    }
+
+    /// Return an iterator of mutable references all resources.
+    pub fn resources_mut(&mut self) -> ResourcesMut<R> {
+        ResourcesMut { stack: vec![self] }
     }
 
     /// Determine which resource, if any, the conrete `path` should be routed to.
@@ -83,8 +139,10 @@ impl<R: Default> UrlTable<R> {
         self.wildcard.as_mut().map(|b| &mut **b)
     }
 
-    /// Add or access a new resource at the given routing path (which may contain wildcards).
-    pub fn setup(&mut self, path: &str) -> &mut R {
+    /// Return the table of the given routing path (which may contain wildcards).
+    ///
+    /// If it doesn't already exist, this will make a new one.
+    pub fn setup_table(&mut self, path: &str) -> &mut UrlTable<R> {
         let mut table = self;
         for segment in path.split('/') {
             if segment.is_empty() {
@@ -117,11 +175,63 @@ impl<R: Default> UrlTable<R> {
             }
         }
 
+        table
+    }
+}
+
+impl<R: Default> UrlTable<R> {
+    /// Add or access a new resource at the given routing path (which may contain wildcards).
+    #[allow(dead_code)]
+    pub fn setup(&mut self, path: &str) -> &mut R {
+        let table = self.setup_table(path);
+
         if table.accept.is_none() {
             table.accept = Some(R::default())
         }
 
         table.accept.as_mut().unwrap()
+    }
+}
+
+pub struct Resources<'a, R> {
+    stack: Vec<&'a UrlTable<R>>,
+}
+
+impl<'a, R> Iterator for Resources<'a, R> {
+    type Item = &'a R;
+
+    fn next(&mut self) -> Option<&'a R> {
+        while let Some(table) = self.stack.pop() {
+            self.stack.extend(table.next.values());
+            if let Some(wildcard) = table.wildcard.as_ref() {
+                self.stack.push(&wildcard.table);
+            }
+            if let Some(res) = &table.accept {
+                return Some(res);
+            }
+        }
+        None
+    }
+}
+
+pub struct ResourcesMut<'a, R> {
+    stack: Vec<&'a mut UrlTable<R>>,
+}
+
+impl<'a, R> Iterator for ResourcesMut<'a, R> {
+    type Item = &'a mut R;
+
+    fn next(&mut self) -> Option<&'a mut R> {
+        while let Some(table) = self.stack.pop() {
+            self.stack.extend(table.next.values_mut());
+            if let Some(wildcard) = table.wildcard.as_mut() {
+                self.stack.push(&mut wildcard.table);
+            }
+            if let Some(res) = &mut table.accept {
+                return Some(res);
+            }
+        }
+        None
     }
 }
 
