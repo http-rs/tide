@@ -44,6 +44,11 @@ impl Head {
     pub fn method(&self) -> &http::Method {
         &self.inner.method
     }
+
+    /// The HTTP headers
+    pub fn headers(&self) -> &http::header::HeaderMap<http::header::HeaderValue> {
+        &self.inner.headers
+    }
 }
 
 /// An extractor for path components.
