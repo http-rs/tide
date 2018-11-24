@@ -112,16 +112,15 @@ impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
                 }) = router.route(&path, &method)
                 {
                     for m in middleware.iter() {
-                        match await!(m.request(&mut data, req, &params)) {
-                            Ok(new_req) => req = new_req,
-                            Err(resp) => return Ok(resp.map(Into::into)),
+                        if let Err(resp) = await!(m.request(&mut data, &mut req, &params)) {
+                            return Ok(resp.map(Into::into));
                         }
                     }
 
                     let (head, mut resp) = await!(endpoint.call(data.clone(), req, params));
 
                     for m in middleware.iter() {
-                        resp = await!(m.response(&mut data, &head, resp))
+                        await!(m.response(&mut data, &head, &mut resp));
                     }
 
                     Ok(resp.map(Into::into))
