@@ -87,6 +87,17 @@ impl<R> UrlTable<R> {
         &mut self.accept
     }
 
+    /// Return an iterator of all resources.
+    #[allow(dead_code)]
+    pub fn resources(&self) -> Resources<R> {
+        Resources { stack: vec![self] }
+    }
+
+    /// Return an iterator of mutable references all resources.
+    pub fn resources_mut(&mut self) -> ResourcesMut<R> {
+        ResourcesMut { stack: vec![self] }
+    }
+
     /// Determine which resource, if any, the conrete `path` should be routed to.
     pub fn route<'a>(&'a self, path: &'a str) -> Option<(&'a R, RouteMatch<'a>)> {
         let mut table = self;
@@ -179,6 +190,48 @@ impl<R: Default> UrlTable<R> {
         }
 
         table.accept.as_mut().unwrap()
+    }
+}
+
+pub struct Resources<'a, R> {
+    stack: Vec<&'a UrlTable<R>>,
+}
+
+impl<'a, R> Iterator for Resources<'a, R> {
+    type Item = &'a R;
+
+    fn next(&mut self) -> Option<&'a R> {
+        while let Some(table) = self.stack.pop() {
+            self.stack.extend(table.next.values());
+            if let Some(wildcard) = table.wildcard.as_ref() {
+                self.stack.push(&wildcard.table);
+            }
+            if let Some(res) = &table.accept {
+                return Some(res);
+            }
+        }
+        None
+    }
+}
+
+pub struct ResourcesMut<'a, R> {
+    stack: Vec<&'a mut UrlTable<R>>,
+}
+
+impl<'a, R> Iterator for ResourcesMut<'a, R> {
+    type Item = &'a mut R;
+
+    fn next(&mut self) -> Option<&'a mut R> {
+        while let Some(table) = self.stack.pop() {
+            self.stack.extend(table.next.values_mut());
+            if let Some(wildcard) = table.wildcard.as_mut() {
+                self.stack.push(&mut wildcard.table);
+            }
+            if let Some(res) = &mut table.accept {
+                return Some(res);
+            }
+        }
+        None
     }
 }
 
