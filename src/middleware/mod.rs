@@ -15,8 +15,8 @@ pub trait Middleware<Data>: Send + Sync {
         data: &'a mut Data,
         req: &'a mut Request,
         params: &'a RouteMatch<'_>,
-    ) -> FutureObj<'a, Option<Response>> {
-        FutureObj::new(Box::new(async { None }))
+    ) -> FutureObj<'a, Result<(), Response>> {
+        FutureObj::new(Box::new(async { Ok(()) }))
     }
 
     /// Asynchronously transform the outgoing response.

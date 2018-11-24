@@ -106,7 +106,7 @@ impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
             async move {
                 if let Some((endpoint, params)) = router.route(&path, &method) {
                     for m in middleware.iter() {
-                        if let Some(resp) = await!(m.request(&mut data, &mut req, &params)) {
+                        if let Err(resp) = await!(m.request(&mut data, &mut req, &params)) {
                             return Ok(resp.map(Into::into));
                         }
                     }
