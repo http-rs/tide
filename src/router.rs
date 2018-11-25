@@ -21,7 +21,7 @@ pub(crate) struct RouteResult<'a, Data> {
     pub(crate) middleware: &'a [Arc<dyn Middleware<Data> + Send + Sync>],
 }
 
-impl<Data> Router<Data> {
+impl<Data: Clone + Send + Sync + 'static> Router<Data> {
     /// Create a new top-level router.
     pub(crate) fn new() -> Router<Data> {
         Router {
@@ -47,19 +47,23 @@ impl<Data> Router<Data> {
     ///
     /// ```
     /// # #![feature(futures_api, async_await)]
-    /// # struct A;
-    /// # impl tide::Middleware<()> for A {}
-    /// # struct B;
-    /// # impl tide::Middleware<()> for B {}
+    /// # fn passthrough_middleware<Data: Clone + Send>(
+    /// #     ctx: tide::middleware::RequestContext<Data>,
+    /// # ) -> futures::future::FutureObj<tide::Response> {
+    /// #     ctx.next()
+    /// # }
     /// # let mut app = tide::App::new(());
     /// # let router = app.router();
     /// router.at("a1").nest(|router| {
-    ///     router.middleware(A);
+    /// #   let a = passthrough_middleware;
+    ///     router.middleware(a);
     ///     router.at("").get(async || "A then B");
     /// });
-    /// router.middleware(B);
+    /// # let b = passthrough_middleware;
+    /// router.middleware(b);
     /// router.at("a2").nest(|router| {
-    ///     router.middleware(A);
+    /// #   let a = passthrough_middleware;
+    ///     router.middleware(a);
     ///     router.at("").get(async || "B then A");
     /// });
     /// ```
@@ -198,9 +202,15 @@ mod tests {
     use futures::{executor::block_on, future::FutureObj};
 
     use super::*;
-    use crate::{body::Body, AppData, Request, Response};
+    use crate::{body::Body, middleware::RequestContext, AppData, Response};
 
-    async fn simulate_request<'a, Data: Default + Clone>(
+    fn passthrough_middleware<Data: Clone + Send>(
+        ctx: RequestContext<Data>,
+    ) -> FutureObj<Response> {
+        ctx.next()
+    }
+
+    async fn simulate_request<'a, Data: Default + Clone + Send + Sync + 'static>(
         router: &'a Router<Data>,
         path: &'a str,
         method: &'a http::Method,
@@ -211,27 +221,24 @@ mod tests {
             middleware,
         } = router.route(path, method)?;
 
-        let mut data = Data::default();
-        let mut req = http::Request::builder()
+        let data = Data::default();
+        let req = http::Request::builder()
             .method(method)
             .body(Body::empty())
             .unwrap();
-        for m in middleware.iter() {
-            if let Err(resp) = await!(m.request(&mut data, &mut req, &params)) {
-                return Some(resp.map(Into::into));
-            }
-        }
 
-        let (head, mut resp) = await!(endpoint.call(data.clone(), req, params));
-
-        for m in middleware.iter() {
-            await!(m.response(&mut data, &head, &mut resp))
-        }
-
-        Some(resp.map(Into::into))
+        let ctx = RequestContext {
+            app_data: data,
+            req,
+            params,
+            endpoint,
+            next_middleware: middleware,
+        };
+        let res = await!(ctx.next());
+        Some(res.map(Into::into))
     }
 
-    fn route_middleware_count<Data>(
+    fn route_middleware_count<Data: Clone + Send + Sync + 'static>(
         router: &Router<Data>,
         path: &str,
         method: &http::Method,
@@ -338,15 +345,12 @@ mod tests {
 
     #[test]
     fn simple_middleware() {
-        struct A;
-        impl Middleware<()> for A {}
-
         let mut router: Router<()> = Router::new();
-        router.middleware(A);
+        router.middleware(passthrough_middleware);
         router.at("/").get(async || "/");
         router.at("/b").nest(|router| {
             router.at("/").get(async || "/b");
-            router.middleware(A);
+            router.middleware(passthrough_middleware);
         });
 
         assert_eq!(
@@ -365,14 +369,13 @@ mod tests {
         struct Data(Vec<usize>);
         struct Pusher(usize);
         impl Middleware<Data> for Pusher {
-            fn request(
-                &self,
-                data: &mut Data,
-                req: &mut Request,
-                _: &RouteMatch<'_>,
-            ) -> FutureObj<'static, Result<(), Response>> {
-                data.0.push(self.0);
-                FutureObj::new(Box::new(async { Ok(()) }))
+            fn handle<'a>(&'a self, mut ctx: RequestContext<'a, Data>) -> FutureObj<'a, Response> {
+                FutureObj::new(Box::new(
+                    async move {
+                        ctx.app_data.0.push(self.0);
+                        await!(ctx.next())
+                    },
+                ))
             }
         }
 

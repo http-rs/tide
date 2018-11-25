@@ -8,14 +8,14 @@ use crate::{extract::Extract, head::Head, IntoResponse, Request, Response, Route
 /// implemented directly by Tide users.
 pub trait Endpoint<Data, Kind>: Send + Sync + 'static {
     /// The async result of `call`.
-    type Fut: Future<Output = (Head, Response)> + Send + 'static;
+    type Fut: Future<Output = Response> + Send + 'static;
 
     /// Invoke the endpoint on the given request and app data handle.
     fn call(&self, data: Data, req: Request, params: RouteMatch<'_>) -> Self::Fut;
 }
 
 type BoxedEndpointFn<Data> =
-    dyn Fn(Data, Request, RouteMatch) -> FutureObj<'static, (Head, Response)> + Send + Sync;
+    dyn Fn(Data, Request, RouteMatch) -> FutureObj<'static, Response> + Send + Sync;
 
 pub(crate) struct BoxedEndpoint<Data> {
     endpoint: Box<BoxedEndpointFn<Data>>,
@@ -38,7 +38,7 @@ impl<Data> BoxedEndpoint<Data> {
         data: Data,
         req: Request,
         params: RouteMatch<'_>,
-    ) -> FutureObj<'static, (Head, Response)> {
+    ) -> FutureObj<'static, Response> {
         (self.endpoint)(data, req, params)
     }
 }
@@ -68,7 +68,7 @@ macro_rules! end_point_impl_raw {
                 $X: Extract<Data>
             ),*
         {
-            type Fut = FutureObj<'static, (Head, Response)>;
+            type Fut = FutureObj<'static, Response>;
 
             #[allow(unused_mut, non_snake_case)]
             fn call(&self, mut data: Data, mut req: Request, params: RouteMatch<'_>) -> Self::Fut {
@@ -79,11 +79,11 @@ macro_rules! end_point_impl_raw {
                     let head = Head::from(parts);
                     $(let $X = match await!($X) {
                         Ok(x) => x,
-                        Err(resp) => return (head, resp),
+                        Err(resp) => return resp,
                     };)*
                     let res = await!(call_f!($($head;)* (f, head); $($X),*));
 
-                    (head, res.into_response())
+                    res.into_response()
                 }))
             }
         }

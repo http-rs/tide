@@ -1,42 +1,50 @@
+use std::sync::Arc;
+
 use futures::future::FutureObj;
 
-use crate::{head::Head, Request, Response, RouteMatch};
+use crate::{endpoint::BoxedEndpoint, Request, Response, RouteMatch};
 
 mod default_headers;
 
 pub use self::default_headers::DefaultHeaders;
 
-/// Middleware for an app with state of type `Data`
+/// Middleware that wraps around remaining middleware chain.
 pub trait Middleware<Data>: Send + Sync {
-    /// Asynchronously transform the incoming request, or abort further handling by immediately
-    /// returning a response.
-    fn request<'a>(
-        &'a self,
-        data: &'a mut Data,
-        req: &'a mut Request,
-        params: &'a RouteMatch<'_>,
-    ) -> FutureObj<'a, Result<(), Response>> {
-        FutureObj::new(Box::new(async { Ok(()) }))
+    /// Asynchronously handle the request, and return a response.
+    fn handle<'a>(&'a self, ctx: RequestContext<'a, Data>) -> FutureObj<'a, Response>;
+}
+
+impl<Data, F> Middleware<Data> for F
+where
+    F: Send + Sync + Fn(RequestContext<Data>) -> FutureObj<Response>,
+{
+    fn handle<'a>(&'a self, ctx: RequestContext<'a, Data>) -> FutureObj<'a, Response> {
+        (self)(ctx)
     }
+}
 
-    /// Asynchronously transform the outgoing response.
-    fn response<'a>(
-        &'a self,
-        data: &'a mut Data,
-        head: &'a Head,
-        resp: &'a mut Response,
-    ) -> FutureObj<'a, ()> {
-        FutureObj::new(Box::new(async {}))
+pub struct RequestContext<'a, Data> {
+    pub app_data: Data,
+    pub req: Request,
+    pub params: RouteMatch<'a>,
+    pub(crate) endpoint: &'a BoxedEndpoint<Data>,
+    pub(crate) next_middleware: &'a [Arc<dyn Middleware<Data> + Send + Sync>],
+}
+
+impl<'a, Data: Clone + Send> RequestContext<'a, Data> {
+    /// Consume this context, and run remaining middleware chain to completion.
+    pub fn next(mut self) -> FutureObj<'a, Response> {
+        FutureObj::new(Box::new(
+            async move {
+                if let Some((current, next)) = self.next_middleware.split_first() {
+                    self.next_middleware = next;
+                    await!(current.handle(self))
+                } else {
+                    await!(self
+                        .endpoint
+                        .call(self.app_data.clone(), self.req, self.params))
+                }
+            },
+        ))
     }
-
-    // TODO: provide the following, intended to fire *after* the body has been fully sent
-
-    /*
-    fn finish(
-        &self,
-        data: &mut Data,
-        head: &Head,
-        resp: &Response,
-    ) -> FutureObj<'static, ()>;
-    */
 }
