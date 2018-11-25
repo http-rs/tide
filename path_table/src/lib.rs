@@ -411,7 +411,10 @@ mod test {
 
         let (_, params) = table.route("foo/a/b").unwrap();
         assert_eq!(params.vec, &["a", "b"]);
-        assert_eq!(params.map, [("foo", "a"), ("bar", "b")].iter().cloned().collect());
+        assert_eq!(
+            params.map,
+            [("foo", "a"), ("bar", "b")].iter().cloned().collect()
+        );
 
         let (_, params) = table.route("c").unwrap();
         assert_eq!(params.vec, &["c"]);

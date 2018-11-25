@@ -22,7 +22,6 @@ mod request;
 mod response;
 mod router;
 
-pub use path_table::RouteMatch;
 pub use crate::{
     app::{App, AppData},
     endpoint::Endpoint,
@@ -32,3 +31,4 @@ pub use crate::{
     response::{IntoResponse, Response},
     router::{Resource, Router},
 };
+pub use path_table::RouteMatch;

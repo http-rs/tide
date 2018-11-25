@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use path_table::{PathTable, RouteMatch};
 use crate::{
     endpoint::{BoxedEndpoint, Endpoint},
     Middleware,
 };
+use path_table::{PathTable, RouteMatch};
 
 /// A core type for routing.
 ///
