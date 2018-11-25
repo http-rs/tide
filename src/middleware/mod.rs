@@ -5,6 +5,7 @@ use futures::future::FutureObj;
 use crate::{endpoint::BoxedEndpoint, Request, Response, RouteMatch};
 
 mod default_headers;
+pub mod logger;
 
 pub use self::default_headers::DefaultHeaders;
 

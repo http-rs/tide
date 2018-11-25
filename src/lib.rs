@@ -17,12 +17,10 @@ pub mod body;
 mod endpoint;
 mod extract;
 pub mod head;
-mod logger;
 pub mod middleware;
 mod request;
 mod response;
 mod router;
-mod url_table;
 
 pub use crate::{
     app::{App, AppData},
