@@ -66,6 +66,12 @@ impl<R> std::fmt::Debug for PathTable<R> {
     }
 }
 
+impl<R> Default for PathTable<R> {
+    fn default() -> Self {
+        PathTable::new()
+    }
+}
+
 impl<R> PathTable<R> {
     /// Create an empty routing table.
     pub fn new() -> PathTable<R> {
