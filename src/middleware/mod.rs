@@ -51,11 +51,9 @@ pub trait ReqResMiddleware<Data>: Send + Sync {
 }
 
 /// Middleware that wraps around remaining middleware chain.
-pub trait Middleware<Data: Clone + Send + Sync + 'static>: Send + Sync {
+pub trait Middleware<Data>: Send + Sync {
     /// Asynchronously handle the request, and return a response.
-    fn handle<'a>(&'a self, ctx: RequestContext<'a, Data>) -> FutureObj<'a, ResponseContext<Data>> {
-        FutureObj::new(Box::new(ctx.next()))
-    }
+    fn handle<'a>(&'a self, ctx: RequestContext<'a, Data>) -> FutureObj<'a, ResponseContext<Data>>;
 }
 
 pub struct ReqResAdapter<T>(T);
@@ -63,7 +61,7 @@ pub struct ReqResAdapter<T>(T);
 impl<T, Data> Middleware<Data> for ReqResAdapter<T>
 where
     T: ReqResMiddleware<Data>,
-    Data: Clone + Send + Sync + 'static,
+    Data: Clone + Send,
 {
     fn handle<'a>(
         &'a self,
@@ -91,7 +89,14 @@ pub struct RequestContext<'a, Data> {
     pub(crate) next_middleware: &'a [Arc<dyn Middleware<Data> + Send + Sync>],
 }
 
-impl<'a, Data: Clone + Send + Sync + 'static> RequestContext<'a, Data> {
+impl<'a, Data> RequestContext<'a, Data> {
+    /// Consume this context, and respond with given `Response`.
+    pub fn respond(self, res: Response) -> ResponseContext<Data> {
+        ResponseContext::from_request_response(self, res)
+    }
+}
+
+impl<'a, Data: Clone + Send> RequestContext<'a, Data> {
     /// Consume this context, and run remaining middleware chain to completion.
     pub fn next(mut self) -> FutureObj<'a, ResponseContext<Data>> {
         FutureObj::new(Box::new(
@@ -112,11 +117,6 @@ impl<'a, Data: Clone + Send + Sync + 'static> RequestContext<'a, Data> {
                 }
             },
         ))
-    }
-
-    /// Consume this context, and respond with given `Response`.
-    pub fn respond(self, res: Response) -> ResponseContext<Data> {
-        ResponseContext::from_request_response(self, res)
     }
 }
 

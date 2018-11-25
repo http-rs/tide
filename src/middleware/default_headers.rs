@@ -36,7 +36,7 @@ impl DefaultHeaders {
     }
 }
 
-impl<Data: Clone + Send + Sync + 'static> Middleware<Data> for DefaultHeaders {
+impl<Data: Clone + Send> Middleware<Data> for DefaultHeaders {
     fn handle<'a>(&'a self, ctx: RequestContext<'a, Data>) -> FutureObj<'a, ResponseContext<Data>> {
         FutureObj::new(Box::new(
             async move {
