@@ -119,8 +119,8 @@ impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
                         endpoint,
                         next_middleware: middleware,
                     };
-                    let ctx = await!(ctx.next());
-                    Ok(ctx.res.map(Into::into))
+                    let res = await!(ctx.next());
+                    Ok(res.map(Into::into))
                 } else {
                     Ok(http::Response::builder()
                         .status(http::status::StatusCode::NOT_FOUND)

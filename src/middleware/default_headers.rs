@@ -5,10 +5,7 @@ use http::{
     HeaderMap, HttpTryFrom,
 };
 
-use crate::{
-    middleware::{RequestContext, ResponseContext},
-    Middleware,
-};
+use crate::{middleware::RequestContext, Middleware, Response};
 
 #[derive(Clone, Default)]
 pub struct DefaultHeaders {
@@ -37,16 +34,16 @@ impl DefaultHeaders {
 }
 
 impl<Data: Clone + Send> Middleware<Data> for DefaultHeaders {
-    fn handle<'a>(&'a self, ctx: RequestContext<'a, Data>) -> FutureObj<'a, ResponseContext<Data>> {
+    fn handle<'a>(&'a self, ctx: RequestContext<'a, Data>) -> FutureObj<'a, Response> {
         FutureObj::new(Box::new(
             async move {
-                let mut ctx = await!(ctx.next());
+                let mut res = await!(ctx.next());
 
-                let headers = ctx.res.headers_mut();
+                let headers = res.headers_mut();
                 for (key, value) in self.headers.iter() {
                     headers.entry(key).unwrap().or_insert_with(|| value.clone());
                 }
-                ctx
+                res
             },
         ))
     }

@@ -47,10 +47,9 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
     ///
     /// ```
     /// # #![feature(futures_api, async_await)]
-    /// # use tide::{Middleware, middleware};
     /// # fn passthrough_middleware<Data: Clone + Send>(
-    /// #     ctx: middleware::RequestContext<Data>,
-    /// # ) -> futures::future::FutureObj<middleware::ResponseContext<Data>> {
+    /// #     ctx: tide::middleware::RequestContext<Data>,
+    /// # ) -> futures::future::FutureObj<tide::Response> {
     /// #     ctx.next()
     /// # }
     /// # let mut app = tide::App::new(());
@@ -203,15 +202,11 @@ mod tests {
     use futures::{executor::block_on, future::FutureObj};
 
     use super::*;
-    use crate::{
-        body::Body,
-        middleware::{RequestContext, ResponseContext},
-        AppData, Response,
-    };
+    use crate::{body::Body, middleware::RequestContext, AppData, Response};
 
     fn passthrough_middleware<Data: Clone + Send>(
         ctx: RequestContext<Data>,
-    ) -> FutureObj<ResponseContext<Data>> {
+    ) -> FutureObj<Response> {
         ctx.next()
     }
 
@@ -239,8 +234,8 @@ mod tests {
             endpoint,
             next_middleware: middleware,
         };
-        let ctx = await!(ctx.next());
-        Some(ctx.res.map(Into::into))
+        let res = await!(ctx.next());
+        Some(res.map(Into::into))
     }
 
     fn route_middleware_count<Data: Clone + Send + Sync + 'static>(
@@ -374,10 +369,7 @@ mod tests {
         struct Data(Vec<usize>);
         struct Pusher(usize);
         impl Middleware<Data> for Pusher {
-            fn handle<'a>(
-                &'a self,
-                mut ctx: RequestContext<'a, Data>,
-            ) -> FutureObj<'a, ResponseContext<Data>> {
+            fn handle<'a>(&'a self, mut ctx: RequestContext<'a, Data>) -> FutureObj<'a, Response> {
                 FutureObj::new(Box::new(
                     async move {
                         ctx.app_data.0.push(self.0);
