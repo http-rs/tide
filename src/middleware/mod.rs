@@ -56,6 +56,15 @@ pub trait Middleware<Data>: Send + Sync {
     fn handle<'a>(&'a self, ctx: RequestContext<'a, Data>) -> FutureObj<'a, ResponseContext<Data>>;
 }
 
+impl<Data, F> Middleware<Data> for F
+where
+    F: Send + Sync + Fn(RequestContext<Data>) -> FutureObj<ResponseContext<Data>>,
+{
+    fn handle<'a>(&'a self, ctx: RequestContext<'a, Data>) -> FutureObj<'a, ResponseContext<Data>> {
+        (self)(ctx)
+    }
+}
+
 pub struct ReqResAdapter<T>(T);
 
 impl<T, Data> Middleware<Data> for ReqResAdapter<T>

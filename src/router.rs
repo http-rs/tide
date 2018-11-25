@@ -202,9 +202,15 @@ mod tests {
     use super::*;
     use crate::{
         body::Body,
-        middleware::{ReqResMiddleware, RequestContext, ResponseContext},
+        middleware::{RequestContext, ResponseContext},
         AppData, Response,
     };
+
+    fn passthrough_middleware<Data: Clone + Send>(
+        ctx: RequestContext<Data>,
+    ) -> FutureObj<ResponseContext<Data>> {
+        FutureObj::new(Box::new(ctx.next()))
+    }
 
     async fn simulate_request<'a, Data: Default + Clone + Send + Sync + 'static>(
         router: &'a Router<Data>,
@@ -341,15 +347,12 @@ mod tests {
 
     #[test]
     fn simple_middleware() {
-        struct A;
-        impl ReqResMiddleware<()> for A {}
-
         let mut router: Router<()> = Router::new();
-        router.middleware(A.into_around());
+        router.middleware(passthrough_middleware);
         router.at("/").get(async || "/");
         router.at("/b").nest(|router| {
             router.at("/").get(async || "/b");
-            router.middleware(A.into_around());
+            router.middleware(passthrough_middleware);
         });
 
         assert_eq!(
