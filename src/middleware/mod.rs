@@ -31,6 +31,13 @@ pub trait ReqResMiddleware<Data>: Send + Sync {
         FutureObj::new(Box::new(async {}))
     }
 
+    fn into_around(self) -> ReqResAdapter<Self>
+    where
+        Self: Sized,
+    {
+        ReqResAdapter(self)
+    }
+
     // TODO: provide the following, intended to fire *after* the body has been fully sent
 
     /*
@@ -51,22 +58,25 @@ pub trait Middleware<Data: Clone + Send + Sync + 'static>: Send + Sync {
     }
 }
 
-impl<T, Data: Clone + Send + Sync + 'static> Middleware<Data> for T
+pub struct ReqResAdapter<T>(T);
+
+impl<T, Data> Middleware<Data> for ReqResAdapter<T>
 where
     T: ReqResMiddleware<Data>,
+    Data: Clone + Send + Sync + 'static,
 {
     fn handle<'a>(
         &'a self,
         mut ctx: RequestContext<'a, Data>,
     ) -> FutureObj<'a, ResponseContext<Data>> {
+        let m = &self.0;
         FutureObj::new(Box::new(
             async move {
-                if let Err(res) = await!(self.request(&mut ctx.app_data, &mut ctx.req, &ctx.params))
-                {
+                if let Err(res) = await!(m.request(&mut ctx.app_data, &mut ctx.req, &ctx.params)) {
                     return ctx.respond(res);
                 }
                 let mut ctx = await!(ctx.next());
-                await!(self.response(&mut ctx.app_data, &ctx.head, &mut ctx.res));
+                await!(m.response(&mut ctx.app_data, &ctx.head, &mut ctx.res));
                 ctx
             },
         ))
