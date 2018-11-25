@@ -12,7 +12,7 @@ use std::{
 use crate::{
     body::Body,
     extract::Extract,
-    middleware::RequestContext,
+    middleware::{logger::RootLogger, RequestContext},
     router::{Resource, RouteResult, Router},
     Middleware, Request, Response, RouteMatch,
 };
@@ -30,10 +30,15 @@ pub struct App<Data> {
 impl<Data: Clone + Send + Sync + 'static> App<Data> {
     /// Set up a new app with some initial `data`.
     pub fn new(data: Data) -> App<Data> {
-        App {
+        let logger = RootLogger::new();
+        let mut app = App {
             data,
             router: Router::new(),
-        }
+        };
+
+        // Add RootLogger as a default middleware
+        app.middleware(logger);
+        app
     }
 
     /// Get the top-level router.
