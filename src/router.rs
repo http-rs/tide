@@ -3,15 +3,15 @@ use std::sync::Arc;
 
 use crate::{
     endpoint::{BoxedEndpoint, Endpoint},
-    url_table::{RouteMatch, UrlTable},
     Middleware,
 };
+use path_table::{PathTable, RouteMatch};
 
 /// A core type for routing.
 ///
 /// The `Router` type can be used to set up routes and resources, and to apply middleware.
 pub struct Router<Data> {
-    table: UrlTable<ResourceData<Data>>,
+    table: PathTable<ResourceData<Data>>,
     middleware_base: Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
 }
 
@@ -25,7 +25,7 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
     /// Create a new top-level router.
     pub(crate) fn new() -> Router<Data> {
         Router {
-            table: UrlTable::new(),
+            table: PathTable::new(),
             middleware_base: Vec::new(),
         }
     }
@@ -69,7 +69,7 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
     /// ```
     pub fn middleware(&mut self, middleware: impl Middleware<Data> + 'static) -> &mut Self {
         let middleware = Arc::new(middleware);
-        for resource in self.table.resources_mut() {
+        for resource in self.table.iter_mut() {
             resource.middleware.push(middleware.clone());
         }
         self.middleware_base.push(middleware);
@@ -100,13 +100,13 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
     }
 }
 
-/// A handle to a resource (identified by a URL).
+/// A handle to a resource (identified by a path).
 ///
 /// All HTTP requests are made against resources. After using `Router::at` (or `App::at`) to
 /// establish a resource path, the `Resource` type can be used to establish endpoints for various
 /// HTTP methods at that path. Also, using `nest`, it can be used to set up a subrouter.
 pub struct Resource<'a, Data> {
-    table: &'a mut UrlTable<ResourceData<Data>>,
+    table: &'a mut PathTable<ResourceData<Data>>,
     middleware_base: &'a Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
 }
 
@@ -125,7 +125,7 @@ impl<'a, Data> Resource<'a, Data> {
     /// If resources are already present, they will be discarded.
     pub fn nest(self, builder: impl FnOnce(&mut Router<Data>)) {
         let mut subrouter = Router {
-            table: UrlTable::new(),
+            table: PathTable::new(),
             middleware_base: self.middleware_base.clone(),
         };
         builder(&mut subrouter);

@@ -12,6 +12,9 @@ readme = "README.md"
 repository = "https://github.com/yoshuawuyts/tide"
 version = "0.0.0"
 
+[workspace]
+members = ["path_table"]
+
 [dependencies]
 http = "0.1"
 hyper = "0.12.0"
@@ -22,6 +25,9 @@ serde_json = "1.0.32"
 typemap = "0.3.3"
 serde_qs = "0.4.1"
 multipart = "0.15.3"
+
+[dependencies.path_table]
+path = "path_table"
 
 [dependencies.futures-preview]
 features = ["compat"]
