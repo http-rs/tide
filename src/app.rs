@@ -12,6 +12,7 @@ use std::{
 use crate::{
     body::Body,
     extract::Extract,
+    middleware::RequestContext,
     router::{Resource, RouteResult, Router},
     Middleware, Request, Response, RouteMatch,
 };
@@ -96,10 +97,10 @@ impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
     type Future = Compat<FutureObj<'static, Result<http::Response<hyper::Body>, Self::Error>>>;
 
     fn call(&mut self, req: http::Request<hyper::Body>) -> Self::Future {
-        let mut data = self.data.clone();
+        let data = self.data.clone();
         let router = self.router.clone();
 
-        let mut req = req.map(Body::from);
+        let req = req.map(Body::from);
         let path = req.uri().path().to_owned();
         let method = req.method().to_owned();
 
@@ -111,19 +112,15 @@ impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
                     middleware,
                 }) = router.route(&path, &method)
                 {
-                    for m in middleware.iter() {
-                        if let Err(resp) = await!(m.request(&mut data, &mut req, &params)) {
-                            return Ok(resp.map(Into::into));
-                        }
-                    }
-
-                    let (head, mut resp) = await!(endpoint.call(data.clone(), req, params));
-
-                    for m in middleware.iter() {
-                        await!(m.response(&mut data, &head, &mut resp));
-                    }
-
-                    Ok(resp.map(Into::into))
+                    let ctx = RequestContext {
+                        app_data: data,
+                        req,
+                        params,
+                        endpoint,
+                        next_middleware: middleware,
+                    };
+                    let ctx = await!(ctx.next());
+                    Ok(ctx.res.map(Into::into))
                 } else {
                     Ok(http::Response::builder()
                         .status(http::status::StatusCode::NOT_FOUND)

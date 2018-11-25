@@ -5,7 +5,7 @@ use http::{
     HeaderMap, HttpTryFrom,
 };
 
-use crate::{head::Head, Middleware, Response};
+use crate::{head::Head, middleware::ReqResMiddleware, Response};
 
 #[derive(Clone, Default)]
 pub struct DefaultHeaders {
@@ -33,7 +33,7 @@ impl DefaultHeaders {
     }
 }
 
-impl<Data> Middleware<Data> for DefaultHeaders {
+impl<Data> ReqResMiddleware<Data> for DefaultHeaders {
     fn response<'a>(
         &'a self,
         data: &'a mut Data,
