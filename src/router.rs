@@ -47,19 +47,21 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
     ///
     /// ```
     /// # #![feature(futures_api, async_await)]
+    /// # use tide::middleware::ReqResMiddleware;
     /// # struct A;
-    /// # impl tide::Middleware<()> for A {}
-    /// # struct B;
-    /// # impl tide::Middleware<()> for B {}
+    /// # impl ReqResMiddleware<()> for A {}
     /// # let mut app = tide::App::new(());
     /// # let router = app.router();
     /// router.at("a1").nest(|router| {
-    ///     router.middleware(A);
+    /// #   let a = A.into_around();
+    ///     router.middleware(a);
     ///     router.at("").get(async || "A then B");
     /// });
-    /// router.middleware(B);
+    /// # let b = A.into_around();
+    /// router.middleware(b);
     /// router.at("a2").nest(|router| {
-    ///     router.middleware(A);
+    /// #   let a = A.into_around();
+    ///     router.middleware(a);
     ///     router.at("").get(async || "B then A");
     /// });
     /// ```
@@ -200,7 +202,7 @@ mod tests {
     use super::*;
     use crate::{
         body::Body,
-        middleware::{RequestContext, ResponseContext},
+        middleware::{ReqResMiddleware, RequestContext, ResponseContext},
         AppData, Response,
     };
 
@@ -340,14 +342,14 @@ mod tests {
     #[test]
     fn simple_middleware() {
         struct A;
-        impl Middleware<()> for A {}
+        impl ReqResMiddleware<()> for A {}
 
         let mut router: Router<()> = Router::new();
-        router.middleware(A);
+        router.middleware(A.into_around());
         router.at("/").get(async || "/");
         router.at("/b").nest(|router| {
             router.at("/").get(async || "/b");
-            router.middleware(A);
+            router.middleware(A.into_around());
         });
 
         assert_eq!(
