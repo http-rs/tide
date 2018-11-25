@@ -47,20 +47,23 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
     ///
     /// ```
     /// # #![feature(futures_api, async_await)]
-    /// # use tide::middleware::ReqResMiddleware;
-    /// # struct A;
-    /// # impl ReqResMiddleware<()> for A {}
+    /// # use tide::{Middleware, middleware};
+    /// # fn passthrough_middleware<Data: Clone + Send>(
+    /// #     ctx: middleware::RequestContext<Data>,
+    /// # ) -> futures::future::FutureObj<middleware::ResponseContext<Data>> {
+    /// #     ctx.next()
+    /// # }
     /// # let mut app = tide::App::new(());
     /// # let router = app.router();
     /// router.at("a1").nest(|router| {
-    /// #   let a = A.into_around();
+    /// #   let a = passthrough_middleware;
     ///     router.middleware(a);
     ///     router.at("").get(async || "A then B");
     /// });
-    /// # let b = A.into_around();
+    /// # let b = passthrough_middleware;
     /// router.middleware(b);
     /// router.at("a2").nest(|router| {
-    /// #   let a = A.into_around();
+    /// #   let a = passthrough_middleware;
     ///     router.middleware(a);
     ///     router.at("").get(async || "B then A");
     /// });
@@ -209,7 +212,7 @@ mod tests {
     fn passthrough_middleware<Data: Clone + Send>(
         ctx: RequestContext<Data>,
     ) -> FutureObj<ResponseContext<Data>> {
-        FutureObj::new(Box::new(ctx.next()))
+        ctx.next()
     }
 
     async fn simulate_request<'a, Data: Default + Clone + Send + Sync + 'static>(
