@@ -8,7 +8,7 @@ fn main() {
     app.middleware(
         DefaultHeaders::new()
             .header("X-Version", "1.0.0")
-            .header("X-Servier", "Tide"),
+            .header("X-Server", "Tide"),
     );
 
     app.at("/").get(async || "Hello, world!");
