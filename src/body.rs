@@ -17,6 +17,7 @@ use crate::{Extract, IntoResponse, Request, Response, RouteMatch};
 /// A body is a stream of `BodyChunk`s, which are essentially `Vec<u8>` values.
 /// Both `Body` and `BodyChunk` values can be easily created from standard byte buffer types,
 /// using the `From` trait.
+#[derive(Debug)]
 pub struct Body {
     inner: BodyInner,
 }
@@ -43,6 +44,7 @@ impl From<String> for BodyChunk {
     }
 }
 
+#[derive(Debug)]
 enum BodyInner {
     Streaming(BodyStream),
     Fixed(Vec<u8>),

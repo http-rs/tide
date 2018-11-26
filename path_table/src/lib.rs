@@ -32,6 +32,15 @@ pub struct RouteMatch<'a> {
     pub map: HashMap<&'a str, &'a str>,
 }
 
+impl<'a> RouteMatch<'a> {
+    pub fn empty() -> Self {
+        RouteMatch {
+            vec: Vec::new(),
+            map: HashMap::new(),
+        }
+    }
+}
+
 impl<R> std::fmt::Debug for PathTable<R> {
     fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
         struct Children<'a, R>(&'a HashMap<String, PathTable<R>>, Option<&'a Wildcard<R>>);

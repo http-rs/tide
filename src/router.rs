@@ -13,12 +13,54 @@ use path_table::{PathTable, RouteMatch};
 pub struct Router<Data> {
     table: PathTable<ResourceData<Data>>,
     middleware_base: Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
+    default_handler: Arc<DefaultHandler<Data>>,
 }
 
 pub(crate) struct RouteResult<'a, Data> {
     pub(crate) endpoint: &'a BoxedEndpoint<Data>,
     pub(crate) params: RouteMatch<'a>,
     pub(crate) middleware: &'a [Arc<dyn Middleware<Data> + Send + Sync>],
+}
+
+pub async fn base_default_handler() -> http::status::StatusCode {
+    http::status::StatusCode::NOT_FOUND
+}
+
+fn route_match_success<'a, Data>(
+    route: &'a ResourceData<Data>,
+    route_match: RouteMatch<'a>,
+    method: &http::Method,
+) -> Option<RouteResult<'a, Data>> {
+    // If it is a HTTP HEAD request then check if there is a callback in the endpoints map
+    // if not then fallback to the behavior of HTTP GET else proceed as usual
+    let endpoint =
+        if method == http::Method::HEAD && !route.endpoints.contains_key(&http::Method::HEAD) {
+            route.endpoints.get(&http::Method::GET)?
+        } else {
+            route.endpoints.get(method)?
+        };
+    let middleware = &*route.middleware;
+
+    Some(RouteResult {
+        endpoint,
+        params: route_match,
+        middleware,
+    })
+}
+
+fn route_match_failure<'a, Data>(
+    default_handler: &'a Arc<DefaultHandler<Data>>,
+    middleware: &'a Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
+) -> RouteResult<'a, Data> {
+    let endpoint = &default_handler.endpoint;
+
+    let params = RouteMatch::empty();
+
+    RouteResult {
+        endpoint: &endpoint,
+        params,
+        middleware: &*middleware,
+    }
 }
 
 impl<Data: Clone + Send + Sync + 'static> Router<Data> {
@@ -61,6 +103,7 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
         Resource {
             table,
             middleware_base: &self.middleware_base,
+            default_handler: &self.default_handler,
         }
     }
 
@@ -109,30 +152,41 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
         self
     }
 
+    pub fn set_default_handler<T: Endpoint<Data, U>, U>(&mut self, ep: T) -> &mut Self {
+        self.default_handler = Arc::new(DefaultHandler::new(ep));
+        self
+    }
+
     pub(crate) fn route<'a>(
         &'a self,
         path: &'a str,
         method: &http::Method,
-    ) -> Option<RouteResult<'a, Data>> {
-        let (route, route_match) = self.table.route(path)?;
-        // If it is a HTTP HEAD request then check if there is a callback in the endpoints map
-        // if not then fallback to the behavior of HTTP GET else proceed as usual
-        let endpoint =
-            if method == http::Method::HEAD && !route.endpoints.contains_key(&http::Method::HEAD) {
-                route.endpoints.get(&http::Method::GET)?
-            } else {
-                route.endpoints.get(method)?
-            };
-        let middleware = &*route.middleware;
-
-        Some(RouteResult {
-            endpoint,
-            params: route_match,
-            middleware,
-        })
+    ) -> RouteResult<'a, Data> {
+        match self.table.route(path) {
+            Some((route, route_match)) => route_match_success(route, route_match, method)
+                .or_else(|| {
+                    Some(route_match_failure(
+                        &self.default_handler,
+                        &self.middleware_base,
+                    ))
+                })
+                .unwrap(),
+            None => route_match_failure(&self.default_handler, &self.middleware_base),
+        }
     }
 }
 
+struct DefaultHandler<Data> {
+    endpoint: BoxedEndpoint<Data>,
+}
+
+impl<Data> DefaultHandler<Data> {
+    pub fn new<T: Endpoint<Data, U>, U>(ep: T) -> Self {
+        DefaultHandler {
+            endpoint: BoxedEndpoint::new(ep),
+        }
+    }
+}
 /// A handle to a resource (identified by a path).
 ///
 /// All HTTP requests are made against resources. After using `Router::at` (or `App::at`) to
@@ -141,6 +195,7 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
 pub struct Resource<'a, Data> {
     table: &'a mut PathTable<ResourceData<Data>>,
     middleware_base: &'a Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
+    default_handler: &'a Arc<DefaultHandler<Data>>,
 }
 
 struct ResourceData<Data> {
@@ -160,6 +215,7 @@ impl<'a, Data> Resource<'a, Data> {
         let mut subrouter = Router {
             table: PathTable::new(),
             middleware_base: self.middleware_base.clone(),
+            default_handler: self.default_handler.clone(),
         };
         builder(&mut subrouter);
         *self.table = subrouter.table;
@@ -252,7 +308,7 @@ mod tests {
             endpoint,
             params,
             middleware,
-        } = router.route(path, method)?;
+        } = router.route(path, method);
 
         let data = Data::default();
         let req = http::Request::builder()
@@ -276,7 +332,7 @@ mod tests {
         path: &str,
         method: &http::Method,
     ) -> Option<usize> {
-        let route_result = router.route(path, method)?;
+        let route_result = router.route(path, method);
         Some(route_result.middleware.len())
     }
 

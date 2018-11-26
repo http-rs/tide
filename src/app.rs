@@ -11,6 +11,7 @@ use std::{
 
 use crate::{
     body::Body,
+    endpoint::Endpoint,
     extract::Extract,
     middleware::{logger::RootLogger, RequestContext},
     router::{Resource, RouteResult, Router},
@@ -50,6 +51,11 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
     /// See [Router.at](struct.Router.html#method.at) for details.
     pub fn at<'a>(&'a mut self, path: &'a str) -> Resource<'a, Data> {
         self.router.at(path)
+    }
+
+    pub fn default_handler<T: Endpoint<Data, U>, U>(&mut self, ep: T) -> &mut Self {
+        self.router.set_default_handler(ep);
+        self
     }
 
     /// Apply `middleware` to the whole app. Note that the order of nesting subrouters and applying
@@ -112,27 +118,22 @@ impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
 
         FutureObj::new(Box::new(
             async move {
-                if let Some(RouteResult {
+                let RouteResult {
                     endpoint,
                     params,
                     middleware,
-                }) = router.route(&path, &method)
-                {
-                    let ctx = RequestContext {
-                        app_data: data,
-                        req,
-                        params,
-                        endpoint,
-                        next_middleware: middleware,
-                    };
-                    let res = await!(ctx.next());
-                    Ok(res.map(Into::into))
-                } else {
-                    Ok(http::Response::builder()
-                        .status(http::status::StatusCode::NOT_FOUND)
-                        .body(hyper::Body::empty())
-                        .unwrap())
-                }
+                } = router.route(&path, &method);
+
+                let ctx = RequestContext {
+                    app_data: data,
+                    req,
+                    params,
+                    endpoint,
+                    next_middleware: middleware,
+                };
+                let res = await!(ctx.next());
+
+                Ok(res.map(Into::into))
             },
         ))
         .compat()
