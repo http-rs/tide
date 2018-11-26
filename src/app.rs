@@ -53,6 +53,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         self.router.at(path)
     }
 
+    /// Set the default handler for the app, a fallback function when there is no match to the route requested
     pub fn default_handler<T: Endpoint<Data, U>, U>(&mut self, ep: T) -> &mut Self {
         self.router.set_default_handler(ep);
         self
