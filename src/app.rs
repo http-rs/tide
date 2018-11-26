@@ -47,6 +47,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
     }
 
     /// Add a new resource at `path`.
+    /// See [Router.at](struct.Router.html#method.at) for details.
     pub fn at<'a>(&'a mut self, path: &'a str) -> Resource<'a, Data> {
         self.router.at(path)
     }
