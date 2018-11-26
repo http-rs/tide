@@ -77,12 +77,15 @@ struct PathIdx(usize);
 
 impl<T: Send + 'static + std::str::FromStr, S: 'static> Extract<S> for Path<T> {
     type Fut = future::Ready<Result<Self, Response>>;
-    fn extract(data: &mut S, req: &mut Request, params: &RouteMatch<'_>) -> Self::Fut {
+    fn extract(data: &mut S, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
         let &PathIdx(i) = req.extensions().get::<PathIdx>().unwrap_or(&PathIdx(0));
         req.extensions_mut().insert(PathIdx(i + 1));
-        match params.vec[i].parse() {
-            Ok(t) => future::ok(Path(t)),
-            Err(_) => future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
+        match params {
+            Some(params) => match params.vec[i].parse() {
+                Ok(t) => future::ok(Path(t)),
+                Err(_) => future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
+            },
+            None => future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
         }
     }
 }
@@ -116,15 +119,18 @@ impl<T: NamedComponent> DerefMut for Named<T> {
 impl<T: NamedComponent, S: 'static> Extract<S> for Named<T> {
     type Fut = future::Ready<Result<Self, Response>>;
 
-    fn extract(data: &mut S, req: &mut Request, params: &RouteMatch<'_>) -> Self::Fut {
-        params
-            .map
-            .get(T::NAME)
-            .and_then(|component| component.parse().ok())
-            .map_or(
-                future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
-                |t| future::ok(Named(t)),
-            )
+    fn extract(data: &mut S, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
+        match params {
+            Some(params) => params
+                .map
+                .get(T::NAME)
+                .and_then(|component| component.parse().ok())
+                .map_or(
+                    future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
+                    |t| future::ok(Named(t)),
+                ),
+            None => future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
+        }
     }
 }
 
@@ -138,7 +144,7 @@ where
     S: 'static,
 {
     type Fut = future::Ready<Result<Self, Response>>;
-    fn extract(data: &mut S, req: &mut Request, params: &RouteMatch<'_>) -> Self::Fut {
+    fn extract(data: &mut S, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
         req.uri().query().and_then(|q| q.parse().ok()).map_or(
             future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
             |q| future::ok(UrlQuery(q)),

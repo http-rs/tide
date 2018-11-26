@@ -132,7 +132,7 @@ impl<S: 'static> Extract<S> for MultipartForm {
     // Note: cannot use `existential type` here due to ICE
     type Fut = FutureObj<'static, Result<Self, Response>>;
 
-    fn extract(data: &mut S, req: &mut Request, params: &RouteMatch<'_>) -> Self::Fut {
+    fn extract(data: &mut S, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
         // https://stackoverflow.com/questions/43424982/how-to-parse-multipart-forms-using-abonander-multipart-with-rocket
 
         const BOUNDARY: &str = "boundary=";
@@ -178,7 +178,7 @@ impl<T: Send + serde::de::DeserializeOwned + 'static, S: 'static> Extract<S> for
     // Note: cannot use `existential type` here due to ICE
     type Fut = FutureObj<'static, Result<Self, Response>>;
 
-    fn extract(data: &mut S, req: &mut Request, params: &RouteMatch<'_>) -> Self::Fut {
+    fn extract(data: &mut S, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
         let mut body = std::mem::replace(req.body_mut(), Body::empty());
         FutureObj::new(Box::new(
             async move {
@@ -225,7 +225,7 @@ impl<T: Send + serde::de::DeserializeOwned + 'static, S: 'static> Extract<S> for
     // Note: cannot use `existential type` here due to ICE
     type Fut = FutureObj<'static, Result<Self, Response>>;
 
-    fn extract(data: &mut S, req: &mut Request, params: &RouteMatch<'_>) -> Self::Fut {
+    fn extract(data: &mut S, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
         let mut body = std::mem::replace(req.body_mut(), Body::empty());
         FutureObj::new(Box::new(
             async move {
@@ -268,7 +268,7 @@ pub struct Str(pub String);
 impl<S: 'static> Extract<S> for Str {
     type Fut = FutureObj<'static, Result<Self, Response>>;
 
-    fn extract(data: &mut S, req: &mut Request, params: &RouteMatch<'_>) -> Self::Fut {
+    fn extract(data: &mut S, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
         let mut body = std::mem::replace(req.body_mut(), Body::empty());
 
         FutureObj::new(Box::new(
@@ -299,7 +299,7 @@ pub struct StrLossy(pub String);
 impl<S: 'static> Extract<S> for StrLossy {
     type Fut = FutureObj<'static, Result<Self, Response>>;
 
-    fn extract(data: &mut S, req: &mut Request, params: &RouteMatch<'_>) -> Self::Fut {
+    fn extract(data: &mut S, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
         let mut body = std::mem::replace(req.body_mut(), Body::empty());
 
         FutureObj::new(Box::new(
@@ -330,7 +330,7 @@ pub struct Bytes(pub Vec<u8>);
 impl<S: 'static> Extract<S> for Bytes {
     type Fut = FutureObj<'static, Result<Self, Response>>;
 
-    fn extract(data: &mut S, req: &mut Request, params: &RouteMatch<'_>) -> Self::Fut {
+    fn extract(data: &mut S, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
         let mut body = std::mem::replace(req.body_mut(), Body::empty());
 
         FutureObj::new(Box::new(

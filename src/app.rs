@@ -160,7 +160,7 @@ impl<T> DerefMut for AppData<T> {
 
 impl<T: Clone + Send + 'static> Extract<T> for AppData<T> {
     type Fut = future::Ready<Result<Self, Response>>;
-    fn extract(data: &mut T, req: &mut Request, params: &RouteMatch<'_>) -> Self::Fut {
+    fn extract(data: &mut T, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
         future::ok(AppData(data.clone()))
     }
 }

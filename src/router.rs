@@ -18,7 +18,7 @@ pub struct Router<Data> {
 
 pub(crate) struct RouteResult<'a, Data> {
     pub(crate) endpoint: &'a BoxedEndpoint<Data>,
-    pub(crate) params: RouteMatch<'a>,
+    pub(crate) params: Option<RouteMatch<'a>>,
     pub(crate) middleware: &'a [Arc<dyn Middleware<Data> + Send + Sync>],
 }
 
@@ -43,7 +43,7 @@ fn route_match_success<'a, Data>(
 
     Some(RouteResult {
         endpoint,
-        params: route_match,
+        params: Some(route_match),
         middleware,
     })
 }
@@ -52,11 +52,9 @@ fn route_match_failure<'a, Data>(
     endpoint: &'a BoxedEndpoint<Data>,
     middleware: &'a Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
 ) -> RouteResult<'a, Data> {
-    let params = RouteMatch::empty();
-
     RouteResult {
         endpoint,
-        params,
+        params: None,
         middleware: &*middleware,
     }
 }
