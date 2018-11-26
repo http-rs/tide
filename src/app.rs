@@ -12,7 +12,8 @@ use std::{
 use crate::{
     body::Body,
     extract::Extract,
-    router::{Resource, Router},
+    middleware::{logger::RootLogger, RequestContext},
+    router::{Resource, RouteResult, Router},
     Middleware, Request, Response, RouteMatch,
 };
 
@@ -24,27 +25,36 @@ use crate::{
 pub struct App<Data> {
     data: Data,
     router: Router<Data>,
-    middleware: Vec<Box<dyn Middleware<Data> + Send + Sync>>,
 }
 
 impl<Data: Clone + Send + Sync + 'static> App<Data> {
     /// Set up a new app with some initial `data`.
     pub fn new(data: Data) -> App<Data> {
-        App {
+        let logger = RootLogger::new();
+        let mut app = App {
             data,
             router: Router::new(),
-            middleware: Vec::new(),
-        }
+        };
+
+        // Add RootLogger as a default middleware
+        app.middleware(logger);
+        app
+    }
+
+    /// Get the top-level router.
+    pub fn router(&mut self) -> &mut Router<Data> {
+        &mut self.router
     }
 
     /// Add a new resource at `path`.
-    pub fn at<'a>(&'a mut self, path: &'a str) -> &mut Resource<Data> {
+    pub fn at<'a>(&'a mut self, path: &'a str) -> Resource<'a, Data> {
         self.router.at(path)
     }
 
-    /// Apply `middleware` to the whole app.
+    /// Apply `middleware` to the whole app. Note that the order of nesting subrouters and applying
+    /// middleware matters; see `Router` for details.
     pub fn middleware(&mut self, middleware: impl Middleware<Data> + 'static) -> &mut Self {
-        self.middleware.push(Box::new(middleware));
+        self.router.middleware(middleware);
         self
     }
 
@@ -52,7 +62,6 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         Server {
             data: self.data,
             router: Arc::new(self.router),
-            middleware: Arc::new(self.middleware),
         }
     }
 
@@ -84,7 +93,6 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
 struct Server<Data> {
     data: Data,
     router: Arc<Router<Data>>,
-    middleware: Arc<Vec<Box<dyn Middleware<Data> + Send + Sync>>>,
 }
 
 impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
@@ -94,31 +102,30 @@ impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
     type Future = Compat<FutureObj<'static, Result<http::Response<hyper::Body>, Self::Error>>>;
 
     fn call(&mut self, req: http::Request<hyper::Body>) -> Self::Future {
-        let mut data = self.data.clone();
+        let data = self.data.clone();
         let router = self.router.clone();
-        let middleware = self.middleware.clone();
 
-        let mut req = req.map(Body::from);
+        let req = req.map(Body::from);
         let path = req.uri().path().to_owned();
         let method = req.method().to_owned();
 
         FutureObj::new(Box::new(
             async move {
-                if let Some((endpoint, params)) = router.route(&path, &method) {
-                    for m in middleware.iter() {
-                        match await!(m.request(&mut data, req, &params)) {
-                            Ok(new_req) => req = new_req,
-                            Err(resp) => return Ok(resp.map(Into::into)),
-                        }
-                    }
-
-                    let (head, mut resp) = await!(endpoint.call(data.clone(), req, params));
-
-                    for m in middleware.iter() {
-                        resp = await!(m.response(&mut data, &head, resp))
-                    }
-
-                    Ok(resp.map(Into::into))
+                if let Some(RouteResult {
+                    endpoint,
+                    params,
+                    middleware,
+                }) = router.route(&path, &method)
+                {
+                    let ctx = RequestContext {
+                        app_data: data,
+                        req,
+                        params,
+                        endpoint,
+                        next_middleware: middleware,
+                    };
+                    let res = await!(ctx.next());
+                    Ok(res.map(Into::into))
                 } else {
                     Ok(http::Response::builder()
                         .status(http::status::StatusCode::NOT_FOUND)

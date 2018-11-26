@@ -17,11 +17,10 @@ pub mod body;
 mod endpoint;
 mod extract;
 pub mod head;
-mod middleware;
+pub mod middleware;
 mod request;
 mod response;
 mod router;
-mod url_table;
 
 pub use crate::{
     app::{App, AppData},
@@ -30,6 +29,6 @@ pub use crate::{
     middleware::Middleware,
     request::Request,
     response::{IntoResponse, Response},
-    router::Resource,
-    url_table::RouteMatch,
+    router::{Resource, Router},
 };
+pub use path_table::RouteMatch;
