@@ -13,7 +13,7 @@ use path_table::{PathTable, RouteMatch};
 pub struct Router<Data> {
     table: PathTable<ResourceData<Data>>,
     middleware_base: Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
-    default_handler: Arc<DefaultHandler<Data>>,
+    default_handler: Arc<BoxedEndpoint<Data>>,
 }
 
 pub(crate) struct RouteResult<'a, Data> {
@@ -49,15 +49,13 @@ fn route_match_success<'a, Data>(
 }
 
 fn route_match_failure<'a, Data>(
-    default_handler: &'a Arc<DefaultHandler<Data>>,
+    endpoint: &'a BoxedEndpoint<Data>,
     middleware: &'a Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
 ) -> RouteResult<'a, Data> {
-    let endpoint = &default_handler.endpoint;
-
     let params = RouteMatch::empty();
 
     RouteResult {
-        endpoint: &endpoint,
+        endpoint,
         params,
         middleware: &*middleware,
     }
@@ -153,7 +151,7 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
     }
 
     pub fn set_default_handler<T: Endpoint<Data, U>, U>(&mut self, ep: T) -> &mut Self {
-        self.default_handler = Arc::new(DefaultHandler::new(ep));
+        self.default_handler = Arc::new(BoxedEndpoint::new(ep));
         self
     }
 
@@ -176,17 +174,6 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
     }
 }
 
-struct DefaultHandler<Data> {
-    endpoint: BoxedEndpoint<Data>,
-}
-
-impl<Data> DefaultHandler<Data> {
-    pub fn new<T: Endpoint<Data, U>, U>(ep: T) -> Self {
-        DefaultHandler {
-            endpoint: BoxedEndpoint::new(ep),
-        }
-    }
-}
 /// A handle to a resource (identified by a path).
 ///
 /// All HTTP requests are made against resources. After using `Router::at` (or `App::at`) to
@@ -195,7 +182,7 @@ impl<Data> DefaultHandler<Data> {
 pub struct Resource<'a, Data> {
     table: &'a mut PathTable<ResourceData<Data>>,
     middleware_base: &'a Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
-    default_handler: &'a Arc<DefaultHandler<Data>>,
+    default_handler: &'a Arc<BoxedEndpoint<Data>>,
 }
 
 struct ResourceData<Data> {
