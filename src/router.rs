@@ -74,7 +74,7 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
     /// other hand extracts and parses the respective part of the path of the incoming request to
     /// pass it along to the endpoint as an argument. A wildcard segment is either defined by "{}"
     /// or by "{name}" for a so called named wildcard segment which must have an implementation of
-    /// `NamedComponent`. It is not possible to define wildcard segments with different names for
+    /// `NamedSegment`. It is not possible to define wildcard segments with different names for
     /// otherwise identical paths.
     ///
     /// Here are some examples omitting the HTTP verb based endpoint selection:

@@ -52,11 +52,11 @@ impl Head {
     }
 }
 
-/// An extractor for path components.
+/// An extractor for path segments.
 ///
-/// Routes can use wildcard path components (`{}`), which are then extracted by the endpoint using
-/// this `Path` extractor. Each `Path<T>` argument to an extractor parses the next wildcard component
-/// as type `T`, failing with a `NOT_FOUND` response if the component fails to parse.
+/// Routes can use wildcard path segments (`{}`), which are then extracted by the endpoint using
+/// this `Path` extractor. Each `Path<T>` argument to an extractor parses the next wildcard segment
+/// as type `T`, failing with a `NOT_FOUND` response if the segment fails to parse.
 pub struct Path<T>(pub T);
 
 impl<T> Deref for Path<T> {
@@ -72,7 +72,7 @@ impl<T> DerefMut for Path<T> {
     }
 }
 
-/// A key for storing the current component match in a request's `extensions`
+/// A key for storing the current segment match in a request's `extensions`
 struct PathIdx(usize);
 
 impl<T: Send + 'static + std::str::FromStr, S: 'static> Extract<S> for Path<T> {
@@ -90,33 +90,33 @@ impl<T: Send + 'static + std::str::FromStr, S: 'static> Extract<S> for Path<T> {
     }
 }
 
-/// A trait providing the name of a named url component
-pub trait NamedComponent: Send + 'static + std::str::FromStr {
+/// A trait providing the name of a named url segment
+pub trait NamedSegment: Send + 'static + std::str::FromStr {
     const NAME: &'static str;
 }
 
-/// An extractor for named path components
+/// An extractor for named path segments
 ///
-/// Allows routes to access named path components (`{foo}`). Each `Named<T>` extracts a single
-/// component. `T` must implement the `NamedComponent` trait - to provide the component name - and the
-/// FromStr trait. Fails with a `BAD_REQUEST` response if the component is not found, fails to
-/// parse or if multiple identically named components exist.
-pub struct Named<T: NamedComponent>(pub T);
+/// Allows routes to access named path segments (`{foo}`). Each `Named<T>` extracts a single
+/// segment. `T` must implement the `NamedSegment` trait - to provide the segment name - and the
+/// FromStr trait. Fails with a `BAD_REQUEST` response if the segment is not found, fails to
+/// parse or if multiple identically named segments exist.
+pub struct Named<T: NamedSegment>(pub T);
 
-impl<T: NamedComponent> Deref for Named<T> {
+impl<T: NamedSegment> Deref for Named<T> {
     type Target = T;
     fn deref(&self) -> &T {
         &self.0
     }
 }
 
-impl<T: NamedComponent> DerefMut for Named<T> {
+impl<T: NamedSegment> DerefMut for Named<T> {
     fn deref_mut(&mut self) -> &mut T {
         &mut self.0
     }
 }
 
-impl<T: NamedComponent, S: 'static> Extract<S> for Named<T> {
+impl<T: NamedSegment, S: 'static> Extract<S> for Named<T> {
     type Fut = future::Ready<Result<Self, Response>>;
 
     fn extract(data: &mut S, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
@@ -124,7 +124,7 @@ impl<T: NamedComponent, S: 'static> Extract<S> for Named<T> {
             Some(params) => params
                 .map
                 .get(T::NAME)
-                .and_then(|component| component.parse().ok())
+                .and_then(|segment| segment.parse().ok())
                 .map_or(
                     future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
                     |t| future::ok(Named(t)),

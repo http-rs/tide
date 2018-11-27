@@ -23,7 +23,7 @@ struct Wildcard<R> {
     table: PathTable<R>,
 }
 
-/// For a successful match, this structure says how any wildcard components were matched.
+/// For a successful match, this structure says how any wildcard segments were matched.
 #[derive(Debug)]
 pub struct RouteMatch<'a> {
     /// Wildcard matches in the order they appeared in the path.
