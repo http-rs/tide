@@ -206,6 +206,12 @@ impl<T> Deref for Json<T> {
     }
 }
 
+impl<T> DerefMut for Json<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        &mut self.0
+    }
+}
+
 /// A wrapper for form encoded (application/x-www-form-urlencoded) (de)serialization of bodies.
 ///
 /// This type is usable both as an extractor (argument to an endpoint) and as a response
@@ -249,6 +255,12 @@ impl<T> Deref for Form<T> {
     }
 }
 
+impl<T> DerefMut for Form<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        &mut self.0
+    }
+}
+
 pub struct Str(pub String);
 
 impl<S: 'static> Extract<S> for Str {
@@ -271,6 +283,12 @@ impl Deref for Str {
     type Target = String;
     fn deref(&self) -> &String {
         &self.0
+    }
+}
+
+impl DerefMut for Str {
+    fn deref_mut(&mut self) -> &mut String {
+        &mut self.0
     }
 }
 
@@ -299,6 +317,12 @@ impl Deref for StrLossy {
     }
 }
 
+impl DerefMut for StrLossy {
+    fn deref_mut(&mut self) -> &mut String {
+        &mut self.0
+    }
+}
+
 pub struct Bytes(pub Vec<u8>);
 
 impl<S: 'static> Extract<S> for Bytes {
@@ -320,5 +344,11 @@ impl Deref for Bytes {
     type Target = Vec<u8>;
     fn deref(&self) -> &Vec<u8> {
         &self.0
+    }
+}
+
+impl DerefMut for Bytes {
+    fn deref_mut(&mut self) -> &mut Vec<u8> {
+        &mut self.0
     }
 }

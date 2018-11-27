@@ -4,7 +4,7 @@
 //! automatically parse out information from a request.
 
 use futures::future;
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
 use crate::{Extract, IntoResponse, Request, Response, RouteMatch};
@@ -66,6 +66,12 @@ impl<T> Deref for Path<T> {
     }
 }
 
+impl<T> DerefMut for Path<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        &mut self.0
+    }
+}
+
 /// A key for storing the current component match in a request's `extensions`
 struct PathIdx(usize);
 
@@ -98,6 +104,12 @@ impl<T: NamedComponent> Deref for Named<T> {
     type Target = T;
     fn deref(&self) -> &T {
         &self.0
+    }
+}
+
+impl<T: NamedComponent> DerefMut for Named<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        &mut self.0
     }
 }
 
