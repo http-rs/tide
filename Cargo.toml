@@ -38,4 +38,4 @@ version = "0.3.0-alpha.9"
 
 [dev-dependencies]
 juniper = "0.10.0"
-cookie = "0.11.0"
+basic-cookies = "0.1.2"

@@ -1,38 +1,32 @@
 #![feature(async_await, futures_api)]
-extern crate cookie;
+extern crate basic_cookies;
 
-use cookie::Cookie;
+use basic_cookies::Cookie;
+use std::collections::HashMap;
 use tide::{Compute, Computed, Request};
 
 #[derive(Clone, Debug)]
 struct Cookies {
-    content: Option<CookieCream>,
-}
-
-#[derive(Clone, Debug)]
-struct CookieCream {
-    name: String,
-    value: String,
+    content: HashMap<String, String>,
 }
 
 impl Compute for Cookies {
     fn compute_fresh(req: &mut Request) -> Self {
         let content = if let Some(raw_cookies) = req.headers().get("Cookie") {
-            let cookie = Cookie::parse(raw_cookies.to_str().unwrap()).unwrap();
-            Some(CookieCream {
-                name: cookie.name().into(),
-                value: cookie.value().into(),
-            })
+            Cookie::parse(raw_cookies.to_str().unwrap())
+                .unwrap()
+                .iter()
+                .map(|c| (c.get_name().into(), c.get_value().into()))
+                .collect()
         } else {
-            None
+            HashMap::new()
         };
 
         Cookies { content }
     }
 }
 
-async fn hello_cookies(cookies: Computed<Cookies>) -> String {
-    let Computed(cookies) = cookies;
+async fn hello_cookies(Computed(cookies): Computed<Cookies>) -> String {
     format!("hello cookies: {:?}", cookies)
 }
 
