@@ -24,5 +24,8 @@ async fn add_two(Named(number): Named<Number>) -> String {
 fn main() {
     let mut app = tide::App::new(());
     app.at("add_two/{num}").get(add_two);
-    app.serve("127.0.0.1:8000");
+
+    let address = "127.0.0.1:8000".to_owned();
+    println!("Server is listening on http://{}", address);
+    app.serve(address);
 }
