@@ -66,9 +66,11 @@ fn main() {
 
     app.at("/upload_file").post(upload_file);
 
-    app.serve("127.0.0.1:7878");
+    let address = "127.0.0.1:8000".to_owned();
+    println!("Server is listening on http://{}", address);
+    app.serve(address);
 }
 
 // Test with:
-// curl -X POST http://localhost:7878/upload_file -H 'content-type: multipart/form-data' -F file=@examples/multipart-form/test.txt
-// curl -X POST http://localhost:7878/upload_file -H 'content-type: multipart/form-data' -F key1=v1, -F key2=v2
+// curl -X POST http://localhost:8000/upload_file -H 'content-type: multipart/form-data' -F file=@examples/multipart-form/test.txt
+// curl -X POST http://localhost:8000/upload_file -H 'content-type: multipart/form-data' -F key1=v1, -F key2=v2

@@ -8,6 +8,7 @@ use http::status::StatusCode;
 use multipart::server::Multipart;
 use pin_utils::pin_mut;
 use std::io::Cursor;
+use std::ops::Deref;
 
 use crate::{Extract, IntoResponse, Request, Response, RouteMatch};
 
