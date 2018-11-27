@@ -15,7 +15,7 @@ struct Message {
 }
 
 async fn upload_file(
-    multipart_form: body::MultipartForm,
+    mut multipart_form: body::MultipartForm,
 ) -> Result<body::Json<Message>, StatusCode> {
     // https://stackoverflow.com/questions/43424982/how-to-parse-multipart-forms-using-abonander-multipart-with-rocket
     let mut message = Message {
@@ -24,8 +24,7 @@ async fn upload_file(
         file: None,
     };
 
-    let mut multipart = multipart_form.0;
-    multipart
+    multipart_form
         .foreach_entry(|mut entry| match entry.headers.name.as_str() {
             "file" => {
                 let mut vec = Vec::new();

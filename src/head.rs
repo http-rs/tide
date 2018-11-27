@@ -4,6 +4,7 @@
 //! automatically parse out information from a request.
 
 use futures::future;
+use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
 use crate::{Extract, IntoResponse, Request, Response, RouteMatch};
@@ -58,6 +59,19 @@ impl Head {
 /// as type `T`, failing with a `NOT_FOUND` response if the component fails to parse.
 pub struct Path<T>(pub T);
 
+impl<T> Deref for Path<T> {
+    type Target = T;
+    fn deref(&self) -> &T {
+        &self.0
+    }
+}
+
+impl<T> DerefMut for Path<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        &mut self.0
+    }
+}
+
 /// A key for storing the current component match in a request's `extensions`
 struct PathIdx(usize);
 
@@ -85,6 +99,19 @@ pub trait NamedComponent: Send + 'static + std::str::FromStr {
 /// FromStr trait. Fails with a `BAD_REQUEST` response if the component is not found, fails to
 /// parse or if multiple identically named components exist.
 pub struct Named<T: NamedComponent>(pub T);
+
+impl<T: NamedComponent> Deref for Named<T> {
+    type Target = T;
+    fn deref(&self) -> &T {
+        &self.0
+    }
+}
+
+impl<T: NamedComponent> DerefMut for Named<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        &mut self.0
+    }
+}
 
 impl<T: NamedComponent, S: 'static> Extract<S> for Named<T> {
     type Fut = future::Ready<Result<Self, Response>>;
