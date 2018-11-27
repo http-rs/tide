@@ -18,12 +18,15 @@ mod endpoint;
 mod extract;
 pub mod head;
 pub mod middleware;
+mod testing;
 mod request;
 mod response;
 mod router;
 
 pub use crate::{
     app::{App, AppData},
+    testing::{test, Test},
+    testing::tokio_test::test as tokio_test,
     endpoint::Endpoint,
     extract::Extract,
     middleware::Middleware,

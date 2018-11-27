@@ -25,9 +25,9 @@ use crate::{
 /// This is a "handle" because it must be `Clone`, and endpoints are invoked with a fresh clone.
 /// They also hold a top-level router.
 pub struct App<Data> {
-    data: Data,
-    router: Router<Data>,
-    default_handler: BoxedEndpoint<Data>,
+    pub(crate) data: Data,
+    pub(crate) router: Router<Data>,
+    pub(crate) default_handler: BoxedEndpoint<Data>,
 }
 
 impl<Data: Clone + Send + Sync + 'static> App<Data> {
