@@ -5,7 +5,6 @@ about: Suggest an idea for this project
 <!--- Provide a general summary of the issue in the Title above -->
 ## Feature Request
 
-
 ## Detailed Description
 <!--- Provide a detailed description of the change or addition you are proposing -->
 
