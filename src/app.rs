@@ -11,6 +11,8 @@ use std::{
 
 use crate::{
     body::Body,
+    typemap::TypeMap,
+    config::{Config, Env},
     extract::Extract,
     middleware::{logger::RootLogger, RequestContext},
     router::{Resource, RouteResult, Router},
@@ -25,19 +27,24 @@ use crate::{
 pub struct App<Data> {
     data: Data,
     router: Router<Data>,
+    state: TypeMap,
 }
 
 impl<Data: Clone + Send + Sync + 'static> App<Data> {
     /// Set up a new app with some initial `data`.
     pub fn new(data: Data) -> App<Data> {
         let logger = RootLogger::new();
+        let config = Config { env: Env::Dev };
         let mut app = App {
             data,
             router: Router::new(),
+            state: TypeMap::new()
         };
 
         // Add RootLogger as a default middleware
         app.middleware(logger);
+        app.state.insert(config);
+
         app
     }
 
