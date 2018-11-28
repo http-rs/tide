@@ -1,6 +1,6 @@
 language: rust
 rust:
-  - nightly
+  - nightly-2018-11-24
 
 before_script: |
   rustup component add rustfmt-preview clippy-preview

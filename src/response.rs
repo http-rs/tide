@@ -23,7 +23,7 @@ impl IntoResponse for String {
     fn into_response(self) -> Response {
         http::Response::builder()
             .status(http::status::StatusCode::OK)
-            .header("Content-Type", "text/plain")
+            .header("Content-Type", "text/plain; charset=utf-8")
             .body(Body::from(self.into_bytes()))
             .unwrap()
     }

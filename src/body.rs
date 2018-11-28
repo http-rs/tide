@@ -8,6 +8,7 @@ use http::status::StatusCode;
 use multipart::server::Multipart;
 use pin_utils::pin_mut;
 use std::io::Cursor;
+use std::ops::{Deref, DerefMut};
 
 use crate::{Extract, IntoResponse, Request, Response, RouteMatch};
 
@@ -152,6 +153,19 @@ impl<S: 'static> Extract<S> for MultipartForm {
     }
 }
 
+impl Deref for MultipartForm {
+    type Target = Multipart<Cursor<Vec<u8>>>;
+    fn deref(&self) -> &Multipart<Cursor<Vec<u8>>> {
+        &self.0
+    }
+}
+
+impl DerefMut for MultipartForm {
+    fn deref_mut(&mut self) -> &mut Multipart<Cursor<Vec<u8>>> {
+        &mut self.0
+    }
+}
+
 /// A wrapper for json (de)serialization of bodies.
 ///
 /// This type is usable both as an extractor (argument to an endpoint) and as a response
@@ -182,6 +196,19 @@ impl<T: 'static + Send + serde::Serialize> IntoResponse for Json<T> {
             .header("Content-Type", "application/json")
             .body(Body::from(serde_json::to_vec(&self.0).unwrap()))
             .unwrap()
+    }
+}
+
+impl<T> Deref for Json<T> {
+    type Target = T;
+    fn deref(&self) -> &T {
+        &self.0
+    }
+}
+
+impl<T> DerefMut for Json<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        &mut self.0
     }
 }
 
@@ -221,6 +248,19 @@ impl<T: 'static + Send + serde::Serialize> IntoResponse for Form<T> {
     }
 }
 
+impl<T> Deref for Form<T> {
+    type Target = T;
+    fn deref(&self) -> &T {
+        &self.0
+    }
+}
+
+impl<T> DerefMut for Form<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        &mut self.0
+    }
+}
+
 pub struct Str(pub String);
 
 impl<S: 'static> Extract<S> for Str {
@@ -236,6 +276,19 @@ impl<S: 'static> Extract<S> for Str {
                 Ok(Str(string))
             },
         ))
+    }
+}
+
+impl Deref for Str {
+    type Target = String;
+    fn deref(&self) -> &String {
+        &self.0
+    }
+}
+
+impl DerefMut for Str {
+    fn deref_mut(&mut self) -> &mut String {
+        &mut self.0
     }
 }
 
@@ -257,6 +310,19 @@ impl<S: 'static> Extract<S> for StrLossy {
     }
 }
 
+impl Deref for StrLossy {
+    type Target = String;
+    fn deref(&self) -> &String {
+        &self.0
+    }
+}
+
+impl DerefMut for StrLossy {
+    fn deref_mut(&mut self) -> &mut String {
+        &mut self.0
+    }
+}
+
 pub struct Bytes(pub Vec<u8>);
 
 impl<S: 'static> Extract<S> for Bytes {
@@ -271,5 +337,18 @@ impl<S: 'static> Extract<S> for Bytes {
                 Ok(Bytes(body))
             },
         ))
+    }
+}
+
+impl Deref for Bytes {
+    type Target = Vec<u8>;
+    fn deref(&self) -> &Vec<u8> {
+        &self.0
+    }
+}
+
+impl DerefMut for Bytes {
+    fn deref_mut(&mut self) -> &mut Vec<u8> {
+        &mut self.0
     }
 }

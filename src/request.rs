@@ -36,7 +36,7 @@ struct ComputedMarker<T>(T);
 /// Endpoints can use this extractor to automatically compute values for a request, and re-use cached
 /// results if those values have been computed previously (e.g. in some middleware).
 #[derive(Clone)]
-pub struct Computed<T>(T);
+pub struct Computed<T>(pub T);
 
 impl<T> Deref for Computed<T> {
     type Target = T;

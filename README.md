@@ -15,4 +15,4 @@ Read about the design here:
 [MIT](./LICENSE-MIT) OR [Apache-2.0](./LICENSE-APACHE)
 
 [1]: https://img.shields.io/travis/rust-net-web/tide.svg?style=flat-square
-[2]: https://travis-ci.org/yoshuawuyts/tide
+[2]: https://travis-ci.org/rust-net-web/tide

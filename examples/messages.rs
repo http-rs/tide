@@ -48,7 +48,7 @@ impl Database {
 }
 
 async fn new_message(mut db: AppData<Database>, msg: body::Json<Message>) -> String {
-    db.insert(msg.0).to_string()
+    db.insert(msg.clone()).to_string()
 }
 
 async fn set_message(
@@ -56,7 +56,7 @@ async fn set_message(
     id: head::Path<usize>,
     msg: body::Json<Message>,
 ) -> Result<(), StatusCode> {
-    if db.set(id.0, msg.0) {
+    if db.set(*id, msg.clone()) {
         Ok(())
     } else {
         Err(StatusCode::NOT_FOUND)
@@ -67,7 +67,7 @@ async fn get_message(
     mut db: AppData<Database>,
     id: head::Path<usize>,
 ) -> Result<body::Json<Message>, StatusCode> {
-    if let Some(msg) = db.get(id.0) {
+    if let Some(msg) = db.get(*id) {
         Ok(body::Json(msg))
     } else {
         Err(StatusCode::NOT_FOUND)
@@ -81,5 +81,7 @@ fn main() {
     app.at("/message/{}").get(get_message);
     app.at("/message/{}").post(set_message);
 
-    app.serve("127.0.0.1:7878");
+    let address = "127.0.0.1:8000".to_owned();
+    println!("Server is listening on http://{}", address);
+    app.serve(address);
 }

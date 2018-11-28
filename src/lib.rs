@@ -27,7 +27,7 @@ pub use crate::{
     endpoint::Endpoint,
     extract::Extract,
     middleware::Middleware,
-    request::Request,
+    request::{Compute, Computed, Request},
     response::{IntoResponse, Response},
     router::{Resource, Router},
 };

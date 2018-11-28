@@ -15,7 +15,7 @@ struct Message {
 }
 
 async fn upload_file(
-    multipart_form: body::MultipartForm,
+    mut multipart_form: body::MultipartForm,
 ) -> Result<body::Json<Message>, StatusCode> {
     // https://stackoverflow.com/questions/43424982/how-to-parse-multipart-forms-using-abonander-multipart-with-rocket
     let mut message = Message {
@@ -24,8 +24,7 @@ async fn upload_file(
         file: None,
     };
 
-    let mut multipart = multipart_form.0;
-    multipart
+    multipart_form
         .foreach_entry(|mut entry| match entry.headers.name.as_str() {
             "file" => {
                 let mut vec = Vec::new();
@@ -66,9 +65,11 @@ fn main() {
 
     app.at("/upload_file").post(upload_file);
 
-    app.serve("127.0.0.1:7878");
+    let address = "127.0.0.1:8000".to_owned();
+    println!("Server is listening on http://{}", address);
+    app.serve(address);
 }
 
 // Test with:
-// curl -X POST http://localhost:7878/upload_file -H 'content-type: multipart/form-data' -F file=@examples/multipart-form/test.txt
-// curl -X POST http://localhost:7878/upload_file -H 'content-type: multipart/form-data' -F key1=v1, -F key2=v2
+// curl -X POST http://localhost:8000/upload_file -H 'content-type: multipart/form-data' -F file=@examples/multipart-form/test.txt
+// curl -X POST http://localhost:8000/upload_file -H 'content-type: multipart/form-data' -F key1=v1, -F key2=v2

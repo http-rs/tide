@@ -8,9 +8,12 @@ fn main() {
     app.middleware(
         DefaultHeaders::new()
             .header("X-Version", "1.0.0")
-            .header("X-Servier", "Tide"),
+            .header("X-Server", "Tide"),
     );
 
     app.at("/").get(async || "Hello, world!");
-    app.serve("127.0.0.1:7878")
+
+    let address = "127.0.0.1:8000".to_owned();
+    println!("Server is listening on http://{}", address);
+    app.serve(address);
 }

@@ -33,5 +33,8 @@ fn build_add_two<Data: Clone + Send + Sync + 'static>(router: &mut Router<Data>)
 fn main() {
     let mut app = tide::App::new(());
     app.at("add_two").nest(build_add_two);
-    app.serve("127.0.0.1:8000");
+
+    let address = "127.0.0.1:8000".to_owned();
+    println!("Server is listening on http://{}", address);
+    app.serve(address);
 }

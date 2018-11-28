@@ -22,20 +22,53 @@ pub(crate) struct RouteResult<'a, Data> {
 }
 
 impl<Data: Clone + Send + Sync + 'static> Router<Data> {
-    /// Create a new top-level router.
-    pub(crate) fn new() -> Router<Data> {
-        Router {
-            table: PathTable::new(),
-            middleware_base: Vec::new(),
-        }
-    }
-
-    /// Add a new resource at `path`, relative to this router.
+    /// Add a new resource at the given `path`, relative to this router.
+    ///
+    /// Routing means mapping an HTTP request to an endpoint. Here Tide applies a "table of
+    /// contents" approach, which makes it easy to see the overall app structure. Endpoints are
+    /// selected solely by the path and HTTP method of a request: the path determines the resource
+    /// and the HTTP verb the respective endpoint of the selected resource. Example:
+    ///
+    /// ```rust,no_run
+    /// # #![feature(async_await)]
+    /// # let mut app = tide::App::new(());
+    /// app.at("/").get(async || "Hello, world!");
+    /// ```
+    ///
+    /// A path is comprised of zero or many segments, i.e. non-empty strings separated by '/'. There
+    /// are two kinds of segments: concrete and wildcard. A concrete segment is used to exactly
+    /// match the respective part of the path of the incoming request. A wildcard segment on the
+    /// other hand extracts and parses the respective part of the path of the incoming request to
+    /// pass it along to the endpoint as an argument. A wildcard segment is either defined by "{}"
+    /// or by "{name}" for a so called named wildcard segment which must have an implementation of
+    /// `NamedComponent`. It is not possible to define wildcard segments with different names for
+    /// otherwise identical paths.
+    ///
+    /// Here are some examples omitting the HTTP verb based endpoint selection:
+    ///
+    /// ```rust,no_run
+    /// # let mut app = tide::App::new(());
+    /// app.at("/");
+    /// app.at("/hello");
+    /// app.at("/message/{}");
+    /// app.at("add_two/{num}");
+    /// ```
+    ///
+    /// Notice that there is no fallback route matching, i.e. either a resource is a full match or
+    /// not, which means that the order of adding resources has no effect.
     pub fn at<'a>(&'a mut self, path: &'a str) -> Resource<'a, Data> {
         let table = self.table.setup_table(path);
         Resource {
             table,
             middleware_base: &self.middleware_base,
+        }
+    }
+
+    /// Create a new top-level router.
+    pub(crate) fn new() -> Router<Data> {
+        Router {
+            table: PathTable::new(),
+            middleware_base: Vec::new(),
         }
     }
 

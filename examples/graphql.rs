@@ -49,8 +49,7 @@ async fn handle_graphql(
     ctx: AppData<Context>,
     query: body::Json<juniper::http::GraphQLRequest>,
 ) -> Result<Response, StatusCode> {
-    let request = query.0;
-    let response = request.execute(&Schema::new(Query, Mutation), &ctx);
+    let response = query.execute(&Schema::new(Query, Mutation), &ctx);
 
     // `response` has the lifetime of `request`, so we can't use `IntoResponse` directly.
     let body_vec = serde_json::to_vec(&response).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -71,5 +70,7 @@ fn main() {
 
     app.at("/graphql").post(handle_graphql);
 
-    app.serve("127.0.0.1:7878");
+    let address = "127.0.0.1:8000".to_owned();
+    println!("Server is listening on http://{}", address);
+    app.serve(address);
 }
