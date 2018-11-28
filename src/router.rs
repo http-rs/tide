@@ -150,8 +150,7 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
     ) -> RouteResult<'a, Data> {
         match self.table.route(path) {
             Some((route, route_match)) => route_match_success(route, route_match, method)
-                .or_else(|| Some(route_match_failure(default_handler, &self.middleware_base)))
-                .unwrap(),
+                .unwrap_or_else(|| route_match_failure(default_handler, &self.middleware_base)),
             None => route_match_failure(default_handler, &self.middleware_base),
         }
     }
