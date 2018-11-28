@@ -11,6 +11,8 @@ use std::{
 
 use crate::{
     body::Body,
+    endpoint::BoxedEndpoint,
+    endpoint::Endpoint,
     extract::Extract,
     middleware::{logger::RootLogger, RequestContext},
     router::{Resource, RouteResult, Router},
@@ -25,6 +27,7 @@ use crate::{
 pub struct App<Data> {
     data: Data,
     router: Router<Data>,
+    default_handler: BoxedEndpoint<Data>,
 }
 
 impl<Data: Clone + Send + Sync + 'static> App<Data> {
@@ -34,6 +37,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         let mut app = App {
             data,
             router: Router::new(),
+            default_handler: BoxedEndpoint::new(async || http::status::StatusCode::NOT_FOUND),
         };
 
         // Add RootLogger as a default middleware
@@ -52,6 +56,12 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         self.router.at(path)
     }
 
+    /// Set the default handler for the app, a fallback function when there is no match to the route requested
+    pub fn default_handler<T: Endpoint<Data, U>, U>(&mut self, handler: T) -> &mut Self {
+        self.default_handler = BoxedEndpoint::new(handler);
+        self
+    }
+
     /// Apply `middleware` to the whole app. Note that the order of nesting subrouters and applying
     /// middleware matters; see `Router` for details.
     pub fn middleware(&mut self, middleware: impl Middleware<Data> + 'static) -> &mut Self {
@@ -63,6 +73,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         Server {
             data: self.data,
             router: Arc::new(self.router),
+            default_handler: Arc::new(self.default_handler),
         }
     }
 
@@ -94,6 +105,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
 struct Server<Data> {
     data: Data,
     router: Arc<Router<Data>>,
+    default_handler: Arc<BoxedEndpoint<Data>>,
 }
 
 impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
@@ -105,6 +117,7 @@ impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
     fn call(&mut self, req: http::Request<hyper::Body>) -> Self::Future {
         let data = self.data.clone();
         let router = self.router.clone();
+        let default_handler = self.default_handler.clone();
 
         let req = req.map(Body::from);
         let path = req.uri().path().to_owned();
@@ -112,27 +125,22 @@ impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
 
         FutureObj::new(Box::new(
             async move {
-                if let Some(RouteResult {
+                let RouteResult {
                     endpoint,
                     params,
                     middleware,
-                }) = router.route(&path, &method)
-                {
-                    let ctx = RequestContext {
-                        app_data: data,
-                        req,
-                        params,
-                        endpoint,
-                        next_middleware: middleware,
-                    };
-                    let res = await!(ctx.next());
-                    Ok(res.map(Into::into))
-                } else {
-                    Ok(http::Response::builder()
-                        .status(http::status::StatusCode::NOT_FOUND)
-                        .body(hyper::Body::empty())
-                        .unwrap())
-                }
+                } = router.route(&path, &method, &default_handler);
+
+                let ctx = RequestContext {
+                    app_data: data,
+                    req,
+                    params,
+                    endpoint,
+                    next_middleware: middleware,
+                };
+                let res = await!(ctx.next());
+
+                Ok(res.map(Into::into))
             },
         ))
         .compat()
@@ -158,7 +166,7 @@ impl<T> DerefMut for AppData<T> {
 
 impl<T: Clone + Send + 'static> Extract<T> for AppData<T> {
     type Fut = future::Ready<Result<Self, Response>>;
-    fn extract(data: &mut T, req: &mut Request, params: &RouteMatch<'_>) -> Self::Fut {
+    fn extract(data: &mut T, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
         future::ok(AppData(data.clone()))
     }
 }

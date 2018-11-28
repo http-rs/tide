@@ -27,7 +27,7 @@ where
 pub struct RequestContext<'a, Data> {
     pub app_data: Data,
     pub req: Request,
-    pub params: RouteMatch<'a>,
+    pub params: Option<RouteMatch<'a>>,
     pub(crate) endpoint: &'a BoxedEndpoint<Data>,
     pub(crate) next_middleware: &'a [Arc<dyn Middleware<Data> + Send + Sync>],
 }

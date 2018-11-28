@@ -17,8 +17,41 @@ pub struct Router<Data> {
 
 pub(crate) struct RouteResult<'a, Data> {
     pub(crate) endpoint: &'a BoxedEndpoint<Data>,
-    pub(crate) params: RouteMatch<'a>,
+    pub(crate) params: Option<RouteMatch<'a>>,
     pub(crate) middleware: &'a [Arc<dyn Middleware<Data> + Send + Sync>],
+}
+
+fn route_match_success<'a, Data>(
+    route: &'a ResourceData<Data>,
+    route_match: RouteMatch<'a>,
+    method: &http::Method,
+) -> Option<RouteResult<'a, Data>> {
+    // If it is a HTTP HEAD request then check if there is a callback in the endpoints map
+    // if not then fallback to the behavior of HTTP GET else proceed as usual
+    let endpoint =
+        if method == http::Method::HEAD && !route.endpoints.contains_key(&http::Method::HEAD) {
+            route.endpoints.get(&http::Method::GET)?
+        } else {
+            route.endpoints.get(method)?
+        };
+    let middleware = &*route.middleware;
+
+    Some(RouteResult {
+        endpoint,
+        params: Some(route_match),
+        middleware,
+    })
+}
+
+fn route_match_failure<'a, Data>(
+    endpoint: &'a BoxedEndpoint<Data>,
+    middleware: &'a [Arc<dyn Middleware<Data> + Send + Sync>],
+) -> RouteResult<'a, Data> {
+    RouteResult {
+        endpoint,
+        params: None,
+        middleware: &*middleware,
+    }
 }
 
 impl<Data: Clone + Send + Sync + 'static> Router<Data> {
@@ -113,23 +146,13 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
         &'a self,
         path: &'a str,
         method: &http::Method,
-    ) -> Option<RouteResult<'a, Data>> {
-        let (route, route_match) = self.table.route(path)?;
-        // If it is a HTTP HEAD request then check if there is a callback in the endpoints map
-        // if not then fallback to the behavior of HTTP GET else proceed as usual
-        let endpoint =
-            if method == http::Method::HEAD && !route.endpoints.contains_key(&http::Method::HEAD) {
-                route.endpoints.get(&http::Method::GET)?
-            } else {
-                route.endpoints.get(method)?
-            };
-        let middleware = &*route.middleware;
-
-        Some(RouteResult {
-            endpoint,
-            params: route_match,
-            middleware,
-        })
+        default_handler: &'a Arc<BoxedEndpoint<Data>>,
+    ) -> RouteResult<'a, Data> {
+        match self.table.route(path) {
+            Some((route, route_match)) => route_match_success(route, route_match, method)
+                .unwrap_or_else(|| route_match_failure(default_handler, &self.middleware_base)),
+            None => route_match_failure(default_handler, &self.middleware_base),
+        }
     }
 }
 
@@ -248,11 +271,14 @@ mod tests {
         path: &'a str,
         method: &'a http::Method,
     ) -> Option<Response> {
+        let default_handler = Arc::new(BoxedEndpoint::new(async || {
+            http::status::StatusCode::NOT_FOUND
+        }));
         let RouteResult {
             endpoint,
             params,
             middleware,
-        } = router.route(path, method)?;
+        } = router.route(path, method, &default_handler);
 
         let data = Data::default();
         let req = http::Request::builder()
@@ -276,7 +302,10 @@ mod tests {
         path: &str,
         method: &http::Method,
     ) -> Option<usize> {
-        let route_result = router.route(path, method)?;
+        let default_handler = Arc::new(BoxedEndpoint::new(async || {
+            http::status::StatusCode::NOT_FOUND
+        }));
+        let route_result = router.route(path, method, &default_handler);
         Some(route_result.middleware.len())
     }
 
@@ -323,11 +352,16 @@ mod tests {
         });
 
         for failing_path in &["/", "/a/a", "/a/b/a"] {
-            if block_on(simulate_request(&router, failing_path, &http::Method::GET)).is_some() {
-                panic!(
-                    "Routing of path `{}` should fail, but was successful",
-                    failing_path
-                );
+            if let Some(res) = block_on(simulate_request(&router, failing_path, &http::Method::GET))
+            {
+                if !res.status().is_client_error() {
+                    panic!(
+                        "Should have returned a client error when router cannot match with path {}",
+                        failing_path
+                    );
+                }
+            } else {
+                panic!("Should have received a response from {}", failing_path);
             };
         }
 

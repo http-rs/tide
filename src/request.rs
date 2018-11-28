@@ -53,7 +53,7 @@ impl<T> DerefMut for Computed<T> {
 
 impl<Data: 'static, T: Compute> Extract<Data> for Computed<T> {
     type Fut = future::Ready<Result<Self, Response>>;
-    fn extract(data: &mut Data, req: &mut Request, params: &RouteMatch<'_>) -> Self::Fut {
+    fn extract(data: &mut Data, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
         future::ok(Computed(T::compute(req)))
     }
 }
