@@ -27,7 +27,7 @@ use crate::{
 pub struct App<Data> {
     data: Data,
     router: Router<Data>,
-    default_handler: Arc<BoxedEndpoint<Data>>,
+    default_handler: BoxedEndpoint<Data>,
 }
 
 impl<Data: Clone + Send + Sync + 'static> App<Data> {
@@ -37,9 +37,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         let mut app = App {
             data,
             router: Router::new(),
-            default_handler: Arc::new(BoxedEndpoint::new(async || {
-                http::status::StatusCode::NOT_FOUND
-            })),
+            default_handler: BoxedEndpoint::new(async || http::status::StatusCode::NOT_FOUND),
         };
 
         // Add RootLogger as a default middleware
@@ -60,7 +58,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
 
     /// Set the default handler for the app, a fallback function when there is no match to the route requested
     pub fn default_handler<T: Endpoint<Data, U>, U>(&mut self, handler: T) -> &mut Self {
-        self.default_handler = Arc::new(BoxedEndpoint::new(handler));
+        self.default_handler = BoxedEndpoint::new(handler);
         self
     }
 
@@ -75,7 +73,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         Server {
             data: self.data,
             router: Arc::new(self.router),
-            default_handler: Arc::clone(&self.default_handler),
+            default_handler: Arc::new(self.default_handler),
         }
     }
 
