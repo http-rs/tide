@@ -85,7 +85,7 @@ impl<T: Send + 'static + std::str::FromStr, S: 'static> Extract<S> for Path<T> {
                 Ok(t) => future::ok(Path(t)),
                 Err(_) => future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
             },
-            None => future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
+            None => future::err(http::status::StatusCode::INTERNAL_SERVER_ERROR.into_response()),
         }
     }
 }

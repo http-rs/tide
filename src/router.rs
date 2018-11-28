@@ -13,17 +13,12 @@ use path_table::{PathTable, RouteMatch};
 pub struct Router<Data> {
     table: PathTable<ResourceData<Data>>,
     middleware_base: Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
-    default_handler: Arc<BoxedEndpoint<Data>>,
 }
 
 pub(crate) struct RouteResult<'a, Data> {
     pub(crate) endpoint: &'a BoxedEndpoint<Data>,
     pub(crate) params: Option<RouteMatch<'a>>,
     pub(crate) middleware: &'a [Arc<dyn Middleware<Data> + Send + Sync>],
-}
-
-pub async fn base_default_handler() -> http::status::StatusCode {
-    http::status::StatusCode::NOT_FOUND
 }
 
 fn route_match_success<'a, Data>(
@@ -50,7 +45,7 @@ fn route_match_success<'a, Data>(
 
 fn route_match_failure<'a, Data>(
     endpoint: &'a BoxedEndpoint<Data>,
-    middleware: &'a Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
+    middleware: &'a [Arc<dyn Middleware<Data> + Send + Sync>],
 ) -> RouteResult<'a, Data> {
     RouteResult {
         endpoint,
@@ -99,7 +94,6 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
         Resource {
             table,
             middleware_base: &self.middleware_base,
-            default_handler: &self.default_handler,
         }
     }
 
@@ -148,26 +142,17 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
         self
     }
 
-    pub fn set_default_handler<T: Endpoint<Data, U>, U>(&mut self, ep: T) -> &mut Self {
-        self.default_handler = Arc::new(BoxedEndpoint::new(ep));
-        self
-    }
-
     pub(crate) fn route<'a>(
         &'a self,
         path: &'a str,
         method: &http::Method,
+        default_handler: &'a Arc<BoxedEndpoint<Data>>,
     ) -> RouteResult<'a, Data> {
         match self.table.route(path) {
             Some((route, route_match)) => route_match_success(route, route_match, method)
-                .or_else(|| {
-                    Some(route_match_failure(
-                        &self.default_handler,
-                        &self.middleware_base,
-                    ))
-                })
+                .or_else(|| Some(route_match_failure(default_handler, &self.middleware_base)))
                 .unwrap(),
-            None => route_match_failure(&self.default_handler, &self.middleware_base),
+            None => route_match_failure(default_handler, &self.middleware_base),
         }
     }
 }
@@ -180,7 +165,6 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
 pub struct Resource<'a, Data> {
     table: &'a mut PathTable<ResourceData<Data>>,
     middleware_base: &'a Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
-    default_handler: &'a Arc<BoxedEndpoint<Data>>,
 }
 
 struct ResourceData<Data> {
@@ -200,7 +184,6 @@ impl<'a, Data> Resource<'a, Data> {
         let mut subrouter = Router {
             table: PathTable::new(),
             middleware_base: self.middleware_base.clone(),
-            default_handler: self.default_handler.clone(),
         };
         builder(&mut subrouter);
         *self.table = subrouter.table;
@@ -289,11 +272,14 @@ mod tests {
         path: &'a str,
         method: &'a http::Method,
     ) -> Option<Response> {
+        let default_handler = Arc::new(BoxedEndpoint::new(async || {
+            http::status::StatusCode::NOT_FOUND
+        }));
         let RouteResult {
             endpoint,
             params,
             middleware,
-        } = router.route(path, method);
+        } = router.route(path, method, &default_handler);
 
         let data = Data::default();
         let req = http::Request::builder()
@@ -317,7 +303,10 @@ mod tests {
         path: &str,
         method: &http::Method,
     ) -> Option<usize> {
-        let route_result = router.route(path, method);
+        let default_handler = Arc::new(BoxedEndpoint::new(async || {
+            http::status::StatusCode::NOT_FOUND
+        }));
+        let route_result = router.route(path, method, &default_handler);
         Some(route_result.middleware.len())
     }
 

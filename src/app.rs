@@ -11,6 +11,7 @@ use std::{
 
 use crate::{
     body::Body,
+    endpoint::BoxedEndpoint,
     endpoint::Endpoint,
     extract::Extract,
     middleware::{logger::RootLogger, RequestContext},
@@ -26,6 +27,7 @@ use crate::{
 pub struct App<Data> {
     data: Data,
     router: Router<Data>,
+    default_handler: Arc<BoxedEndpoint<Data>>,
 }
 
 impl<Data: Clone + Send + Sync + 'static> App<Data> {
@@ -35,6 +37,9 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         let mut app = App {
             data,
             router: Router::new(),
+            default_handler: Arc::new(BoxedEndpoint::new(async || {
+                http::status::StatusCode::NOT_FOUND
+            })),
         };
 
         // Add RootLogger as a default middleware
@@ -54,8 +59,8 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
     }
 
     /// Set the default handler for the app, a fallback function when there is no match to the route requested
-    pub fn default_handler<T: Endpoint<Data, U>, U>(&mut self, ep: T) -> &mut Self {
-        self.router.set_default_handler(ep);
+    pub fn default_handler<T: Endpoint<Data, U>, U>(&mut self, handler: T) -> &mut Self {
+        self.default_handler = Arc::new(BoxedEndpoint::new(handler));
         self
     }
 
@@ -70,6 +75,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         Server {
             data: self.data,
             router: Arc::new(self.router),
+            default_handler: Arc::clone(&self.default_handler),
         }
     }
 
@@ -101,6 +107,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
 struct Server<Data> {
     data: Data,
     router: Arc<Router<Data>>,
+    default_handler: Arc<BoxedEndpoint<Data>>,
 }
 
 impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
@@ -112,6 +119,7 @@ impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
     fn call(&mut self, req: http::Request<hyper::Body>) -> Self::Future {
         let data = self.data.clone();
         let router = self.router.clone();
+        let default_handler = self.default_handler.clone();
 
         let req = req.map(Body::from);
         let path = req.uri().path().to_owned();
@@ -123,7 +131,7 @@ impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
                     endpoint,
                     params,
                     middleware,
-                } = router.route(&path, &method);
+                } = router.route(&path, &method, &default_handler);
 
                 let ctx = RequestContext {
                     app_data: data,
