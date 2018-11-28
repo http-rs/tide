@@ -353,11 +353,16 @@ mod tests {
         });
 
         for failing_path in &["/", "/a/a", "/a/b/a"] {
-            if block_on(simulate_request(&router, failing_path, &http::Method::GET)).is_some() {
-                panic!(
-                    "Routing of path `{}` should fail, but was successful",
-                    failing_path
-                );
+            if let Some(res) = block_on(simulate_request(&router, failing_path, &http::Method::GET))
+            {
+                if !res.status().is_client_error() {
+                    panic!(
+                        "Should have returned a client error when router cannot match with path {}",
+                        failing_path
+                    );
+                }
+            } else {
+                panic!("Should have received a response from {}", failing_path);
             };
         }
 
