@@ -3,13 +3,13 @@
 #![feature(async_await, futures_api)]
 
 use tide::{
-    head::{Named, NamedComponent},
+    head::{Named, NamedSegment},
     Router,
 };
 
 struct Number(i32);
 
-impl NamedComponent for Number {
+impl NamedSegment for Number {
     const NAME: &'static str = "num";
 }
 
