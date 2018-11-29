@@ -12,6 +12,12 @@
     existential_type
 )]
 
+//!
+//! Welcome to Tide.
+//!
+//! The [`App`](struct.App.html) docs are a good place to get started.
+//!
+//!
 mod app;
 pub mod body;
 mod endpoint;

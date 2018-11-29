@@ -24,6 +24,61 @@ use crate::{
 /// Apps are equipped with a handle to their own state (`Data`), which is available to all endpoints.
 /// This is a "handle" because it must be `Clone`, and endpoints are invoked with a fresh clone.
 /// They also hold a top-level router.
+///
+/// # Examples
+///
+/// You can start a simple Tide application that listens for `GET` requests at path `/hello`
+/// on `127.0.0.1:7878` with:
+///
+/// ```rust, no_run
+/// #![feature(async_await)]
+///
+/// let mut app = tide::App::new(());
+/// app.at("/hello").get(async || "Hello, world!");
+/// app.serve("127.0.0.1:7878")
+/// ```
+///
+/// Create a new `App` with a `Data` handle and make a clone of that handle available to endpoints:
+///
+/// ```rust, no_run
+/// #![feature(async_await, futures_api)]
+///
+/// use std::sync::Arc;
+/// use std::sync::Mutex;
+/// use tide::AppData;
+/// use tide::body;
+///
+/// #[derive(Clone)]
+/// struct Database {
+///     contents: Arc<Mutex<Vec<String>>>,
+/// }
+///
+/// impl Database {
+///     fn new() -> Database {
+///         Database {
+///             contents: Arc::new(Mutex::new(Vec::new())),
+///         }
+///     }
+/// }
+///
+/// async fn insert(
+///     mut db: AppData<Database>,
+///     msg: body::Str,
+/// ) -> String {
+///     // insert into db
+///     # String::from("")
+/// }
+///
+/// fn main() {
+///     let mut app = tide::App::new(Database::new());
+///     app.at("/messages/insert").post(insert);
+///     app.serve("127.0.0.1:7878")
+/// }
+/// ```
+///
+/// Where to go from here: Please see [`Router`](struct.Router.html) and [`Endpoint`](trait.Endpoint.html)
+/// for further examples.
+///
 pub struct App<Data> {
     data: Data,
     router: Router<Data>,
