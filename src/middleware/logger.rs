@@ -34,9 +34,19 @@ impl<Data: Clone + Send> Middleware<Data> for RootLogger {
                 let path = ctx.req.uri().path().to_owned();
                 let method = ctx.req.method().as_str().to_owned();
 
+                let start = std::time::Instant::now();
+
                 let res = await!(ctx.next());
+                let elapsed = start.elapsed();
                 let status = res.status();
-                info!(self.inner_logger, "{} {} {}", method, path, status.as_str());
+                info!(
+                    self.inner_logger,
+                    "[{:?}] {} {} {}",
+                    elapsed,
+                    method,
+                    path,
+                    status.as_str()
+                );
                 res
             },
         ))
