@@ -28,6 +28,7 @@ multipart = "0.15.3"
 slog = "2.4.1"
 slog-term = "2.4.0"
 slog-async = "2.3.0"
+lazy_static = "1.2.0"
 
 [dependencies.path_table]
 path = "path_table"

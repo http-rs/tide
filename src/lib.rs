@@ -14,6 +14,7 @@
 
 mod app;
 pub mod body;
+mod config;
 mod endpoint;
 mod extract;
 pub mod head;
@@ -22,7 +23,6 @@ mod request;
 mod response;
 mod router;
 mod typemap;
-mod config;
 
 pub use crate::{
     app::{App, AppData},

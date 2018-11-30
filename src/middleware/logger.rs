@@ -4,24 +4,27 @@ use slog_term;
 
 use futures::future::FutureObj;
 
-use crate::{middleware::RequestContext, Middleware, Response};
+use crate::{middleware::RequestContext, typemap::STATE, Middleware, Response};
 
 /// Root logger for Tide. Wraps over logger provided by slog.SimpleLogger
 ///
 /// Only used internally for now.
-pub(crate) struct RootLogger {
-    // drain: dyn slog::Drain,
-    inner_logger: slog::Logger,
-}
+pub(crate) struct RootLogger;
 
 impl RootLogger {
-    pub fn new() -> RootLogger {
+    pub fn init() -> RootLogger {
         let decorator = slog_term::TermDecorator::new().build();
         let drain = slog_term::CompactFormat::new(decorator).build().fuse();
         let drain = slog_async::Async::new(drain).build().fuse();
 
         let log = slog::Logger::root(drain, o!());
-        RootLogger { inner_logger: log }
+
+        let logger = RootLogger {};
+
+        // Store global logger instance.
+        STATE.write().unwrap().insert(log);
+
+        logger
     }
 }
 
@@ -36,7 +39,13 @@ impl<Data: Clone + Send> Middleware<Data> for RootLogger {
 
                 let res = await!(ctx.next());
                 let status = res.status();
-                info!(self.inner_logger, "{} {} {}", method, path, status.as_str());
+
+                let map = STATE.read().unwrap();
+
+                // Get global logger instance
+                let logger = map.get::<slog::Logger>().unwrap();
+
+                info!(logger, "{} {} {}", method, path, status.as_str());
                 res
             },
         ))
