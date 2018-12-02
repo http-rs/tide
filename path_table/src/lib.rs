@@ -215,15 +215,9 @@ impl<R> PathTable<R> {
 
             let wildcard_opt = if segment.starts_with('{') {
                 if segment.ends_with('}') {
-                    Some((
-                        &segment[1..segment.len() - 1],
-                        WildcardKind::Segment,
-                    ))
+                    Some((&segment[1..segment.len() - 1], WildcardKind::Segment))
                 } else if segment.ends_with("}*") {
-                    Some((
-                        &segment[1..segment.len() - 2],
-                        WildcardKind::CatchAll,
-                    ))
+                    Some((&segment[1..segment.len() - 2], WildcardKind::CatchAll))
                 } else {
                     None
                 }
