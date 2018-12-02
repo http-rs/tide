@@ -38,7 +38,9 @@ use crate::{
 /// app.serve("127.0.0.1:7878")
 /// ```
 ///
-/// Create a new `App` with a `Data` handle and make a clone of that handle available to endpoints:
+/// `App` state can be modeled with an underlying `Data` handle for a cloneable type `T`. Endpoints
+/// can receive a fresh clone of that handle (in addition to data extracted from the request) by
+/// defining a parameter of type `AppData<T>`:
 ///
 /// ```rust, no_run
 /// #![feature(async_await, futures_api)]
