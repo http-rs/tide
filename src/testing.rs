@@ -3,16 +3,13 @@ use tokio;
 
 use std::sync::Arc;
 
-use futures::{
-    future::FutureObj,
-    prelude::*,
-};
+use futures::{future::FutureObj, prelude::*};
 
 use crate::{
     body::Body,
-    router::{Router, RouteResult},
     endpoint::BoxedEndpoint,
-    middleware::{RequestContext},
+    middleware::RequestContext,
+    router::{RouteResult, Router},
 };
 
 impl<Data: Clone + Send + Sync + 'static> App<Data> {
@@ -33,7 +30,10 @@ pub struct Test<Data> {
 }
 
 impl<Data: Clone + Send + Sync + 'static> Test<Data> {
-    pub fn call(&mut self, req: http::Request<Body>) -> FutureObj<'static, Result<http::Response<Body>, std::io::Error>> {
+    pub fn call(
+        &mut self,
+        req: http::Request<Body>,
+    ) -> FutureObj<'static, Result<http::Response<Body>, std::io::Error>> {
         let data = self.data.clone();
         let router = self.router.clone();
         let default_handler = self.default_handler.clone();
@@ -63,17 +63,15 @@ impl<Data: Clone + Send + Sync + 'static> Test<Data> {
             },
         ))
     }
-
 }
 
-pub fn test<T, F>(test: T) -> impl Future<Output=Result<(), Box<std::any::Any + 'static + Send>>>
-        where T: FnOnce() -> F,
-              F: Future<Output=()> + Send + 'static
+pub fn test<T, F>(test: T) -> impl Future<Output = Result<(), Box<std::any::Any + 'static + Send>>>
+where
+    T: FnOnce() -> F,
+    F: Future<Output = ()> + Send + 'static,
 {
     FutureObj::new(Box::new(
-        std::panic::AssertUnwindSafe(
-            test()
-        ).catch_unwind()
+        std::panic::AssertUnwindSafe(test()).catch_unwind(),
     ))
 }
 
@@ -81,40 +79,46 @@ pub mod tokio_test {
     use futures::prelude::*;
 
     pub fn test<T, F>(test: T)
-        where T: FnOnce() -> F,
-              T: 'static,
-              F: Future<Output=()> + Send + 'static
+    where
+        T: FnOnce() -> F,
+        T: 'static,
+        F: Future<Output = ()> + Send + 'static,
     {
         let runner = super::test(test).compat();
 
-        tokio::runtime::Runtime::new().unwrap().block_on(runner).unwrap();
+        tokio::runtime::Runtime::new()
+            .unwrap()
+            .block_on(runner)
+            .unwrap();
     }
 }
 
 #[macro_export]
 macro_rules! assert_status {
-    ($response:ident, $status:expr) => ({
+    ($response:ident, $status:expr) => {{
         let status = $response.status();
         if !($response.status() == $status) {
-            panic!(r#"assertion failed:
+            panic!(
+                r#"assertion failed:
 expected response code: `{:?}`,
-received response code: `{:?}`"#, $status, status)
+received response code: `{:?}`"#,
+                $status, status
+            )
         }
-    });
+    }};
 }
 
 #[macro_export]
 macro_rules! assert_ok {
-    ($response:ident) => ({
+    ($response:ident) => {{
         assert_status!($response, 200)
-    });
+    }};
 }
-
 
 #[cfg(test)]
 mod test {
-    use crate::app::App;
     use super::tokio_test::test;
+    use crate::app::App;
 
     #[test]
     fn working_test() {
@@ -127,12 +131,10 @@ mod test {
             .body(Vec::new().into())
             .unwrap();
 
-        test(
-            async move || {
-                let response = await!(tester.call(request)).unwrap();
-                assert_ok!(response);
-            }
-        )
+        test(async move || {
+            let response = await!(tester.call(request)).unwrap();
+            assert_ok!(response);
+        })
     }
 
     #[test]
@@ -144,14 +146,12 @@ mod test {
 
         let request = http::Request::builder()
             .method("POST")
-            .body(Vec::new().into ())
+            .body(Vec::new().into())
             .unwrap();
 
-        test(
-            async move || {
-                let response = await!(tester.call(request)).unwrap();
-                assert_ok!(response);
-            }
-        )
+        test(async move || {
+            let response = await!(tester.call(request)).unwrap();
+            assert_ok!(response);
+        })
     }
 }

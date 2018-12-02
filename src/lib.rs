@@ -18,20 +18,20 @@ mod endpoint;
 mod extract;
 pub mod head;
 pub mod middleware;
-mod testing;
 mod request;
 mod response;
 mod router;
+mod testing;
 
 pub use crate::{
     app::{App, AppData},
-    testing::{test, Test},
-    testing::tokio_test::test as tokio_test,
     endpoint::Endpoint,
     extract::Extract,
     middleware::Middleware,
     request::{Compute, Computed, Request},
     response::{IntoResponse, Response},
     router::{Resource, Router},
+    testing::tokio_test::test as tokio_test,
+    testing::{test, Test},
 };
 pub use path_table::RouteMatch;
