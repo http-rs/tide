@@ -18,16 +18,16 @@ pub struct PathTable<R> {
 }
 
 #[derive(Copy, Clone, PartialEq)]
-enum WildcardCountModifier {
-    ExactlyOnce,
-    ZeroOrMore,
+enum WildcardKind {
+    Segment,
+    CatchAll,
 }
 
-impl std::fmt::Display for WildcardCountModifier {
+impl std::fmt::Display for WildcardKind {
     fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            WildcardCountModifier::ExactlyOnce => Ok(()),
-            WildcardCountModifier::ZeroOrMore => write!(fmt, "*"),
+            WildcardKind::Segment => Ok(()),
+            WildcardKind::CatchAll => write!(fmt, "*"),
         }
     }
 }
@@ -35,7 +35,7 @@ impl std::fmt::Display for WildcardCountModifier {
 #[derive(Clone)]
 struct Wildcard<R> {
     name: String,
-    count_mod: WildcardCountModifier,
+    count_mod: WildcardKind,
     table: PathTable<R>,
 }
 
@@ -127,6 +127,7 @@ impl<R> PathTable<R> {
         let mut params = Vec::new();
         let mut param_map = HashMap::new();
 
+        // Find all segments with their indices.
         let segment_iter = path
             .match_indices('/')
             .chain(std::iter::once((path.len(), "")))
@@ -145,7 +146,7 @@ impl<R> PathTable<R> {
             if let Some(next_table) = table.next.get(segment) {
                 table = next_table;
             } else if let Some(wildcard) = &table.wildcard {
-                let last = if wildcard.count_mod == WildcardCountModifier::ZeroOrMore {
+                let last = if wildcard.count_mod == WildcardKind::CatchAll {
                     segment = &path[starts_at..];
                     true
                 } else {
@@ -170,7 +171,7 @@ impl<R> PathTable<R> {
 
         if table.accept.is_none() {
             if let Some(wildcard) = &table.wildcard {
-                if wildcard.count_mod == WildcardCountModifier::ZeroOrMore {
+                if wildcard.count_mod == WildcardKind::CatchAll {
                     params.push("");
 
                     if !wildcard.name.is_empty() {
@@ -216,24 +217,24 @@ impl<R> PathTable<R> {
                 if segment.ends_with('}') {
                     Some((
                         &segment[1..segment.len() - 1],
-                        WildcardCountModifier::ExactlyOnce,
+                        WildcardKind::Segment,
                     ))
                 } else if segment.ends_with("}*") {
                     Some((
                         &segment[1..segment.len() - 2],
-                        WildcardCountModifier::ZeroOrMore,
+                        WildcardKind::CatchAll,
                     ))
                 } else {
                     None
                 }
             } else if segment == "*" {
-                Some(("", WildcardCountModifier::ZeroOrMore))
+                Some(("", WildcardKind::CatchAll))
             } else {
                 None
             };
 
             if let Some((name, count_mod)) = wildcard_opt {
-                if count_mod != WildcardCountModifier::ExactlyOnce {
+                if count_mod != WildcardKind::Segment {
                     forbid_next = true;
                 }
 
