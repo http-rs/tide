@@ -73,9 +73,16 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
     /// match the respective part of the path of the incoming request. A wildcard segment on the
     /// other hand extracts and parses the respective part of the path of the incoming request to
     /// pass it along to the endpoint as an argument. A wildcard segment is either defined by "{}"
-    /// or by "{name}" for a so called named wildcard segment which must have an implementation of
+    /// or by "{name}" for a so called named wildcard segment which can be extracted using
     /// `NamedSegment`. It is not possible to define wildcard segments with different names for
     /// otherwise identical paths.
+    ///
+    /// Wildcard definitions can be followed by an optional *wildcard modifier*. Currently, there is
+    /// only one modifier: `*`, which means that the wildcard will match to the end of given path,
+    /// no matter how many segments are left, even nothing. If there is a modifier for unnamed
+    /// wildcard definition, `{}` may be omitted. That is, `{}*` can be written as `*`. It is an
+    /// error to define two wildcard segments with different wildcard modifiers, or to write other
+    /// path segment after a segment with wildcard modifier.
     ///
     /// Here are some examples omitting the HTTP verb based endpoint selection:
     ///
@@ -85,6 +92,8 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
     /// app.at("/hello");
     /// app.at("/message/{}");
     /// app.at("add_two/{num}");
+    /// app.at("static/{path}*");
+    /// app.at("single_page_app/*");
     /// ```
     ///
     /// Notice that there is no fallback route matching, i.e. either a resource is a full match or

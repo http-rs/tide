@@ -17,9 +17,25 @@ pub struct PathTable<R> {
     wildcard: Option<Box<Wildcard<R>>>,
 }
 
+#[derive(Copy, Clone, PartialEq)]
+enum WildcardKind {
+    Segment,
+    CatchAll,
+}
+
+impl std::fmt::Display for WildcardKind {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            WildcardKind::Segment => Ok(()),
+            WildcardKind::CatchAll => write!(fmt, "*"),
+        }
+    }
+}
+
 #[derive(Clone)]
 struct Wildcard<R> {
     name: String,
+    count_mod: WildcardKind,
     table: PathTable<R>,
 }
 
@@ -40,7 +56,10 @@ impl<R> std::fmt::Debug for PathTable<R> {
                 let mut dbg = fmt.debug_map();
                 dbg.entries(self.0.iter());
                 if let Some(wildcard) = self.1 {
-                    dbg.entry(&format_args!("{{{}}}", wildcard.name), &wildcard.table);
+                    dbg.entry(
+                        &format_args!("{{{}}}{}", wildcard.name, wildcard.count_mod),
+                        &wildcard.table,
+                    );
                 }
                 dbg.finish()
             }
@@ -108,7 +127,18 @@ impl<R> PathTable<R> {
         let mut params = Vec::new();
         let mut param_map = HashMap::new();
 
-        for segment in path.split('/') {
+        // Find all segments with their indices.
+        let segment_iter = path
+            .match_indices('/')
+            .chain(std::iter::once((path.len(), "")))
+            .scan(0usize, |prev_idx, (idx, _)| {
+                let starts_at = *prev_idx;
+                let segment = &path[starts_at..idx];
+                *prev_idx = idx + 1;
+                Some((starts_at, segment))
+            });
+
+        for (starts_at, mut segment) in segment_iter {
             if segment.is_empty() {
                 continue;
             }
@@ -116,6 +146,13 @@ impl<R> PathTable<R> {
             if let Some(next_table) = table.next.get(segment) {
                 table = next_table;
             } else if let Some(wildcard) = &table.wildcard {
+                let last = if wildcard.count_mod == WildcardKind::CatchAll {
+                    segment = &path[starts_at..];
+                    true
+                } else {
+                    false
+                };
+
                 params.push(segment);
 
                 if !wildcard.name.is_empty() {
@@ -123,8 +160,26 @@ impl<R> PathTable<R> {
                 }
 
                 table = &wildcard.table;
+
+                if last {
+                    break;
+                }
             } else {
                 return None;
+            }
+        }
+
+        if table.accept.is_none() {
+            if let Some(wildcard) = &table.wildcard {
+                if wildcard.count_mod == WildcardKind::CatchAll {
+                    params.push("");
+
+                    if !wildcard.name.is_empty() {
+                        param_map.insert(&*wildcard.name, "");
+                    }
+
+                    table = &wildcard.table;
+                }
             }
         }
 
@@ -148,24 +203,53 @@ impl<R> PathTable<R> {
     /// If it doesn't already exist, this will make a new one.
     pub fn setup_table(&mut self, path: &str) -> &mut PathTable<R> {
         let mut table = self;
+        let mut forbid_next = false;
         for segment in path.split('/') {
             if segment.is_empty() {
                 continue;
             }
 
-            if segment.starts_with('{') && segment.ends_with('}') {
-                let name = &segment[1..segment.len() - 1];
+            if forbid_next {
+                panic!("No segments are allowed after wildcard with `*` modifier");
+            }
+
+            let wildcard_opt = if segment.starts_with('{') {
+                if segment.ends_with('}') {
+                    Some((&segment[1..segment.len() - 1], WildcardKind::Segment))
+                } else if segment.ends_with("}*") {
+                    Some((&segment[1..segment.len() - 2], WildcardKind::CatchAll))
+                } else {
+                    None
+                }
+            } else if segment == "*" {
+                Some(("", WildcardKind::CatchAll))
+            } else {
+                None
+            };
+
+            if let Some((name, count_mod)) = wildcard_opt {
+                if count_mod != WildcardKind::Segment {
+                    forbid_next = true;
+                }
 
                 if table.wildcard.is_none() {
                     table.wildcard = Some(Box::new(Wildcard {
                         name: name.to_string(),
+                        count_mod,
                         table: PathTable::new(),
                     }));
                 }
 
                 match table.wildcard_mut().unwrap() {
-                    Wildcard { name: n, .. } if name != n => {
-                        panic!("Route {} segment `{{{}}}` conflicts with existing wildcard segment `{{{}}}`", path, name, n);
+                    Wildcard {
+                        name: n,
+                        count_mod: c,
+                        ..
+                    } if name != n || count_mod != *c => {
+                        panic!(
+                            "Route {} segment `{{{}}}{}` conflicts with existing wildcard segment `{{{}}}{}`",
+                            path, name, count_mod, n, c
+                        );
                     }
                     Wildcard { table: t, .. } => {
                         table = t;
@@ -428,11 +512,48 @@ mod test {
     }
 
     #[test]
+    fn wildcard_count_mod() {
+        let mut table: PathTable<usize> = PathTable::new();
+        *table.setup("foo/{foo}*") = 0;
+        *table.setup("bar/{}*") = 1;
+        *table.setup("baz/*") = 2;
+        *table.setup("foo/bar") = 3;
+
+        let (&id, params) = table.route("foo/a/b").unwrap();
+        assert_eq!(id, 0);
+        assert_eq!(params.vec, &["a/b"]);
+        assert_eq!(params.map, [("foo", "a/b")].iter().cloned().collect());
+
+        let (&id, params) = table.route("bar/a/b").unwrap();
+        assert_eq!(id, 1);
+        assert_eq!(params.vec, &["a/b"]);
+        assert!(params.map.is_empty());
+
+        let (&id, params) = table.route("baz/a/b").unwrap();
+        assert_eq!(id, 2);
+        assert_eq!(params.vec, &["a/b"]);
+        assert!(params.map.is_empty());
+
+        let (&id, params) = table.route("foo/bar").unwrap();
+        assert_eq!(id, 3);
+        assert!(params.vec.is_empty());
+        assert!(params.map.is_empty());
+    }
+
+    #[test]
     #[should_panic]
-    fn conflicting_wildcard_fails() {
+    fn conflicting_wildcard_name_fails() {
         let mut table: PathTable<()> = PathTable::new();
         *table.setup("foo/{foo}");
         *table.setup("foo/{bar}");
+    }
+
+    #[test]
+    #[should_panic]
+    fn conflicting_wildcard_modifier_fails() {
+        let mut table: PathTable<()> = PathTable::new();
+        table.setup("foo/{foo}*");
+        table.setup("foo/{foo}");
     }
 
     #[test]
