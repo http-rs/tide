@@ -65,7 +65,7 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
     /// ```rust,no_run
     /// # #![feature(async_await)]
     /// # let mut app = tide::App::new(());
-    /// app.at("/").get(async || "Hello, world!");
+    /// app.path("/").get(async || "Hello, world!");
     /// ```
     ///
     /// A path is comprised of zero or many segments, i.e. non-empty strings separated by '/'. There
@@ -81,10 +81,10 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
     ///
     /// ```rust,no_run
     /// # let mut app = tide::App::new(());
-    /// app.at("/");
-    /// app.at("/hello");
-    /// app.at("/message/{}");
-    /// app.at("add_two/{num}");
+    /// app.path("/");
+    /// app.path("/hello");
+    /// app.path("/message/{}");
+    /// app.path("add_two/{num}");
     /// ```
     ///
     /// Notice that there is no fallback route matching, i.e. either a resource is a full match or

@@ -5,7 +5,7 @@ use tide::body;
 
 fn main() {
     let mut app = tide::App::new(());
-    app.at("/").get(async || "Hello, world!");
+    app.path("/").get(async || "Hello, world!");
 
     app.default_handler(async || {
         http::Response::builder()

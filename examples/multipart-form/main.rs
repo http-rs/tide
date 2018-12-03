@@ -63,7 +63,7 @@ async fn upload_file(
 fn main() {
     let mut app = App::new(());
 
-    app.at("/upload_file").post(upload_file);
+    app.path("/upload_file").post(upload_file);
 
     let address = "127.0.0.1:8000".to_owned();
     println!("Server is listening on http://{}", address);

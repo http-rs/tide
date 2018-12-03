@@ -32,7 +32,7 @@ async fn hello_cookies(Computed(cookies): Computed<Cookies>) -> String {
 
 fn main() {
     let mut app = tide::App::new(());
-    app.at("/").get(hello_cookies);
+    app.path("/").get(hello_cookies);
 
     let address = "127.0.0.1:8000".to_owned();
     println!("Server is listening on http://{}", address);

@@ -77,9 +77,9 @@ async fn get_message(
 fn main() {
     let mut app = App::new(Database::new());
 
-    app.at("/message").post(new_message);
-    app.at("/message/{}").get(get_message);
-    app.at("/message/{}").post(set_message);
+    app.path("/message").post(new_message);
+    app.path("/message/{}").get(get_message);
+    app.path("/message/{}").post(set_message);
 
     let address = "127.0.0.1:8000".to_owned();
     println!("Server is listening on http://{}", address);

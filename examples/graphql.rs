@@ -68,7 +68,7 @@ async fn handle_graphql(
 fn main() {
     let mut app = App::new(Context::default());
 
-    app.at("/graphql").post(handle_graphql);
+    app.path("/graphql").post(handle_graphql);
 
     let address = "127.0.0.1:8000".to_owned();
     println!("Server is listening on http://{}", address);
