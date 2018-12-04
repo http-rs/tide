@@ -6,6 +6,68 @@ use crate::{extract::Extract, head::Head, IntoResponse, Request, Response, Route
 ///
 /// This trait is automatically implemented by a host of `Fn` types, and should not be
 /// implemented directly by Tide users.
+///
+/// # Examples
+///
+/// Endpoints are implemented as asynchronous functions that make use of language features
+/// currently only available in Rust Nightly. For this reason, we have to explicitly enable
+/// those features with `#![feature(async_await, futures_api)]`. To keep examples concise,
+/// the attribute will be omitted in most of the documentation.
+///
+/// A simple endpoint that is invoked on a `GET` request and returns a `String`:
+///
+/// ```rust, no_run
+/// # #![feature(async_await, futures_api)]
+/// async fn hello() -> String {
+///     String::from("hello")
+/// }
+///
+/// fn main() {
+///     let mut app = tide::App::new(());
+///     app.at("/hello").get(hello);
+///     app.serve("127.0.0.1:7878")
+/// }
+/// ```
+///
+/// Endpoint accessing `App` state (`Data`) and body of `POST` request as `String`:
+///
+/// ```rust, no_run
+/// # #![feature(async_await, futures_api)]
+/// use std::sync::Arc;
+/// use std::sync::Mutex;
+/// use tide::AppData;
+/// use tide::body;
+///
+/// #[derive(Clone)]
+/// struct Database {
+///     contents: Arc<Mutex<Vec<String>>>,
+/// }
+///
+/// impl Database {
+///     fn new() -> Database {
+///         Database {
+///             contents: Arc::new(Mutex::new(Vec::new())),
+///         }
+///     }
+/// }
+///
+/// async fn insert(
+///     mut db: AppData<Database>,
+///     msg: body::Str,
+/// ) -> String {
+///     // insert into db
+///     # String::from("")
+/// }
+///
+/// fn main() {
+///     let mut app = tide::App::new(Database::new());
+///     app.at("/messages/insert").post(insert);
+///     app.serve("127.0.0.1:7878")
+/// }
+/// ```
+///
+/// See [`body`](body/index.html) module for examples of how to work with request and response bodies.
+///
 pub trait Endpoint<Data, Kind>: Send + Sync + 'static {
     /// The async result of `call`.
     type Fut: Future<Output = Response> + Send + 'static;
