@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::{
+    body::Body,
     endpoint::{BoxedEndpoint, Endpoint},
     Middleware,
 };
@@ -178,6 +179,7 @@ pub struct Resource<'a, Data> {
 struct ResourceData<Data> {
     endpoints: HashMap<http::Method, BoxedEndpoint<Data>>,
     middleware: Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
+    method_options: Vec<String>,
 }
 
 impl<'a, Data> Resource<'a, Data> {
@@ -204,13 +206,29 @@ impl<'a, Data> Resource<'a, Data> {
             let new_resource = ResourceData {
                 endpoints: HashMap::new(),
                 middleware: self.middleware_base.clone(),
+                method_options: Vec::new(),
             };
             *resource = Some(new_resource);
         }
         let resource = resource.as_mut().unwrap();
+        if method != http::Method::OPTIONS {
+            // It's important that this panics here, otherwise we will get weird results for OPTIONS
+            // routes
+            if resource.endpoints.contains_key(&method) {
+                panic!("A {} endpoint already exists for this path", method)
+            }
 
-        if resource.endpoints.contains_key(&method) {
-            panic!("A {} endpoint already exists for this path", method)
+            resource.method_options.push(method.as_str().to_string());
+            let option_header = resource.method_options.join(", ");
+            self.options(async || {
+                http::Response::builder()
+                    .status(http::status::StatusCode::OK)
+                    .header("Access-Control-Allow-Methods", option_header)
+                    .header("Allow", option_header)
+                    .header("Content-Type", "text/plain")
+                    .body(Body::empty())
+                    .unwrap()
+            });
         }
 
         resource.endpoints.insert(method, BoxedEndpoint::new(ep));
@@ -242,7 +260,7 @@ impl<'a, Data> Resource<'a, Data> {
     }
 
     /// Add an endpoint for `OPTIONS` requests
-    pub fn options<T: Endpoint<Data, U>, U>(&mut self, ep: T) {
+    fn options<T: Endpoint<Data, U>, U>(&mut self, ep: T) {
         self.method(http::Method::OPTIONS, ep)
     }
 
