@@ -21,10 +21,9 @@
 //!     format!("{}", *msg)
 //! }
 //!
-//! async fn echo_vec(msg: body::Bytes) -> String {
-//!     println!("Vec<u8>: {:?}", *msg);
-//!
-//!     String::from_utf8(msg.to_vec()).unwrap()
+//! async fn echo_bytes(msg: body::Bytes) -> body::Bytes {
+//!     println!("Bytes: {:?}", *msg);
+//!     msg
 //! }
 //!
 //! # fn main() {
@@ -32,7 +31,7 @@
 //! #
 //! app.at("/echo/string").post(echo_string);
 //! app.at("/echo/string_lossy").post(echo_string_lossy);
-//! app.at("/echo/vec").post(echo_vec);
+//! app.at("/echo/bytes").post(echo_bytes);
 //!
 //! #    app.serve("127.0.0.1:7878");
 //! # }

@@ -1,3 +1,4 @@
+use crate::body;
 use crate::body::Body;
 
 /// An HTTP response.
@@ -19,13 +20,25 @@ impl IntoResponse for () {
     }
 }
 
-impl IntoResponse for String {
+impl IntoResponse for Vec<u8> {
     fn into_response(self) -> Response {
         http::Response::builder()
             .status(http::status::StatusCode::OK)
             .header("Content-Type", "text/plain; charset=utf-8")
-            .body(Body::from(self.into_bytes()))
+            .body(Body::from(self))
             .unwrap()
+    }
+}
+
+impl IntoResponse for body::Bytes {
+    fn into_response(self) -> Response {
+        self.to_vec().into_response()
+    }
+}
+
+impl IntoResponse for String {
+    fn into_response(self) -> Response {
+        self.into_bytes().into_response()
     }
 }
 

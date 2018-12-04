@@ -20,10 +20,14 @@ async fn echo_string_lossy(msg: body::StrLossy) -> String {
     format!("{}", *msg)
 }
 
-async fn echo_vec(msg: body::Bytes) -> String {
+async fn echo_vec(msg: body::Bytes) -> Vec<u8> {
     println!("Vec<u8>: {:?}", *msg);
+    msg.to_vec()
+}
 
-    String::from_utf8(msg.to_vec()).unwrap()
+async fn echo_bytes(msg: body::Bytes) -> body::Bytes {
+    println!("Bytes: {:?}", *msg);
+    msg
 }
 
 async fn echo_json(msg: body::Json<Message>) -> body::Json<Message> {
@@ -44,6 +48,7 @@ fn main() {
     app.at("/echo/string").post(echo_string);
     app.at("/echo/string_lossy").post(echo_string_lossy);
     app.at("/echo/vec").post(echo_vec);
+    app.at("/echo/bytes").post(echo_bytes);
     app.at("/echo/json").post(echo_json);
     app.at("/echo/form").post(echo_form);
 
