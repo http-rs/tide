@@ -9,84 +9,21 @@ use std::time::Duration;
 /// Check out the [official specification](https://tools.ietf.org/html/rfc6265).
 #[derive(Clone, Debug)]
 pub struct Cookie<S> {
-    domain: Option<S>,
-    expires_at: Option<Duration>,
-    is_host_only: bool,
-    is_http_only: bool,
-    is_persistent: bool,
-    is_secure: bool,
-    name: S,
-    path: Option<S>,
-    value: S,
+    pub(self) domain: Option<S>,
+    pub(self) expires_at: Option<Duration>,
+    pub(self) host_only: bool,
+    pub(self) http_only: bool,
+    pub(self) name: S,
+    pub(self) path: Option<S>,
+    pub(self) persistent: bool,
+    pub(self) secure: bool,
+    pub(self) value: S,
 }
 
 impl<S> Cookie<S>
 where
     S: AsRef<str>,
 {
-    /// Creates a new [`Cookie`](Cookie) from the full range of possible parameters.
-    ///
-    /// # Parameters
-    ///
-    /// * `domain` - See [`Cookie.domain`](Cookie::domain).
-    /// * `expires_at` - See [`Cookie.expires_at`](Cookie::expires_at).
-    /// * `is_host_only` - See [`Cookie.is_host_only`](Cookie::is_host_only).
-    /// * `is_http_only` - See [`Cookie.is_http_only`](Cookie::is_http_only).
-    /// * `is_persistent` - See [`Cookie.is_persistent`](Cookie::is_persistent).
-    /// * `is_secure` - See [`Cookie.is_secure`](Cookie::is_secure).
-    /// * `name` - See [`Cookie.name`](Cookie::name).
-    /// * `path` - See [`Cookie.path`](Cookie::path).
-    /// * `value` - See [`Cookie.value`](Cookie::value).
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use tide::Cookie;
-    /// use std::time::{Duration, SystemTime, UNIX_EPOCH};
-    ///
-    /// let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-    /// let one_hour_from_now = now + Duration::from_secs(3600);
-    /// let _ = Cookie::new(
-    ///     "foo.com",
-    ///     one_hour_from_now,
-    ///     true,
-    ///     true,
-    ///     false,
-    ///     true,
-    ///     "foo",
-    ///     "/a-path",
-    ///     "bar"
-    /// );
-    /// ```
-    pub fn new<ID, IEA, IP>(
-        domain: ID,
-        expires_at: IEA,
-        is_host_only: bool,
-        is_http_only: bool,
-        is_persistent: bool,
-        is_secure: bool,
-        name: S,
-        path: IP,
-        value: S,
-    ) -> Self
-    where
-        ID: Into<Option<S>>,
-        IEA: Into<Option<Duration>>,
-        IP: Into<Option<S>>,
-    {
-        Self {
-            domain: domain.into(),
-            expires_at: expires_at.into(),
-            is_host_only,
-            is_http_only,
-            is_persistent,
-            is_secure,
-            name,
-            path: path.into(),
-            value,
-        }
-    }
-
     /// If any, returns the domain associated with this
     /// cookie. E.g.: `Set-Cookie: name=value; Domain=.foo.com`.
     pub fn domain(&self) -> Option<&str> {
@@ -106,46 +43,38 @@ where
     /// # Examples
     ///
     /// ```rust
-    /// use tide::Cookie;
+    /// use tide::CookieBuilder;
     ///
-    /// let _ = Cookie::new(None, None, true, true, false, true, "foo", None, "bar")
+    /// let _ = CookieBuilder::new()
+    ///     .name("foo")
+    ///     .path("/a-path")
+    ///     .build()
     ///     .into_builder()
     ///     .name("another-foo")
-    ///     .path("/a-path")
     ///     .build();
     /// ```
     pub fn into_builder(self) -> CookieBuilder<S> {
         CookieBuilder {
             domain: self.domain,
             expires_at: self.expires_at,
-            is_host_only: self.is_host_only,
-            is_http_only: self.is_http_only,
-            is_persistent: self.is_persistent,
-            is_secure: self.is_secure,
+            host_only: self.host_only,
+            http_only: self.http_only,
             name: Some(self.name),
             path: self.path,
+            persistent: self.persistent,
+            secure: self.secure,
             value: self.value,
         }
     }
 
     /// If this cookie should be used for a single and unique domain.
-    pub fn is_host_only(&self) -> bool {
-        self.is_host_only
+    pub fn host_only(&self) -> bool {
+        self.host_only
     }
 
     /// If this cookie should be restrained to HTTP APIs only.
-    pub fn is_http_only(&self) -> bool {
-        self.is_http_only
-    }
-
-    /// If this cookie should not expire at the end of the current session.
-    pub fn is_persistent(&self) -> bool {
-        self.is_persistent
-    }
-
-    /// If this cookie should only be transmitted in HTTPS connections.
-    pub fn is_secure(&self) -> bool {
-        self.is_secure
+    pub fn http_only(&self) -> bool {
+        self.http_only
     }
 
     /// The name that identifies this cookie. E.g.: `Set-Cookie: name=value`.
@@ -159,6 +88,16 @@ where
         self.path.as_ref().map(|x| x.as_ref())
     }
 
+    /// If this cookie should not expire at the end of the current session.
+    pub fn persistent(&self) -> bool {
+        self.persistent
+    }
+
+    /// If this cookie should only be transmitted in HTTPS connections.
+    pub fn secure(&self) -> bool {
+        self.secure
+    }
+
     /// The cookie's value. E.g.: `Set-Cookie: name=value`.
     pub fn value(&self) -> &str {
         self.value.as_ref()
@@ -166,16 +105,16 @@ where
 }
 
 /// Provides a handy interface to build a [`Cookie`](Cookie) readably.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct CookieBuilder<S> {
     domain: Option<S>,
     expires_at: Option<Duration>,
-    is_host_only: bool,
-    is_http_only: bool,
-    is_persistent: bool,
-    is_secure: bool,
+    host_only: bool,
+    http_only: bool,
     name: Option<S>,
     path: Option<S>,
+    persistent: bool,
+    secure: bool,
     value: S,
 }
 
@@ -188,11 +127,11 @@ where
     ///
     /// * `domain` - None
     /// * `expires_at` - None
-    /// * `is_host_only` - true
-    /// * `is_http_only` - true
-    /// * `is_persistent` - false
-    /// * `is_secure` - true
+    /// * `host_only` - true
+    /// * `http_only` - true
     /// * `path` - None
+    /// * `persistent` - false
+    /// * `secure` - true
     /// * `value` - Empty string ("")
     ///
     /// All default parameters can be overwritten and [`name`](CookieBuilder::name) is
@@ -201,12 +140,12 @@ where
         Self {
             domain: None,
             expires_at: None,
-            is_host_only: true,
-            is_http_only: true,
-            is_persistent: false,
-            is_secure: true,
+            host_only: true,
+            http_only: true,
             name: None,
             path: None,
+            persistent: false,
+            secure: true,
             value: S::default(),
         }
     }
@@ -228,9 +167,9 @@ where
     /// let _ = CookieBuilder::new()
     ///     .domain("foo.com")
     ///     .expires_at(one_hour_from_now)
-    ///     .is_persistent(true)
     ///     .name("bar")
     ///     .path("/a-path")
+    ///     .persistent(true)
     ///     .build();
     /// ```
     ///
@@ -244,17 +183,17 @@ where
     /// ```
     pub fn build(self) -> Cookie<S> {
         assert!(self.name.is_some(), "The `name` method must be used");
-        Cookie::new(
-            self.domain,
-            self.expires_at,
-            self.is_host_only,
-            self.is_http_only,
-            self.is_persistent,
-            self.is_secure,
-            self.name.unwrap(),
-            self.path,
-            self.value,
-        )
+        Cookie {
+            domain: self.domain,
+            expires_at: self.expires_at,
+            host_only: self.host_only,
+            http_only: self.http_only,
+            name: self.name.unwrap(),
+            path: self.path,
+            persistent: self.persistent,
+            secure: self.secure,
+            value: self.value,
+        }
     }
 
     /// See [`Cookie.domain`](Cookie::domain).
@@ -269,27 +208,15 @@ where
         self
     }
 
-    /// See [`Cookie.is_host_only`](Cookie::is_host_only).
-    pub fn is_host_only(mut self, is_host_only: bool) -> Self {
-        self.is_host_only = is_host_only;
+    /// See [`Cookie.host_only`](Cookie::host_only).
+    pub fn host_only(mut self, host_only: bool) -> Self {
+        self.host_only = host_only;
         self
     }
 
-    /// See [`Cookie.is_http_only`](Cookie::is_http_only).
-    pub fn is_http_only(mut self, is_http_only: bool) -> Self {
-        self.is_http_only = is_http_only;
-        self
-    }
-
-    /// See [`Cookie.is_persistent`](Cookie::is_persistent).
-    pub fn is_persistent(mut self, is_persistent: bool) -> Self {
-        self.is_persistent = is_persistent;
-        self
-    }
-
-    /// See [`Cookie.is_secure`](Cookie::is_secure).
-    pub fn is_secure(mut self, is_secure: bool) -> Self {
-        self.is_secure = is_secure;
+    /// See [`Cookie.http_only`](Cookie::http_only).
+    pub fn http_only(mut self, http_only: bool) -> Self {
+        self.http_only = http_only;
         self
     }
 
@@ -302,6 +229,18 @@ where
     /// See [`Cookie.path`](Cookie::path).
     pub fn path(mut self, path: S) -> Self {
         self.path = Some(path);
+        self
+    }
+
+    /// See [`Cookie.persistent`](Cookie::persistent).
+    pub fn persistent(mut self, persistent: bool) -> Self {
+        self.persistent = persistent;
+        self
+    }
+
+    /// See [`Cookie.secure`](Cookie::secure).
+    pub fn secure(mut self, secure: bool) -> Self {
+        self.secure = secure;
         self
     }
 
