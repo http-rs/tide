@@ -3,26 +3,29 @@ extern crate basic_cookies;
 
 use basic_cookies::Cookie;
 use std::collections::HashMap;
-use tide::{Compute, Computed, Request};
+use tide::{Compute, Computed, CookieBuilder, Request};
 
 #[derive(Clone, Debug)]
-struct Cookies {
-    content: HashMap<String, String>,
-}
+struct Cookies(HashMap<String, tide::Cookie<String>>);
 
 impl Compute for Cookies {
     fn compute_fresh(req: &mut Request) -> Self {
-        let content = if let Some(raw_cookies) = req.headers().get("Cookie") {
+        let unique_cookies = if let Some(raw_cookies) = req.headers().get("Cookie") {
             Cookie::parse(raw_cookies.to_str().unwrap())
                 .unwrap()
                 .iter()
-                .map(|c| (c.get_name().into(), c.get_value().into()))
+                .map(|c| {
+                    let cookie = CookieBuilder::new()
+                        .name(c.get_name().into())
+                        .value(c.get_value().into())
+                        .build();
+                    (c.get_name().into(), cookie).into()
+                })
                 .collect()
         } else {
             HashMap::new()
         };
-
-        Cookies { content }
+        Cookies(unique_cookies)
     }
 }
 

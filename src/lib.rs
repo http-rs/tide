@@ -20,6 +20,7 @@
 //!
 mod app;
 pub mod body;
+mod cookie;
 mod endpoint;
 mod extract;
 pub mod head;
@@ -30,6 +31,7 @@ mod router;
 
 pub use crate::{
     app::{App, AppData},
+    cookie::{Cookie, CookieBuilder},
     endpoint::Endpoint,
     extract::Extract,
     middleware::Middleware,
