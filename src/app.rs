@@ -15,8 +15,8 @@ use crate::{
     endpoint::Endpoint,
     extract::Extract,
     middleware::{logger::RootLogger, RequestContext},
-    router::{Resource, RouteResult, Router},
-    Middleware, Request, Response, RouteMatch,
+    router::{EndpointData, Resource, RouteResult, Router},
+    Configuration, Middleware, Request, Response, RouteMatch,
 };
 
 /// The top-level type for setting up a Tide application.
@@ -84,7 +84,7 @@ use crate::{
 pub struct App<Data> {
     data: Data,
     router: Router<Data>,
-    default_handler: BoxedEndpoint<Data>,
+    default_handler: EndpointData<Data>,
 }
 
 impl<Data: Clone + Send + Sync + 'static> App<Data> {
@@ -94,7 +94,10 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         let mut app = App {
             data,
             router: Router::new(),
-            default_handler: BoxedEndpoint::new(async || http::status::StatusCode::NOT_FOUND),
+            default_handler: EndpointData {
+                endpoint: BoxedEndpoint::new(async || http::status::StatusCode::NOT_FOUND),
+                config: Configuration::new(),
+            },
         };
 
         // Add RootLogger as a default middleware
@@ -114,9 +117,16 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
     }
 
     /// Set the default handler for the app, a fallback function when there is no match to the route requested
-    pub fn default_handler<T: Endpoint<Data, U>, U>(&mut self, handler: T) -> &mut Self {
-        self.default_handler = BoxedEndpoint::new(handler);
-        self
+    pub fn default_handler<T: Endpoint<Data, U>, U>(
+        &mut self,
+        handler: T,
+    ) -> &mut EndpointData<Data> {
+        let endpoint = EndpointData {
+            endpoint: BoxedEndpoint::new(handler),
+            config: self.router.config_base.clone(),
+        };
+        self.default_handler = endpoint;
+        &mut self.default_handler
     }
 
     /// Apply `middleware` to the whole app. Note that the order of nesting subrouters and applying
@@ -162,7 +172,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
 struct Server<Data> {
     data: Data,
     router: Arc<Router<Data>>,
-    default_handler: Arc<BoxedEndpoint<Data>>,
+    default_handler: Arc<EndpointData<Data>>,
 }
 
 impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
@@ -223,7 +233,12 @@ impl<T> DerefMut for AppData<T> {
 
 impl<T: Clone + Send + 'static> Extract<T> for AppData<T> {
     type Fut = future::Ready<Result<Self, Response>>;
-    fn extract(data: &mut T, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
+    fn extract(
+        data: &mut T,
+        req: &mut Request,
+        params: &Option<RouteMatch<'_>>,
+        config: &Configuration,
+    ) -> Self::Fut {
         future::ok(AppData(data.clone()))
     }
 }

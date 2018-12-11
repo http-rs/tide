@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use crate::{
     endpoint::{BoxedEndpoint, Endpoint},
-    Middleware,
+    Configuration, Middleware,
 };
 use path_table::{PathTable, RouteMatch};
 
@@ -13,10 +13,11 @@ use path_table::{PathTable, RouteMatch};
 pub struct Router<Data> {
     table: PathTable<ResourceData<Data>>,
     middleware_base: Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
+    pub(crate) config_base: Configuration,
 }
 
 pub(crate) struct RouteResult<'a, Data> {
-    pub(crate) endpoint: &'a BoxedEndpoint<Data>,
+    pub(crate) endpoint: &'a EndpointData<Data>,
     pub(crate) params: Option<RouteMatch<'a>>,
     pub(crate) middleware: &'a [Arc<dyn Middleware<Data> + Send + Sync>],
 }
@@ -44,7 +45,7 @@ fn route_match_success<'a, Data>(
 }
 
 fn route_match_failure<'a, Data>(
-    endpoint: &'a BoxedEndpoint<Data>,
+    endpoint: &'a EndpointData<Data>,
     middleware: &'a [Arc<dyn Middleware<Data> + Send + Sync>],
 ) -> RouteResult<'a, Data> {
     RouteResult {
@@ -103,6 +104,7 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
         Resource {
             table,
             middleware_base: &self.middleware_base,
+            config_base: &self.config_base,
         }
     }
 
@@ -111,6 +113,7 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
         Router {
             table: PathTable::new(),
             middleware_base: Vec::new(),
+            config_base: Configuration::new(),
         }
     }
 
@@ -155,7 +158,7 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
         &'a self,
         path: &'a str,
         method: &http::Method,
-        default_handler: &'a Arc<BoxedEndpoint<Data>>,
+        default_handler: &'a Arc<EndpointData<Data>>,
     ) -> RouteResult<'a, Data> {
         match self.table.route(path) {
             Some((route, route_match)) => route_match_success(route, route_match, method)
@@ -173,11 +176,17 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
 pub struct Resource<'a, Data> {
     table: &'a mut PathTable<ResourceData<Data>>,
     middleware_base: &'a Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
+    config_base: &'a Configuration,
 }
 
 struct ResourceData<Data> {
-    endpoints: HashMap<http::Method, BoxedEndpoint<Data>>,
+    endpoints: HashMap<http::Method, EndpointData<Data>>,
     middleware: Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
+}
+
+pub struct EndpointData<Data> {
+    pub(crate) endpoint: BoxedEndpoint<Data>,
+    pub(crate) config: Configuration,
 }
 
 impl<'a, Data> Resource<'a, Data> {
@@ -192,13 +201,18 @@ impl<'a, Data> Resource<'a, Data> {
         let mut subrouter = Router {
             table: PathTable::new(),
             middleware_base: self.middleware_base.clone(),
+            config_base: self.config_base.clone(),
         };
         builder(&mut subrouter);
         *self.table = subrouter.table;
     }
 
     /// Add an endpoint for the given HTTP method
-    pub fn method<T: Endpoint<Data, U>, U>(&mut self, method: http::Method, ep: T) {
+    pub fn method<T: Endpoint<Data, U>, U>(
+        &mut self,
+        method: http::Method,
+        ep: T,
+    ) -> &mut EndpointData<Data> {
         let resource = self.table.resource_mut();
         if resource.is_none() {
             let new_resource = ResourceData {
@@ -209,55 +223,61 @@ impl<'a, Data> Resource<'a, Data> {
         }
         let resource = resource.as_mut().unwrap();
 
-        if resource.endpoints.contains_key(&method) {
-            panic!("A {} endpoint already exists for this path", method)
+        let entry = resource.endpoints.entry(method);
+        if let std::collections::hash_map::Entry::Occupied(ep) = entry {
+            panic!("A {} endpoint already exists for this path", ep.key())
         }
 
-        resource.endpoints.insert(method, BoxedEndpoint::new(ep));
+        let endpoint = EndpointData {
+            endpoint: BoxedEndpoint::new(ep),
+            config: self.config_base.clone(),
+        };
+
+        entry.or_insert(endpoint)
     }
 
     /// Add an endpoint for `GET` requests
-    pub fn get<T: Endpoint<Data, U>, U>(&mut self, ep: T) {
+    pub fn get<T: Endpoint<Data, U>, U>(&mut self, ep: T) -> &mut EndpointData<Data> {
         self.method(http::Method::GET, ep)
     }
 
     /// Add an endpoint for `HEAD` requests
-    pub fn head<T: Endpoint<Data, U>, U>(&mut self, ep: T) {
+    pub fn head<T: Endpoint<Data, U>, U>(&mut self, ep: T) -> &mut EndpointData<Data> {
         self.method(http::Method::HEAD, ep)
     }
 
     /// Add an endpoint for `PUT` requests
-    pub fn put<T: Endpoint<Data, U>, U>(&mut self, ep: T) {
+    pub fn put<T: Endpoint<Data, U>, U>(&mut self, ep: T) -> &mut EndpointData<Data> {
         self.method(http::Method::PUT, ep)
     }
 
     /// Add an endpoint for `POST` requests
-    pub fn post<T: Endpoint<Data, U>, U>(&mut self, ep: T) {
+    pub fn post<T: Endpoint<Data, U>, U>(&mut self, ep: T) -> &mut EndpointData<Data> {
         self.method(http::Method::POST, ep)
     }
 
     /// Add an endpoint for `DELETE` requests
-    pub fn delete<T: Endpoint<Data, U>, U>(&mut self, ep: T) {
+    pub fn delete<T: Endpoint<Data, U>, U>(&mut self, ep: T) -> &mut EndpointData<Data> {
         self.method(http::Method::DELETE, ep)
     }
 
     /// Add an endpoint for `OPTIONS` requests
-    pub fn options<T: Endpoint<Data, U>, U>(&mut self, ep: T) {
+    pub fn options<T: Endpoint<Data, U>, U>(&mut self, ep: T) -> &mut EndpointData<Data> {
         self.method(http::Method::OPTIONS, ep)
     }
 
     /// Add an endpoint for `CONNECT` requests
-    pub fn connect<T: Endpoint<Data, U>, U>(&mut self, ep: T) {
+    pub fn connect<T: Endpoint<Data, U>, U>(&mut self, ep: T) -> &mut EndpointData<Data> {
         self.method(http::Method::CONNECT, ep)
     }
 
     /// Add an endpoint for `PATCH` requests
-    pub fn patch<T: Endpoint<Data, U>, U>(&mut self, ep: T) {
+    pub fn patch<T: Endpoint<Data, U>, U>(&mut self, ep: T) -> &mut EndpointData<Data> {
         self.method(http::Method::PATCH, ep)
     }
 
     /// Add an endpoint for `TRACE` requests
-    pub fn trace<T: Endpoint<Data, U>, U>(&mut self, ep: T) {
+    pub fn trace<T: Endpoint<Data, U>, U>(&mut self, ep: T) -> &mut EndpointData<Data> {
         self.method(http::Method::TRACE, ep)
     }
 }
@@ -280,9 +300,10 @@ mod tests {
         path: &'a str,
         method: &'a http::Method,
     ) -> Option<Response> {
-        let default_handler = Arc::new(BoxedEndpoint::new(async || {
-            http::status::StatusCode::NOT_FOUND
-        }));
+        let default_handler = Arc::new(EndpointData {
+            endpoint: BoxedEndpoint::new(async || http::status::StatusCode::NOT_FOUND),
+            config: Configuration::new(),
+        });
         let RouteResult {
             endpoint,
             params,
@@ -311,9 +332,10 @@ mod tests {
         path: &str,
         method: &http::Method,
     ) -> Option<usize> {
-        let default_handler = Arc::new(BoxedEndpoint::new(async || {
-            http::status::StatusCode::NOT_FOUND
-        }));
+        let default_handler = Arc::new(EndpointData {
+            endpoint: BoxedEndpoint::new(async || http::status::StatusCode::NOT_FOUND),
+            config: Configuration::new(),
+        });
         let route_result = router.route(path, method, &default_handler);
         Some(route_result.middleware.len())
     }

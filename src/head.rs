@@ -7,7 +7,7 @@ use futures::future;
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
-use crate::{Extract, IntoResponse, Request, Response, RouteMatch};
+use crate::{Configuration, Extract, IntoResponse, Request, Response, RouteMatch};
 
 /// Header and metadata for a request.
 ///
@@ -98,7 +98,12 @@ struct PathIdx(usize);
 
 impl<T: Send + 'static + std::str::FromStr, S: 'static> Extract<S> for Path<T> {
     type Fut = future::Ready<Result<Self, Response>>;
-    fn extract(data: &mut S, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
+    fn extract(
+        data: &mut S,
+        req: &mut Request,
+        params: &Option<RouteMatch<'_>>,
+        config: &Configuration,
+    ) -> Self::Fut {
         let &PathIdx(i) = req.extensions().get::<PathIdx>().unwrap_or(&PathIdx(0));
         req.extensions_mut().insert(PathIdx(i + 1));
         match params {
@@ -176,7 +181,12 @@ impl<T: NamedSegment> DerefMut for Named<T> {
 impl<T: NamedSegment, S: 'static> Extract<S> for Named<T> {
     type Fut = future::Ready<Result<Self, Response>>;
 
-    fn extract(data: &mut S, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
+    fn extract(
+        data: &mut S,
+        req: &mut Request,
+        params: &Option<RouteMatch<'_>>,
+        config: &Configuration,
+    ) -> Self::Fut {
         match params {
             Some(params) => params
                 .map
@@ -201,7 +211,12 @@ where
     S: 'static,
 {
     type Fut = future::Ready<Result<Self, Response>>;
-    fn extract(data: &mut S, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
+    fn extract(
+        data: &mut S,
+        req: &mut Request,
+        params: &Option<RouteMatch<'_>>,
+        config: &Configuration,
+    ) -> Self::Fut {
         req.uri().query().and_then(|q| q.parse().ok()).map_or(
             future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
             |q| future::ok(UrlQuery(q)),

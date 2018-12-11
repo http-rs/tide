@@ -31,7 +31,7 @@ mod router;
 
 pub use crate::{
     app::{App, AppData},
-    configuration::{Configuration, ConfigurationItem},
+    configuration::{Configuration, ConfigurationItem, ExtractConfiguration},
     endpoint::Endpoint,
     extract::Extract,
     middleware::Middleware,

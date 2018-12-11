@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use futures::future::FutureObj;
 
-use crate::{endpoint::BoxedEndpoint, Request, Response, RouteMatch};
+use crate::{router::EndpointData, Request, Response, RouteMatch};
 
 mod default_headers;
 pub mod logger;
@@ -28,7 +28,7 @@ pub struct RequestContext<'a, Data> {
     pub app_data: Data,
     pub req: Request,
     pub params: Option<RouteMatch<'a>>,
-    pub(crate) endpoint: &'a BoxedEndpoint<Data>,
+    pub(crate) endpoint: &'a EndpointData<Data>,
     pub(crate) next_middleware: &'a [Arc<dyn Middleware<Data> + Send + Sync>],
 }
 
@@ -41,9 +41,12 @@ impl<'a, Data: Clone + Send> RequestContext<'a, Data> {
                     self.next_middleware = next;
                     await!(current.handle(self))
                 } else {
-                    await!(self
-                        .endpoint
-                        .call(self.app_data.clone(), self.req, self.params))
+                    await!(self.endpoint.endpoint.call(
+                        self.app_data.clone(),
+                        self.req,
+                        self.params,
+                        &self.endpoint.config
+                    ))
                 }
             },
         ))
