@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use crate::{
     endpoint::{BoxedEndpoint, Endpoint},
-    Configuration, Middleware,
+    Configuration, ConfigurationItem, Middleware,
 };
 use path_table::{PathTable, RouteMatch};
 
@@ -154,6 +154,11 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
         self
     }
 
+    pub fn config<T: ConfigurationItem>(&mut self, item: T) -> &mut Self {
+        self.config_base.write(item).unwrap(); // TODO: handle error
+        self
+    }
+
     pub(crate) fn route<'a>(
         &'a self,
         path: &'a str,
@@ -165,6 +170,18 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
                 .unwrap_or_else(|| route_match_failure(default_handler, &self.middleware_base)),
             None => route_match_failure(default_handler, &self.middleware_base),
         }
+    }
+}
+
+pub struct EndpointData<Data> {
+    pub(crate) endpoint: BoxedEndpoint<Data>,
+    pub(crate) config: Configuration,
+}
+
+impl<Data> EndpointData<Data> {
+    pub fn config<T: ConfigurationItem>(&mut self, item: T) -> &mut Self {
+        self.config.write(item).unwrap(); // TODO: handle error
+        self
     }
 }
 
@@ -182,11 +199,6 @@ pub struct Resource<'a, Data> {
 struct ResourceData<Data> {
     endpoints: HashMap<http::Method, EndpointData<Data>>,
     middleware: Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
-}
-
-pub struct EndpointData<Data> {
-    pub(crate) endpoint: BoxedEndpoint<Data>,
-    pub(crate) config: Configuration,
 }
 
 impl<'a, Data> Resource<'a, Data> {

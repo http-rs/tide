@@ -16,7 +16,7 @@ use crate::{
     extract::Extract,
     middleware::{logger::RootLogger, RequestContext},
     router::{EndpointData, Resource, RouteResult, Router},
-    Configuration, Middleware, Request, Response, RouteMatch,
+    Configuration, ConfigurationItem, Middleware, Request, Response, RouteMatch,
 };
 
 /// The top-level type for setting up a Tide application.
@@ -133,6 +133,11 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
     /// middleware matters; see `Router` for details.
     pub fn middleware(&mut self, middleware: impl Middleware<Data> + 'static) -> &mut Self {
         self.router.middleware(middleware);
+        self
+    }
+
+    pub fn config<T: ConfigurationItem>(&mut self, item: T) -> &mut Self {
+        self.router.config(item);
         self
     }
 
