@@ -1,40 +1,63 @@
-use std::collections::BTreeMap;
+use std::any::{Any, TypeId};
+use std::collections::HashMap;
 
 use futures::future::FutureObj;
-use serde::{Deserialize, Serialize};
-use serde_derive::{Deserialize, Serialize};
 
 use crate::{Extract, Request, Response, RouteMatch};
 
-pub trait ConfigurationItem: Serialize + Deserialize<'static> {
-    const NAME: &'static str;
+trait ConfigurationItem: Any + Send + Sync {
+    fn clone_any(&self) -> Box<dyn ConfigurationItem>;
+    fn as_dyn_any(&self) -> &(dyn Any + Send + Sync);
+    fn as_dyn_any_mut(&mut self) -> &mut (dyn Any + Send + Sync);
 }
 
-#[derive(Clone, Serialize, Deserialize)]
-#[serde(transparent)]
-pub struct Configuration(BTreeMap<String, toml::Value>);
+impl<T> ConfigurationItem for T
+where
+    T: Any + Clone + Send + Sync,
+{
+    fn clone_any(&self) -> Box<dyn ConfigurationItem> {
+        Box::new(self.clone())
+    }
+
+    fn as_dyn_any(&self) -> &(dyn Any + Send + Sync) {
+        self
+    }
+
+    fn as_dyn_any_mut(&mut self) -> &mut (dyn Any + Send + Sync) {
+        self
+    }
+}
+
+impl Clone for Box<dyn ConfigurationItem> {
+    fn clone(&self) -> Box<dyn ConfigurationItem> {
+        (&**self).clone_any()
+    }
+}
+
+#[derive(Clone)]
+pub struct Configuration(HashMap<TypeId, Box<dyn ConfigurationItem>>);
 
 impl Configuration {
     pub(crate) fn new() -> Self {
-        Configuration(BTreeMap::new())
+        Configuration(HashMap::new())
     }
 
-    // TODO: properly handle errors
-    pub fn read<T: ConfigurationItem>(&self) -> Option<T> {
-        let value = self.0.get(T::NAME)?;
-        value.clone().try_into::<T>().ok()
+    pub fn read<T: Any + Clone + Send + Sync>(&self) -> Option<&T> {
+        let id = TypeId::of::<T>();
+        self.0.get(&id).and_then(|v| {
+            (**v).as_dyn_any().downcast_ref::<T>()
+        })
     }
 
-    pub fn write<T: ConfigurationItem>(&mut self, value: T) -> Result<Option<T>, toml::ser::Error> {
-        let value = toml::Value::try_from(value)?;
-        let previous_value = self.0.insert(T::NAME.into(), value);
-        Ok(previous_value.and_then(|v| v.try_into::<T>().ok()))
+    pub fn write<T: Any + Clone + Send + Sync>(&mut self, value: T) {
+        let id = TypeId::of::<T>();
+        self.0.insert(id, Box::new(value) as Box<dyn ConfigurationItem>);
     }
 }
 
 pub struct ExtractConfiguration<T>(pub Option<T>);
 
-impl<S: 'static, T: 'static + ConfigurationItem + Send> Extract<S> for ExtractConfiguration<T> {
+impl<S: 'static, T: Any + Clone + Send + Sync + 'static> Extract<S> for ExtractConfiguration<T> {
     type Fut = FutureObj<'static, Result<Self, Response>>;
 
     fn extract(
@@ -43,7 +66,7 @@ impl<S: 'static, T: 'static + ConfigurationItem + Send> Extract<S> for ExtractCo
         params: &Option<RouteMatch<'_>>,
         config: &Configuration,
     ) -> Self::Fut {
-        let config_item = config.read();
+        let config_item = config.read().cloned();
         FutureObj::new(Box::new(
             async move { Ok(ExtractConfiguration(config_item)) },
         ))

@@ -1,9 +1,10 @@
+use std::any::Any;
 use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::{
     endpoint::{BoxedEndpoint, Endpoint},
-    Configuration, ConfigurationItem, Middleware,
+    Configuration, Middleware,
 };
 use path_table::{PathTable, RouteMatch};
 
@@ -154,8 +155,8 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
         self
     }
 
-    pub fn config<T: ConfigurationItem>(&mut self, item: T) -> &mut Self {
-        self.config_base.write(item).unwrap(); // TODO: handle error
+    pub fn config<T: Any + Clone + Send + Sync>(&mut self, item: T) -> &mut Self {
+        self.config_base.write(item);
         self
     }
 
@@ -179,8 +180,8 @@ pub struct EndpointData<Data> {
 }
 
 impl<Data> EndpointData<Data> {
-    pub fn config<T: ConfigurationItem>(&mut self, item: T) -> &mut Self {
-        self.config.write(item).unwrap(); // TODO: handle error
+    pub fn config<T: Any + Clone + Send + Sync>(&mut self, item: T) -> &mut Self {
+        self.config.write(item);
         self
     }
 }

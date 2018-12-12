@@ -5,6 +5,7 @@ use futures::{
 };
 use hyper::service::Service;
 use std::{
+    any::Any,
     ops::{Deref, DerefMut},
     sync::Arc,
 };
@@ -16,7 +17,7 @@ use crate::{
     extract::Extract,
     middleware::{logger::RootLogger, RequestContext},
     router::{EndpointData, Resource, RouteResult, Router},
-    Configuration, ConfigurationItem, Middleware, Request, Response, RouteMatch,
+    Configuration, Middleware, Request, Response, RouteMatch,
 };
 
 /// The top-level type for setting up a Tide application.
@@ -136,7 +137,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         self
     }
 
-    pub fn config<T: ConfigurationItem>(&mut self, item: T) -> &mut Self {
+    pub fn config<T: Any + Clone + Send + Sync>(&mut self, item: T) -> &mut Self {
         self.router.config(item);
         self
     }

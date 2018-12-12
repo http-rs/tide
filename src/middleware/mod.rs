@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::sync::Arc;
 
 use futures::future::FutureObj;
@@ -33,6 +34,10 @@ pub struct RequestContext<'a, Data> {
 }
 
 impl<'a, Data: Clone + Send> RequestContext<'a, Data> {
+    pub fn get_config<T: Any + Clone + Send + Sync>(&self) -> Option<&T> {
+        self.endpoint.config.read::<T>()
+    }
+
     /// Consume this context, and run remaining middleware chain to completion.
     pub fn next(mut self) -> FutureObj<'a, Response> {
         FutureObj::new(Box::new(
