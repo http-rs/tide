@@ -1,7 +1,7 @@
 use futures::future;
 use std::ops::{Deref, DerefMut};
 
-use crate::{body::Body, Configuration, Extract, Response, RouteMatch};
+use crate::{body::Body, configuration::Configuration, Extract, Response, RouteMatch};
 
 /// An HTTP request.
 ///

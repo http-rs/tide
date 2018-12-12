@@ -3,8 +3,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::{
+    configuration::Configuration,
     endpoint::{BoxedEndpoint, Endpoint},
-    Configuration, Middleware,
+    Middleware,
 };
 use path_table::{PathTable, RouteMatch};
 

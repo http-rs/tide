@@ -1,7 +1,10 @@
 use futures::future::{Future, FutureObj};
 
 use crate::{
-    extract::Extract, head::Head, Configuration, IntoResponse, Request, Response, RouteMatch,
+    configuration::Configuration,
+    extract::Extract,
+    head::Head,
+    IntoResponse, Request, Response, RouteMatch,
 };
 
 /// The raw representation of an endpoint.

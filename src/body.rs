@@ -80,7 +80,7 @@ use pin_utils::pin_mut;
 use std::io::Cursor;
 use std::ops::{Deref, DerefMut};
 
-use crate::{Configuration, Extract, IntoResponse, Request, Response, RouteMatch};
+use crate::{configuration::Configuration, Extract, IntoResponse, Request, Response, RouteMatch};
 
 /// The raw contents of an http request or response.
 ///

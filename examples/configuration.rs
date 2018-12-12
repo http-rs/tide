@@ -1,9 +1,6 @@
 #![feature(async_await, futures_api)]
 
-use tide::{
-    head::Path,
-    ExtractConfiguration,
-};
+use tide::{head::Path, ExtractConfiguration};
 
 #[derive(Clone, Default)]
 struct IncreaseBy(i32);

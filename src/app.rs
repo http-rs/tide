@@ -12,12 +12,13 @@ use std::{
 
 use crate::{
     body::Body,
+    configuration::Configuration,
     endpoint::BoxedEndpoint,
     endpoint::Endpoint,
     extract::Extract,
     middleware::{logger::RootLogger, RequestContext},
     router::{EndpointData, Resource, RouteResult, Router},
-    Configuration, Middleware, Request, Response, RouteMatch,
+    Middleware, Request, Response, RouteMatch,
 };
 
 /// The top-level type for setting up a Tide application.

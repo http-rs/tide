@@ -1,6 +1,6 @@
 use futures::prelude::*;
 
-use crate::{Configuration, Request, Response, RouteMatch};
+use crate::{configuration::Configuration, Request, Response, RouteMatch};
 
 /// An extractor for an app with `Data`
 pub trait Extract<Data>: Send + Sized + 'static {

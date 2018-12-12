@@ -7,7 +7,7 @@ use futures::future;
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
-use crate::{Configuration, Extract, IntoResponse, Request, Response, RouteMatch};
+use crate::{configuration::Configuration, Extract, IntoResponse, Request, Response, RouteMatch};
 
 /// Header and metadata for a request.
 ///
