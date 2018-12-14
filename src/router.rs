@@ -548,4 +548,84 @@ mod tests {
             assert_eq!(res.status(), 200);
         }
     }
+
+    #[test]
+    fn configuration() {
+        use crate::ExtractConfiguration;
+        async fn endpoint(
+            ExtractConfiguration(x): ExtractConfiguration<&'static str>,
+        ) -> &'static str {
+            x.unwrap()
+        }
+
+        let mut router: Router<()> = Router::new();
+        router.config("foo");
+        router.at("/").get(endpoint);
+        router.at("/bar").get(endpoint).config("bar");
+        router.apply_default_config(); // simulating App behavior
+
+        let res = block_on(simulate_request(&router, "/", &http::Method::GET)).unwrap();
+        let body = block_on(res.into_body().read_to_vec()).unwrap();
+        assert_eq!(&*body, &*b"foo");
+
+        let res = block_on(simulate_request(&router, "/bar", &http::Method::GET)).unwrap();
+        let body = block_on(res.into_body().read_to_vec()).unwrap();
+        assert_eq!(&*body, &*b"bar");
+    }
+
+    #[test]
+    fn configuration_nested() {
+        use crate::ExtractConfiguration;
+        async fn endpoint(
+            ExtractConfiguration(x): ExtractConfiguration<&'static str>,
+        ) -> &'static str {
+            x.unwrap()
+        }
+
+        let mut router: Router<()> = Router::new();
+        router.config("foo");
+        router.at("/").get(endpoint);
+        router.at("/bar").nest(|router| {
+            router.config("bar");
+            router.at("/").get(endpoint);
+            router.at("/baz").get(endpoint).config("baz");
+        });
+        router.apply_default_config(); // simulating App behavior
+
+        let res = block_on(simulate_request(&router, "/", &http::Method::GET)).unwrap();
+        let body = block_on(res.into_body().read_to_vec()).unwrap();
+        assert_eq!(&*body, &*b"foo");
+
+        let res = block_on(simulate_request(&router, "/bar", &http::Method::GET)).unwrap();
+        let body = block_on(res.into_body().read_to_vec()).unwrap();
+        assert_eq!(&*body, &*b"bar");
+
+        let res = block_on(simulate_request(&router, "/bar/baz", &http::Method::GET)).unwrap();
+        let body = block_on(res.into_body().read_to_vec()).unwrap();
+        assert_eq!(&*body, &*b"baz");
+    }
+
+    #[test]
+    fn configuration_order() {
+        use crate::ExtractConfiguration;
+        async fn endpoint(
+            ExtractConfiguration(x): ExtractConfiguration<&'static str>,
+        ) -> &'static str {
+            x.unwrap()
+        }
+
+        let mut router: Router<()> = Router::new();
+        router.at("/").get(endpoint);
+        router.config("foo"); // order does not matter
+        router.at("/bar").get(endpoint).config("bar");
+        router.apply_default_config(); // simulating App behavior
+
+        let res = block_on(simulate_request(&router, "/", &http::Method::GET)).unwrap();
+        let body = block_on(res.into_body().read_to_vec()).unwrap();
+        assert_eq!(&*body, &*b"foo");
+
+        let res = block_on(simulate_request(&router, "/bar", &http::Method::GET)).unwrap();
+        let body = block_on(res.into_body().read_to_vec()).unwrap();
+        assert_eq!(&*body, &*b"bar");
+    }
 }
