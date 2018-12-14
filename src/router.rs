@@ -106,7 +106,6 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
         Resource {
             table,
             middleware_base: &self.middleware_base,
-            config_base: &self.config_base,
         }
     }
 
@@ -156,6 +155,9 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
         self
     }
 
+    /// Add a default configuration `item` for this router.
+    ///
+    /// The default configuration will be applied when the router setup ends.
     pub fn config<T: Any + Clone + Send + Sync>(&mut self, item: T) -> &mut Self {
         self.config_base.write(item);
         self
@@ -175,12 +177,26 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
     }
 }
 
+impl<Data> Router<Data> {
+    pub(crate) fn apply_default_config(&mut self) {
+        for resource in self.table.iter_mut() {
+            for endpoint in resource.endpoints.values_mut() {
+                endpoint.config.merge(&self.config_base);
+            }
+        }
+    }
+}
+
+/// A handle to the endpoint.
+///
+/// This can be used to add configuration items to the endpoint.
 pub struct EndpointData<Data> {
     pub(crate) endpoint: BoxedEndpoint<Data>,
     pub(crate) config: Configuration,
 }
 
 impl<Data> EndpointData<Data> {
+    /// Add a configuration `item` for this endpoint.
     pub fn config<T: Any + Clone + Send + Sync>(&mut self, item: T) -> &mut Self {
         self.config.write(item);
         self
@@ -192,10 +208,12 @@ impl<Data> EndpointData<Data> {
 /// All HTTP requests are made against resources. After using `Router::at` (or `App::at`) to
 /// establish a resource path, the `Resource` type can be used to establish endpoints for various
 /// HTTP methods at that path. Also, using `nest`, it can be used to set up a subrouter.
+///
+/// After establishing an endpoint, the method will return `&mut EndpointData`. This can be used to
+/// set per-endpoint configuration.
 pub struct Resource<'a, Data> {
     table: &'a mut PathTable<ResourceData<Data>>,
     middleware_base: &'a Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
-    config_base: &'a Configuration,
 }
 
 struct ResourceData<Data> {
@@ -215,9 +233,10 @@ impl<'a, Data> Resource<'a, Data> {
         let mut subrouter = Router {
             table: PathTable::new(),
             middleware_base: self.middleware_base.clone(),
-            config_base: self.config_base.clone(),
+            config_base: Configuration::new(),
         };
         builder(&mut subrouter);
+        subrouter.apply_default_config();
         *self.table = subrouter.table;
     }
 
@@ -244,7 +263,7 @@ impl<'a, Data> Resource<'a, Data> {
 
         let endpoint = EndpointData {
             endpoint: BoxedEndpoint::new(ep),
-            config: self.config_base.clone(),
+            config: Configuration::new(),
         };
 
         entry.or_insert(endpoint)

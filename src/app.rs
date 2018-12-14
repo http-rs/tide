@@ -138,12 +138,14 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         self
     }
 
+    /// Add a default configuration `item` for the whole app.
     pub fn config<T: Any + Clone + Send + Sync>(&mut self, item: T) -> &mut Self {
         self.router.config(item);
         self
     }
 
-    fn into_server(self) -> Server<Data> {
+    fn into_server(mut self) -> Server<Data> {
+        self.router.apply_default_config();
         Server {
             data: self.data,
             router: Arc::new(self.router),

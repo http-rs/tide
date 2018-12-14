@@ -47,6 +47,11 @@ impl Configuration {
         Configuration(HashMap::new())
     }
 
+    pub(crate) fn merge(&mut self, base: &Configuration) {
+        let overlay = std::mem::replace(&mut self.0, base.0.clone());
+        self.0.extend(overlay);
+    }
+
     /// Retrieve the configuration item of given type, returning `None` if it is not found.
     pub fn read<T: Any + Clone + Send + Sync>(&self) -> Option<&T> {
         let id = TypeId::of::<T>();
