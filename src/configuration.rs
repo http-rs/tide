@@ -1,3 +1,5 @@
+//! Types for managing and extracting configuration.
+
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 
@@ -34,6 +36,9 @@ impl Clone for Box<dyn ConfigurationItem> {
     }
 }
 
+/// A cloneable typemap for saving per-endpoint configuration.
+///
+/// Configuration is mostly managed by `App` and `Router`, so this is normally not used directly.
 #[derive(Clone)]
 pub struct Configuration(HashMap<TypeId, Box<dyn ConfigurationItem>>);
 
@@ -42,6 +47,7 @@ impl Configuration {
         Configuration(HashMap::new())
     }
 
+    /// Retrieve the configuration item of given type, returning `None` if it is not found.
     pub fn read<T: Any + Clone + Send + Sync>(&self) -> Option<&T> {
         let id = TypeId::of::<T>();
         self.0.get(&id).and_then(|v| {
@@ -49,12 +55,17 @@ impl Configuration {
         })
     }
 
+    /// Save the given configuration item.
     pub fn write<T: Any + Clone + Send + Sync>(&mut self, value: T) {
         let id = TypeId::of::<T>();
         self.0.insert(id, Box::new(value) as Box<dyn ConfigurationItem>);
     }
 }
 
+/// An extractor for reading configuration from endpoints.
+///
+/// It will try to retrieve the given configuration item. If it is not set, the extracted value
+/// will be `None`.
 pub struct ExtractConfiguration<T>(pub Option<T>);
 
 impl<S: 'static, T: Any + Clone + Send + Sync + 'static> Extract<S> for ExtractConfiguration<T> {
