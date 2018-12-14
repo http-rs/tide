@@ -50,15 +50,16 @@ impl Configuration {
     /// Retrieve the configuration item of given type, returning `None` if it is not found.
     pub fn read<T: Any + Clone + Send + Sync>(&self) -> Option<&T> {
         let id = TypeId::of::<T>();
-        self.0.get(&id).and_then(|v| {
-            (**v).as_dyn_any().downcast_ref::<T>()
-        })
+        self.0
+            .get(&id)
+            .and_then(|v| (**v).as_dyn_any().downcast_ref::<T>())
     }
 
     /// Save the given configuration item.
     pub fn write<T: Any + Clone + Send + Sync>(&mut self, value: T) {
         let id = TypeId::of::<T>();
-        self.0.insert(id, Box::new(value) as Box<dyn ConfigurationItem>);
+        self.0
+            .insert(id, Box::new(value) as Box<dyn ConfigurationItem>);
     }
 }
 
