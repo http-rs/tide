@@ -83,3 +83,40 @@ impl<S: 'static, T: Any + Clone + Send + Sync + 'static> Extract<S> for ExtractC
         ))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn configuration_read_write() {
+        let mut config = Configuration::new();
+        assert_eq!(config.read::<usize>(), None);
+        assert_eq!(config.read::<isize>(), None);
+        config.write(42usize);
+        config.write(-3isize);
+        assert_eq!(config.read::<usize>(), Some(&42));
+        assert_eq!(config.read::<isize>(), Some(&-3));
+        config.write(3usize);
+        assert_eq!(config.read::<usize>(), Some(&3));
+    }
+
+    #[test]
+    fn configuration_clone() {
+        let mut config = Configuration::new();
+        config.write(42usize);
+        config.write(String::from("foo"));
+
+        let mut new_config = config.clone();
+        new_config.write(3usize);
+        new_config.write(4u32);
+
+        assert_eq!(config.read::<usize>(), Some(&42));
+        assert_eq!(config.read::<u32>(), None);
+        assert_eq!(config.read::<String>(), Some(&"foo".into()));
+
+        assert_eq!(new_config.read::<usize>(), Some(&3));
+        assert_eq!(new_config.read::<u32>(), Some(&4));
+        assert_eq!(new_config.read::<String>(), Some(&"foo".into()));
+    }
+}

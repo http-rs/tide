@@ -430,7 +430,7 @@ mod tests {
         let mut router: Router<()> = Router::new();
         router
             .at("/a")
-            .nest(|router| router.at("/b").get(async || "/a/b GET"));
+            .nest(|router| { router.at("/b").get(async || "/a/b GET"); });
         router.at("/a/b").post(async || "/a/b POST");
 
         for (path, method) in &[("/a/b", http::Method::GET), ("/a/b", http::Method::POST)] {
@@ -451,7 +451,7 @@ mod tests {
         let mut router: Router<()> = Router::new();
         router
             .at("/a")
-            .nest(|router| router.at("/b").get(async || "")); // flattened into /a/b
+            .nest(|router| { router.at("/b").get(async || ""); }); // flattened into /a/b
         router.at("/a/b").get(async || "duplicate");
     }
 
