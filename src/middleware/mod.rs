@@ -34,7 +34,8 @@ pub struct RequestContext<'a, Data> {
 }
 
 impl<'a, Data: Clone + Send> RequestContext<'a, Data> {
-    pub fn get_config<T: Any + Clone + Send + Sync>(&self) -> Option<&T> {
+    /// Get a configuration item of given type from the endpoint.
+    pub fn get_config_item<T: Any + Clone + Send + Sync>(&self) -> Option<&T> {
         self.endpoint.config.read::<T>()
     }
 
