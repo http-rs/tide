@@ -12,7 +12,7 @@ use std::{
 
 use crate::{
     body::Body,
-    configuration::Configuration,
+    configuration::Store,
     endpoint::BoxedEndpoint,
     endpoint::Endpoint,
     extract::Extract,
@@ -98,7 +98,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
             router: Router::new(),
             default_handler: EndpointData {
                 endpoint: BoxedEndpoint::new(async || http::status::StatusCode::NOT_FOUND),
-                config: Configuration::new(),
+                store: Store::new(),
             },
         };
 
@@ -125,7 +125,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
     ) -> &mut EndpointData<Data> {
         let endpoint = EndpointData {
             endpoint: BoxedEndpoint::new(handler),
-            config: self.router.config_base.clone(),
+            store: self.router.store_base.clone(),
         };
         self.default_handler = endpoint;
         &mut self.default_handler
@@ -246,7 +246,7 @@ impl<T: Clone + Send + 'static> Extract<T> for AppData<T> {
         data: &mut T,
         req: &mut Request,
         params: &Option<RouteMatch<'_>>,
-        config: &Configuration,
+        store: &Store,
     ) -> Self::Fut {
         future::ok(AppData(data.clone()))
     }

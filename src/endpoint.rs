@@ -1,8 +1,7 @@
 use futures::future::{Future, FutureObj};
 
 use crate::{
-    configuration::Configuration, extract::Extract, head::Head, IntoResponse, Request, Response,
-    RouteMatch,
+    configuration::Store, extract::Extract, head::Head, IntoResponse, Request, Response, RouteMatch,
 };
 
 /// The raw representation of an endpoint.
@@ -81,14 +80,12 @@ pub trait Endpoint<Data, Kind>: Send + Sync + 'static {
         data: Data,
         req: Request,
         params: Option<RouteMatch<'_>>,
-        config: &Configuration,
+        store: &Store,
     ) -> Self::Fut;
 }
 
 type BoxedEndpointFn<Data> =
-    dyn Fn(Data, Request, Option<RouteMatch>, &Configuration) -> FutureObj<'static, Response>
-        + Send
-        + Sync;
+    dyn Fn(Data, Request, Option<RouteMatch>, &Store) -> FutureObj<'static, Response> + Send + Sync;
 
 pub(crate) struct BoxedEndpoint<Data> {
     endpoint: Box<BoxedEndpointFn<Data>>,
@@ -100,8 +97,8 @@ impl<Data> BoxedEndpoint<Data> {
         T: Endpoint<Data, Kind>,
     {
         BoxedEndpoint {
-            endpoint: Box::new(move |data, request, params, config| {
-                FutureObj::new(Box::new(ep.call(data, request, params, config)))
+            endpoint: Box::new(move |data, request, params, store| {
+                FutureObj::new(Box::new(ep.call(data, request, params, store)))
             }),
         }
     }
@@ -111,9 +108,9 @@ impl<Data> BoxedEndpoint<Data> {
         data: Data,
         req: Request,
         params: Option<RouteMatch<'_>>,
-        config: &Configuration,
+        store: &Store,
     ) -> FutureObj<'static, Response> {
-        (self.endpoint)(data, req, params, config)
+        (self.endpoint)(data, req, params, store)
     }
 }
 
@@ -145,9 +142,9 @@ macro_rules! end_point_impl_raw {
             type Fut = FutureObj<'static, Response>;
 
             #[allow(unused_mut, non_snake_case)]
-            fn call(&self, mut data: Data, mut req: Request, params: Option<RouteMatch<'_>>, config: &Configuration) -> Self::Fut {
+            fn call(&self, mut data: Data, mut req: Request, params: Option<RouteMatch<'_>>, store: &Store) -> Self::Fut {
                 let f = self.clone();
-                $(let $X = $X::extract(&mut data, &mut req, &params, config);)*
+                $(let $X = $X::extract(&mut data, &mut req, &params, store);)*
                 FutureObj::new(Box::new(async move {
                     let (parts, _) = req.into_parts();
                     let head = Head::from(parts);

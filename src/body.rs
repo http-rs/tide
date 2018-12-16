@@ -80,7 +80,7 @@ use pin_utils::pin_mut;
 use std::io::Cursor;
 use std::ops::{Deref, DerefMut};
 
-use crate::{configuration::Configuration, Extract, IntoResponse, Request, Response, RouteMatch};
+use crate::{configuration::Store, Extract, IntoResponse, Request, Response, RouteMatch};
 
 /// The raw contents of an http request or response.
 ///
@@ -206,7 +206,7 @@ impl<S: 'static> Extract<S> for MultipartForm {
         data: &mut S,
         req: &mut Request,
         params: &Option<RouteMatch<'_>>,
-        config: &Configuration,
+        store: &Store,
     ) -> Self::Fut {
         // https://stackoverflow.com/questions/43424982/how-to-parse-multipart-forms-using-abonander-multipart-with-rocket
 
@@ -257,7 +257,7 @@ impl<T: Send + serde::de::DeserializeOwned + 'static, S: 'static> Extract<S> for
         data: &mut S,
         req: &mut Request,
         params: &Option<RouteMatch<'_>>,
-        config: &Configuration,
+        store: &Store,
     ) -> Self::Fut {
         let mut body = std::mem::replace(req.body_mut(), Body::empty());
         FutureObj::new(Box::new(
@@ -309,7 +309,7 @@ impl<T: Send + serde::de::DeserializeOwned + 'static, S: 'static> Extract<S> for
         data: &mut S,
         req: &mut Request,
         params: &Option<RouteMatch<'_>>,
-        config: &Configuration,
+        store: &Store,
     ) -> Self::Fut {
         let mut body = std::mem::replace(req.body_mut(), Body::empty());
         FutureObj::new(Box::new(
@@ -357,7 +357,7 @@ impl<S: 'static> Extract<S> for Str {
         data: &mut S,
         req: &mut Request,
         params: &Option<RouteMatch<'_>>,
-        config: &Configuration,
+        store: &Store,
     ) -> Self::Fut {
         let mut body = std::mem::replace(req.body_mut(), Body::empty());
 
@@ -393,7 +393,7 @@ impl<S: 'static> Extract<S> for StrLossy {
         data: &mut S,
         req: &mut Request,
         params: &Option<RouteMatch<'_>>,
-        config: &Configuration,
+        store: &Store,
     ) -> Self::Fut {
         let mut body = std::mem::replace(req.body_mut(), Body::empty());
 
@@ -429,7 +429,7 @@ impl<S: 'static> Extract<S> for Bytes {
         data: &mut S,
         req: &mut Request,
         params: &Option<RouteMatch<'_>>,
-        config: &Configuration,
+        store: &Store,
     ) -> Self::Fut {
         let mut body = std::mem::replace(req.body_mut(), Body::empty());
 
