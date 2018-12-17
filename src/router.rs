@@ -185,6 +185,10 @@ impl<Data> Router<Data> {
             }
         }
     }
+
+    pub(crate) fn get<T: Any + Clone + Send + Sync>(&self) -> Option<&T> {
+        self.store_base.read()
+    }
 }
 
 /// A handle to the endpoint.

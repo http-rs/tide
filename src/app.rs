@@ -12,7 +12,7 @@ use std::{
 
 use crate::{
     body::Body,
-    configuration::Store,
+    configuration::{Configuration, Store},
     endpoint::BoxedEndpoint,
     endpoint::Endpoint,
     extract::Extract,
@@ -104,7 +104,15 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
 
         // Add RootLogger as a default middleware
         app.middleware(logger);
+        app.setup_configuration();
+
         app
+    }
+
+    // Add default configuration
+    fn setup_configuration(&mut self) {
+        let config = Configuration::build().finalize();
+        self.config(config);
     }
 
     /// Get the top-level router.
@@ -142,6 +150,10 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
     pub fn config<T: Any + Clone + Send + Sync>(&mut self, item: T) -> &mut Self {
         self.router.config(item);
         self
+    }
+
+    pub fn get_config_item<T: Any + Clone + Send + Sync>(&self) -> Option<&T> {
+        self.router.get()
     }
 
     fn into_server(mut self) -> Server<Data> {

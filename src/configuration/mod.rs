@@ -7,6 +7,10 @@ use futures::future::FutureObj;
 
 use crate::{Extract, Request, Response, RouteMatch};
 
+mod default_config;
+
+pub use self::default_config::{Configuration, ConfigurationBuilder};
+
 trait StoreItem: Any + Send + Sync {
     fn clone_any(&self) -> Box<dyn StoreItem>;
     fn as_dyn_any(&self) -> &(dyn Any + Send + Sync);
@@ -82,6 +86,9 @@ impl<S: 'static, T: Any + Clone + Send + Sync + 'static> Extract<S> for ExtractC
         params: &Option<RouteMatch<'_>>,
         config: &Store,
     ) -> Self::Fut {
+        // The return type here is Option<K>, but the return type of the result of the future is
+        // Result<ExtractConfiguration<T>, Response>, so rustc can infer that K == T, so we do not
+        // need config.read::<T>().cloned()
         let config_item = config.read().cloned();
         FutureObj::new(Box::new(
             async move { Ok(ExtractConfiguration(config_item)) },
