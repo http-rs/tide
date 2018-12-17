@@ -152,7 +152,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         self
     }
 
-    pub fn get_config_item<T: Any + Clone + Send + Sync>(&self) -> Option<&T> {
+    pub fn get_item<T: Any + Clone + Send + Sync>(&self) -> Option<&T> {
         self.router.get()
     }
 
@@ -169,6 +169,9 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
     ///
     /// Blocks the calling thread indefinitely.
     pub fn serve<A: std::net::ToSocketAddrs>(self, addr: A) {
+        let configuration = self.get_item::<Configuration>().unwrap();
+        println!("Got configuration {:?}", configuration);
+
         let server: Server<Data> = self.into_server();
 
         // TODO: be more robust
