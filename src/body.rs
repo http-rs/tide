@@ -33,7 +33,7 @@
 //! app.at("/echo/string_lossy").post(echo_string_lossy);
 //! app.at("/echo/bytes").post(echo_bytes);
 //!
-//! #    app.serve("127.0.0.1:7878");
+//! #    app.serve();
 //! # }
 //!
 //! ```
@@ -68,7 +68,7 @@
 //! app.at("/echo/json").post(echo_json);
 //! app.at("/echo/form").post(echo_form);
 //! #
-//! #    app.serve("127.0.0.1:7878");
+//! #    app.serve();
 //! # }
 //!
 //! ```

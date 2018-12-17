@@ -74,7 +74,7 @@ impl Head {
 /// fn main() {
 ///     let mut app = tide::App::new(());
 ///     app.at("/path/{}").get(path_segment);
-///     app.serve("127.0.0.1:7878")
+///     app.serve()
 /// }
 /// ```
 ///
@@ -159,7 +159,7 @@ pub trait NamedSegment: Send + 'static + std::str::FromStr {
 /// fn main() {
 ///     let mut app = tide::App::new(());
 ///     app.at("/path_named/{num}").get(named_segments);
-///     app.serve("127.0.0.1:7878")
+///     app.serve()
 /// }
 /// ```
 ///

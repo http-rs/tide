@@ -27,7 +27,7 @@ use crate::{
 /// fn main() {
 ///     let mut app = tide::App::new(());
 ///     app.at("/hello").get(hello);
-///     app.serve("127.0.0.1:7878")
+///     app.serve()
 /// }
 /// ```
 ///
@@ -64,7 +64,7 @@ use crate::{
 /// fn main() {
 ///     let mut app = tide::App::new(Database::new());
 ///     app.at("/messages/insert").post(insert);
-///     app.serve("127.0.0.1:7878")
+///     app.serve()
 /// }
 /// ```
 ///

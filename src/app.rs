@@ -37,7 +37,7 @@ use crate::{
 ///
 /// let mut app = tide::App::new(());
 /// app.at("/hello").get(async || "Hello, world!");
-/// app.serve("127.0.0.1:7878")
+/// app.serve()
 /// ```
 ///
 /// `App` state can be modeled with an underlying `Data` handle for a cloneable type `T`. Endpoints
@@ -76,7 +76,7 @@ use crate::{
 /// fn main() {
 ///     let mut app = tide::App::new(Database::new());
 ///     app.at("/messages/insert").post(insert);
-///     app.serve("127.0.0.1:7878")
+///     app.serve()
 /// }
 /// ```
 ///
