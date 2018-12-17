@@ -168,15 +168,18 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
     /// Start serving the app at the given address.
     ///
     /// Blocks the calling thread indefinitely.
-    pub fn serve<A: std::net::ToSocketAddrs>(self, addr: A) {
+    pub fn serve(self) {
         let configuration = self.get_item::<Configuration>().unwrap();
-        println!("Got configuration {:?}", configuration);
+        let addr = format!("{}:{}", configuration.address, configuration.port)
+            .parse::<std::net::SocketAddr>()
+            .unwrap()
+            .clone();
+
+        println!("Server is listening on: http://{}", addr);
 
         let server: Server<Data> = self.into_server();
 
         // TODO: be more robust
-        let addr = addr.to_socket_addrs().unwrap().next().unwrap();
-
         let server = hyper::Server::bind(&addr)
             .serve(move || {
                 let res: Result<_, std::io::Error> = Ok(server.clone());
