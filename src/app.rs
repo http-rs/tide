@@ -153,7 +153,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
     }
 
     pub fn get_item<T: Any + Clone + Send + Sync>(&self) -> Option<&T> {
-        self.router.get()
+        self.router.get_item()
     }
 
     fn into_server(mut self) -> Server<Data> {
