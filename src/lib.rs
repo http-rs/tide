@@ -7,8 +7,6 @@
     futures_api,
     async_await,
     await_macro,
-    pin,
-    arbitrary_self_types,
     existential_type
 )]
 
