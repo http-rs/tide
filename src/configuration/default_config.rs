@@ -6,7 +6,10 @@ pub enum Environment {
     Production,
 }
 
-/// Holds the default configuration for the App
+/// Holds the default configuration for the App.
+///
+/// Only the one that is applied to the top-level router will be regarded. Overriding this item in
+/// resource paths or subrouters has no effect.
 #[derive(Debug, Clone)]
 pub struct Configuration {
     pub env: Environment,
