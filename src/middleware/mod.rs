@@ -41,20 +41,16 @@ impl<'a, Data: Clone + Send> RequestContext<'a, Data> {
 
     /// Consume this context, and run remaining middleware chain to completion.
     pub fn next(mut self) -> FutureObj<'a, Response> {
-        FutureObj::new(Box::new(
-            async move {
-                if let Some((current, next)) = self.next_middleware.split_first() {
-                    self.next_middleware = next;
-                    await!(current.handle(self))
-                } else {
-                    await!(self.endpoint.endpoint.call(
-                        self.app_data.clone(),
-                        self.req,
-                        self.params,
-                        &self.endpoint.store
-                    ))
-                }
-            },
-        ))
+        if let Some((current, next)) = self.next_middleware.split_first() {
+            self.next_middleware = next;
+            current.handle(self)
+        } else {
+            FutureObj::new(Box::new(self.endpoint.endpoint.call(
+                self.app_data.clone(),
+                self.req,
+                self.params,
+                &self.endpoint.store,
+            )))
+        }
     }
 }
