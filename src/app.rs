@@ -172,8 +172,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         let configuration = self.get_item::<Configuration>().unwrap();
         let addr = format!("{}:{}", configuration.address, configuration.port)
             .parse::<std::net::SocketAddr>()
-            .unwrap()
-            .clone();
+            .unwrap();
 
         println!("Server is listening on: http://{}", addr);
 

@@ -35,12 +35,12 @@ impl Default for Configuration {
 
 impl Configuration {
     pub fn build() -> ConfigurationBuilder {
-        ConfigurationBuilder::new()
+        ConfigurationBuilder::default()
     }
 }
 
-impl ConfigurationBuilder {
-    pub fn new() -> Self {
+impl Default for ConfigurationBuilder {
+    fn default() -> Self {
         let config = Configuration::default();
 
         Self {
@@ -49,7 +49,9 @@ impl ConfigurationBuilder {
             port: config.port,
         }
     }
+}
 
+impl ConfigurationBuilder {
     pub fn env(mut self, env: Environment) -> Self {
         self.env = env;
         self
