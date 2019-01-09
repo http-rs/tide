@@ -23,7 +23,5 @@ fn main() {
     app.at("add_one/{}").get(add); // `IncreaseBy` is set to 1
     app.at("add_two/{}").get(add).config(IncreaseBy(2)); // `IncreaseBy` is overridden to 2
 
-    let address = "127.0.0.1:8000".to_owned();
-    println!("Server is listening on http://{}", address);
-    app.serve(address);
+    app.serve();
 }

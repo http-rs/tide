@@ -35,8 +35,8 @@ pub struct RequestContext<'a, Data> {
 
 impl<'a, Data: Clone + Send> RequestContext<'a, Data> {
     /// Get a configuration item of given type from the endpoint.
-    pub fn get_config_item<T: Any + Clone + Send + Sync>(&self) -> Option<&T> {
-        self.endpoint.config.read::<T>()
+    pub fn get_item<T: Any + Clone + Send + Sync>(&self) -> Option<&T> {
+        self.endpoint.store.read::<T>()
     }
 
     /// Consume this context, and run remaining middleware chain to completion.
@@ -51,7 +51,7 @@ impl<'a, Data: Clone + Send> RequestContext<'a, Data> {
                         self.app_data.clone(),
                         self.req,
                         self.params,
-                        &self.endpoint.config
+                        &self.endpoint.store
                     ))
                 }
             },

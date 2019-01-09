@@ -7,17 +7,21 @@ use futures::future::FutureObj;
 
 use crate::{Extract, Request, Response, RouteMatch};
 
-trait ConfigurationItem: Any + Send + Sync {
-    fn clone_any(&self) -> Box<dyn ConfigurationItem>;
+mod default_config;
+
+pub use self::default_config::{Configuration, ConfigurationBuilder};
+
+trait StoreItem: Any + Send + Sync {
+    fn clone_any(&self) -> Box<dyn StoreItem>;
     fn as_dyn_any(&self) -> &(dyn Any + Send + Sync);
     fn as_dyn_any_mut(&mut self) -> &mut (dyn Any + Send + Sync);
 }
 
-impl<T> ConfigurationItem for T
+impl<T> StoreItem for T
 where
     T: Any + Clone + Send + Sync,
 {
-    fn clone_any(&self) -> Box<dyn ConfigurationItem> {
+    fn clone_any(&self) -> Box<dyn StoreItem> {
         Box::new(self.clone())
     }
 
@@ -30,24 +34,24 @@ where
     }
 }
 
-impl Clone for Box<dyn ConfigurationItem> {
-    fn clone(&self) -> Box<dyn ConfigurationItem> {
+impl Clone for Box<dyn StoreItem> {
+    fn clone(&self) -> Box<dyn StoreItem> {
         (&**self).clone_any()
     }
 }
 
 /// A cloneable typemap for saving per-endpoint configuration.
 ///
-/// Configuration is mostly managed by `App` and `Router`, so this is normally not used directly.
+/// Store is mostly managed by `App` and `Router`, so this is normally not used directly.
 #[derive(Clone)]
-pub struct Configuration(HashMap<TypeId, Box<dyn ConfigurationItem>>);
+pub struct Store(HashMap<TypeId, Box<dyn StoreItem>>);
 
-impl Configuration {
+impl Store {
     pub(crate) fn new() -> Self {
-        Configuration(HashMap::new())
+        Store(HashMap::new())
     }
 
-    pub(crate) fn merge(&mut self, base: &Configuration) {
+    pub(crate) fn merge(&mut self, base: &Store) {
         let overlay = std::mem::replace(&mut self.0, base.0.clone());
         self.0.extend(overlay);
     }
@@ -63,8 +67,7 @@ impl Configuration {
     /// Save the given configuration item.
     pub fn write<T: Any + Clone + Send + Sync>(&mut self, value: T) {
         let id = TypeId::of::<T>();
-        self.0
-            .insert(id, Box::new(value) as Box<dyn ConfigurationItem>);
+        self.0.insert(id, Box::new(value) as Box<dyn StoreItem>);
     }
 }
 
@@ -81,8 +84,11 @@ impl<S: 'static, T: Any + Clone + Send + Sync + 'static> Extract<S> for ExtractC
         data: &mut S,
         req: &mut Request,
         params: &Option<RouteMatch<'_>>,
-        config: &Configuration,
+        config: &Store,
     ) -> Self::Fut {
+        // The return type here is Option<K>, but the return type of the result of the future is
+        // Result<ExtractConfiguration<T>, Response>, so rustc can infer that K == T, so we do not
+        // need config.read::<T>().cloned()
         let config_item = config.read().cloned();
         FutureObj::new(Box::new(
             async move { Ok(ExtractConfiguration(config_item)) },
@@ -96,7 +102,7 @@ mod tests {
 
     #[test]
     fn configuration_read_write() {
-        let mut config = Configuration::new();
+        let mut config = Store::new();
         assert_eq!(config.read::<usize>(), None);
         assert_eq!(config.read::<isize>(), None);
         config.write(42usize);
@@ -109,7 +115,7 @@ mod tests {
 
     #[test]
     fn configuration_clone() {
-        let mut config = Configuration::new();
+        let mut config = Store::new();
         config.write(42usize);
         config.write(String::from("foo"));
 

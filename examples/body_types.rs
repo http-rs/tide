@@ -52,7 +52,5 @@ fn main() {
     app.at("/echo/json").post(echo_json);
     app.at("/echo/form").post(echo_form);
 
-    let address = "127.0.0.1:8000".to_owned();
-    println!("Server is listening on http://{}", address);
-    app.serve(address);
+    app.serve();
 }

@@ -7,7 +7,7 @@ use futures::future;
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
-use crate::{configuration::Configuration, Extract, IntoResponse, Request, Response, RouteMatch};
+use crate::{configuration::Store, Extract, IntoResponse, Request, Response, RouteMatch};
 
 /// Header and metadata for a request.
 ///
@@ -74,7 +74,7 @@ impl Head {
 /// fn main() {
 ///     let mut app = tide::App::new(());
 ///     app.at("/path/{}").get(path_segment);
-///     app.serve("127.0.0.1:7878")
+///     app.serve()
 /// }
 /// ```
 ///
@@ -102,7 +102,7 @@ impl<T: Send + 'static + std::str::FromStr, S: 'static> Extract<S> for Path<T> {
         data: &mut S,
         req: &mut Request,
         params: &Option<RouteMatch<'_>>,
-        config: &Configuration,
+        store: &Store,
     ) -> Self::Fut {
         let &PathIdx(i) = req.extensions().get::<PathIdx>().unwrap_or(&PathIdx(0));
         req.extensions_mut().insert(PathIdx(i + 1));
@@ -159,7 +159,7 @@ pub trait NamedSegment: Send + 'static + std::str::FromStr {
 /// fn main() {
 ///     let mut app = tide::App::new(());
 ///     app.at("/path_named/{num}").get(named_segments);
-///     app.serve("127.0.0.1:7878")
+///     app.serve()
 /// }
 /// ```
 ///
@@ -185,7 +185,7 @@ impl<T: NamedSegment, S: 'static> Extract<S> for Named<T> {
         data: &mut S,
         req: &mut Request,
         params: &Option<RouteMatch<'_>>,
-        config: &Configuration,
+        store: &Store,
     ) -> Self::Fut {
         match params {
             Some(params) => params
@@ -215,7 +215,7 @@ where
         data: &mut S,
         req: &mut Request,
         params: &Option<RouteMatch<'_>>,
-        config: &Configuration,
+        store: &Store,
     ) -> Self::Fut {
         req.uri().query().and_then(|q| q.parse().ok()).map_or(
             future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
