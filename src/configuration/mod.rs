@@ -101,34 +101,34 @@ mod tests {
     use super::*;
 
     #[test]
-    fn configuration_read_write() {
-        let mut config = Store::new();
-        assert_eq!(config.read::<usize>(), None);
-        assert_eq!(config.read::<isize>(), None);
-        config.write(42usize);
-        config.write(-3isize);
-        assert_eq!(config.read::<usize>(), Some(&42));
-        assert_eq!(config.read::<isize>(), Some(&-3));
-        config.write(3usize);
-        assert_eq!(config.read::<usize>(), Some(&3));
+    fn store_read_write() {
+        let mut store = Store::new();
+        assert_eq!(store.read::<usize>(), None);
+        assert_eq!(store.read::<isize>(), None);
+        store.write(42usize);
+        store.write(-3isize);
+        assert_eq!(store.read::<usize>(), Some(&42));
+        assert_eq!(store.read::<isize>(), Some(&-3));
+        store.write(3usize);
+        assert_eq!(store.read::<usize>(), Some(&3));
     }
 
     #[test]
-    fn configuration_clone() {
-        let mut config = Store::new();
-        config.write(42usize);
-        config.write(String::from("foo"));
+    fn store_clone() {
+        let mut store = Store::new();
+        store.write(42usize);
+        store.write(String::from("foo"));
 
-        let mut new_config = config.clone();
-        new_config.write(3usize);
-        new_config.write(4u32);
+        let mut new_store = store.clone();
+        new_store.write(3usize);
+        new_store.write(4u32);
 
-        assert_eq!(config.read::<usize>(), Some(&42));
-        assert_eq!(config.read::<u32>(), None);
-        assert_eq!(config.read::<String>(), Some(&"foo".into()));
+        assert_eq!(store.read::<usize>(), Some(&42));
+        assert_eq!(store.read::<u32>(), None);
+        assert_eq!(store.read::<String>(), Some(&"foo".into()));
 
-        assert_eq!(new_config.read::<usize>(), Some(&3));
-        assert_eq!(new_config.read::<u32>(), Some(&4));
-        assert_eq!(new_config.read::<String>(), Some(&"foo".into()));
+        assert_eq!(new_store.read::<usize>(), Some(&3));
+        assert_eq!(new_store.read::<u32>(), Some(&4));
+        assert_eq!(new_store.read::<String>(), Some(&"foo".into()));
     }
 }
