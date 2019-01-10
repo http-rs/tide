@@ -84,14 +84,14 @@ impl<S: 'static, T: Any + Clone + Send + Sync + 'static> Extract<S> for ExtractC
         data: &mut S,
         req: &mut Request,
         params: &Option<RouteMatch<'_>>,
-        config: &Store,
+        store: &Store,
     ) -> Self::Fut {
         // The return type here is Option<K>, but the return type of the result of the future is
         // Result<ExtractConfiguration<T>, Response>, so rustc can infer that K == T, so we do not
         // need config.read::<T>().cloned()
-        let config_item = config.read().cloned();
+        let store_item = store.read().cloned();
         FutureObj::new(Box::new(
-            async move { Ok(ExtractConfiguration(config_item)) },
+            async move { Ok(ExtractConfiguration(store_item)) },
         ))
     }
 }
