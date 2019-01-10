@@ -2,6 +2,7 @@
 
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
+use std::fmt::{self, Debug};
 
 use futures::future::FutureObj;
 
@@ -15,11 +16,12 @@ trait StoreItem: Any + Send + Sync {
     fn clone_any(&self) -> Box<dyn StoreItem>;
     fn as_dyn_any(&self) -> &(dyn Any + Send + Sync);
     fn as_dyn_any_mut(&mut self) -> &mut (dyn Any + Send + Sync);
+    fn fmt_debug(&self, fmt: &mut fmt::Formatter) -> fmt::Result;
 }
 
 impl<T> StoreItem for T
 where
-    T: Any + Clone + Send + Sync,
+    T: Any + Debug + Clone + Send + Sync,
 {
     fn clone_any(&self) -> Box<dyn StoreItem> {
         Box::new(self.clone())
@@ -32,6 +34,10 @@ where
     fn as_dyn_any_mut(&mut self) -> &mut (dyn Any + Send + Sync) {
         self
     }
+
+    fn fmt_debug(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        self.fmt(fmt)
+    }
 }
 
 impl Clone for Box<dyn StoreItem> {
@@ -40,11 +46,23 @@ impl Clone for Box<dyn StoreItem> {
     }
 }
 
+impl Debug for Box<dyn StoreItem> {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        (&**self).fmt_debug(fmt)
+    }
+}
+
 /// A cloneable typemap for saving per-endpoint configuration.
 ///
 /// Store is mostly managed by `App` and `Router`, so this is normally not used directly.
 #[derive(Clone)]
 pub struct Store(HashMap<TypeId, Box<dyn StoreItem>>);
+
+impl Debug for Store {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        fmt.debug_set().entries(self.0.values()).finish()
+    }
+}
 
 impl Store {
     pub(crate) fn new() -> Self {
@@ -57,7 +75,7 @@ impl Store {
     }
 
     /// Retrieve the configuration item of given type, returning `None` if it is not found.
-    pub fn read<T: Any + Clone + Send + Sync>(&self) -> Option<&T> {
+    pub fn read<T: Any + Debug + Clone + Send + Sync>(&self) -> Option<&T> {
         let id = TypeId::of::<T>();
         self.0
             .get(&id)
@@ -65,7 +83,7 @@ impl Store {
     }
 
     /// Save the given configuration item.
-    pub fn write<T: Any + Clone + Send + Sync>(&mut self, value: T) {
+    pub fn write<T: Any + Debug + Clone + Send + Sync>(&mut self, value: T) {
         let id = TypeId::of::<T>();
         self.0.insert(id, Box::new(value) as Box<dyn StoreItem>);
     }
@@ -77,7 +95,11 @@ impl Store {
 /// will be `None`.
 pub struct ExtractConfiguration<T>(pub Option<T>);
 
-impl<S: 'static, T: Any + Clone + Send + Sync + 'static> Extract<S> for ExtractConfiguration<T> {
+impl<S, T> Extract<S> for ExtractConfiguration<T>
+where
+    S: 'static,
+    T: Any + Debug + Clone + Send + Sync + 'static,
+{
     type Fut = FutureObj<'static, Result<Self, Response>>;
 
     fn extract(

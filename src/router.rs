@@ -1,5 +1,6 @@
 use std::any::Any;
 use std::collections::HashMap;
+use std::fmt::Debug;
 use std::sync::Arc;
 
 use crate::{
@@ -158,7 +159,7 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
     /// Add a default configuration `item` for this router.
     ///
     /// The default configuration will be applied when the router setup ends.
-    pub fn config<T: Any + Clone + Send + Sync>(&mut self, item: T) -> &mut Self {
+    pub fn config<T: Any + Debug + Clone + Send + Sync>(&mut self, item: T) -> &mut Self {
         self.store_base.write(item);
         self
     }
@@ -186,7 +187,7 @@ impl<Data> Router<Data> {
         }
     }
 
-    pub(crate) fn get_item<T: Any + Clone + Send + Sync>(&self) -> Option<&T> {
+    pub(crate) fn get_item<T: Any + Debug + Clone + Send + Sync>(&self) -> Option<&T> {
         self.store_base.read()
     }
 }
@@ -201,7 +202,7 @@ pub struct EndpointData<Data> {
 
 impl<Data> EndpointData<Data> {
     /// Add a configuration `item` for this endpoint.
-    pub fn config<T: Any + Clone + Send + Sync>(&mut self, item: T) -> &mut Self {
+    pub fn config<T: Any + Debug + Clone + Send + Sync>(&mut self, item: T) -> &mut Self {
         self.store.write(item);
         self
     }

@@ -1,9 +1,10 @@
 use std::any::Any;
+use std::fmt::Debug;
 use std::sync::Arc;
 
 use futures::future::FutureObj;
 
-use crate::{router::EndpointData, Request, Response, RouteMatch};
+use crate::{configuration::Store, router::EndpointData, Request, Response, RouteMatch};
 
 mod default_headers;
 pub mod logger;
@@ -35,8 +36,16 @@ pub struct RequestContext<'a, Data> {
 
 impl<'a, Data: Clone + Send> RequestContext<'a, Data> {
     /// Get a configuration item of given type from the endpoint.
-    pub fn get_item<T: Any + Clone + Send + Sync>(&self) -> Option<&T> {
+    pub fn get_item<T: Any + Debug + Clone + Send + Sync>(&self) -> Option<&T> {
         self.endpoint.store.read::<T>()
+    }
+
+    /// Get the configuration store for this request.
+    ///
+    /// This is for debug purposes. `Store` implements `Debug`, so the store can be inspected using
+    /// `{:?}` formatter.
+    pub fn store(&self) -> &Store {
+        &self.endpoint.store
     }
 
     /// Consume this context, and run remaining middleware chain to completion.

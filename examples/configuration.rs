@@ -3,7 +3,7 @@
 use tide::{head::Path, ExtractConfiguration};
 
 /// A type that represents how much value will be added by the `add` handler.
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 struct IncreaseBy(i32);
 
 async fn add(

@@ -6,6 +6,7 @@ use futures::{
 use hyper::service::Service;
 use std::{
     any::Any,
+    fmt::Debug,
     ops::{Deref, DerefMut},
     sync::Arc,
 };
@@ -147,12 +148,12 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
     }
 
     /// Add a default configuration `item` for the whole app.
-    pub fn config<T: Any + Clone + Send + Sync>(&mut self, item: T) -> &mut Self {
+    pub fn config<T: Any + Debug + Clone + Send + Sync>(&mut self, item: T) -> &mut Self {
         self.router.config(item);
         self
     }
 
-    pub fn get_item<T: Any + Clone + Send + Sync>(&self) -> Option<&T> {
+    pub fn get_item<T: Any + Debug + Clone + Send + Sync>(&self) -> Option<&T> {
         self.router.get_item()
     }
 
