@@ -179,7 +179,6 @@ pub struct Resource<'a, Data> {
 struct ResourceData<Data> {
     endpoints: HashMap<http::Method, BoxedEndpoint<Data>>,
     middleware: Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
-    method_options: Vec<String>,
 }
 
 impl<'a, Data: Send + Sync + Clone + 'static> Resource<'a, Data> {
@@ -206,7 +205,6 @@ impl<'a, Data: Send + Sync + Clone + 'static> Resource<'a, Data> {
             let new_resource = ResourceData {
                 endpoints: HashMap::new(),
                 middleware: self.middleware_base.clone(),
-                method_options: Vec::new(),
             };
             *resource = Some(new_resource);
         }
@@ -215,14 +213,11 @@ impl<'a, Data: Send + Sync + Clone + 'static> Resource<'a, Data> {
             panic!("A {} endpoint already exists for this path", method)
         }
 
-        resource.method_options.push(method.as_str().to_string());
-        let method_options = resource.method_options.join(", ");
         if !resource.endpoints.contains_key(&http::Method::OPTIONS) {
             let callback = async move || {
                 http::Response::builder()
                     .status(http::status::StatusCode::OK)
                     .header("Content-Type", "text/plain")
-                    .header("Access-Control-Allow-Methods", method_options.clone())
                     .body(Body::empty())
                     .unwrap()
             };
