@@ -179,10 +179,9 @@ pub struct Resource<'a, Data> {
 struct ResourceData<Data> {
     endpoints: HashMap<http::Method, BoxedEndpoint<Data>>,
     middleware: Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
-    method_options: Vec<String>,
 }
 
-impl<'a, Data> Resource<'a, Data> {
+impl<'a, Data: Send + Sync + Clone + 'static> Resource<'a, Data> {
     /// "Nest" a subrouter to the path.
     ///
     /// This method will build a fresh `Router` and give a mutable reference to it to the builder
@@ -206,31 +205,26 @@ impl<'a, Data> Resource<'a, Data> {
             let new_resource = ResourceData {
                 endpoints: HashMap::new(),
                 middleware: self.middleware_base.clone(),
-                method_options: Vec::new(),
             };
             *resource = Some(new_resource);
         }
         let resource = resource.as_mut().unwrap();
-        if method != http::Method::OPTIONS {
-            // It's important that this panics here, otherwise we will get weird results for OPTIONS
-            // routes
-            if resource.endpoints.contains_key(&method) {
-                panic!("A {} endpoint already exists for this path", method)
-            }
+        if resource.endpoints.contains_key(&method) {
+            panic!("A {} endpoint already exists for this path", method)
+        }
 
-            resource.method_options.push(method.as_str().to_string());
-            let option_header = resource.method_options.join(", ");
-            self.options(async || {
+        if !resource.endpoints.contains_key(&http::Method::OPTIONS) {
+            let callback = async move || {
                 http::Response::builder()
                     .status(http::status::StatusCode::OK)
-                    .header("Access-Control-Allow-Methods", option_header)
-                    .header("Allow", option_header)
                     .header("Content-Type", "text/plain")
                     .body(Body::empty())
                     .unwrap()
-            });
+            };
+            resource
+                .endpoints
+                .insert(http::Method::OPTIONS, BoxedEndpoint::new(callback));
         }
-
         resource.endpoints.insert(method, BoxedEndpoint::new(ep));
     }
 
@@ -257,11 +251,6 @@ impl<'a, Data> Resource<'a, Data> {
     /// Add an endpoint for `DELETE` requests
     pub fn delete<T: Endpoint<Data, U>, U>(&mut self, ep: T) {
         self.method(http::Method::DELETE, ep)
-    }
-
-    /// Add an endpoint for `OPTIONS` requests
-    fn options<T: Endpoint<Data, U>, U>(&mut self, ep: T) {
-        self.method(http::Method::OPTIONS, ep)
     }
 
     /// Add an endpoint for `CONNECT` requests
