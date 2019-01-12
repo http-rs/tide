@@ -2,6 +2,8 @@
 
 use tide::Cookies;
 
+/// Tide will use the the `Cookies`'s `Extract` implementation to build this parameter.
+///
 async fn hello_cookies(cookies: Cookies) -> String {
     format!("hello cookies: {:?}", cookies)
 }

@@ -4,12 +4,20 @@ use futures::future;
 use crate::response::IntoResponse;
 use crate::{Extract, Request, Response, RouteMatch};
 
+
+
+/// A representation of cookies which wraps `CookieJar` from `cookie` crate
+///
+/// Currently this only exposes getting cookie by name but future enhancements might allow more
+/// operation. `Cookies` implements`Extract` so that handler methods can have a `Cookies` parameter.
+///
 #[derive(Clone, Debug)]
 pub struct Cookies {
     content: CookieJar,
 }
 
 impl Cookies {
+    /// returns a `Cookie` by name of the cookie
     #[inline]
     pub fn get(&self, name: &str) -> Option<&Cookie<'static>> {
         self.content.get(name)

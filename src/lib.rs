@@ -3,12 +3,7 @@
 #![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
 #![cfg_attr(test, deny(warnings))]
 #![allow(unused_variables)]
-#![feature(
-    futures_api,
-    async_await,
-    await_macro,
-    existential_type
-)]
+#![feature(futures_api, async_await, await_macro, existential_type)]
 
 //!
 //! Welcome to Tide.
