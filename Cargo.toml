@@ -27,6 +27,7 @@ serde_qs = "0.4.1"
 slog = "2.4.1"
 slog-term = "2.4.0"
 slog-async = "2.3.0"
+flate2 = "1.0.6"
 
 [dependencies.multipart]
 version = "0.15.3"

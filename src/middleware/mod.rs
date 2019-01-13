@@ -4,9 +4,10 @@ use futures::future::FutureObj;
 
 use crate::{endpoint::BoxedEndpoint, Request, Response, RouteMatch};
 
+pub mod compression;
 mod default_headers;
 pub mod logger;
-
+pub use self::compression::Compression;
 pub use self::default_headers::DefaultHeaders;
 
 /// Middleware that wraps around remaining middleware chain.
