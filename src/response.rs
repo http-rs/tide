@@ -116,7 +116,9 @@ mod tests {
 
     #[test]
     fn test_status() {
-        let resp = "foo".with_status(http::status::StatusCode::NOT_FOUND).into_response();
+        let resp = "foo"
+            .with_status(http::status::StatusCode::NOT_FOUND)
+            .into_response();
         assert_eq!(resp.status(), http::status::StatusCode::NOT_FOUND);
     }
 }
