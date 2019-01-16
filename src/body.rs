@@ -270,7 +270,7 @@ impl<T: Send + serde::de::DeserializeOwned + 'static, S: 'static> Extract<S> for
     }
 }
 
-impl<T: 'static + Send + serde::Serialize> IntoResponse for Json<T> {
+impl<T: Send + serde::Serialize> IntoResponse for Json<T> {
     fn into_response(self) -> Response {
         // TODO: think about how to handle errors
         http::Response::builder()

@@ -8,7 +8,7 @@
 use http::status::StatusCode;
 use juniper::graphql_object;
 use std::sync::{atomic, Arc};
-use tide::{body, App, AppData, Response};
+use tide::{body, App, AppData, IntoResponse, Response};
 
 // First, we define `Context` that holds accumulator state. This is accessible as App data in
 // Tide, and as executor context in Juniper.
@@ -48,21 +48,14 @@ type Schema = juniper::RootNode<'static, Query, Mutation>;
 async fn handle_graphql(
     ctx: AppData<Context>,
     query: body::Json<juniper::http::GraphQLRequest>,
-) -> Result<Response, StatusCode> {
+) -> Response {
     let response = query.execute(&Schema::new(Query, Mutation), &ctx);
-
-    // `response` has the lifetime of `request`, so we can't use `IntoResponse` directly.
-    let body_vec = serde_json::to_vec(&response).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    http::Response::builder()
-        .status(if response.is_ok() {
-            StatusCode::OK
-        } else {
-            StatusCode::BAD_REQUEST
-        })
-        .header("Content-Type", "application/json")
-        .body(body::Body::from(body_vec))
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+    let status = if response.is_ok() {
+        StatusCode::OK
+    } else {
+        StatusCode::BAD_REQUEST
+    };
+    body::Json(response).with_status(status).into_response()
 }
 
 fn main() {
