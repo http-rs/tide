@@ -12,9 +12,6 @@ readme = "README.md"
 repository = "https://github.com/rust-net-web/tide"
 version = "0.0.0"
 
-[workspace]
-members = ["path_table"]
-
 [dependencies]
 http = "0.1"
 hyper = "0.12.0"
@@ -27,14 +24,12 @@ serde_qs = "0.4.1"
 slog = "2.4.1"
 slog-term = "2.4.0"
 slog-async = "2.3.0"
+path-table = "1.0.0"
 
 [dependencies.multipart]
 version = "0.15.3"
 default-features = false
 features = ["server"]
-
-[dependencies.path_table]
-path = "path_table"
 
 [dependencies.futures-preview]
 features = ["compat"]
