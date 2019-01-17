@@ -5,17 +5,20 @@ use futures::{
 };
 use hyper::service::Service;
 use std::{
+    any::Any,
+    fmt::Debug,
     ops::{Deref, DerefMut},
     sync::Arc,
 };
 
 use crate::{
     body::Body,
+    configuration::{Configuration, Store},
     endpoint::BoxedEndpoint,
     endpoint::Endpoint,
     extract::Extract,
     middleware::{logger::RootLogger, RequestContext},
-    router::{Resource, RouteResult, Router},
+    router::{EndpointData, Resource, RouteResult, Router},
     Middleware, Request, Response, RouteMatch,
 };
 
@@ -35,7 +38,7 @@ use crate::{
 ///
 /// let mut app = tide::App::new(());
 /// app.at("/hello").get(async || "Hello, world!");
-/// app.serve("127.0.0.1:7878")
+/// app.serve()
 /// ```
 ///
 /// `App` state can be modeled with an underlying `Data` handle for a cloneable type `T`. Endpoints
@@ -74,7 +77,7 @@ use crate::{
 /// fn main() {
 ///     let mut app = tide::App::new(Database::new());
 ///     app.at("/messages/insert").post(insert);
-///     app.serve("127.0.0.1:7878")
+///     app.serve()
 /// }
 /// ```
 ///
@@ -84,7 +87,7 @@ use crate::{
 pub struct App<Data> {
     data: Data,
     router: Router<Data>,
-    default_handler: BoxedEndpoint<Data>,
+    default_handler: EndpointData<Data>,
 }
 
 impl<Data: Clone + Send + Sync + 'static> App<Data> {
@@ -94,12 +97,23 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         let mut app = App {
             data,
             router: Router::new(),
-            default_handler: BoxedEndpoint::new(async || http::status::StatusCode::NOT_FOUND),
+            default_handler: EndpointData {
+                endpoint: BoxedEndpoint::new(async || http::status::StatusCode::NOT_FOUND),
+                store: Store::new(),
+            },
         };
 
         // Add RootLogger as a default middleware
         app.middleware(logger);
+        app.setup_configuration();
+
         app
+    }
+
+    // Add default configuration
+    fn setup_configuration(&mut self) {
+        let config = Configuration::build().finalize();
+        self.config(config);
     }
 
     /// Get the top-level router.
@@ -114,9 +128,16 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
     }
 
     /// Set the default handler for the app, a fallback function when there is no match to the route requested
-    pub fn default_handler<T: Endpoint<Data, U>, U>(&mut self, handler: T) -> &mut Self {
-        self.default_handler = BoxedEndpoint::new(handler);
-        self
+    pub fn default_handler<T: Endpoint<Data, U>, U>(
+        &mut self,
+        handler: T,
+    ) -> &mut EndpointData<Data> {
+        let endpoint = EndpointData {
+            endpoint: BoxedEndpoint::new(handler),
+            store: self.router.store_base.clone(),
+        };
+        self.default_handler = endpoint;
+        &mut self.default_handler
     }
 
     /// Apply `middleware` to the whole app. Note that the order of nesting subrouters and applying
@@ -126,7 +147,18 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         self
     }
 
-    fn into_server(self) -> Server<Data> {
+    /// Add a default configuration `item` for the whole app.
+    pub fn config<T: Any + Debug + Clone + Send + Sync>(&mut self, item: T) -> &mut Self {
+        self.router.config(item);
+        self
+    }
+
+    pub fn get_item<T: Any + Debug + Clone + Send + Sync>(&self) -> Option<&T> {
+        self.router.get_item()
+    }
+
+    fn into_server(mut self) -> Server<Data> {
+        self.router.apply_default_config();
         Server {
             data: self.data,
             router: Arc::new(self.router),
@@ -137,12 +169,17 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
     /// Start serving the app at the given address.
     ///
     /// Blocks the calling thread indefinitely.
-    pub fn serve<A: std::net::ToSocketAddrs>(self, addr: A) {
+    pub fn serve(self) {
+        let configuration = self.get_item::<Configuration>().unwrap();
+        let addr = format!("{}:{}", configuration.address, configuration.port)
+            .parse::<std::net::SocketAddr>()
+            .unwrap();
+
+        println!("Server is listening on: http://{}", addr);
+
         let server: Server<Data> = self.into_server();
 
         // TODO: be more robust
-        let addr = addr.to_socket_addrs().unwrap().next().unwrap();
-
         let server = hyper::Server::bind(&addr)
             .serve(move || {
                 let res: Result<_, std::io::Error> = Ok(server.clone());
@@ -162,7 +199,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
 struct Server<Data> {
     data: Data,
     router: Arc<Router<Data>>,
-    default_handler: Arc<BoxedEndpoint<Data>>,
+    default_handler: Arc<EndpointData<Data>>,
 }
 
 impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
@@ -223,7 +260,12 @@ impl<T> DerefMut for AppData<T> {
 
 impl<T: Clone + Send + 'static> Extract<T> for AppData<T> {
     type Fut = future::Ready<Result<Self, Response>>;
-    fn extract(data: &mut T, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
+    fn extract(
+        data: &mut T,
+        req: &mut Request,
+        params: &Option<RouteMatch<'_>>,
+        store: &Store,
+    ) -> Self::Fut {
         future::ok(AppData(data.clone()))
     }
 }

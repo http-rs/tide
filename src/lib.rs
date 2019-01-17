@@ -13,6 +13,7 @@
 //!
 mod app;
 pub mod body;
+pub mod configuration;
 mod endpoint;
 mod extract;
 pub mod head;
@@ -23,6 +24,7 @@ mod router;
 
 pub use crate::{
     app::{App, AppData},
+    configuration::ExtractConfiguration,
     endpoint::Endpoint,
     extract::Extract,
     middleware::Middleware,

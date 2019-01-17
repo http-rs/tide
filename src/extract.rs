@@ -1,6 +1,6 @@
 use futures::prelude::*;
 
-use crate::{Request, Response, RouteMatch};
+use crate::{configuration::Store, Request, Response, RouteMatch};
 
 /// An extractor for an app with `Data`
 pub trait Extract<Data>: Send + Sized + 'static {
@@ -11,5 +11,10 @@ pub trait Extract<Data>: Send + Sized + 'static {
     type Fut: Future<Output = Result<Self, Response>> + Send + 'static;
 
     /// Attempt to extract a value from the given request.
-    fn extract(data: &mut Data, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut;
+    fn extract(
+        data: &mut Data,
+        req: &mut Request,
+        params: &Option<RouteMatch<'_>>,
+        store: &Store,
+    ) -> Self::Fut;
 }

@@ -10,7 +10,5 @@ fn main() {
         router.at("*").get(echo_path);
     });
 
-    let address = "127.0.0.1:8000".to_owned();
-    println!("Server is listening on http://{}", address);
-    app.serve(address);
+    app.serve();
 }
