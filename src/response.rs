@@ -7,7 +7,7 @@ use crate::body::Body;
 pub type Response = http::Response<Body>;
 
 /// A value that is synchronously convertable into a `Response`.
-pub trait IntoResponse: Send + 'static + Sized {
+pub trait IntoResponse: Send + Sized {
     /// Convert the value into a `Response`.
     fn into_response(self) -> Response;
 
@@ -57,7 +57,7 @@ impl IntoResponse for String {
     }
 }
 
-impl IntoResponse for &'static str {
+impl IntoResponse for &'_ str {
     fn into_response(self) -> Response {
         self.to_string().into_response()
     }
@@ -90,7 +90,7 @@ impl<T: IntoResponse, U: IntoResponse> IntoResponse for Result<T, U> {
     }
 }
 
-impl<T: Send + 'static + Into<Body>> IntoResponse for http::Response<T> {
+impl<T: Send + Into<Body>> IntoResponse for http::Response<T> {
     fn into_response(self) -> Response {
         self.map(Into::into)
     }
