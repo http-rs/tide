@@ -1,10 +1,7 @@
 use cookie::{Cookie, CookieJar, ParseError};
 use futures::future;
 
-use crate::response::IntoResponse;
-use crate::{Extract, Request, Response, RouteMatch};
-
-
+use crate::{configuration::Store, response::IntoResponse, Extract, Request, Response, RouteMatch};
 
 /// A representation of cookies which wraps `CookieJar` from `cookie` crate
 ///
@@ -27,7 +24,12 @@ impl Cookies {
 impl<S: 'static> Extract<S> for Cookies {
     type Fut = future::Ready<Result<Self, Response>>;
 
-    fn extract(data: &mut S, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
+    fn extract(
+        data: &mut S,
+        req: &mut Request,
+        params: &Option<RouteMatch<'_>>,
+        store: &Store,
+    ) -> Self::Fut {
         let cookie_jar = match req.headers().get("Cookie") {
             Some(raw_cookies) => parse_from_header(raw_cookies.to_str().unwrap()),
             _ => Ok(CookieJar::new()),
