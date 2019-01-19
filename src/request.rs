@@ -1,7 +1,7 @@
 use futures::future;
 use std::ops::{Deref, DerefMut};
 
-use crate::{body::Body, Extract, Response, RouteMatch};
+use crate::{body::Body, configuration::Store, Extract, Response, RouteMatch};
 
 /// An HTTP request.
 ///
@@ -53,7 +53,12 @@ impl<T> DerefMut for Computed<T> {
 
 impl<Data: 'static, T: Compute> Extract<Data> for Computed<T> {
     type Fut = future::Ready<Result<Self, Response>>;
-    fn extract(data: &mut Data, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
+    fn extract(
+        data: &mut Data,
+        req: &mut Request,
+        params: &Option<RouteMatch<'_>>,
+        store: &Store,
+    ) -> Self::Fut {
         future::ok(Computed(T::compute(req)))
     }
 }

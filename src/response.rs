@@ -7,8 +7,23 @@ use crate::body::Body;
 pub type Response = http::Response<Body>;
 
 /// A value that is synchronously convertable into a `Response`.
-pub trait IntoResponse: Send + 'static + Sized {
+pub trait IntoResponse: Send + Sized {
+    /// Convert the value into a `Response`.
     fn into_response(self) -> Response;
+
+    /// Create a new `IntoResponse` value that will respond with the given status code.
+    ///
+    /// ```
+    /// # use tide::IntoResponse;
+    /// let resp = "Hello, 404!".with_status(http::status::StatusCode::NOT_FOUND).into_response();
+    /// assert_eq!(resp.status(), http::status::StatusCode::NOT_FOUND);
+    /// ```
+    fn with_status(self, status: http::status::StatusCode) -> WithStatus<Self> {
+        WithStatus {
+            inner: self,
+            status,
+        }
+    }
 }
 
 impl IntoResponse for () {
@@ -42,7 +57,7 @@ impl IntoResponse for String {
     }
 }
 
-impl IntoResponse for &'static str {
+impl IntoResponse for &'_ str {
     fn into_response(self) -> Response {
         self.to_string().into_response()
     }
@@ -75,8 +90,35 @@ impl<T: IntoResponse, U: IntoResponse> IntoResponse for Result<T, U> {
     }
 }
 
-impl<T: Send + 'static + Into<Body>> IntoResponse for http::Response<T> {
+impl<T: Send + Into<Body>> IntoResponse for http::Response<T> {
     fn into_response(self) -> Response {
         self.map(Into::into)
+    }
+}
+
+/// A response type that modifies the status code.
+pub struct WithStatus<R> {
+    inner: R,
+    status: http::status::StatusCode,
+}
+
+impl<R: IntoResponse> IntoResponse for WithStatus<R> {
+    fn into_response(self) -> Response {
+        let mut resp = self.inner.into_response();
+        *resp.status_mut() = self.status;
+        resp
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_status() {
+        let resp = "foo"
+            .with_status(http::status::StatusCode::NOT_FOUND)
+            .into_response();
+        assert_eq!(resp.status(), http::status::StatusCode::NOT_FOUND);
     }
 }

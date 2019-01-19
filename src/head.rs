@@ -7,7 +7,7 @@ use futures::future;
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
-use crate::{Extract, IntoResponse, Request, Response, RouteMatch};
+use crate::{configuration::Store, Extract, IntoResponse, Request, Response, RouteMatch};
 
 /// Header and metadata for a request.
 ///
@@ -74,7 +74,7 @@ impl Head {
 /// fn main() {
 ///     let mut app = tide::App::new(());
 ///     app.at("/path/{}").get(path_segment);
-///     app.serve("127.0.0.1:7878")
+///     app.serve()
 /// }
 /// ```
 ///
@@ -98,7 +98,12 @@ struct PathIdx(usize);
 
 impl<T: Send + 'static + std::str::FromStr, S: 'static> Extract<S> for Path<T> {
     type Fut = future::Ready<Result<Self, Response>>;
-    fn extract(data: &mut S, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
+    fn extract(
+        data: &mut S,
+        req: &mut Request,
+        params: &Option<RouteMatch<'_>>,
+        store: &Store,
+    ) -> Self::Fut {
         let &PathIdx(i) = req.extensions().get::<PathIdx>().unwrap_or(&PathIdx(0));
         req.extensions_mut().insert(PathIdx(i + 1));
         match params {
@@ -154,7 +159,7 @@ pub trait NamedSegment: Send + 'static + std::str::FromStr {
 /// fn main() {
 ///     let mut app = tide::App::new(());
 ///     app.at("/path_named/{num}").get(named_segments);
-///     app.serve("127.0.0.1:7878")
+///     app.serve()
 /// }
 /// ```
 ///
@@ -176,7 +181,12 @@ impl<T: NamedSegment> DerefMut for Named<T> {
 impl<T: NamedSegment, S: 'static> Extract<S> for Named<T> {
     type Fut = future::Ready<Result<Self, Response>>;
 
-    fn extract(data: &mut S, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
+    fn extract(
+        data: &mut S,
+        req: &mut Request,
+        params: &Option<RouteMatch<'_>>,
+        store: &Store,
+    ) -> Self::Fut {
         match params {
             Some(params) => params
                 .map
@@ -201,7 +211,12 @@ where
     S: 'static,
 {
     type Fut = future::Ready<Result<Self, Response>>;
-    fn extract(data: &mut S, req: &mut Request, params: &Option<RouteMatch<'_>>) -> Self::Fut {
+    fn extract(
+        data: &mut S,
+        req: &mut Request,
+        params: &Option<RouteMatch<'_>>,
+        store: &Store,
+    ) -> Self::Fut {
         req.uri().query().and_then(|q| q.parse().ok()).map_or(
             future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
             |q| future::ok(UrlQuery(q)),
