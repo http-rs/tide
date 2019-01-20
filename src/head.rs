@@ -7,7 +7,7 @@ use futures::future;
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
-use crate::{configuration::Store, Extract, IntoResponse, Request, Response, RouteMatch};
+use crate::{configuration::Store, Extract, ExtractSeed, IntoResponse, Request, Response, RouteMatch};
 
 /// Header and metadata for a request.
 ///
@@ -51,6 +51,43 @@ impl Head {
         &self.inner.headers
     }
 }
+
+pub struct NamedHeader(pub http::header::HeaderName);
+
+pub struct Header<T>(pub T);
+
+impl<T: From<http::header::HeaderValue> + Send + 'static, S: 'static> ExtractSeed<Header<T>, S> for NamedHeader {
+    type Fut = future::Ready<Result<Header<T>, Response>>;
+    fn extract(&self,
+        data: &mut S,
+        req: &mut Request,
+        params: &Option<RouteMatch<'_>>,
+        store: &Store,
+    ) -> Self::Fut {
+        let header = req.headers().get(&self.0);
+        match header {
+            Some(value) => future::ok(Header(value.clone().into())),
+            None => future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
+        }
+    }
+}
+
+impl<T: From<http::header::HeaderValue> + Send + 'static, S: 'static> ExtractSeed<Option<Header<T>>, S> for NamedHeader {
+    type Fut = future::Ready<Result<Option<Header<T>>, Response>>;
+    fn extract(&self,
+        data: &mut S,
+        req: &mut Request,
+        params: &Option<RouteMatch<'_>>,
+        store: &Store,
+    ) -> Self::Fut {
+        let header = req.headers().get(&self.0);
+        match header {
+            Some(value) => future::ok(Some(Header(value.clone().into()))),
+            None => future::ok(None),
+        }
+    }
+}
+
 
 /// An extractor for path segments.
 ///

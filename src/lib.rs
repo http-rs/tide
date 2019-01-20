@@ -30,7 +30,7 @@ pub use crate::{
     configuration::ExtractConfiguration,
     cookies::Cookies,
     endpoint::Endpoint,
-    extract::Extract,
+    extract::{Extract, ExtractSeed},
     middleware::Middleware,
     request::{Compute, Computed, Request},
     response::{IntoResponse, Response},

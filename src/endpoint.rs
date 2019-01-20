@@ -1,7 +1,7 @@
 use futures::future::{Future, FutureObj};
 
 use crate::{
-    configuration::Store, extract::Extract, head::Head, IntoResponse, Request, Response, RouteMatch,
+    configuration::Store, Extract, ExtractSeed, head::Head, IntoResponse, Request, Response, RouteMatch,
 };
 
 /// The raw representation of an endpoint.
@@ -119,6 +119,35 @@ macro_rules! call_f {
     };
 }
 
+pub struct Seeded<F, E>(pub(crate) F, pub(crate) E);
+
+/// FIXME: implement this for all other parameter lengths.
+impl<F, Data, Fut, E, X> Endpoint<Data, (Ty<Fut>, Ty<X>,)> for Seeded<F, (E,)>
+where
+    F: Send + Sync + Clone + 'static + Fn(X) -> Fut,
+    Data: Send + Sync + Clone + 'static,
+    Fut: Future + Send + 'static,
+    Fut::Output: IntoResponse,
+    X: Send + Sized + 'static,
+    E: ExtractSeed<X, Data>,
+{
+    type Fut = FutureObj<'static, Response>;
+    fn call(&self, mut data: Data, mut req: Request, params: Option<RouteMatch<'_>>, store: &Store) -> Self::Fut {
+        let f = self.0.clone();
+        let x = (self.1).0.extract(&mut data, &mut req, &params, store);
+        FutureObj::new(Box::new(async move {
+            let (parts, _) = req.into_parts();
+            let head = Head::from(parts);
+            let x = match await!(x) {
+                Ok(x) => x,
+                Err(resp) => return resp,
+            };
+            let res = await!(f(x));
+            res.into_response()
+        }))
+    }
+}
+
 macro_rules! end_point_impl_raw {
     ($([$head:ty])* $($X:ident),*) => {
         impl<T, Data, Fut, $($X),*> Endpoint<Data, (Ty<Fut>, $($head,)* $(Ty<$X>),*)> for T
@@ -128,6 +157,7 @@ macro_rules! end_point_impl_raw {
             Fut: Future + Send + 'static,
             Fut::Output: IntoResponse,
             $(
+                $X: Send + Sized + 'static,
                 $X: Extract<Data>
             ),*
         {
@@ -136,7 +166,7 @@ macro_rules! end_point_impl_raw {
             #[allow(unused_mut, non_snake_case)]
             fn call(&self, mut data: Data, mut req: Request, params: Option<RouteMatch<'_>>, store: &Store) -> Self::Fut {
                 let f = self.clone();
-                $(let $X = $X::extract(&mut data, &mut req, &params, store);)*
+                $(let $X = <$X as Extract<Data>>::extract(&mut data, &mut req, &params, store);)*
                 FutureObj::new(Box::new(async move {
                     let (parts, _) = req.into_parts();
                     let head = Head::from(parts);

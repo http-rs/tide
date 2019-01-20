@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use crate::{
     configuration::Store,
-    endpoint::{BoxedEndpoint, Endpoint},
+    endpoint::{BoxedEndpoint, Endpoint, Seeded},
     Middleware,
 };
 use path_table::{PathTable, RouteMatch};
@@ -277,6 +277,12 @@ impl<'a, Data> Resource<'a, Data> {
     /// Add an endpoint for `GET` requests
     pub fn get<T: Endpoint<Data, U>, U>(&mut self, ep: T) -> &mut EndpointData<Data> {
         self.method(http::Method::GET, ep)
+    }
+
+    pub fn get_with<T, S, U>(&mut self, ep: T, seed: S) -> &mut EndpointData<Data>
+        where Seeded<T, S>: Endpoint<Data, U>
+    {
+        self.method(http::Method::GET, Seeded(ep, seed))
     }
 
     /// Add an endpoint for `HEAD` requests
