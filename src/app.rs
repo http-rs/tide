@@ -53,17 +53,9 @@ use crate::{
 /// use tide::AppData;
 /// use tide::body;
 ///
-/// #[derive(Clone)]
+/// #[derive(Clone, Default)]
 /// struct Database {
 ///     contents: Arc<Mutex<Vec<String>>>,
-/// }
-///
-/// impl Database {
-///     fn new() -> Database {
-///         Database {
-///             contents: Arc::new(Mutex::new(Vec::new())),
-///         }
-///     }
 /// }
 ///
 /// async fn insert(
@@ -75,7 +67,7 @@ use crate::{
 /// }
 ///
 /// fn main() {
-///     let mut app = tide::App::new(Database::new());
+///     let mut app = tide::App::new(Database::default());
 ///     app.at("/messages/insert").post(insert);
 ///     app.serve()
 /// }
