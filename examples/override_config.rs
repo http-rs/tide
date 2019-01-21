@@ -21,6 +21,8 @@ fn debug_store(ctx: RequestContext<()>) -> FutureObj<Response> {
 fn main() {
     let mut app = tide::App::new(());
 
+    // Using the `Configuration` type to build our custon `Configuration` struct we can override
+    // the default configuration by using the `.config()` method.
     let updated_conf = Configuration::build()
         .port(8000)
         .env(Environment::Production)

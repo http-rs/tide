@@ -70,6 +70,22 @@ impl Default for Configuration {
     }
 }
 
+/// Holds application specific configuration
+///
+/// This struct implements the builder pattern, therefore you can override the default values
+/// before calling `app.serve` by doing something like this:
+///
+/// ```rust, no_run
+/// let mut app = tide::App::new(());
+/// let updated_conf = tide::configuration::Configuration::build()
+///     .port(8000)
+///     .env(tide::configuration::Environment::Production)
+///     .finalize();
+/// app.config(updated_conf);
+/// ```
+///
+/// Now the applivation will be running with the `Production` environment and will be listening on
+/// port `8000` instead of the default `8086`
 impl Configuration {
     pub fn build() -> ConfigurationBuilder {
         ConfigurationBuilder::default()
