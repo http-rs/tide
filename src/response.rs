@@ -125,4 +125,16 @@ mod tests {
             .into_response();
         assert_eq!(resp.status(), http::status::StatusCode::NOT_FOUND);
     }
+
+    #[test]
+    fn byte_vec_content_type() {
+        let resp = String::from("foo").into_bytes().into_response();
+        assert_eq!(resp.headers()["Content-Type"], "application/octet-stream");
+    }
+
+    #[test]
+    fn string_content_type() {
+        let resp = String::from("foo").into_response();
+        assert_eq!(resp.headers()["Content-Type"], "text/plain; charset=utf-8");
+    }
 }
