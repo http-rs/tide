@@ -10,6 +10,7 @@ use std::{
     ops::{Deref, DerefMut},
     sync::Arc,
 };
+use structopt::StructOpt;
 
 use crate::{
     body::Body,
@@ -104,7 +105,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
 
     // Add default configuration
     fn setup_configuration(&mut self) {
-        let config = Configuration::build().finalize();
+        let config = Configuration::from_args();
         self.config(config);
     }
 
