@@ -25,6 +25,7 @@ slog = "2.4.1"
 slog-term = "2.4.0"
 slog-async = "2.3.0"
 path-table = "1.0.0"
+structopt = "0.2.14"
 
 [dependencies.multipart]
 version = "0.15.3"

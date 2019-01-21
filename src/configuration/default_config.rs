@@ -1,3 +1,7 @@
+use structopt::StructOpt;
+
+use std::fmt;
+
 /// What environment are we running in?
 #[derive(Debug, Clone)]
 pub enum Environment {
@@ -6,14 +10,47 @@ pub enum Environment {
     Production,
 }
 
-/// Holds the default configuration for the App.
+impl fmt::Display for Environment {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Environment::Development => write!(f, "Development"),
+            Environment::Staging => write!(f, "Staging"),
+            Environment::Production => write!(f, "Production"),
+        }
+    }
+}
+
+fn parse_env(s: &str) -> Environment {
+    match s {
+        "development" => Environment::Development,
+        "staging" => Environment::Staging,
+        "production" => Environment::Production,
+        // Default to development environment
+        _ => Environment::Development,
+    }
+}
+
+/// Default configuration for the application
 ///
 /// Only the one that is applied to the top-level router will be regarded. Overriding this item in
 /// resource paths or subrouters has no effect.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, StructOpt)]
+#[structopt(name = "Configuration")]
 pub struct Configuration {
+    /// Execution environment of the application
+    #[structopt(
+        short = "e",
+        long = "env",
+        default_value = "development",
+        env = "ENV",
+        parse(from_str = "parse_env")
+    )]
     pub env: Environment,
+    /// Address the server binds to
+    #[structopt(short = "a", long = "addr", env = "ADDR", default_value = "127.0.0.1")]
     pub address: String,
+    /// Port the server binds to
+    #[structopt(short = "p", long = "port", env = "PORT", default_value = "8086")]
     pub port: u16,
 }
 

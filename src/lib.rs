@@ -24,7 +24,6 @@ mod router;
 
 pub use crate::{
     app::{App, AppData},
-    configuration::ExtractConfiguration,
     endpoint::Endpoint,
     extract::Extract,
     middleware::Middleware,
