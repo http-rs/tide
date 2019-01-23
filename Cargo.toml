@@ -37,4 +37,7 @@ version = "0.3.0-alpha.12"
 
 [dev-dependencies]
 juniper = "0.10.0"
-basic-cookies = "0.1.2"
+
+[dev-dependencies.basic-cookies]
+git = "https://github.com/yoshuawuyts/basic-cookies"
+branch = "fix-cookie-token"
