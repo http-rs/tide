@@ -7,7 +7,7 @@ use http::status::StatusCode;
 use std::sync::{Arc, Mutex};
 use tide::{body, head, App, AppData};
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 struct Database {
     contents: Arc<Mutex<Vec<Message>>>,
 }
@@ -19,12 +19,6 @@ struct Message {
 }
 
 impl Database {
-    fn new() -> Database {
-        Database {
-            contents: Arc::new(Mutex::new(Vec::new())),
-        }
-    }
-
     fn insert(&mut self, msg: Message) -> usize {
         let mut table = self.contents.lock().unwrap();
         table.push(msg);
@@ -75,7 +69,7 @@ async fn get_message(
 }
 
 fn main() {
-    let mut app = App::new(Database::new());
+    let mut app = App::new(Database::default());
 
     app.at("/message").post(new_message);
     app.at("/message/{}").get(get_message);
