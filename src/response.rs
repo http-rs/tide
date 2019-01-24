@@ -39,7 +39,7 @@ impl IntoResponse for Vec<u8> {
     fn into_response(self) -> Response {
         http::Response::builder()
             .status(http::status::StatusCode::OK)
-            .header("Content-Type", "text/plain; charset=utf-8")
+            .header("Content-Type", "application/octet-stream")
             .body(Body::from(self))
             .unwrap()
     }
@@ -53,7 +53,11 @@ impl IntoResponse for body::Bytes {
 
 impl IntoResponse for String {
     fn into_response(self) -> Response {
-        self.into_bytes().into_response()
+        http::Response::builder()
+            .status(http::status::StatusCode::OK)
+            .header("Content-Type", "text/plain; charset=utf-8")
+            .body(Body::from(self.into_bytes()))
+            .unwrap()
     }
 }
 
@@ -120,5 +124,17 @@ mod tests {
             .with_status(http::status::StatusCode::NOT_FOUND)
             .into_response();
         assert_eq!(resp.status(), http::status::StatusCode::NOT_FOUND);
+    }
+
+    #[test]
+    fn byte_vec_content_type() {
+        let resp = String::from("foo").into_bytes().into_response();
+        assert_eq!(resp.headers()["Content-Type"], "application/octet-stream");
+    }
+
+    #[test]
+    fn string_content_type() {
+        let resp = String::from("foo").into_response();
+        assert_eq!(resp.headers()["Content-Type"], "text/plain; charset=utf-8");
     }
 }
