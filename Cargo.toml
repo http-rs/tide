@@ -37,9 +37,6 @@ features = ["compat"]
 version = "0.3.0-alpha.12"
 
 [dev-dependencies]
+basic-cookies = "0.1.3"
 juniper = "0.10.0"
 structopt = "0.2.14"
-
-[dev-dependencies.basic-cookies]
-git = "https://github.com/yoshuawuyts/basic-cookies"
-branch = "fix-cookie-token"
