@@ -10,7 +10,7 @@ use crate::{Extract, Request, Response, RouteMatch};
 
 mod default_config;
 
-pub use self::default_config::{Configuration, ConfigurationBuilder};
+pub use self::default_config::{Configuration, ConfigurationBuilder, Environment};
 
 trait StoreItem: Any + Send + Sync {
     fn clone_any(&self) -> Box<dyn StoreItem>;
