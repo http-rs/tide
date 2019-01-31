@@ -1,3 +1,35 @@
+## 2019-01-31, Version 0.0.3
+### Commits
+- [[`658aa8222a`](https://github.com/rust-net-web/tide/commit/658aa8222a6467e289ee992eeed7b7cfb27ebf5b)] (cargo-release) version 0.0.3 (Yoshua Wuyts)
+- [[`4aeb4b831d`](https://github.com/rust-net-web/tide/commit/4aeb4b831d883819a20d61ed48e3f4bce3f7f731)] Fixes GH-130 (#133) (Yoshua Wuyts)
+- [[`5f7e387bb0`](https://github.com/rust-net-web/tide/commit/5f7e387bb09f4fae4318db7b030dd6b3ccfc613c)] Merge pull request #132 from bIgBV/cli-example (Bhargav)
+- [[`af8db24cdd`](https://github.com/rust-net-web/tide/commit/af8db24cdd491f14ef067efa615120c46e58d144)] change 'Content-Type' for IntoResponse::into_response(Vec<u8>) (#124) (DCjanus)
+- [[`fd575921f8`](https://github.com/rust-net-web/tide/commit/fd575921f80d607087f2c46228f80db38f2e6818)] Basic cookie extractor (#114) (Murali)
+- [[`6554105144`](https://github.com/rust-net-web/tide/commit/6554105144ae989648ba3827ba799203db30f0c1)] Add example to show CLI parsing integration with tide app (Bhargav Voleti)
+- [[`bf1e3d8103`](https://github.com/rust-net-web/tide/commit/bf1e3d8103d66994b8510317f0544e83359035b2)] Merge pull request #131 from rust-net-web/tmp-fix-dep (Wonwoo Choi)
+- [[`bf7cb2e145`](https://github.com/rust-net-web/tide/commit/bf7cb2e145f90967962d52ee4bfe33608c971fef)] temporarily override fix-cookie source (Yoshua Wuyts)
+- [[`4517d11c32`](https://github.com/rust-net-web/tide/commit/4517d11c32123ef47745a0a32a6ba9c7f2f22806)] Fix links from contributing to code of conduct (#128) (HeroicKatora)
+- [[`efd51ac407`](https://github.com/rust-net-web/tide/commit/efd51ac4073a30daff53afd3f807dc8ec23b8f2e)] Clean up doctests and messages example via Default trait (#125) (whentze)
+- [[`9b3fe0c9dd`](https://github.com/rust-net-web/tide/commit/9b3fe0c9ddcbeca08b9815f51164b22f263e854b)] Update changelog (Yoshua Wuyts)
+
+### Stats
+```diff
+ .github/CONTRIBUTING.md      |   6 +-
+ .gitignore                   |   1 +-
+ CHANGELOG.md                 | 226 ++++++++++++++++++++++++++++++++++++++++++++-
+ Cargo.toml                   |   6 +-
+ examples/cli_parsing.rs      |  48 +++++++++-
+ examples/cookie_extractor.rs |  18 ++++-
+ examples/messages.rs         |  10 +--
+ src/app.rs                   |  12 +--
+ src/cookies.rs               |  55 +++++++++++-
+ src/endpoint.rs              |  12 +--
+ src/lib.rs                   |   2 +-
+ src/response.rs              |  20 +++-
+ 12 files changed, 381 insertions(+), 35 deletions(-)
+```
+
+
 ## 2019-01-18, Version 0.0.1
 ### Commits
 - [[`ae2faa1eef`](https://github.com/rust-net-web/tide/commit/ae2faa1eefba07e551e5766e458555a3a3109062)] (cargo-release) version 0.0.1 (Yoshua Wuyts)
