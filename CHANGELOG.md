@@ -1,3 +1,21 @@
+## 2019-02-04, Version 0.0.4
+### Commits
+- [[`2128abc1d0`](https://github.com/rust-net-web/tide/commit/2128abc1d01b95eabdfadc8ce2d587ba2bb1d62e)] (cargo-release) version 0.0.4 (Yoshua Wuyts)
+- [[`cbd7525557`](https://github.com/rust-net-web/tide/commit/cbd7525557ee7ddb65a6ed5103618df5263cd5a6)] pin nightly version on CI (#136) (Yoshua Wuyts)
+- [[`3455f96cf9`](https://github.com/rust-net-web/tide/commit/3455f96cf9eca83baad31d9a2a7170f9f1a6fde3)] Merge pull request #135 from rust-net-web/fix-env-pub (Aaron Turon)
+- [[`9402aef6d5`](https://github.com/rust-net-web/tide/commit/9402aef6d58e3207100c6d4d177ba1de2fa2eaa1)] make the Environment struct public (Yoshua Wuyts)
+- [[`012b49dc15`](https://github.com/rust-net-web/tide/commit/012b49dc1576821fcb637802e552dae5409041b5)] Update changelog (Yoshua Wuyts)
+
+### Stats
+```diff
+ .travis.yml              |  1 +
+ CHANGELOG.md             | 32 ++++++++++++++++++++++++++++++++
+ Cargo.toml               |  2 +-
+ src/configuration/mod.rs |  2 +-
+ 4 files changed, 35 insertions(+), 2 deletions(-)
+```
+
+
 ## 2019-01-31, Version 0.0.3
 ### Commits
 - [[`658aa8222a`](https://github.com/rust-net-web/tide/commit/658aa8222a6467e289ee992eeed7b7cfb27ebf5b)] (cargo-release) version 0.0.3 (Yoshua Wuyts)
