@@ -10,7 +10,7 @@ license = "MIT OR Apache-2.0"
 name = "tide"
 readme = "README.md"
 repository = "https://github.com/rust-net-web/tide"
-version = "0.0.3"
+version = "0.0.4"
 
 [dependencies]
 http = "0.1"
