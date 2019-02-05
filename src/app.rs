@@ -31,7 +31,7 @@ use crate::{
 /// # Examples
 ///
 /// You can start a simple Tide application that listens for `GET` requests at path `/hello`
-/// on `127.0.0.1:7878` with:
+/// on `127.0.0.1:8181` with:
 ///
 /// ```rust, no_run
 /// #![feature(async_await)]
