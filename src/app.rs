@@ -1,8 +1,9 @@
 use futures::{
-    compat::{Compat, Future01CompatExt},
+    compat::{Compat, Future01CompatExt, Compat01As03},
     future::{self, FutureObj},
     prelude::*,
 };
+use http_service::Body;
 use hyper::service::Service;
 use std::{
     any::Any,
@@ -12,7 +13,6 @@ use std::{
 };
 
 use crate::{
-    body::Body,
     configuration::{Configuration, Store},
     endpoint::BoxedEndpoint,
     endpoint::Endpoint,
@@ -205,7 +205,13 @@ impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
         let router = self.router.clone();
         let default_handler = self.default_handler.clone();
 
-        let req = req.map(Body::from);
+        let req = req.map(|hyper_body| {
+            let stream = Compat01As03::new(hyper_body).map(|c| match c {
+                Ok(chunk) => Ok(chunk.into_bytes()),
+                Err(e) => Err(std::io::Error::new(std::io::ErrorKind::Other, e)),
+            });
+            Body::from_stream(stream)
+        });
         let path = req.uri().path().to_owned();
         let method = req.method().to_owned();
 
@@ -226,7 +232,9 @@ impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
                 };
                 let res = await!(ctx.next());
 
-                Ok(res.map(Into::into))
+                Ok(res.map(|body| {
+                    hyper::Body::wrap_stream(body.compat())
+                }))
             },
         ))
         .compat()

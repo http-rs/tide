@@ -1,5 +1,6 @@
+use http_service::Body;
+
 use crate::body;
-use crate::body::Body;
 
 /// An HTTP response.
 ///

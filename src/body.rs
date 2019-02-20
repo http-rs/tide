@@ -73,118 +73,23 @@
 //!
 //! ```
 //!
-use futures::{compat::Compat01As03, future::FutureObj, prelude::*, stream::StreamObj};
+use futures::{future::FutureObj, prelude::*};
 use http::status::StatusCode;
+use http_service::Body;
 use multipart::server::Multipart;
 use pin_utils::pin_mut;
-use std::io::Cursor;
+use std::io::{self, Cursor};
 use std::ops::{Deref, DerefMut};
 
 use crate::{configuration::Store, Extract, IntoResponse, Request, Response, RouteMatch};
 
-/// The raw contents of an http request or response.
-///
-/// A body is a stream of `BodyChunk`s, which are essentially `Vec<u8>` values.
-/// Both `Body` and `BodyChunk` values can be easily created from standard byte buffer types,
-/// using the `From` trait.
-#[derive(Debug)]
-pub struct Body {
-    inner: BodyInner,
-}
-
-type BodyStream = StreamObj<'static, Result<BodyChunk, Error>>;
-type Error = Box<dyn std::error::Error + Send + Sync>;
-pub struct BodyChunk(hyper::Chunk);
-
-impl BodyChunk {
-    pub fn as_bytes(&self) -> &[u8] {
-        (*self.0).as_ref()
+async fn body_to_vec(body: Body) -> Result<Vec<u8>, io::Error> {
+    let mut bytes = Vec::new();
+    pin_mut!(body);
+    while let Some(chunk) = await!(body.next()) {
+        bytes.extend(chunk?);
     }
-}
-
-impl From<Vec<u8>> for BodyChunk {
-    fn from(v: Vec<u8>) -> Self {
-        BodyChunk(v.into())
-    }
-}
-
-impl From<String> for BodyChunk {
-    fn from(v: String) -> Self {
-        BodyChunk(v.into())
-    }
-}
-
-#[derive(Debug)]
-enum BodyInner {
-    Streaming(BodyStream),
-    Fixed(Vec<u8>),
-}
-
-impl Body {
-    /// Create an empty body.
-    pub fn empty() -> Self {
-        Body {
-            inner: BodyInner::Fixed(Vec::new()),
-        }
-    }
-
-    /// Collect the full contents of the body into a vector.
-    ///
-    /// This method is asynchronous because, in general, it requires reading an async
-    /// stream of `BodyChunk` values.
-    pub async fn read_to_vec(&mut self) -> Result<Vec<u8>, Error> {
-        match &mut self.inner {
-            BodyInner::Streaming(s) => {
-                let mut bytes = Vec::new();
-                pin_mut!(s);
-                while let Some(chunk) = await!(s.next()) {
-                    // TODO: do something more robust than `unwrap`
-                    bytes.extend(chunk?.as_bytes());
-                }
-                Ok(bytes)
-            }
-            BodyInner::Fixed(v) => Ok(v.clone()),
-        }
-    }
-}
-
-impl From<Vec<u8>> for Body {
-    fn from(v: Vec<u8>) -> Self {
-        Self {
-            inner: BodyInner::Fixed(v),
-        }
-    }
-}
-
-impl From<hyper::Body> for Body {
-    fn from(body: hyper::Body) -> Body {
-        // TODO: handle chunk-level errors
-        let stream = Compat01As03::new(body).map(|c| match c {
-            Ok(chunk) => Ok(BodyChunk(chunk)),
-            Err(e) => {
-                let e: Error = Box::new(e);
-                Err(e)
-            }
-        });
-        Body {
-            inner: BodyInner::Streaming(StreamObj::new(Box::new(stream))),
-        }
-    }
-}
-
-impl From<BodyChunk> for hyper::Chunk {
-    fn from(chunk: BodyChunk) -> hyper::Chunk {
-        chunk.0
-    }
-}
-
-impl Into<hyper::Body> for Body {
-    fn into(self) -> hyper::Body {
-        match self.inner {
-            BodyInner::Fixed(v) => v.into(),
-            BodyInner::Streaming(s) => hyper::Body::wrap_stream(s.compat()),
-        }
-    }
+    Ok(bytes)
 }
 
 // Small utility function to return a stamped error when we cannot parse a request body
@@ -217,11 +122,11 @@ impl<S: 'static> Extract<S> for MultipartForm {
             Some(ct[idx + BOUNDARY.len()..].to_string())
         });
 
-        let mut body = std::mem::replace(req.body_mut(), Body::empty());
+        let body = std::mem::replace(req.body_mut(), Body::empty());
 
         FutureObj::new(Box::new(
             async move {
-                let body = await!(body.read_to_vec()).map_err(mk_err)?;
+                let body = await!(body_to_vec(body)).map_err(mk_err)?;
                 let boundary = boundary.ok_or(()).map_err(mk_err)?;
                 let mp = Multipart::with_body(Cursor::new(body), boundary);
                 Ok(MultipartForm(mp))
@@ -259,10 +164,10 @@ impl<T: Send + serde::de::DeserializeOwned + 'static, S: 'static> Extract<S> for
         params: &Option<RouteMatch<'_>>,
         store: &Store,
     ) -> Self::Fut {
-        let mut body = std::mem::replace(req.body_mut(), Body::empty());
+        let body = std::mem::replace(req.body_mut(), Body::empty());
         FutureObj::new(Box::new(
             async move {
-                let body = await!(body.read_to_vec()).map_err(mk_err)?;
+                let body = await!(body_to_vec(body)).map_err(mk_err)?;
                 let json: T = serde_json::from_slice(&body).map_err(mk_err)?;
                 Ok(Json(json))
             },
@@ -311,10 +216,10 @@ impl<T: Send + serde::de::DeserializeOwned + 'static, S: 'static> Extract<S> for
         params: &Option<RouteMatch<'_>>,
         store: &Store,
     ) -> Self::Fut {
-        let mut body = std::mem::replace(req.body_mut(), Body::empty());
+        let body = std::mem::replace(req.body_mut(), Body::empty());
         FutureObj::new(Box::new(
             async move {
-                let body = await!(body.read_to_vec()).map_err(mk_err)?;
+                let body = await!(body_to_vec(body)).map_err(mk_err)?;
                 let data: T = serde_qs::from_bytes(&body).map_err(mk_err)?;
                 Ok(Form(data))
             },
@@ -359,11 +264,11 @@ impl<S: 'static> Extract<S> for Str {
         params: &Option<RouteMatch<'_>>,
         store: &Store,
     ) -> Self::Fut {
-        let mut body = std::mem::replace(req.body_mut(), Body::empty());
+        let body = std::mem::replace(req.body_mut(), Body::empty());
 
         FutureObj::new(Box::new(
             async move {
-                let body = await!(body.read_to_vec().map_err(mk_err))?;
+                let body = await!(body_to_vec(body).map_err(mk_err))?;
                 let string = String::from_utf8(body).map_err(mk_err)?;
                 Ok(Str(string))
             },
@@ -395,11 +300,11 @@ impl<S: 'static> Extract<S> for StrLossy {
         params: &Option<RouteMatch<'_>>,
         store: &Store,
     ) -> Self::Fut {
-        let mut body = std::mem::replace(req.body_mut(), Body::empty());
+        let body = std::mem::replace(req.body_mut(), Body::empty());
 
         FutureObj::new(Box::new(
             async move {
-                let body = await!(body.read_to_vec().map_err(mk_err))?;
+                let body = await!(body_to_vec(body).map_err(mk_err))?;
                 let string = String::from_utf8_lossy(&body).to_string();
                 Ok(StrLossy(string))
             },
@@ -431,11 +336,11 @@ impl<S: 'static> Extract<S> for Bytes {
         params: &Option<RouteMatch<'_>>,
         store: &Store,
     ) -> Self::Fut {
-        let mut body = std::mem::replace(req.body_mut(), Body::empty());
+        let body = std::mem::replace(req.body_mut(), Body::empty());
 
         FutureObj::new(Box::new(
             async move {
-                let body = await!(body.read_to_vec().map_err(mk_err))?;
+                let body = await!(body_to_vec(body).map_err(mk_err))?;
                 Ok(Bytes(body))
             },
         ))
