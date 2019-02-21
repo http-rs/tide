@@ -176,7 +176,8 @@ struct Server<Data> {
 }
 
 impl<Data> HttpService for Server<Data>
-    where Data: Clone + Send + Sync + 'static
+where
+    Data: Clone + Send + Sync + 'static,
 {
     type Connection = ();
     type ConnectionFuture = future::Ready<Result<(), std::io::Error>>;
@@ -209,7 +210,7 @@ impl<Data> HttpService for Server<Data>
                     next_middleware: middleware,
                 };
                 Ok(await!(ctx.next()))
-            }
+            },
         ))
     }
 }

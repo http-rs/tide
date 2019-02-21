@@ -1,13 +1,10 @@
-use http_service::{Body, HttpService};
-use std::{
-    sync::Arc,
-    net::SocketAddr,
-};
 use futures::{
-    prelude::*,
     compat::{Compat, Compat01As03, Future01CompatExt},
-    future::FutureObj
+    future::FutureObj,
+    prelude::*,
 };
+use http_service::{Body, HttpService};
+use std::{net::SocketAddr, sync::Arc};
 
 // Wrapper type to allow us to provide a blanket `MakeService` impl
 struct WrapHttpService<H> {
@@ -20,7 +17,10 @@ struct WrapConnection<H: HttpService> {
     connection: H::Connection,
 }
 
-impl<H, Ctx> hyper::service::MakeService<Ctx> for WrapHttpService<H> where H: HttpService {
+impl<H, Ctx> hyper::service::MakeService<Ctx> for WrapHttpService<H>
+where
+    H: HttpService,
+{
     type ReqBody = hyper::Body;
     type ResBody = hyper::Body;
     type Error = std::io::Error;
@@ -34,14 +34,20 @@ impl<H, Ctx> hyper::service::MakeService<Ctx> for WrapHttpService<H> where H: Ht
         FutureObj::new(Box::new(
             async move {
                 let connection = await!(service.connect().into_future()).map_err(|_| error)?;
-                Ok(WrapConnection { service, connection })
-            }
-        )).compat()
-
+                Ok(WrapConnection {
+                    service,
+                    connection,
+                })
+            },
+        ))
+        .compat()
     }
 }
 
-impl<H> hyper::service::Service for WrapConnection<H> where H: HttpService {
+impl<H> hyper::service::Service for WrapConnection<H>
+where
+    H: HttpService,
+{
     type ReqBody = hyper::Body;
     type ResBody = hyper::Body;
     type Error = std::io::Error;
@@ -61,11 +67,10 @@ impl<H> hyper::service::Service for WrapConnection<H> where H: HttpService {
         FutureObj::new(Box::new(
             async move {
                 let res: http::Response<_> = await!(fut.into_future()).map_err(|_| error)?;
-                Ok(res.map(|body| {
-                    hyper::Body::wrap_stream(body.compat())
-                }))
-            }
-        )).compat()
+                Ok(res.map(|body| hyper::Body::wrap_stream(body.compat())))
+            },
+        ))
+        .compat()
     }
 }
 

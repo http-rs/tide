@@ -392,8 +392,7 @@ mod tests {
                 } else {
                     panic!("Routing of path `{}` failed", path);
                 };
-            let body =
-                block_on(res.into_body().into_vec()).expect("Reading body should succeed");
+            let body = block_on(res.into_body().into_vec()).expect("Reading body should succeed");
             assert_eq!(&*body, path.as_bytes());
         }
     }
@@ -443,8 +442,7 @@ mod tests {
                 } else {
                     panic!("Routing of path `{}` failed", path);
                 };
-            let body =
-                block_on(res.into_body().into_vec()).expect("Reading body should succeed");
+            let body = block_on(res.into_body().into_vec()).expect("Reading body should succeed");
             assert_eq!(&*body, path.as_bytes());
         }
     }
@@ -463,8 +461,7 @@ mod tests {
             } else {
                 panic!("Routing of {} `{}` failed", method, path);
             };
-            let body =
-                block_on(res.into_body().into_vec()).expect("Reading body should succeed");
+            let body = block_on(res.into_body().into_vec()).expect("Reading body should succeed");
             assert_eq!(&*body, format!("{} {}", path, method).as_bytes());
         }
     }
