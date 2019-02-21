@@ -325,7 +325,7 @@ mod tests {
     use futures::{executor::block_on, future::FutureObj};
 
     use super::*;
-    use crate::{middleware::RequestContext, AppData, Response, body::body_to_vec};
+    use crate::{middleware::RequestContext, AppData, Response};
 
     fn passthrough_middleware<Data: Clone + Send>(
         ctx: RequestContext<Data>,
@@ -393,7 +393,7 @@ mod tests {
                     panic!("Routing of path `{}` failed", path);
                 };
             let body =
-                block_on(body_to_vec(res.into_body())).expect("Reading body should succeed");
+                block_on(res.into_body().into_vec()).expect("Reading body should succeed");
             assert_eq!(&*body, path.as_bytes());
         }
     }
@@ -444,7 +444,7 @@ mod tests {
                     panic!("Routing of path `{}` failed", path);
                 };
             let body =
-                block_on(body_to_vec(res.into_body())).expect("Reading body should succeed");
+                block_on(res.into_body().into_vec()).expect("Reading body should succeed");
             assert_eq!(&*body, path.as_bytes());
         }
     }
@@ -464,7 +464,7 @@ mod tests {
                 panic!("Routing of {} `{}` failed", method, path);
             };
             let body =
-                block_on(body_to_vec(res.into_body())).expect("Reading body should succeed");
+                block_on(res.into_body().into_vec()).expect("Reading body should succeed");
             assert_eq!(&*body, format!("{} {}", path, method).as_bytes());
         }
     }
@@ -570,11 +570,11 @@ mod tests {
         router.apply_default_config(); // simulating App behavior
 
         let res = block_on(simulate_request(&router, "/", &http::Method::GET)).unwrap();
-        let body = block_on(body_to_vec(res.into_body())).unwrap();
+        let body = block_on(res.into_body().into_vec()).unwrap();
         assert_eq!(&*body, &*b"foo");
 
         let res = block_on(simulate_request(&router, "/bar", &http::Method::GET)).unwrap();
-        let body = block_on(body_to_vec(res.into_body())).unwrap();
+        let body = block_on(res.into_body().into_vec()).unwrap();
         assert_eq!(&*body, &*b"bar");
     }
 
@@ -598,15 +598,15 @@ mod tests {
         router.apply_default_config(); // simulating App behavior
 
         let res = block_on(simulate_request(&router, "/", &http::Method::GET)).unwrap();
-        let body = block_on(body_to_vec(res.into_body())).unwrap();
+        let body = block_on(res.into_body().into_vec()).unwrap();
         assert_eq!(&*body, &*b"foo");
 
         let res = block_on(simulate_request(&router, "/bar", &http::Method::GET)).unwrap();
-        let body = block_on(body_to_vec(res.into_body())).unwrap();
+        let body = block_on(res.into_body().into_vec()).unwrap();
         assert_eq!(&*body, &*b"bar");
 
         let res = block_on(simulate_request(&router, "/bar/baz", &http::Method::GET)).unwrap();
-        let body = block_on(body_to_vec(res.into_body())).unwrap();
+        let body = block_on(res.into_body().into_vec()).unwrap();
         assert_eq!(&*body, &*b"baz");
     }
 
@@ -626,11 +626,11 @@ mod tests {
         router.apply_default_config(); // simulating App behavior
 
         let res = block_on(simulate_request(&router, "/", &http::Method::GET)).unwrap();
-        let body = block_on(body_to_vec(res.into_body())).unwrap();
+        let body = block_on(res.into_body().into_vec()).unwrap();
         assert_eq!(&*body, &*b"foo");
 
         let res = block_on(simulate_request(&router, "/bar", &http::Method::GET)).unwrap();
-        let body = block_on(body_to_vec(res.into_body())).unwrap();
+        let body = block_on(res.into_body().into_vec()).unwrap();
         assert_eq!(&*body, &*b"bar");
     }
 }

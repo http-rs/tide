@@ -15,7 +15,7 @@ version = "0.0.4"
 [dependencies]
 cookie = "0.11"
 http = "0.1"
-http-service = "0.1.2"
+http-service = "0.1.4"
 hyper = "0.12.24"
 path-table = "1.0.0"
 pin-utils = "0.1.0-alpha.4"

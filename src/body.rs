@@ -73,24 +73,14 @@
 //!
 //! ```
 //!
-use futures::{future::FutureObj, prelude::*};
+use futures::future::FutureObj;
 use http::status::StatusCode;
 use http_service::Body;
 use multipart::server::Multipart;
-use pin_utils::pin_mut;
-use std::io::{self, Cursor};
+use std::io::Cursor;
 use std::ops::{Deref, DerefMut};
 
 use crate::{configuration::Store, Extract, IntoResponse, Request, Response, RouteMatch};
-
-pub(crate) async fn body_to_vec(body: Body) -> Result<Vec<u8>, io::Error> {
-    let mut bytes = Vec::new();
-    pin_mut!(body);
-    while let Some(chunk) = await!(body.next()) {
-        bytes.extend(chunk?);
-    }
-    Ok(bytes)
-}
 
 // Small utility function to return a stamped error when we cannot parse a request body
 fn mk_err<T>(_: T) -> Response {
@@ -126,7 +116,7 @@ impl<S: 'static> Extract<S> for MultipartForm {
 
         FutureObj::new(Box::new(
             async move {
-                let body = await!(body_to_vec(body)).map_err(mk_err)?;
+                let body = await!(body.into_vec()).map_err(mk_err)?;
                 let boundary = boundary.ok_or(()).map_err(mk_err)?;
                 let mp = Multipart::with_body(Cursor::new(body), boundary);
                 Ok(MultipartForm(mp))
@@ -167,7 +157,7 @@ impl<T: Send + serde::de::DeserializeOwned + 'static, S: 'static> Extract<S> for
         let body = std::mem::replace(req.body_mut(), Body::empty());
         FutureObj::new(Box::new(
             async move {
-                let body = await!(body_to_vec(body)).map_err(mk_err)?;
+                let body = await!(body.into_vec()).map_err(mk_err)?;
                 let json: T = serde_json::from_slice(&body).map_err(mk_err)?;
                 Ok(Json(json))
             },
@@ -219,7 +209,7 @@ impl<T: Send + serde::de::DeserializeOwned + 'static, S: 'static> Extract<S> for
         let body = std::mem::replace(req.body_mut(), Body::empty());
         FutureObj::new(Box::new(
             async move {
-                let body = await!(body_to_vec(body)).map_err(mk_err)?;
+                let body = await!(body.into_vec()).map_err(mk_err)?;
                 let data: T = serde_qs::from_bytes(&body).map_err(mk_err)?;
                 Ok(Form(data))
             },
@@ -268,7 +258,7 @@ impl<S: 'static> Extract<S> for Str {
 
         FutureObj::new(Box::new(
             async move {
-                let body = await!(body_to_vec(body).map_err(mk_err))?;
+                let body = await!(body.into_vec()).map_err(mk_err)?;
                 let string = String::from_utf8(body).map_err(mk_err)?;
                 Ok(Str(string))
             },
@@ -304,7 +294,7 @@ impl<S: 'static> Extract<S> for StrLossy {
 
         FutureObj::new(Box::new(
             async move {
-                let body = await!(body_to_vec(body).map_err(mk_err))?;
+                let body = await!(body.into_vec()).map_err(mk_err)?;
                 let string = String::from_utf8_lossy(&body).to_string();
                 Ok(StrLossy(string))
             },
@@ -340,7 +330,7 @@ impl<S: 'static> Extract<S> for Bytes {
 
         FutureObj::new(Box::new(
             async move {
-                let body = await!(body_to_vec(body).map_err(mk_err))?;
+                let body = await!(body.into_vec()).map_err(mk_err)?;
                 Ok(Bytes(body))
             },
         ))
