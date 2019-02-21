@@ -83,7 +83,7 @@ use std::ops::{Deref, DerefMut};
 
 use crate::{configuration::Store, Extract, IntoResponse, Request, Response, RouteMatch};
 
-async fn body_to_vec(body: Body) -> Result<Vec<u8>, io::Error> {
+pub(crate) async fn body_to_vec(body: Body) -> Result<Vec<u8>, io::Error> {
     let mut bytes = Vec::new();
     pin_mut!(body);
     while let Some(chunk) = await!(body.next()) {
