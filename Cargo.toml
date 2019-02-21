@@ -13,28 +13,29 @@ repository = "https://github.com/rust-net-web/tide"
 version = "0.0.4"
 
 [dependencies]
+cookie = "0.11"
 http = "0.1"
-hyper = "0.12.0"
+http-service = "0.1.4"
+hyper = "0.12.24"
+path-table = "1.0.0"
 pin-utils = "0.1.0-alpha.4"
 serde = "1.0.80"
 serde_derive = "1.0.80"
 serde_json = "1.0.32"
-typemap = "0.3.3"
 serde_qs = "0.4.1"
 slog = "2.4.1"
-slog-term = "2.4.0"
 slog-async = "2.3.0"
-cookie="0.11"
-path-table = "1.0.0"
-
-[dependencies.multipart]
-version = "0.15.3"
-default-features = false
-features = ["server"]
+slog-term = "2.4.0"
+typemap = "0.3.3"
 
 [dependencies.futures-preview]
 features = ["compat"]
-version = "0.3.0-alpha.12"
+version = "0.3.0-alpha.13"
+
+[dependencies.multipart]
+default-features = false
+features = ["server"]
+version = "0.15.3"
 
 [dev-dependencies]
 basic-cookies = "0.1.3"

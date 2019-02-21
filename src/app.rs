@@ -1,9 +1,5 @@
-use futures::{
-    compat::{Compat, Future01CompatExt},
-    future::{self, FutureObj},
-    prelude::*,
-};
-use hyper::service::Service;
+use futures::future::{self, FutureObj};
+use http_service::HttpService;
 use std::{
     any::Any,
     fmt::Debug,
@@ -12,7 +8,6 @@ use std::{
 };
 
 use crate::{
-    body::Body,
     configuration::{Configuration, Store},
     endpoint::BoxedEndpoint,
     endpoint::Endpoint,
@@ -169,21 +164,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
 
         println!("Server is listening on: http://{}", addr);
 
-        let server: Server<Data> = self.into_server();
-
-        // TODO: be more robust
-        let server = hyper::Server::bind(&addr)
-            .serve(move || {
-                let res: Result<_, std::io::Error> = Ok(server.clone());
-                res
-            })
-            .compat()
-            .map(|_| {
-                let res: Result<(), ()> = Ok(());
-                res
-            })
-            .compat();
-        hyper::rt::run(server);
+        crate::serve::serve(self.into_server(), addr);
     }
 }
 
@@ -194,18 +175,22 @@ struct Server<Data> {
     default_handler: Arc<EndpointData<Data>>,
 }
 
-impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
-    type ReqBody = hyper::Body;
-    type ResBody = hyper::Body;
-    type Error = std::io::Error;
-    type Future = Compat<FutureObj<'static, Result<http::Response<hyper::Body>, Self::Error>>>;
+impl<Data> HttpService for Server<Data>
+where
+    Data: Clone + Send + Sync + 'static,
+{
+    type Connection = ();
+    type ConnectionFuture = future::Ready<Result<(), std::io::Error>>;
+    type Fut = FutureObj<'static, Result<http_service::Response, std::io::Error>>;
 
-    fn call(&mut self, req: http::Request<hyper::Body>) -> Self::Future {
+    fn connect(&self) -> Self::ConnectionFuture {
+        future::ok(())
+    }
+
+    fn respond(&self, _conn: &mut (), req: http_service::Request) -> Self::Fut {
         let data = self.data.clone();
         let router = self.router.clone();
         let default_handler = self.default_handler.clone();
-
-        let req = req.map(Body::from);
         let path = req.uri().path().to_owned();
         let method = req.method().to_owned();
 
@@ -224,12 +209,9 @@ impl<Data: Clone + Send + Sync + 'static> Service for Server<Data> {
                     endpoint,
                     next_middleware: middleware,
                 };
-                let res = await!(ctx.next());
-
-                Ok(res.map(Into::into))
+                Ok(await!(ctx.next()))
             },
         ))
-        .compat()
     }
 }
 
