@@ -1,0 +1,19 @@
+[package]
+authors = [
+    "Aaron Turon <aturon@mozilla.com>",
+    "Yoshua Wuyts <yoshuawuyts@gmail.com>",
+]
+description = "HttpService server that uses Hyper as backend"
+edition = "2018"
+license = "MIT OR Apache-2.0"
+name = "http-service-hyper"
+version = "0.1.0"
+
+[dependencies]
+http = "0.1"
+http-service = "0.1.4"
+hyper = "0.12.24"
+
+[dependencies.futures-preview]
+features = ["compat"]
+version = "0.3.0-alpha.13"

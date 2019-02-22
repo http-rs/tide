@@ -12,11 +12,14 @@ readme = "README.md"
 repository = "https://github.com/rust-net-web/tide"
 version = "0.0.4"
 
+[workspace]
+members = ["http-service-hyper"]
+
 [dependencies]
 cookie = "0.11"
+futures-preview = "0.3.0-alpha.13"
 http = "0.1"
 http-service = "0.1.4"
-hyper = "0.12.24"
 path-table = "1.0.0"
 pin-utils = "0.1.0-alpha.4"
 serde = "1.0.80"
@@ -28,14 +31,18 @@ slog-async = "2.3.0"
 slog-term = "2.4.0"
 typemap = "0.3.3"
 
-[dependencies.futures-preview]
-features = ["compat"]
-version = "0.3.0-alpha.13"
+[dependencies.http-service-hyper]
+optional = true
+path = "http-service-hyper"
 
 [dependencies.multipart]
 default-features = false
 features = ["server"]
 version = "0.15.3"
+
+[features]
+default = ["hyper"]
+hyper = ["http-service-hyper"]
 
 [dev-dependencies]
 basic-cookies = "0.1.3"

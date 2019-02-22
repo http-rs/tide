@@ -144,7 +144,8 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
         self.router.get_item()
     }
 
-    fn into_server(mut self) -> Server<Data> {
+    /// Make this app into an `HttpService`.
+    pub fn into_http_service(mut self) -> Server<Data> {
         self.router.apply_default_config();
         Server {
             data: self.data,
@@ -156,6 +157,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
     /// Start serving the app at the given address.
     ///
     /// Blocks the calling thread indefinitely.
+    #[cfg(feature = "hyper")]
     pub fn serve(self) {
         let configuration = self.get_item::<Configuration>().unwrap();
         let addr = format!("{}:{}", configuration.address, configuration.port)
@@ -164,12 +166,12 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
 
         println!("Server is listening on: http://{}", addr);
 
-        crate::serve::serve(self.into_server(), addr);
+        crate::serve::serve(self.into_http_service(), addr);
     }
 }
 
 #[derive(Clone)]
-struct Server<Data> {
+pub struct Server<Data> {
     data: Data,
     router: Arc<Router<Data>>,
     default_handler: Arc<EndpointData<Data>>,

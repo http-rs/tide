@@ -22,10 +22,11 @@ pub mod middleware;
 mod request;
 mod response;
 mod router;
+#[cfg(feature = "hyper")]
 mod serve;
 
 pub use crate::{
-    app::{App, AppData},
+    app::{App, AppData, Server},
     configuration::ExtractConfiguration,
     cookies::Cookies,
     endpoint::Endpoint,
