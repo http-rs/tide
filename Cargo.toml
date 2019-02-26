@@ -12,9 +12,6 @@ readme = "README.md"
 repository = "https://github.com/rust-net-web/tide"
 version = "0.0.4"
 
-[workspace]
-members = ["http-service-hyper"]
-
 [dependencies]
 cookie = "0.11"
 futures-preview = "0.3.0-alpha.13"
@@ -33,7 +30,7 @@ typemap = "0.3.3"
 
 [dependencies.http-service-hyper]
 optional = true
-path = "http-service-hyper"
+version = "0.1.0"
 
 [dependencies.multipart]
 default-features = false
