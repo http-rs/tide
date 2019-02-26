@@ -8,6 +8,7 @@ before_script: |
 script: |
   cargo fmt --all -- --check &&
   cargo clippy --all -- -D clippy::all &&
+  cargo build --no-default-features --verbose &&
   cargo build --all --verbose &&
   cargo test  --all --verbose
 cache: cargo
