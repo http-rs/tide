@@ -45,3 +45,4 @@ hyper = ["http-service-hyper"]
 basic-cookies = "0.1.3"
 juniper = "0.10.0"
 structopt = "0.2.14"
+http-service-mock = "0.1.0"
