@@ -49,7 +49,8 @@ fn wildcard() {
 
 #[test]
 fn invalid_segment_error() {
-    let app = tide::App::new(());
+    let mut app = tide::App::new(());
+    app.at("/add_one/{num}").get(add_one); 
     let mut server = make_server(app.into_http_service()).unwrap();
 
     let req = http::Request::get("/add_one/a")
@@ -61,7 +62,8 @@ fn invalid_segment_error() {
 
 #[test]
 fn not_found_error() {
-    let app = tide::App::new(());
+    let mut app = tide::App::new(());
+    app.at("/add_one/{num}").get(add_one); 
     let mut server = make_server(app.into_http_service()).unwrap();
 
     let req = http::Request::get("/add_one/").body(Body::empty()).unwrap();
