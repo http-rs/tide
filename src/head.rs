@@ -4,6 +4,7 @@
 //! automatically parse out information from a request.
 
 use futures::future;
+use std::borrow::Cow;
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
@@ -55,6 +56,12 @@ impl Head {
 pub struct NamedHeader(pub http::header::HeaderName);
 
 pub struct Header<T>(pub T);
+
+impl From<http::header::HeaderName> for NamedHeader {
+    fn from(name: http::header::HeaderName) -> Self {
+        NamedHeader(name)
+    }
+}
 
 impl<T: From<http::header::HeaderValue> + Send + 'static, S: 'static> ExtractSeed<Header<T>, S> for NamedHeader {
     type Fut = future::Ready<Result<Header<T>, Response>>;
@@ -200,7 +207,7 @@ pub trait NamedSegment: Send + 'static + std::str::FromStr {
 /// }
 /// ```
 ///
-pub struct Named<T: NamedSegment>(pub T);
+pub struct Named<T>(pub T);
 
 impl<T: NamedSegment> Deref for Named<T> {
     type Target = T;
@@ -228,6 +235,34 @@ impl<T: NamedSegment, S: 'static> Extract<S> for Named<T> {
             Some(params) => params
                 .map
                 .get(T::NAME)
+                .and_then(|segment| segment.parse().ok())
+                .map_or(
+                    future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
+                    |t| future::ok(Named(t)),
+                ),
+            None => future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
+        }
+    }
+}
+
+/// A seed extracting a particular segment.
+///
+/// This extracts any `Named<T>` where `T: std::str::FromStr` by looking up the particular segment.
+pub struct SegmentName(pub Cow<'static, str>);
+
+impl<T: std::str::FromStr + Send + 'static, S: 'static> ExtractSeed<Named<T>, S> for SegmentName {
+    type Fut = future::Ready<Result<Named<T>, Response>>;
+
+    fn extract(&self,
+        data: &mut S,
+        req: &mut Request,
+        params: &Option<RouteMatch<'_>>,
+        store: &Store,
+    ) -> Self::Fut {
+        match params {
+            Some(params) => params
+                .map
+                .get(self.0.as_ref())
                 .and_then(|segment| segment.parse().ok())
                 .map_or(
                     future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
