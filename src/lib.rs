@@ -29,7 +29,7 @@ pub use crate::{
     app::{App, AppData, Server},
     configuration::ExtractConfiguration,
     cookies::Cookies,
-    endpoint::Endpoint,
+    endpoint::{Endpoint, Seeded},
     extract::{Extract, ExtractSeed},
     middleware::Middleware,
     request::{Compute, Computed, Request},
