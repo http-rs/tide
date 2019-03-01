@@ -119,33 +119,42 @@ macro_rules! call_f {
     };
 }
 
-pub struct Seeded<F, E>(pub(crate) F, pub(crate) E);
+pub struct Seeded<F, E>(pub F, pub E);
 
-/// FIXME: implement this for all other parameter lengths.
-impl<F, Data, Fut, E, X> Endpoint<Data, (Ty<Fut>, Ty<X>,)> for Seeded<F, (E,)>
-where
-    F: Send + Sync + Clone + 'static + Fn(X) -> Fut,
-    Data: Send + Sync + Clone + 'static,
-    Fut: Future + Send + 'static,
-    Fut::Output: IntoResponse,
-    X: Send + Sized + 'static,
-    E: ExtractSeed<X, Data>,
-{
-    type Fut = FutureObj<'static, Response>;
-    fn call(&self, mut data: Data, mut req: Request, params: Option<RouteMatch<'_>>, store: &Store) -> Self::Fut {
-        let f = self.0.clone();
-        let x = (self.1).0.extract(&mut data, &mut req, &params, store);
-        FutureObj::new(Box::new(async move {
-            let (parts, _) = req.into_parts();
-            let head = Head::from(parts);
-            let x = match await!(x) {
-                Ok(x) => x,
-                Err(resp) => return resp,
-            };
-            let res = await!(f(x));
-            res.into_response()
-        }))
-    }
+macro_rules! seeded_end_point_impl_raw {
+    ($([$head:ty])* $(($X:ident,$Y:ident)),*) => {
+        impl<T, Data, Fut, $($X,$Y),*> Endpoint<Data, (Ty<Fut>, $($head,)* $(Ty<$X>),*)> for Seeded<T, ($($Y),*)>
+        where
+            T: Send + Sync + Clone + 'static + Fn($($head,)* $($X),*) -> Fut,
+            Data: Send + Sync + Clone + 'static,
+            Fut: Future + Send + 'static,
+            Fut::Output: IntoResponse,
+            $(
+                $X: Send + Sized + 'static,
+                $Y: ExtractSeed<$X, Data>
+            ),*
+        {
+            type Fut = FutureObj<'static, Response>;
+
+            #[allow(unused_mut, unused_parens, non_snake_case)]
+            fn call(&self, mut data: Data, mut req: Request, params: Option<RouteMatch<'_>>, store: &Store) -> Self::Fut {
+                let f = self.0.clone();
+                let ($($Y),*) = &self.1;
+                $(let $X = <$Y as ExtractSeed<$X, Data>>::extract($Y, &mut data, &mut req, &params, store);)*
+                FutureObj::new(Box::new(async move {
+                    let (parts, _) = req.into_parts();
+                    let head = Head::from(parts);
+                    $(let $X = match await!($X) {
+                        Ok(x) => x,
+                        Err(resp) => return resp,
+                    };)*
+                    let res = await!(call_f!($($head;)* (f, head); $($X),*));
+
+                    res.into_response()
+                }))
+            }
+        }
+    };
 }
 
 macro_rules! end_point_impl_raw {
@@ -190,6 +199,13 @@ macro_rules! end_point_impl {
     }
 }
 
+macro_rules! seeded_end_point_impl {
+    ($(($X:ident,$Y:ident)),*) => {
+        seeded_end_point_impl_raw!([Head] $(($X,$Y)),*);
+        seeded_end_point_impl_raw!($(($X,$Y)),*);
+    }
+}
+
 end_point_impl!();
 end_point_impl!(T0);
 end_point_impl!(T0, T1);
@@ -201,3 +217,15 @@ end_point_impl!(T0, T1, T2, T3, T4, T5, T6);
 end_point_impl!(T0, T1, T2, T3, T4, T5, T6, T7);
 end_point_impl!(T0, T1, T2, T3, T4, T5, T6, T7, T8);
 end_point_impl!(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9);
+
+seeded_end_point_impl!();
+seeded_end_point_impl!((T0,S0));
+seeded_end_point_impl!((T0,S0), (T1,S1));
+seeded_end_point_impl!((T0,S0), (T1,S1), (T2,S2));
+seeded_end_point_impl!((T0,S0), (T1,S1), (T2,S2), (T3,S3));
+seeded_end_point_impl!((T0,S0), (T1,S1), (T2,S2), (T3,S3), (T4,S4));
+seeded_end_point_impl!((T0,S0), (T1,S1), (T2,S2), (T3,S3), (T4,S4), (T5,S5));
+seeded_end_point_impl!((T0,S0), (T1,S1), (T2,S2), (T3,S3), (T4,S4), (T5,S5), (T6,S6));
+seeded_end_point_impl!((T0,S0), (T1,S1), (T2,S2), (T3,S3), (T4,S4), (T5,S5), (T6,S6), (T7,S7));
+seeded_end_point_impl!((T0,S0), (T1,S1), (T2,S2), (T3,S3), (T4,S4), (T5,S5), (T6,S6), (T7,S7), (T8,S8));
+seeded_end_point_impl!((T0,S0), (T1,S1), (T2,S2), (T3,S3), (T4,S4), (T5,S5), (T6,S6), (T7,S7), (T8,S8), (T9,S9));
