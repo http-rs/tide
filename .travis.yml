@@ -1,10 +1,9 @@
 language: rust
 rust:
-  - nightly
+  - nightly-2019-02-27
 
 before_script: |
-  rustup install nightly-2019-02-21
-  rustup component add rustfmt-preview clippy-preview
+  rustup component add rustfmt clippy
 script: |
   cargo fmt --all -- --check &&
   cargo clippy --all -- -D clippy::all &&
