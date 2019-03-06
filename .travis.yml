@@ -3,8 +3,8 @@ rust:
   - nightly
 
 before_script: |
-  rustup install nightly-2019-03-05
-  rustup default nightly-2019-03-05
+  rustup install nightly-2019-03-02
+  rustup default nightly-2019-03-02
   rustup component add rustfmt clippy
 script: |
   cargo fmt --all -- --check &&
