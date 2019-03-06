@@ -1,34 +1,11 @@
 #![feature(futures_api, async_await)]
 
-use futures::{executor::block_on, prelude::*};
-use http_service::{Body, HttpService, Request, Response};
+use http_service::{Body};
+use futures::{executor::block_on};
 use tide::{
-    head::{Named, NamedSegment},
-    Server,
+    head::{Named, NamedSegment}
 };
-
-struct TestBackend<T: HttpService> {
-    service: T,
-    connection: T::Connection,
-}
-
-impl<T: HttpService> TestBackend<T> {
-    fn wrap(service: T) -> Result<Self, <T::ConnectionFuture as TryFuture>::Error> {
-        let connection = block_on(service.connect().into_future())?;
-        Ok(Self {
-            service,
-            connection,
-        })
-    }
-
-    fn simulate(&mut self, req: Request) -> Result<Response, <T::Fut as TryFuture>::Error> {
-        block_on(
-            self.service
-                .respond(&mut self.connection, req)
-                .into_future(),
-        )
-    }
-}
+use http_service_mock::{make_server};
 
 struct Number(i32);
 
@@ -43,20 +20,15 @@ impl std::str::FromStr for Number {
         s.parse().map(|num| Number(num))
     }
 }
-
 async fn add_one(Named(Number(num)): Named<Number>) -> String {
     (num + 1).to_string()
 }
 
-fn make_server() -> TestBackend<Server<()>> {
-    let mut app = tide::App::new(());
-    app.at("/add_one/{num}").get(add_one);
-    TestBackend::wrap(app.into_http_service()).unwrap()
-}
-
 #[test]
 fn wildcard() {
-    let mut server = make_server();
+    let mut app = tide::App::new(());
+    app.at("/add_one/{num}").get(add_one); 
+    let mut server = make_server(app.into_http_service()).unwrap();
 
     let req = http::Request::get("/add_one/3")
         .body(Body::empty())
@@ -77,7 +49,9 @@ fn wildcard() {
 
 #[test]
 fn invalid_segment_error() {
-    let mut server = make_server();
+    let mut app = tide::App::new(());
+    app.at("/add_one/{num}").get(add_one); 
+    let mut server = make_server(app.into_http_service()).unwrap();
 
     let req = http::Request::get("/add_one/a")
         .body(Body::empty())
@@ -88,7 +62,9 @@ fn invalid_segment_error() {
 
 #[test]
 fn not_found_error() {
-    let mut server = make_server();
+    let mut app = tide::App::new(());
+    app.at("/add_one/{num}").get(add_one); 
+    let mut server = make_server(app.into_http_service()).unwrap();
 
     let req = http::Request::get("/add_one/").body(Body::empty()).unwrap();
     let res = server.simulate(req).unwrap();
