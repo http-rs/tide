@@ -203,9 +203,9 @@ impl<T: NamedSegment, S: 'static> Extract<S> for Named<T> {
 
 /// An extractor for query string in URL
 ///
-pub struct UrlQuery<T>(pub T);
+pub struct QueryString<T>(pub T);
 
-impl<S, T> Extract<S> for UrlQuery<T>
+impl<S, T> Extract<S> for QueryString<T>
 where
     T: Send + std::str::FromStr + 'static,
     S: 'static,
@@ -219,7 +219,7 @@ where
     ) -> Self::Fut {
         req.uri().query().and_then(|q| q.parse().ok()).map_or(
             future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
-            |q| future::ok(UrlQuery(q)),
+            |q| future::ok(QueryString(q)),
         )
     }
 }
