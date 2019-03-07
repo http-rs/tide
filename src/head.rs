@@ -223,3 +223,28 @@ where
         )
     }
 }
+
+pub struct QueryParams<T>(pub T);
+
+impl<S, T> Extract<S> for QueryParams<T>
+where
+    T: Send + serde::de::DeserializeOwned + 'static,
+    S: 'static,
+{
+    type Fut = future::Ready<Result<Self, Response>>;
+
+    fn extract(
+        data: &mut S,
+        req: &mut Request,
+        params: &Option<RouteMatch<'_>>,
+        store: &Store,
+    ) -> Self::Fut {
+        req.uri()
+            .query()
+            .and_then(|q| serde_qs::from_str(q).ok())
+            .map_or(
+                future::err(http::status::StatusCode::BAD_REQUEST.into_response()),
+                |q| future::ok(QueryParams(q)),
+            )
+    }
+}
