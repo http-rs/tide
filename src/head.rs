@@ -224,6 +224,47 @@ where
     }
 }
 
+/// An extractor for query string parameters.
+///
+/// # Examples
+///
+/// Extract queries like `?title=Hitchhiker%27s+Guide&author=Adams`:
+///
+/// ```rust
+/// #![feature(async_await, futures_api)]
+///
+/// use serde_derive::Deserialize;
+/// use tide::head::QueryParams;
+///
+/// #[derive(Deserialize)]
+/// struct Book {
+///     title: String,
+///     author: String,
+/// }
+///
+/// async fn search_book(QueryParams(book): QueryParams<Book>) -> String {
+///     format!("title: {}, author: {}", book.title, book.author)
+/// }
+/// #
+/// # fn main() {
+/// #     use http_service::Body;
+/// #     use http_service_mock::make_server;
+/// #     use futures::executor::block_on;
+/// #     use std::str;
+/// #
+/// #     let mut app = tide::App::new(());
+/// #     app.at("/search").get(search_book);
+/// #     let mut server = make_server(app.into_http_service()).unwrap();
+/// #
+/// #     let req = http::Request::get("/search?title=Hitchhiker%27s+Guide&author=Adams")
+/// #         .body(Body::empty())
+/// #         .unwrap();
+/// #
+/// #     let res = server.simulate(req).unwrap();
+/// #     let body = block_on(res.into_body().into_vec()).unwrap();
+/// #     assert_eq!(str::from_utf8(&body).unwrap(), "title: Hitchhiker's Guide, author: Adams");
+/// # }
+/// ```
 pub struct QueryParams<T>(pub T);
 
 impl<S, T> Extract<S> for QueryParams<T>
