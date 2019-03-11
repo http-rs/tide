@@ -102,7 +102,7 @@ impl<T: Send + 'static + std::str::FromStr, S: 'static> Extract<S> for Path<T> {
         data: &mut S,
         req: &mut Request,
         params: &Option<RouteMatch<'_>>,
-        store: &Store,
+        store: &Arc<Store>,
     ) -> Self::Fut {
         let &PathIdx(i) = req.extensions().get::<PathIdx>().unwrap_or(&PathIdx(0));
         req.extensions_mut().insert(PathIdx(i + 1));
@@ -185,7 +185,7 @@ impl<T: NamedSegment, S: 'static> Extract<S> for Named<T> {
         data: &mut S,
         req: &mut Request,
         params: &Option<RouteMatch<'_>>,
-        store: &Store,
+        store: &Arc<Store>,
     ) -> Self::Fut {
         match params {
             Some(params) => params
@@ -215,7 +215,7 @@ where
         data: &mut S,
         req: &mut Request,
         params: &Option<RouteMatch<'_>>,
-        store: &Store,
+        store: &Arc<Store>,
     ) -> Self::Fut {
         req.uri().query().and_then(|q| q.parse().ok()).map_or(
             future::err(http::status::StatusCode::BAD_REQUEST.into_response()),

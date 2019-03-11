@@ -1,5 +1,6 @@
 use cookie::{Cookie, CookieJar, ParseError};
 use futures::future;
+use std::sync::Arc;
 
 use crate::{configuration::Store, response::IntoResponse, Extract, Request, Response, RouteMatch};
 
@@ -28,7 +29,7 @@ impl<S: 'static> Extract<S> for Cookies {
         data: &mut S,
         req: &mut Request,
         params: &Option<RouteMatch<'_>>,
-        store: &Store,
+        store: &Arc<Store>,
     ) -> Self::Fut {
         let cookie_jar = match req.headers().get("Cookie") {
             Some(raw_cookies) => parse_from_header(raw_cookies.to_str().unwrap()),

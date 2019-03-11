@@ -3,6 +3,7 @@
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::fmt::{self, Debug};
+use std::sync::Arc;
 
 use futures::future::FutureObj;
 
@@ -106,7 +107,7 @@ where
         data: &mut S,
         req: &mut Request,
         params: &Option<RouteMatch<'_>>,
-        store: &Store,
+        store: &Arc<Store>,
     ) -> Self::Fut {
         // The return type here is Option<K>, but the return type of the result of the future is
         // Result<ExtractConfiguration<T>, Response>, so rustc can infer that K == T, so we do not

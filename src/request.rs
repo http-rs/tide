@@ -1,6 +1,7 @@
 use futures::future;
 use http_service::Body;
 use std::ops::{Deref, DerefMut};
+use std::sync::Arc;
 
 use crate::{configuration::Store, Extract, Response, RouteMatch};
 
@@ -58,7 +59,7 @@ impl<Data: 'static, T: Compute> Extract<Data> for Computed<T> {
         data: &mut Data,
         req: &mut Request,
         params: &Option<RouteMatch<'_>>,
-        store: &Store,
+        store: &Arc<Store>,
     ) -> Self::Fut {
         future::ok(Computed(T::compute(req)))
     }

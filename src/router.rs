@@ -16,7 +16,7 @@ use path_table::{PathTable, RouteMatch};
 pub struct Router<Data> {
     table: PathTable<ResourceData<Data>>,
     middleware_base: Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
-    pub(crate) store_base: Store,
+    pub(crate) store_base: Arc<Store>,
 }
 
 pub(crate) struct RouteResult<'a, Data> {
@@ -115,7 +115,7 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
         Router {
             table: PathTable::new(),
             middleware_base: Vec::new(),
-            store_base: Store::new(),
+            store_base: Arc::new(Store::new()),
         }
     }
 
@@ -160,7 +160,7 @@ impl<Data: Clone + Send + Sync + 'static> Router<Data> {
     ///
     /// The default configuration will be applied when the router setup ends.
     pub fn config<T: Any + Debug + Clone + Send + Sync>(&mut self, item: T) -> &mut Self {
-        self.store_base.write(item);
+        Arc::get_mut(&mut self.store_base).unwrap().write(item);
         self
     }
 
@@ -182,7 +182,9 @@ impl<Data> Router<Data> {
     pub(crate) fn apply_default_config(&mut self) {
         for resource in self.table.iter_mut() {
             for endpoint in resource.endpoints.values_mut() {
-                endpoint.store.merge(&self.store_base);
+                Arc::get_mut(&mut endpoint.store)
+                    .unwrap()
+                    .merge(&self.store_base);
             }
         }
     }
@@ -197,13 +199,13 @@ impl<Data> Router<Data> {
 /// This can be used to add configuration items to the endpoint.
 pub struct EndpointData<Data> {
     pub(crate) endpoint: BoxedEndpoint<Data>,
-    pub(crate) store: Store,
+    pub(crate) store: Arc<Store>,
 }
 
 impl<Data> EndpointData<Data> {
     /// Add a configuration `item` for this endpoint.
     pub fn config<T: Any + Debug + Clone + Send + Sync>(&mut self, item: T) -> &mut Self {
-        self.store.write(item);
+        Arc::get_mut(&mut self.store).unwrap().write(item);
         self
     }
 }
@@ -238,7 +240,7 @@ impl<'a, Data> Resource<'a, Data> {
         let mut subrouter = Router {
             table: PathTable::new(),
             middleware_base: self.middleware_base.clone(),
-            store_base: Store::new(),
+            store_base: Arc::new(Store::new()),
         };
         builder(&mut subrouter);
         subrouter.apply_default_config();
@@ -268,7 +270,7 @@ impl<'a, Data> Resource<'a, Data> {
 
         let endpoint = EndpointData {
             endpoint: BoxedEndpoint::new(ep),
-            store: Store::new(),
+            store: Arc::new(Store::new()),
         };
 
         entry.or_insert(endpoint)
@@ -340,7 +342,7 @@ mod tests {
     ) -> Option<Response> {
         let default_handler = Arc::new(EndpointData {
             endpoint: BoxedEndpoint::new(async || http::status::StatusCode::NOT_FOUND),
-            store: Store::new(),
+            store: Arc::new(Store::new()),
         });
         let RouteResult {
             endpoint,
@@ -372,7 +374,7 @@ mod tests {
     ) -> Option<usize> {
         let default_handler = Arc::new(EndpointData {
             endpoint: BoxedEndpoint::new(async || http::status::StatusCode::NOT_FOUND),
-            store: Store::new(),
+            store: Arc::new(Store::new()),
         });
         let route_result = router.route(path, method, &default_handler);
         Some(route_result.middleware.len())

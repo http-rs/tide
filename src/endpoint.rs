@@ -1,4 +1,5 @@
 use futures::future::{Future, FutureObj};
+use std::sync::Arc;
 
 use crate::{
     configuration::Store, extract::Extract, head::Head, IntoResponse, Request, Response, RouteMatch,
@@ -72,12 +73,14 @@ pub trait Endpoint<Data, Kind>: Send + Sync + 'static {
         data: Data,
         req: Request,
         params: Option<RouteMatch<'_>>,
-        store: &Store,
+        store: &Arc<Store>,
     ) -> Self::Fut;
 }
 
 type BoxedEndpointFn<Data> =
-    dyn Fn(Data, Request, Option<RouteMatch>, &Store) -> FutureObj<'static, Response> + Send + Sync;
+    dyn Fn(Data, Request, Option<RouteMatch>, &Arc<Store>) -> FutureObj<'static, Response>
+        + Send
+        + Sync;
 
 pub(crate) struct BoxedEndpoint<Data> {
     endpoint: Box<BoxedEndpointFn<Data>>,
@@ -100,7 +103,7 @@ impl<Data> BoxedEndpoint<Data> {
         data: Data,
         req: Request,
         params: Option<RouteMatch<'_>>,
-        store: &Store,
+        store: &Arc<Store>,
     ) -> FutureObj<'static, Response> {
         (self.endpoint)(data, req, params, store)
     }
@@ -134,7 +137,7 @@ macro_rules! end_point_impl_raw {
             type Fut = FutureObj<'static, Response>;
 
             #[allow(unused_mut, non_snake_case)]
-            fn call(&self, mut data: Data, mut req: Request, params: Option<RouteMatch<'_>>, store: &Store) -> Self::Fut {
+            fn call(&self, mut data: Data, mut req: Request, params: Option<RouteMatch<'_>>, store: &Arc<Store>) -> Self::Fut {
                 let f = self.clone();
                 $(let $X = $X::extract(&mut data, &mut req, &params, store);)*
                 FutureObj::new(Box::new(async move {

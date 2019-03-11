@@ -1,4 +1,5 @@
 use futures::prelude::*;
+use std::sync::Arc;
 
 use crate::{configuration::Store, Request, Response, RouteMatch};
 
@@ -15,6 +16,6 @@ pub trait Extract<Data>: Send + Sized + 'static {
         data: &mut Data,
         req: &mut Request,
         params: &Option<RouteMatch<'_>>,
-        store: &Store,
+        store: &Arc<Store>,
     ) -> Self::Fut;
 }

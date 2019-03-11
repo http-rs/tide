@@ -86,7 +86,7 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
             router: Router::new(),
             default_handler: EndpointData {
                 endpoint: BoxedEndpoint::new(async || http::status::StatusCode::NOT_FOUND),
-                store: Store::new(),
+                store: Arc::new(Store::new()),
             },
         };
 
@@ -240,7 +240,7 @@ impl<T: Clone + Send + 'static> Extract<T> for AppData<T> {
         data: &mut T,
         req: &mut Request,
         params: &Option<RouteMatch<'_>>,
-        store: &Store,
+        store: &Arc<Store>,
     ) -> Self::Fut {
         future::ok(AppData(data.clone()))
     }
