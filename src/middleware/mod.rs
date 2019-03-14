@@ -54,12 +54,12 @@ impl<'a, Data: Clone + Send> RequestContext<'a, Data> {
             self.next_middleware = next;
             current.handle(self)
         } else {
-            FutureObj::new(Box::new(self.endpoint.endpoint.call(
+            self.endpoint.endpoint.call(
                 self.app_data.clone(),
                 self.req,
                 self.params,
                 &self.endpoint.store,
-            )))
+            )
         }
     }
 }
