@@ -1,65 +1,46 @@
-use std::any::Any;
-use std::fmt::Debug;
+use futures::future::FutureObj;
 use std::sync::Arc;
 
-use futures::future::FutureObj;
-
-use crate::{configuration::Store, router::EndpointData, Request, Response, RouteMatch};
+use crate::{endpoint::DynEndpoint, Context, Response};
 
 mod default_headers;
-pub mod logger;
+mod logger;
 
-pub use self::default_headers::DefaultHeaders;
+pub use self::{default_headers::DefaultHeaders, logger::RootLogger};
 
 /// Middleware that wraps around remaining middleware chain.
-pub trait Middleware<Data>: Send + Sync {
+pub trait Middleware<AppData>: 'static + Send + Sync {
     /// Asynchronously handle the request, and return a response.
-    fn handle<'a>(&'a self, ctx: RequestContext<'a, Data>) -> FutureObj<'a, Response>;
+    fn handle<'a>(
+        &'a self,
+        cx: Context<AppData>,
+        next: Next<'a, AppData>,
+    ) -> FutureObj<'a, Response>;
 }
 
 impl<Data, F> Middleware<Data> for F
 where
-    F: Send + Sync + Fn(RequestContext<Data>) -> FutureObj<Response>,
+    F: Send + Sync + 'static + for<'a> Fn(Context<Data>, Next<'a, Data>) -> FutureObj<'a, Response>,
 {
-    fn handle<'a>(&'a self, ctx: RequestContext<'a, Data>) -> FutureObj<'a, Response> {
-        (self)(ctx)
+    fn handle<'a>(&'a self, cx: Context<Data>, next: Next<'a, Data>) -> FutureObj<'a, Response> {
+        (self)(cx, next)
     }
 }
 
-pub struct RequestContext<'a, Data> {
-    pub app_data: Data,
-    pub req: Request,
-    pub params: Option<RouteMatch<'a>>,
-    pub(crate) endpoint: &'a EndpointData<Data>,
-    pub(crate) next_middleware: &'a [Arc<dyn Middleware<Data> + Send + Sync>],
+/// The remainder of a middleware chain, including the endpoint.
+pub struct Next<'a, AppData> {
+    pub(crate) endpoint: &'a DynEndpoint<AppData>,
+    pub(crate) next_middleware: &'a [Arc<dyn Middleware<AppData>>],
 }
 
-impl<'a, Data: Clone + Send> RequestContext<'a, Data> {
-    /// Get a configuration item of given type from the endpoint.
-    pub fn get_item<T: Any + Debug + Clone + Send + Sync>(&self) -> Option<&T> {
-        self.endpoint.store.read::<T>()
-    }
-
-    /// Get the configuration store for this request.
-    ///
-    /// This is for debug purposes. `Store` implements `Debug`, so the store can be inspected using
-    /// `{:?}` formatter.
-    pub fn store(&self) -> &Store {
-        &self.endpoint.store
-    }
-
-    /// Consume this context, and run remaining middleware chain to completion.
-    pub fn next(mut self) -> FutureObj<'a, Response> {
+impl<'a, AppData: 'static> Next<'a, AppData> {
+    /// Asynchronously execute the remaining middleware chain.
+    pub fn run(mut self, cx: Context<AppData>) -> FutureObj<'a, Response> {
         if let Some((current, next)) = self.next_middleware.split_first() {
             self.next_middleware = next;
-            current.handle(self)
+            current.handle(cx, self)
         } else {
-            FutureObj::new(Box::new(self.endpoint.endpoint.call(
-                self.app_data.clone(),
-                self.req,
-                self.params,
-                &self.endpoint.store,
-            )))
+            (self.endpoint)(cx)
         }
     }
 }

@@ -1,11 +1,16 @@
 use http_service::Body;
 
-use crate::body;
+pub type Response = http_service::Response;
 
-/// An HTTP response.
-///
-/// A convenient alias for the `http::Response` type, using Tide's `Body`.
-pub type Response = http::Response<Body>;
+/// Serialize `t` into a JSON-encoded response.
+pub fn json<T: serde::Serialize>(t: T) -> Response {
+    // TODO: remove the `unwrap`
+    http::Response::builder()
+        .status(http::status::StatusCode::OK)
+        .header("Content-Type", "application/json")
+        .body(Body::from(serde_json::to_vec(&t).unwrap()))
+        .unwrap()
+}
 
 /// A value that is synchronously convertable into a `Response`.
 pub trait IntoResponse: Send + Sized {
@@ -15,7 +20,7 @@ pub trait IntoResponse: Send + Sized {
     /// Create a new `IntoResponse` value that will respond with the given status code.
     ///
     /// ```
-    /// # use tide::IntoResponse;
+    /// # use tide::response::IntoResponse;
     /// let resp = "Hello, 404!".with_status(http::status::StatusCode::NOT_FOUND).into_response();
     /// assert_eq!(resp.status(), http::status::StatusCode::NOT_FOUND);
     /// ```
@@ -43,12 +48,6 @@ impl IntoResponse for Vec<u8> {
             .header("Content-Type", "application/octet-stream")
             .body(Body::from(self))
             .unwrap()
-    }
-}
-
-impl IntoResponse for body::Bytes {
-    fn into_response(self) -> Response {
-        self.to_vec().into_response()
     }
 }
 

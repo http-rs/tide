@@ -1,11 +1,10 @@
-#![feature(async_await, futures_api)]
+#![feature(async_await, futures_api, await_macro)]
 
 #[macro_use]
 extern crate serde_derive;
 
-use http::status::StatusCode;
 use std::io::Read;
-use tide::{body, App};
+use tide::{forms::ExtractForms, response, App, Context, EndpointResult};
 
 #[derive(Serialize, Deserialize, Clone)]
 struct Message {
@@ -14,9 +13,7 @@ struct Message {
     file: Option<String>,
 }
 
-async fn upload_file(
-    mut multipart_form: body::MultipartForm,
-) -> Result<body::Json<Message>, StatusCode> {
+async fn upload_file(mut cx: Context<()>) -> EndpointResult {
     // https://stackoverflow.com/questions/43424982/how-to-parse-multipart-forms-using-abonander-multipart-with-rocket
     let mut message = Message {
         key1: None,
@@ -24,7 +21,7 @@ async fn upload_file(
         file: None,
     };
 
-    multipart_form
+    await!(cx.body_multipart())?
         .foreach_entry(|mut entry| match entry.headers.name.as_str() {
             "file" => {
                 let mut vec = Vec::new();
@@ -57,15 +54,13 @@ async fn upload_file(
         })
         .expect("Unable to iterate multipart?");
 
-    Ok(body::Json(message))
+    Ok(response::json(message))
 }
 
 fn main() {
     let mut app = App::new(());
-
     app.at("/upload_file").post(upload_file);
-
-    app.serve();
+    app.serve("127.0.0.1:8000").unwrap();
 }
 
 // Test with:

@@ -1,13 +1,15 @@
 use futures::future::{Future, FutureObj};
+use std::pin::Pin;
 
-use crate::{
-    configuration::Store, extract::Extract, head::Head, IntoResponse, Request, Response, RouteMatch,
-};
+use crate::{response::IntoResponse, Context, Response};
 
-/// The raw representation of an endpoint.
+/// A Tide endpoint.
 ///
-/// This trait is automatically implemented by a host of `Fn` types, and should not be
-/// implemented directly by Tide users.
+/// This trait is automatically implemented for `Fn` types, and so is rarely implemented
+/// directly by Tide users.
+///
+/// In practice, endpoints are function that take a `Context<AppData>` as an argument and
+/// return a type `T` that implements [`IntoResponse`].
 ///
 /// # Examples
 ///
@@ -20,154 +22,53 @@ use crate::{
 ///
 /// ```rust, no_run
 /// # #![feature(async_await, futures_api)]
-/// async fn hello() -> String {
+/// async fn hello(_cx: tide::Context<()>) -> String {
 ///     String::from("hello")
 /// }
 ///
 /// fn main() {
 ///     let mut app = tide::App::new(());
 ///     app.at("/hello").get(hello);
-///     app.serve()
+///     app.serve("127.0.0.1:8000").unwrap()
 /// }
 /// ```
-///
-/// Endpoint accessing `App` state (`Data`) and body of `POST` request as `String`:
-///
-/// ```rust, no_run
-/// # #![feature(async_await, futures_api)]
-/// use std::sync::Arc;
-/// use std::sync::Mutex;
-/// use tide::AppData;
-/// use tide::body;
-///
-/// #[derive(Clone, Default)]
-/// struct Database {
-///     contents: Arc<Mutex<Vec<String>>>,
-/// }
-///
-/// async fn insert(
-///     mut db: AppData<Database>,
-///     msg: body::Str,
-/// ) -> String {
-///     // insert into db
-///     # String::from("")
-/// }
-///
-/// fn main() {
-///     let mut app = tide::App::new(Database::default());
-///     app.at("/messages/insert").post(insert);
-///     app.serve()
-/// }
-/// ```
-///
-/// See [`body`](body/index.html) module for examples of how to work with request and response bodies.
-///
-pub trait Endpoint<Data, Kind>: Send + Sync + 'static {
+pub trait Endpoint<AppData>: Send + Sync + 'static {
     /// The async result of `call`.
     type Fut: Future<Output = Response> + Send + 'static;
 
-    /// Invoke the endpoint on the given request and app data handle.
-    fn call(
-        &self,
-        data: Data,
-        req: Request,
-        params: Option<RouteMatch<'_>>,
-        store: &Store,
-    ) -> Self::Fut;
+    /// Invoke the endpoint within the given context
+    fn call(&self, cx: Context<AppData>) -> Self::Fut;
 }
 
-type BoxedEndpointFn<Data> =
-    dyn Fn(Data, Request, Option<RouteMatch>, &Store) -> FutureObj<'static, Response> + Send + Sync;
+pub(crate) type DynEndpoint<AppData> =
+    dyn (Fn(Context<AppData>) -> FutureObj<'static, Response>) + 'static + Send + Sync;
 
-pub(crate) struct BoxedEndpoint<Data> {
-    endpoint: Box<BoxedEndpointFn<Data>>,
-}
-
-impl<Data> BoxedEndpoint<Data> {
-    pub fn new<T, Kind>(ep: T) -> BoxedEndpoint<Data>
-    where
-        T: Endpoint<Data, Kind>,
-    {
-        BoxedEndpoint {
-            endpoint: Box::new(move |data, request, params, store| {
-                FutureObj::new(Box::new(ep.call(data, request, params, store)))
-            }),
-        }
-    }
-
-    pub fn call(
-        &self,
-        data: Data,
-        req: Request,
-        params: Option<RouteMatch<'_>>,
-        store: &Store,
-    ) -> FutureObj<'static, Response> {
-        (self.endpoint)(data, req, params, store)
+impl<AppData, F: Send + Sync + 'static, Fut> Endpoint<AppData> for F
+where
+    F: Fn(Context<AppData>) -> Fut,
+    Fut: Future + Send + 'static,
+    Fut::Output: IntoResponse,
+{
+    type Fut = ResponseWrapper<Fut>;
+    fn call(&self, cx: Context<AppData>) -> Self::Fut {
+        ResponseWrapper { fut: (self)(cx) }
     }
 }
 
-/// A marker type used for the (phantom) `Kind` parameter in endpoints.
-#[doc(hidden)]
-pub struct Ty<T>(T);
-
-macro_rules! call_f {
-    ($head_ty:ty; ($f:ident, $head:ident); $($X:ident),*) => {
-        $f($head.clone(), $($X),*)
-    };
-    (($f:ident, $head:ident); $($X:ident),*) => {
-        $f($($X),*)
-    };
+/// The future retured by the endpoint implementation for `Fn` types.
+pub struct ResponseWrapper<F> {
+    fut: F,
 }
 
-macro_rules! end_point_impl_raw {
-    ($([$head:ty])* $($X:ident),*) => {
-        impl<T, Data, Fut, $($X),*> Endpoint<Data, (Ty<Fut>, $($head,)* $(Ty<$X>),*)> for T
-        where
-            T: Send + Sync + Clone + 'static + Fn($($head,)* $($X),*) -> Fut,
-            Data: Clone + Send + Sync + 'static,
-            Fut: Future + Send + 'static,
-            Fut::Output: IntoResponse,
-            $(
-                $X: Extract<Data>
-            ),*
-        {
-            type Fut = FutureObj<'static, Response>;
+impl<F> Future for ResponseWrapper<F>
+where
+    F: Future,
+    F::Output: IntoResponse,
+{
+    type Output = Response;
 
-            #[allow(unused_mut, non_snake_case)]
-            fn call(&self, mut data: Data, mut req: Request, params: Option<RouteMatch<'_>>, store: &Store) -> Self::Fut {
-                let f = self.clone();
-                $(let $X = $X::extract(&mut data, &mut req, &params, store);)*
-                FutureObj::new(Box::new(async move {
-                    let (parts, _) = req.into_parts();
-                    let head = Head::from(parts);
-                    $(let $X = match await!($X) {
-                        Ok(x) => x,
-                        Err(resp) => return resp,
-                    };)*
-                    let res = await!(call_f!($($head;)* (f, head); $($X),*));
-
-                    res.into_response()
-                }))
-            }
-        }
-    };
-}
-
-macro_rules! end_point_impl {
-    ($($X:ident),*) => {
-        end_point_impl_raw!([Head] $($X),*);
-        end_point_impl_raw!($($X),*);
+    fn poll(self: Pin<&mut Self>, waker: &std::task::Waker) -> std::task::Poll<Response> {
+        let inner = unsafe { self.map_unchecked_mut(|wrapper| &mut wrapper.fut) };
+        inner.poll(waker).map(IntoResponse::into_response)
     }
 }
-
-end_point_impl!();
-end_point_impl!(T0);
-end_point_impl!(T0, T1);
-end_point_impl!(T0, T1, T2);
-end_point_impl!(T0, T1, T2, T3);
-end_point_impl!(T0, T1, T2, T3, T4);
-end_point_impl!(T0, T1, T2, T3, T4, T5);
-end_point_impl!(T0, T1, T2, T3, T4, T5, T6);
-end_point_impl!(T0, T1, T2, T3, T4, T5, T6, T7);
-end_point_impl!(T0, T1, T2, T3, T4, T5, T6, T7, T8);
-end_point_impl!(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9);
