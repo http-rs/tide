@@ -23,6 +23,6 @@
 <!--- If you're unsure about any of these, don't hesitate to ask. We're here to help! -->
 - [ ] My change requires a change to the documentation.
 - [ ] I have updated the documentation accordingly.
-- [ ] I have read the [CONTRIBUTING](https://github.com/rust-net-web/tide/blob/master/.github/CONTRIBUTING.md) document.
+- [ ] I have read the [CONTRIBUTING](https://github.com/rustasync/tide/blob/master/.github/CONTRIBUTING.md) document.
 - [ ] I have added tests to cover my changes.
 - [ ] All new and existing tests passed.
