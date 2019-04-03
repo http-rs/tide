@@ -79,8 +79,7 @@ pub struct App<Data> {
 
 impl<Data: Clone + Send + Sync + 'static> App<Data> {
     /// Set up a new app with some initial `data`.
-    pub fn new(data: Data) -> App<Data> {
-        let logger = RootLogger::new();
+    pub fn empty(data: Data) -> App<Data> {
         let mut app = App {
             data,
             router: Router::new(),
@@ -90,10 +89,15 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
             },
         };
 
+        app.setup_configuration();
+        app
+    }
+
+    pub fn new(data: Data) -> App<Data> {
+        let mut app = App::empty(data);
+        let logger = RootLogger::new();
         // Add RootLogger as a default middleware
         app.middleware(logger);
-        app.setup_configuration();
-
         app
     }
 
