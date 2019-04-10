@@ -31,6 +31,7 @@ pub mod response;
 mod route;
 mod router;
 
+#[doc(inline)]
 pub use crate::{
     app::{App, Server},
     context::Context,
