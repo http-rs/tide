@@ -74,6 +74,18 @@ pub trait ResultExt<T>: Sized {
         StatusCode: HttpTryFrom<S>;
 }
 
+/// Extends the `Response` type with a method to extract error causes when applicable.
+pub trait ResponseExt {
+    /// Extract the cause of the unsuccessful response, if any
+    fn err_cause(&self) -> Option<&(dyn std::error::Error + Send + Sync + 'static)>;
+}
+
+impl<T> ResponseExt for Response<T> {
+    fn err_cause(&self) -> Option<&(dyn std::error::Error + Send + Sync + 'static)> {
+        self.extensions().get().map(|Cause(c)| &**c)
+    }
+}
+
 impl<T, E: std::error::Error + Send + Sync + 'static> ResultExt<T> for std::result::Result<T, E> {
     fn with_err_status<S>(self, status: S) -> EndpointResult<T>
     where

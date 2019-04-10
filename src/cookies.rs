@@ -24,7 +24,7 @@ impl<AppData> ExtractCookies for Context<AppData> {
             .unwrap_or_else(|| CookieData {
                 content: self
                     .headers()
-                    .get("Cookie")
+                    .get("tide-cookie")
                     .and_then(|raw| parse_from_header(raw.to_str().unwrap()).ok())
                     .unwrap_or_default(),
             });

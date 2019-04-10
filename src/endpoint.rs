@@ -1,5 +1,4 @@
 use futures::future::{Future, FutureObj};
-use std::pin::Pin;
 
 use crate::{response::IntoResponse, Context, Response};
 
@@ -49,26 +48,11 @@ where
     Fut: Future + Send + 'static,
     Fut::Output: IntoResponse,
 {
-    type Fut = ResponseWrapper<Fut>;
+    type Fut = FutureObj<'static, Response>;
     fn call(&self, cx: Context<AppData>) -> Self::Fut {
-        ResponseWrapper { fut: (self)(cx) }
-    }
-}
-
-/// The future retured by the endpoint implementation for `Fn` types.
-pub struct ResponseWrapper<F> {
-    fut: F,
-}
-
-impl<F> Future for ResponseWrapper<F>
-where
-    F: Future,
-    F::Output: IntoResponse,
-{
-    type Output = Response;
-
-    fn poll(self: Pin<&mut Self>, waker: &std::task::Waker) -> std::task::Poll<Response> {
-        let inner = unsafe { self.map_unchecked_mut(|wrapper| &mut wrapper.fut) };
-        inner.poll(waker).map(IntoResponse::into_response)
+        let fut = (self)(cx);
+        box_async! {
+            await!(fut).into_response()
+        }
     }
 }

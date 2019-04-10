@@ -54,11 +54,6 @@ impl<AppData> Context<AppData> {
         &self.request
     }
 
-    /// Mutably access the request body
-    pub fn body(&mut self) -> &mut http_service::Body {
-        self.request.body_mut()
-    }
-
     ///  Access app-global data.
     pub fn app_data(&self) -> &AppData {
         &self.app_data
