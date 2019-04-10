@@ -11,29 +11,31 @@
 //! The [`App`](struct.App.html) docs are a good place to get started.
 //!
 //!
+
+macro_rules! box_async {
+    {$($t:tt)*} => {
+        FutureObj::new(Box::new(async move { $($t)* }))
+    };
+}
+
+#[macro_use]
+pub mod error;
+
 mod app;
-pub mod body;
-pub mod configuration;
-mod cookies;
+mod context;
+pub mod cookies;
 mod endpoint;
-mod extract;
-pub mod head;
+pub mod forms;
 pub mod middleware;
-mod request;
-mod response;
+pub mod response;
+mod route;
 mod router;
-#[cfg(feature = "hyper")]
-mod serve;
 
 pub use crate::{
-    app::{App, AppData, Server},
-    configuration::ExtractConfiguration,
-    cookies::Cookies,
+    app::{App, Server},
+    context::Context,
     endpoint::Endpoint,
-    extract::Extract,
-    middleware::Middleware,
-    request::{Compute, Computed, Request},
-    response::{IntoResponse, Response},
-    router::{Resource, Router},
+    error::{EndpointResult, Error},
+    response::Response,
+    route::Route,
 };
-pub use path_table::RouteMatch;

@@ -1,156 +1,218 @@
 use futures::future::{self, FutureObj};
 use http_service::HttpService;
-use std::{
-    any::Any,
-    fmt::Debug,
-    ops::{Deref, DerefMut},
-    sync::Arc,
-};
+use std::sync::Arc;
 
 use crate::{
-    configuration::{Configuration, Store},
-    endpoint::BoxedEndpoint,
-    endpoint::Endpoint,
-    extract::Extract,
-    middleware::{logger::RootLogger, RequestContext},
-    router::{EndpointData, Resource, RouteResult, Router},
-    Middleware, Request, Response, RouteMatch,
+    middleware::{Middleware, Next},
+    router::{Router, Selection},
+    Context, Route,
 };
 
-/// The top-level type for setting up a Tide application.
+/// The entry point for building a Tide application.
 ///
-/// Apps are equipped with a handle to their own state (`Data`), which is available to all endpoints.
-/// This is a "handle" because it must be `Clone`, and endpoints are invoked with a fresh clone.
-/// They also hold a top-level router.
+/// Apps are built up as a combination of *state*, *endpoints* and *middleware*:
 ///
-/// # Examples
+/// - Application state is user-defined, and is provided via the [`App:new`]
+/// function. The state is available as a shared reference to all app endpoints.
+///
+/// - Endpoints provide the actual application-level code corresponding to
+/// particular URLs. The [`App::at`] method creates a new *route* (using
+/// standard router syntax), which can then be used to register endpoints
+/// for particular HTTP request types.
+///
+/// - Middleware extends the base Tide framework with additional request or
+/// response processing, such as compression, default headers, or logging. To
+/// add middleware to an app, use the [`App::middleware`] method.
+///
+/// # Hello, world!
 ///
 /// You can start a simple Tide application that listens for `GET` requests at path `/hello`
-/// on `127.0.0.1:8181` with:
+/// on `127.0.0.1:8000` with:
 ///
 /// ```rust, no_run
 /// #![feature(async_await)]
 ///
 /// let mut app = tide::App::new(());
-/// app.at("/hello").get(async || "Hello, world!");
-/// app.serve()
-/// ```
+/// app.at("/hello").get(async move |_| "Hello, world!");
+/// app.serve("127.0.0.1:8000");
+///```
 ///
-/// `App` state can be modeled with an underlying `Data` handle for a cloneable type `T`. Endpoints
-/// can receive a fresh clone of that handle (in addition to data extracted from the request) by
-/// defining a parameter of type `AppData<T>`:
+/// # Routing and parameters
+///
+/// Tide's routing system is simple and similar to many other frameworks. It
+/// uses `:foo` for "wildcard" URL segments, and `:foo*` to match the rest of a
+/// URL (which may include multiple segments). Here's an example using wildcard
+/// segments as parameters to endpoints:
 ///
 /// ```rust, no_run
 /// #![feature(async_await, futures_api)]
 ///
-/// use std::sync::Arc;
-/// use std::sync::Mutex;
-/// use tide::AppData;
-/// use tide::body;
+/// use tide::error::ResultExt;
 ///
-/// #[derive(Clone, Default)]
-/// struct Database {
-///     contents: Arc<Mutex<Vec<String>>>,
+/// async fn hello(cx: tide::Context<()>) -> tide::EndpointResult<String> {
+///     let user: String = cx.param("user").client_err()?;
+///     Ok(format!("Hello, {}!", user))
 /// }
 ///
-/// async fn insert(
-///     mut db: AppData<Database>,
-///     msg: body::Str,
-/// ) -> String {
-///     // insert into db
-///     # String::from("")
+/// async fn goodbye(cx: tide::Context<()>) -> tide::EndpointResult<String> {
+///     let user: String = cx.param("user").client_err()?;
+///     Ok(format!("Goodbye, {}.", user))
+/// }
+///
+/// let mut app = tide::App::new(());
+///
+/// app.at("/hello/:user").get(hello);
+/// app.at("/goodbye/:user").get(goodbye);
+/// app.at("/").get(async move |_| {
+///     "Use /hello/{your name} or /goodbye/{your name}"
+/// });
+///
+/// app.serve("127.0.0.1:8000");
+///```
+///
+/// You can learn more about routing in the [`App::at`] documentation.
+///
+/// # Application state
+///
+/// ```rust, no_run, ignore
+/// #![feature(async_await, futures_api, await_macro)]
+///
+/// use tide::{Context, EndpointResult, error::ResultExt, response, App};
+/// use http::StatusCode;
+/// use std::sync::Mutex;
+///
+/// #[derive(Default)]
+/// struct Database {
+///     contents: Mutex<Vec<Message>>,
+/// }
+///
+/// impl Database {
+///     fn messages(&self) -> std::sync::MutexGuard<Vec<Message>> {
+///         self.contents.lock().unwrap()
+///     }
+/// }
+///
+/// #[derive(Serialize, Deserialize, Clone)]
+/// struct Message {
+///     author: Option<String>,
+///     contents: String,
+/// }
+///
+/// async fn new_message(cx: Context<Database>) -> EndpointResult<String> {
+///     let msg = await!(cx.body_json()).client_err()?;
+///
+///     let mut messages = cx.app_data().messages();
+///     let id = messages.len();
+///     messages.push(msg);
+///
+///     Ok(id.to_string())
+/// }
+///
+/// async fn get_message(cx: Context<Database>) -> EndpointResult {
+///     let id: usize = cx.param("id").client_err()?;
+///
+///     if let Some(msg) = cx.app_data().messages().get(id) {
+///         Ok(response::json(msg))
+///     } else {
+///         Err(StatusCode::NOT_FOUND)?
+///     }
 /// }
 ///
 /// fn main() {
-///     let mut app = tide::App::new(Database::default());
-///     app.at("/messages/insert").post(insert);
-///     app.serve()
+///     let mut app = App::new(Database::default());
+///     app.at("/message").post(new_message);
+///     app.at("/message/:id").get(get_message);
+///     app.serve("127.0.0.1:8000").unwrap();
 /// }
-/// ```
-///
-/// Where to go from here: Please see [`Router`](struct.Router.html) and [`Endpoint`](trait.Endpoint.html)
-/// for further examples.
-///
-pub struct App<Data> {
-    data: Data,
-    router: Router<Data>,
-    default_handler: EndpointData<Data>,
+
+pub struct App<AppData> {
+    router: Router<AppData>,
+    middleware: Vec<Arc<dyn Middleware<AppData>>>,
+    data: AppData,
 }
 
-impl<Data: Clone + Send + Sync + 'static> App<Data> {
-    /// Set up a new app with some initial `data`.
-    pub fn new(data: Data) -> App<Data> {
-        let logger = RootLogger::new();
-        let mut app = App {
-            data,
+impl<AppData: Send + Sync + 'static> App<AppData> {
+    /// Create an empty `App`, with no initial middleware or configuration.
+    pub fn new(data: AppData) -> App<AppData> {
+        App {
             router: Router::new(),
-            default_handler: EndpointData {
-                endpoint: BoxedEndpoint::new(async || http::status::StatusCode::NOT_FOUND),
-                store: Store::new(),
-            },
-        };
-
-        // Add RootLogger as a default middleware
-        app.middleware(logger);
-        app.setup_configuration();
-
-        app
+            middleware: Vec::new(),
+            data,
+        }
     }
 
-    // Add default configuration
-    fn setup_configuration(&mut self) {
-        let config = Configuration::build().finalize();
-        self.config(config);
+    /// Add a new route at the given `path`, relative to root.
+    ///
+    /// Routing means mapping an HTTP request to an endpoint. Here Tide applies
+    /// a "table of contents" approach, which makes it easy to see the overall
+    /// app structure. Endpoints are selected solely by the path and HTTP method
+    /// of a request: the path determines the resource and the HTTP verb the
+    /// respective endpoint of the selected resource. Example:
+    ///
+    /// ```rust,no_run
+    /// # #![feature(async_await)]
+    /// # let mut app = tide::App::new(());
+    /// app.at("/").get(async move |_| "Hello, world!");
+    /// ```
+    ///
+    /// A path is comprised of zero or many segments, i.e. non-empty strings
+    /// separated by '/'. There are two kinds of segments: concrete and
+    /// wildcard. A concrete segment is used to exactly match the respective
+    /// part of the path of the incoming request. A wildcard segment on the
+    /// other hand extracts and parses the respective part of the path of the
+    /// incoming request to pass it along to the endpoint as an argument. A
+    /// wildcard segment is written as `:name`, which creates an endpoint
+    /// parameter called `name`. It is not possible to define wildcard segments
+    /// with different names for otherwise identical paths.
+    ///
+    /// Wildcard definitions can be followed by an optional *wildcard
+    /// modifier*. Currently, there is only one modifier: `*`, which means that
+    /// the wildcard will match to the end of given path, no matter how many
+    /// segments are left, even nothing. It is an error to define two wildcard
+    /// segments with different wildcard modifiers, or to write other path
+    /// segment after a segment with wildcard modifier.
+    ///
+    /// Here are some examples omitting the HTTP verb based endpoint selection:
+    ///
+    /// ```rust,no_run
+    /// # let mut app = tide::App::new(());
+    /// app.at("/");
+    /// app.at("/hello");
+    /// app.at("add_two/:num");
+    /// app.at("static/:path*");
+    /// ```
+    ///
+    /// There is no fallback route matching, i.e. either a resource is a full
+    /// match or not, which means that the order of adding resources has no
+    /// effect.
+    pub fn at<'a>(&'a mut self, path: &'a str) -> Route<'a, AppData> {
+        Route::new(&mut self.router, path.to_owned())
     }
 
-    /// Get the top-level router.
-    pub fn router(&mut self) -> &mut Router<Data> {
-        &mut self.router
-    }
-
-    /// Add a new resource at `path`.
-    /// See [Router.at](struct.Router.html#method.at) for details.
-    pub fn at<'a>(&'a mut self, path: &'a str) -> Resource<'a, Data> {
-        self.router.at(path)
-    }
-
-    /// Set the default handler for the app, a fallback function when there is no match to the route requested
-    pub fn default_handler<T: Endpoint<Data, U>, U>(
-        &mut self,
-        handler: T,
-    ) -> &mut EndpointData<Data> {
-        let endpoint = EndpointData {
-            endpoint: BoxedEndpoint::new(handler),
-            store: self.router.store_base.clone(),
-        };
-        self.default_handler = endpoint;
-        &mut self.default_handler
-    }
-
-    /// Apply `middleware` to the whole app. Note that the order of nesting subrouters and applying
-    /// middleware matters; see `Router` for details.
-    pub fn middleware(&mut self, middleware: impl Middleware<Data> + 'static) -> &mut Self {
-        self.router.middleware(middleware);
+    /// Add middleware to an application.
+    ///
+    /// Middleware provides application-global customization of the
+    /// request/response cycle, such as compression, logging, or header
+    /// modification. Middleware is invoked when processing a request, and can
+    /// either continue processing (possibly modifying the response) or
+    /// immediately return a response. See the [`Middleware`] trait for details.
+    ///
+    /// Middleware can only be added at the "top level" of an application,
+    /// and is processed in the order in which it is applied.
+    pub fn middleware(&mut self, m: impl Middleware<AppData>) -> &mut Self {
+        self.middleware.push(Arc::new(m));
         self
-    }
-
-    /// Add a default configuration `item` for the whole app.
-    pub fn config<T: Any + Debug + Clone + Send + Sync>(&mut self, item: T) -> &mut Self {
-        self.router.config(item);
-        self
-    }
-
-    pub fn get_item<T: Any + Debug + Clone + Send + Sync>(&self) -> Option<&T> {
-        self.router.get_item()
     }
 
     /// Make this app into an `HttpService`.
-    pub fn into_http_service(mut self) -> Server<Data> {
-        self.router.apply_default_config();
+    ///
+    /// This lower-level method lets you host a Tide application within an HTTP
+    /// server of your choice, via the `http_service` interface crate.
+    pub fn into_http_service(self) -> Server<AppData> {
         Server {
-            data: self.data,
             router: Arc::new(self.router),
-            default_handler: Arc::new(self.default_handler),
+            data: Arc::new(self.data),
+            middleware: Arc::new(self.middleware),
         }
     }
 
@@ -158,29 +220,30 @@ impl<Data: Clone + Send + Sync + 'static> App<Data> {
     ///
     /// Blocks the calling thread indefinitely.
     #[cfg(feature = "hyper")]
-    pub fn serve(self) {
-        let configuration = self.get_item::<Configuration>().unwrap();
-        let addr = format!("{}:{}", configuration.address, configuration.port)
-            .parse::<std::net::SocketAddr>()
-            .unwrap();
+    pub fn serve(self, addr: impl std::net::ToSocketAddrs) -> std::io::Result<()> {
+        let addr = addr
+            .to_socket_addrs()?
+            .next()
+            .ok_or(std::io::ErrorKind::InvalidInput)?;
 
         println!("Server is listening on: http://{}", addr);
-
-        crate::serve::serve(self.into_http_service(), addr);
+        http_service_hyper::serve(self.into_http_service(), addr);
+        Ok(())
     }
 }
 
+/// An instantiated Tide server.
+///
+/// This type is useful only in conjunction with the [`HttpService`] trait,
+/// i.e. for hosting a Tide app within some custom HTTP server.
 #[derive(Clone)]
-pub struct Server<Data> {
-    data: Data,
-    router: Arc<Router<Data>>,
-    default_handler: Arc<EndpointData<Data>>,
+pub struct Server<AppData> {
+    router: Arc<Router<AppData>>,
+    data: Arc<AppData>,
+    middleware: Arc<Vec<Arc<dyn Middleware<AppData>>>>,
 }
 
-impl<Data> HttpService for Server<Data>
-where
-    Data: Clone + Send + Sync + 'static,
-{
+impl<AppData: Sync + Send + 'static> HttpService for Server<AppData> {
     type Connection = ();
     type ConnectionFuture = future::Ready<Result<(), std::io::Error>>;
     type Fut = FutureObj<'static, Result<http_service::Response, std::io::Error>>;
@@ -190,58 +253,127 @@ where
     }
 
     fn respond(&self, _conn: &mut (), req: http_service::Request) -> Self::Fut {
-        let data = self.data.clone();
-        let router = self.router.clone();
-        let default_handler = self.default_handler.clone();
         let path = req.uri().path().to_owned();
         let method = req.method().to_owned();
+        let router = self.router.clone();
+        let middleware = self.middleware.clone();
+        let data = self.data.clone();
 
-        FutureObj::new(Box::new(
-            async move {
-                let RouteResult {
-                    endpoint,
-                    params,
-                    middleware,
-                } = router.route(&path, &method, &default_handler);
+        box_async! {
+            let fut = {
+                let Selection { endpoint, params } = router.route(&path, method);
+                let cx = Context::new(data, req, params);
 
-                let ctx = RequestContext {
-                    app_data: data,
-                    req,
-                    params,
+                let next = Next {
                     endpoint,
-                    next_middleware: middleware,
+                    next_middleware: &middleware,
                 };
-                Ok(await!(ctx.next()))
-            },
-        ))
+
+                next.run(cx)
+            };
+
+            Ok(await!(fut))
+        }
     }
 }
 
-/// An extractor for accessing app data.
-///
-/// Endpoints can use `AppData<T>` to gain a handle to the data (of type `T`) originally injected into their app.
-pub struct AppData<T>(pub T);
+#[cfg(test)]
+mod tests {
+    use futures::executor::block_on;
+    use std::sync::Arc;
 
-impl<T> Deref for AppData<T> {
-    type Target = T;
-    fn deref(&self) -> &T {
-        &self.0
-    }
-}
-impl<T> DerefMut for AppData<T> {
-    fn deref_mut(&mut self) -> &mut T {
-        &mut self.0
-    }
-}
+    use super::*;
+    use crate::{middleware::Next, router::Selection, Context, Response};
 
-impl<T: Clone + Send + 'static> Extract<T> for AppData<T> {
-    type Fut = future::Ready<Result<Self, Response>>;
-    fn extract(
-        data: &mut T,
-        req: &mut Request,
-        params: &Option<RouteMatch<'_>>,
-        store: &Store,
-    ) -> Self::Fut {
-        future::ok(AppData(data.clone()))
+    fn simulate_request<'a, Data: Default + Clone + Send + Sync + 'static>(
+        app: &'a App<Data>,
+        path: &'a str,
+        method: http::Method,
+    ) -> FutureObj<'a, Response> {
+        let Selection { endpoint, params } = app.router.route(path, method.clone());
+
+        let data = Arc::new(Data::default());
+        let req = http::Request::builder()
+            .method(method)
+            .body(http_service::Body::empty())
+            .unwrap();
+        let cx = Context::new(data, req, params);
+        let next = Next {
+            endpoint,
+            next_middleware: &app.middleware,
+        };
+
+        next.run(cx)
+    }
+
+    #[test]
+    fn simple_static() {
+        let mut router = App::new(());
+        router.at("/").get(async move |_| "/");
+        router.at("/foo").get(async move |_| "/foo");
+        router.at("/foo/bar").get(async move |_| "/foo/bar");
+
+        for path in &["/", "/foo", "/foo/bar"] {
+            let res = block_on(simulate_request(&router, path, http::Method::GET));
+            let body = block_on(res.into_body().into_vec()).expect("Reading body should succeed");
+            assert_eq!(&*body, path.as_bytes());
+        }
+    }
+
+    #[test]
+    fn nested_static() {
+        let mut router = App::new(());
+        router.at("/a").get(async move |_| "/a");
+        router.at("/b").nest(|router| {
+            router.at("/").get(async move |_| "/b");
+            router.at("/a").get(async move |_| "/b/a");
+            router.at("/b").get(async move |_| "/b/b");
+            router.at("/c").nest(|router| {
+                router.at("/a").get(async move |_| "/b/c/a");
+                router.at("/b").get(async move |_| "/b/c/b");
+            });
+            router.at("/d").get(async move |_| "/b/d");
+        });
+        router.at("/a/a").nest(|router| {
+            router.at("/a").get(async move |_| "/a/a/a");
+            router.at("/b").get(async move |_| "/a/a/b");
+        });
+        router.at("/a/b").nest(|router| {
+            router.at("/").get(async move |_| "/a/b");
+        });
+
+        for failing_path in &["/", "/a/a", "/a/b/a"] {
+            let res = block_on(simulate_request(&router, failing_path, http::Method::GET));
+            if !res.status().is_client_error() {
+                panic!(
+                    "Should have returned a client error when router cannot match with path {}",
+                    failing_path
+                );
+            }
+        }
+
+        for path in &[
+            "/a", "/a/a/a", "/a/a/b", "/a/b", "/b", "/b/a", "/b/b", "/b/c/a", "/b/c/b", "/b/d",
+        ] {
+            let res = block_on(simulate_request(&router, path, http::Method::GET));
+            let body = block_on(res.into_body().into_vec()).expect("Reading body should succeed");
+            assert_eq!(&*body, path.as_bytes());
+        }
+    }
+
+    #[test]
+    fn multiple_methods() {
+        let mut router = App::new(());
+        router.at("/a").nest(|router| {
+            router.at("/b").get(async move |_| "/a/b GET");
+        });
+        router.at("/a/b").post(async move |_| "/a/b POST");
+
+        for (path, method) in &[("/a/b", http::Method::GET), ("/a/b", http::Method::POST)] {
+            let res = block_on(simulate_request(&router, path, method.clone()));
+            assert!(res.status().is_success());
+            let body = block_on(res.into_body().into_vec()).expect("Reading body should succeed");
+            assert_eq!(&*body, format!("{} {}", path, method).as_bytes());
+        }
     }
 }

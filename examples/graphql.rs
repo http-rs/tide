@@ -3,26 +3,26 @@
 //
 // [the Juniper book]: https://graphql-rust.github.io/
 
-#![feature(async_await, futures_api)]
+#![feature(async_await, futures_api, await_macro)]
 
 use http::status::StatusCode;
 use juniper::graphql_object;
 use std::sync::{atomic, Arc};
-use tide::{body, App, AppData, IntoResponse, Response};
+use tide::{error::ResultExt, response, App, Context, EndpointResult};
 
-// First, we define `Context` that holds accumulator state. This is accessible as App data in
+// First, we define `Data` that holds accumulator state. This is accessible as App data in
 // Tide, and as executor context in Juniper.
 #[derive(Clone, Default)]
-struct Context(Arc<atomic::AtomicIsize>);
+struct Data(Arc<atomic::AtomicIsize>);
 
-impl juniper::Context for Context {}
+impl juniper::Context for Data {}
 
 // We define `Query` unit struct here. GraphQL queries will refer to this struct. The struct itself
 // doesn't have any associated data (and there's no need to do so), but instead it exposes the
 // accumulator state from the context.
 struct Query;
 
-graphql_object!(Query: Context |&self| {
+graphql_object!(Query: Data |&self| {
     // GraphQL integers are signed and 32 bits long.
     field accumulator(&executor) -> i32 as "Current value of the accumulator" {
         executor.context().0.load(atomic::Ordering::Relaxed) as i32
@@ -33,7 +33,7 @@ graphql_object!(Query: Context |&self| {
 // `Query`, but it provides the way to "mutate" the accumulator state.
 struct Mutation;
 
-graphql_object!(Mutation: Context |&self| {
+graphql_object!(Mutation: Data |&self| {
     field add(&executor, by: i32) -> i32 as "Add given value to the accumulator." {
         executor.context().0.fetch_add(by as isize, atomic::Ordering::Relaxed) as i32 + by
     }
@@ -45,23 +45,21 @@ type Schema = juniper::RootNode<'static, Query, Mutation>;
 
 // Finally, we'll bridge between Tide and Juniper. `GraphQLRequest` from Juniper implements
 // `Deserialize`, so we use `Json` extractor to deserialize the request body.
-async fn handle_graphql(
-    ctx: AppData<Context>,
-    query: body::Json<juniper::http::GraphQLRequest>,
-) -> Response {
-    let response = query.execute(&Schema::new(Query, Mutation), &ctx);
+async fn handle_graphql(mut cx: Context<Data>) -> EndpointResult {
+    let query: juniper::http::GraphQLRequest = await!(cx.body_json()).client_err()?;
+    let response = query.execute(&Schema::new(Query, Mutation), cx.app_data());
     let status = if response.is_ok() {
         StatusCode::OK
     } else {
         StatusCode::BAD_REQUEST
     };
-    body::Json(response).with_status(status).into_response()
+    let mut resp = response::json(response);
+    *resp.status_mut() = status;
+    Ok(resp)
 }
 
 fn main() {
-    let mut app = App::new(Context::default());
-
+    let mut app = App::new(Data::default());
     app.at("/graphql").post(handle_graphql);
-
-    app.serve();
+    app.serve("127.0.0.1:8000").unwrap();
 }

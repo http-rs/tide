@@ -3,29 +3,17 @@
 use futures::executor::block_on;
 use http_service::Body;
 use http_service_mock::make_server;
-use tide::head::{Named, NamedSegment};
+use tide::{error::ResultExt, Context};
 
-struct Number(i32);
-
-impl NamedSegment for Number {
-    const NAME: &'static str = "num";
-}
-
-impl std::str::FromStr for Number {
-    type Err = std::num::ParseIntError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        s.parse().map(|num| Number(num))
-    }
-}
-async fn add_one(Named(Number(num)): Named<Number>) -> String {
-    (num + 1).to_string()
+async fn add_one(cx: Context<()>) -> Result<String, tide::Error> {
+    let num: i64 = cx.param("num").client_err()?;
+    Ok((num + 1).to_string())
 }
 
 #[test]
 fn wildcard() {
     let mut app = tide::App::new(());
-    app.at("/add_one/{num}").get(add_one);
+    app.at("/add_one/:num").get(add_one);
     let mut server = make_server(app.into_http_service()).unwrap();
 
     let req = http::Request::get("/add_one/3")
@@ -48,7 +36,7 @@ fn wildcard() {
 #[test]
 fn invalid_segment_error() {
     let mut app = tide::App::new(());
-    app.at("/add_one/{num}").get(add_one);
+    app.at("/add_one/:num").get(add_one);
     let mut server = make_server(app.into_http_service()).unwrap();
 
     let req = http::Request::get("/add_one/a")
@@ -61,7 +49,7 @@ fn invalid_segment_error() {
 #[test]
 fn not_found_error() {
     let mut app = tide::App::new(());
-    app.at("/add_one/{num}").get(add_one);
+    app.at("/add_one/:num").get(add_one);
     let mut server = make_server(app.into_http_service()).unwrap();
 
     let req = http::Request::get("/add_one/").body(Body::empty()).unwrap();

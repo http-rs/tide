@@ -4,12 +4,13 @@ use slog_term;
 
 use futures::future::FutureObj;
 
-use crate::{middleware::RequestContext, Middleware, Response};
+use crate::{
+    middleware::{Middleware, Next},
+    Context, Response,
+};
 
 /// Root logger for Tide. Wraps over logger provided by slog.SimpleLogger
-///
-/// Only used internally for now.
-pub(crate) struct RootLogger {
+pub struct RootLogger {
     // drain: dyn slog::Drain,
     inner_logger: slog::Logger,
 }
@@ -25,20 +26,24 @@ impl RootLogger {
     }
 }
 
+impl Default for RootLogger {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Stores information during request phase and logs information once the response
 /// is generated.
-impl<Data: Clone + Send> Middleware<Data> for RootLogger {
-    fn handle<'a>(&'a self, ctx: RequestContext<'a, Data>) -> FutureObj<'a, Response> {
-        FutureObj::new(Box::new(
-            async move {
-                let path = ctx.req.uri().path().to_owned();
-                let method = ctx.req.method().as_str().to_owned();
+impl<Data: Send + Sync + 'static> Middleware<Data> for RootLogger {
+    fn handle<'a>(&'a self, cx: Context<Data>, next: Next<'a, Data>) -> FutureObj<'a, Response> {
+        box_async! {
+            let path = cx.uri().path().to_owned();
+            let method = cx.method().as_str().to_owned();
 
-                let res = await!(ctx.next());
-                let status = res.status();
-                info!(self.inner_logger, "{} {} {}", method, path, status.as_str());
-                res
-            },
-        ))
+            let res = await!(next.run(cx));
+            let status = res.status();
+            info!(self.inner_logger, "{} {} {}", method, path, status.as_str());
+            res
+        }
     }
 }

@@ -1,44 +1,37 @@
 use cookie::{Cookie, CookieJar, ParseError};
-use futures::future;
 
-use crate::{configuration::Store, response::IntoResponse, Extract, Request, Response, RouteMatch};
+use crate::Context;
 
 /// A representation of cookies which wraps `CookieJar` from `cookie` crate
 ///
 /// Currently this only exposes getting cookie by name but future enhancements might allow more
-/// operation. `Cookies` implements`Extract` so that handler methods can have a `Cookies` parameter.
-///
-#[derive(Clone, Debug)]
-pub struct Cookies {
+/// operations
+struct CookieData {
     content: CookieJar,
 }
 
-impl Cookies {
+/// An extension to `Context` that provides cached access to cookies
+pub trait ExtractCookies {
     /// returns a `Cookie` by name of the cookie
-    #[inline]
-    pub fn get(&self, name: &str) -> Option<&Cookie<'static>> {
-        self.content.get(name)
-    }
+    fn cookie(&mut self, name: &str) -> Option<Cookie<'static>>;
 }
 
-impl<S: 'static> Extract<S> for Cookies {
-    type Fut = future::Ready<Result<Self, Response>>;
+impl<AppData> ExtractCookies for Context<AppData> {
+    fn cookie(&mut self, name: &str) -> Option<Cookie<'static>> {
+        let cookie_data = self
+            .extensions_mut()
+            .remove()
+            .unwrap_or_else(|| CookieData {
+                content: self
+                    .headers()
+                    .get("Cookie")
+                    .and_then(|raw| parse_from_header(raw.to_str().unwrap()).ok())
+                    .unwrap_or_default(),
+            });
+        let cookie = cookie_data.content.get(name).cloned();
+        self.extensions_mut().insert(cookie_data);
 
-    fn extract(
-        data: &mut S,
-        req: &mut Request,
-        params: &Option<RouteMatch<'_>>,
-        store: &Store,
-    ) -> Self::Fut {
-        let cookie_jar = match req.headers().get("Cookie") {
-            Some(raw_cookies) => parse_from_header(raw_cookies.to_str().unwrap()),
-            _ => Ok(CookieJar::new()),
-        };
-        let resp = cookie_jar
-            .map(|c| Cookies { content: c })
-            .map_err(|_e| http::status::StatusCode::BAD_REQUEST.into_response());
-
-        future::ready(resp)
+        cookie
     }
 }
 
