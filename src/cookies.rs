@@ -1,13 +1,15 @@
 use cookie::{Cookie, CookieJar, ParseError};
 
 use crate::Context;
+use std::sync::Arc;
+use http::HeaderMap;
 
 /// A representation of cookies which wraps `CookieJar` from `cookie` crate
 ///
 /// Currently this only exposes getting cookie by name but future enhancements might allow more
 /// operations
-struct CookieData {
-    content: CookieJar,
+pub(crate) struct CookieData {
+    pub(crate) content: Arc<CookieJar>,
 }
 
 /// An extension to `Context` that provides cached access to cookies
@@ -22,11 +24,11 @@ impl<AppData> ExtractCookies for Context<AppData> {
             .extensions_mut()
             .remove()
             .unwrap_or_else(|| CookieData {
-                content: self
+                content: Arc::new(self
                     .headers()
-                    .get("tide-cookie")
+                    .get("Cookie")
                     .and_then(|raw| parse_from_header(raw.to_str().unwrap()).ok())
-                    .unwrap_or_default(),
+                    .unwrap_or_default()),
             });
         let cookie = cookie_data.content.get(name).cloned();
         self.extensions_mut().insert(cookie_data);
@@ -45,4 +47,15 @@ fn parse_from_header(s: &str) -> Result<CookieJar, ParseError> {
     })?;
 
     Ok(jar)
+}
+
+impl CookieData{
+    pub fn from_headers(headers: &HeaderMap)->Self{
+        CookieData {
+            content: Arc::new(headers
+                .get("Cookie")
+                .and_then(|raw| parse_from_header(raw.to_str().unwrap()).ok())
+                .unwrap_or_default()),
+        }
+    }
 }

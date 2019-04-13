@@ -13,7 +13,7 @@ repository = "https://github.com/rustasync/tide"
 version = "0.0.5"
 
 [dependencies]
-cookie = "0.11"
+cookie = { version="0.11", features = ["percent-encode"] }
 futures-preview = "0.3.0-alpha.13"
 fnv = "1.0.6"
 http = "0.1"

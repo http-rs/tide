@@ -5,6 +5,7 @@ use crate::{endpoint::DynEndpoint, Context, Response};
 
 mod default_headers;
 mod logger;
+mod cookies;
 
 pub use self::{default_headers::DefaultHeaders, logger::RootLogger};
 
