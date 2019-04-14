@@ -6,15 +6,15 @@ use tide::{cookies::CookiesExt, middleware::CookiesMiddleware, Context};
 /// Tide will use the the `Cookies`'s `Extract` implementation to build this parameter.
 ///
 async fn retrieve_cookie(mut cx: Context<()>) -> String {
-    format!("hello cookies: {:?}", cx.get_cookie("hello"))
+    format!("hello cookies: {:?}", cx.get_cookie("hello").unwrap())
 }
 async fn set_cookie(mut cx: Context<()>) -> String {
-    cx.set_cookie(Cookie::new("hello", "world"));
+    cx.set_cookie(Cookie::new("hello", "world")).unwrap();
     format!("hello cookies: {:?}", cx.get_cookie("hello"))
 }
 async fn remove_cookie(mut cx: Context<()>) -> String {
-    cx.remove_cookie(Cookie::new("hello", "world"));
-    format!("hello cookies: {:?}", cx.get_cookie("hello"))
+    cx.remove_cookie(Cookie::new("hello", "world")).unwrap();
+    format!("hello cookies: {:?}", cx.get_cookie("hello").unwrap())
 }
 
 fn main() {

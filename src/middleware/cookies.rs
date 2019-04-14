@@ -24,9 +24,9 @@ impl<Data: Send + Sync + 'static> Middleware<Data> for CookiesMiddleware {
     ) -> FutureObj<'a, Response> {
         box_async! {
             let cookie_data = cx
-            .extensions_mut()
-            .remove()
-            .unwrap_or_else(|| CookieData::from_headers(cx.headers()));
+                .extensions_mut()
+                .remove()
+                .unwrap_or_else(|| CookieData::from_headers(cx.headers()));
 
             let cookie_jar = cookie_data.content.clone();
 
@@ -35,10 +35,16 @@ impl<Data: Send + Sync + 'static> Middleware<Data> for CookiesMiddleware {
             let headers = res.headers_mut();
             for cookie in cookie_jar.read().unwrap().delta() {
                 let hv = HeaderValue::from_str(cookie.encoded().to_string().as_str());
-                 if let Ok(val) = hv {
+                if let Ok(val) = hv {
                     headers.append(http::header::SET_COOKIE, val);
-                 };
-                 // TODO: raise error in case of Error?
+                } else {
+                    //TODO Log error here
+                    return http::Response::builder()
+                        .status(http::status::StatusCode::INTERNAL_SERVER_ERROR)
+                        .header("Content-Type", "text/plain; charset=utf-8")
+                        .body(http_service::Body::empty())
+                        .unwrap();
+                }
             }
             res
         }
