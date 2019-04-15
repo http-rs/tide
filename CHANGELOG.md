@@ -1,5 +1,36 @@
 ## 2019-02-26, Version 0.0.5
 ### Commits
+- [[`990c80f78e`](https://github.com/rustasync/tide/commit/990c80f78e5622a751a5d2d4948cd005616e84f8)] (cargo-release) version 0.0.5 (Yoshua Wuyts)
+- [[`61f2aa5bf7`](https://github.com/rustasync/tide/commit/61f2aa5bf71f8eff34b1f9dcbb97e83a86f33b92)] Extract serve.rs into a separate crate (#140) (Wonwoo Choi)
+- [[`b4d0806a15`](https://github.com/rustasync/tide/commit/b4d0806a15e50ccbfcffeaf5bb6f767019269670)] Merge pull request #139 from aturon/http-service (Aaron Turon)
+- [[`092fc7f4e4`](https://github.com/rustasync/tide/commit/092fc7f4e4764b3a4c0101046f0ceced95f09194)] update rust version (Aaron Turon)
+- [[`703d41b79a`](https://github.com/rustasync/tide/commit/703d41b79a3089640731cae2de54b4dec0c0c93a)] rustfmt (Aaron Turon)
+- [[`fe0c39cc60`](https://github.com/rustasync/tide/commit/fe0c39cc60b0ff54bc577a3d8d21b4821c13841a)] Update to use new Body::into_vec method (Aaron Turon)
+- [[`369095140d`](https://github.com/rustasync/tide/commit/369095140d0acdad0656e0d79a3a64c9aae87436)] update tests (Aaron Turon)
+- [[`9fee015612`](https://github.com/rustasync/tide/commit/9fee015612fc89c78fb5555a837ad03af2c32ef1)] Refactor to use HttpService internally (Aaron Turon)
+- [[`1fb71bf421`](https://github.com/rustasync/tide/commit/1fb71bf421ef27b6acf8c23d5d0a267a9b385d62)] Move to http_service::Body (Aaron Turon)
+- [[`c727750a69`](https://github.com/rustasync/tide/commit/c727750a694b0a2f217eb391a5d8d9f07b722802)] docs: updated docs to have correct default port (#137) (Matt Gathu)
+- [[`b02220a06a`](https://github.com/rustasync/tide/commit/b02220a06aac5bf42455bcc6c9bdc36368fe9a9f)] Update changelog (Yoshua Wuyts)
+
+### Stats
+```diff
+ .travis.yml       |   3 +-
+ CHANGELOG.md      |  18 +++++++-
+ Cargo.toml        |  25 ++++++----
+ src/app.rs        |  58 ++++++++----------------
+ src/body.rs       | 133 +++++--------------------------------------------------
+ src/lib.rs        |   4 +-
+ src/request.rs    |   3 +-
+ src/response.rs   |   3 +-
+ src/router.rs     |  27 ++++-------
+ src/serve.rs      |   4 ++-
+ tests/wildcard.rs |  96 ++++++++++++++++++++++++++++++++++++++++-
+ 11 files changed, 189 insertions(+), 185 deletions(-)
+```
+
+
+## 2019-02-26, Version 0.0.5
+### Commits
 - [[`990c80f78e`](https://github.com/rust-net-web/tide/commit/990c80f78e5622a751a5d2d4948cd005616e84f8)] (cargo-release) version 0.0.5 (Yoshua Wuyts)
 - [[`61f2aa5bf7`](https://github.com/rust-net-web/tide/commit/61f2aa5bf71f8eff34b1f9dcbb97e83a86f33b92)] Extract serve.rs into a separate crate (#140) (Wonwoo Choi)
 - [[`b4d0806a15`](https://github.com/rust-net-web/tide/commit/b4d0806a15e50ccbfcffeaf5bb6f767019269670)] Merge pull request #139 from aturon/http-service (Aaron Turon)
