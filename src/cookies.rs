@@ -32,7 +32,12 @@ impl CookieData {
 pub trait CookiesExt {
     /// returns a `Cookie` by name of the cookie
     fn get_cookie(&mut self, name: &str) -> Result<Option<Cookie<'static>>, StringError>;
+
+    /// Add cookie to the cookie jar
     fn set_cookie(&mut self, cookie: Cookie<'static>) -> Result<(), StringError>;
+
+    /// Removes the cookie. This instructs the `CookiesMiddleware` to send a cookie with empty value
+    /// in the response.
     fn remove_cookie(&mut self, cookie: Cookie<'static>) -> Result<(), StringError>;
 }
 

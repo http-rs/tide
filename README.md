@@ -72,7 +72,7 @@ __More Examples__
 - [Body Types](https://github.com/rustasync/tide/blob/master/examples/body_types.rs)
 - [Multipart Form](https://github.com/rustasync/tide/tree/master/examples/multipart-form/main.rs)
 - [Catch All](https://github.com/rustasync/tide/tree/master/examples/catch_all.rs)
-- [Cookie Extractor](https://github.com/rustasync/tide/tree/master/examples/cookie_extractor.rs)
+- [Cookies](https://github.com/rustasync/tide/tree/master/examples/cookies.rs)
 - [Default Headers](https://github.com/rustasync/tide/tree/master/examples/default_headers.rs)
 - [GraphQL](https://github.com/rustasync/tide/tree/master/examples/graphql.rs)
 
