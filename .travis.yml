@@ -1,6 +1,6 @@
 language: rust
 rust:
-  - nightly-2019-02-27
+  - nightly-2019-04-15
 
 before_script: |
   rustup component add rustfmt clippy
