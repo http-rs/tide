@@ -31,6 +31,7 @@ pub mod cookies;
 mod endpoint;
 pub mod forms;
 pub mod middleware;
+pub mod querystring;
 pub mod response;
 mod route;
 mod router;
