@@ -14,16 +14,16 @@ version = "0.1.0"
 
 [dependencies]
 cookie = "0.11"
-futures-preview = "0.3.0-alpha.13"
+futures-preview = "0.3.0-alpha.14"
 fnv = "1.0.6"
 http = "0.1"
-http-service = "0.1.4"
+http-service = "0.1.4" # TODO: update after release
 pin-utils = "0.1.0-alpha.4"
 route-recognizer = "0.1.12"
-serde = "1.0.80"
-serde_derive = "1.0.80"
-serde_json = "1.0.32"
-serde_qs = "0.4.1"
+serde = "1.0.90"
+serde_derive = "1.0.90"
+serde_json = "1.0.39"
+serde_qs = "0.4.5"
 slog = "2.4.1"
 slog-async = "2.3.0"
 slog-term = "2.4.0"
@@ -31,7 +31,7 @@ typemap = "0.3.3"
 
 [dependencies.http-service-hyper]
 optional = true
-version = "0.1.0"
+version = "0.1.0" # TODO: update after release
 
 [dependencies.multipart]
 default-features = false
@@ -45,7 +45,7 @@ hyper = ["http-service-hyper"]
 [dev-dependencies]
 basic-cookies = "0.1.3"
 juniper = "0.10.0"
-structopt = "0.2.14"
-http-service-mock = "0.1.0"
-serde = "1.0.80"
-serde_derive = "1.0.80"
+structopt = "0.2.15"
+http-service-mock = "0.1.0" # TODO: update after release
+serde = "1.0.90"
+serde_derive = "1.0.90"
