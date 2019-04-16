@@ -40,3 +40,5 @@ pub use crate::{
     response::Response,
     route::Route,
 };
+
+pub use http;
