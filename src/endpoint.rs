@@ -7,7 +7,7 @@ use crate::{response::IntoResponse, Context, Response};
 /// This trait is automatically implemented for `Fn` types, and so is rarely implemented
 /// directly by Tide users.
 ///
-/// In practice, endpoints are function that take a `Context<AppData>` as an argument and
+/// In practice, endpoints are functions that take a `Context<AppData>` as an argument and
 /// return a type `T` that implements [`IntoResponse`].
 ///
 /// # Examples
@@ -31,6 +31,26 @@ use crate::{response::IntoResponse, Context, Response};
 ///     app.serve("127.0.0.1:8000").unwrap()
 /// }
 /// ```
+///
+/// An endpoint with similar functionality that does not make use of the `async` keyword would look something like this:
+///
+/// ```rust, no_run
+/// # #![feature(futures_api)]
+/// # use core::future::Future;
+/// use futures::future::{ready as fut_ready};
+///
+/// fn hello(_cx: tide::Context<()>) -> impl Future<Output = String> {
+///     fut_ready(String::from("hello"))
+/// }
+///
+/// fn main() {
+///     let mut app = tide::App::new(());
+///     app.at("/hello").get(hello);
+///     app.serve("127.0.0.1:8000").unwrap()
+/// }
+/// ```
+///
+/// Tide routes will also accept endpoints with `Fn` signatures of this form, but using the `async` keyword has better ergonomics.
 pub trait Endpoint<AppData>: Send + Sync + 'static {
     /// The async result of `call`.
     type Fut: Future<Output = Response> + Send + 'static;
