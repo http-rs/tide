@@ -55,3 +55,112 @@ impl<Data: Send + Sync + 'static> Middleware<Data> for CookiesMiddleware {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{cookies::CookiesExt, Context};
+    use cookie::Cookie;
+    use futures::executor::block_on;
+    use http_service::Body;
+    use http_service_mock::make_server;
+
+    static COOKIE_NAME: &str = "testCookie";
+
+    /// Tide will use the the `Cookies`'s `Extract` implementation to build this parameter.
+    async fn retrieve_cookie(mut cx: Context<()>) -> String {
+        format!("{}", cx.get_cookie(COOKIE_NAME).unwrap().unwrap().value())
+    }
+    async fn set_cookie(mut cx: Context<()>) {
+        cx.set_cookie(Cookie::new(COOKIE_NAME, "NewCookieValue"))
+            .unwrap();
+    }
+    async fn remove_cookie(mut cx: Context<()>) {
+        cx.remove_cookie(Cookie::named(COOKIE_NAME)).unwrap();
+    }
+
+    async fn set_multiple_cookie(mut cx: Context<()>) {
+        cx.set_cookie(Cookie::new("C1", "V1")).unwrap();
+        cx.set_cookie(Cookie::new("C2", "V2")).unwrap();
+    }
+
+    fn app() -> crate::App<()> {
+        let mut app = crate::App::new(());
+        app.middleware(CookiesMiddleware::new());
+
+        app.at("/get").get(retrieve_cookie);
+        app.at("/set").get(set_cookie);
+        app.at("/remove").get(remove_cookie);
+        app.at("/multi").get(set_multiple_cookie);
+        app
+    }
+
+    fn make_request(endpoint: &str) -> Response {
+        let app = app();
+        let mut server = make_server(app.into_http_service()).unwrap();
+        let req = http::Request::get(endpoint)
+            .header(http::header::COOKIE, "testCookie=RequestCookieValue")
+            .body(Body::empty())
+            .unwrap();
+        let res = server.simulate(req).unwrap();
+        res
+    }
+
+    #[test]
+    fn successfully_retrieve_request_cookie() {
+        let res = make_request("/get");
+        assert_eq!(res.status(), 200);
+        let body = block_on(res.into_body().into_vec()).unwrap();
+        assert_eq!(&*body, &*b"RequestCookieValue");
+    }
+
+    #[test]
+    fn successfully_set_cookie() {
+        let res = make_request("/set");
+        assert_eq!(res.status(), 200);
+        let test_cookie_header = res.headers().get(http::header::SET_COOKIE).unwrap();
+        assert_eq!(
+            test_cookie_header.to_str().unwrap(),
+            "testCookie=NewCookieValue"
+        );
+    }
+
+    #[test]
+    fn successfully_remove_cookie() {
+        let res = make_request("/remove");
+        assert_eq!(res.status(), 200);
+        let test_cookie_header = res.headers().get(http::header::SET_COOKIE).unwrap();
+        assert!(test_cookie_header
+            .to_str()
+            .unwrap()
+            .starts_with("testCookie=;"));
+        let cookie = Cookie::parse_encoded(test_cookie_header.to_str().unwrap()).unwrap();
+        assert_eq!(cookie.name(), COOKIE_NAME);
+        assert_eq!(cookie.value(), "");
+        assert_eq!(cookie.http_only(), None);
+        assert_eq!(cookie.max_age().unwrap().num_nanoseconds(), Some(0));
+    }
+
+    #[test]
+    fn successfully_set_multiple_cookies() {
+        let res = make_request("/multi");
+        assert_eq!(res.status(), 200);
+        let cookie_header = res.headers().get_all(http::header::SET_COOKIE);
+        let mut iter = cookie_header.iter();
+
+        let cookie1 = iter.next().unwrap();
+        let cookie2 = iter.next().unwrap();
+
+        //Headers can be out of order
+        if cookie1.to_str().unwrap().starts_with("C1") {
+            assert_eq!(cookie1, "C1=V1");
+            assert_eq!(cookie2, "C2=V2");
+        } else {
+            assert_eq!(cookie2, "C1=V1");
+            assert_eq!(cookie1, "C2=V2");
+        }
+
+        assert!(iter.next().is_none());
+    }
+
+}
