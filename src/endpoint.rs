@@ -37,10 +37,8 @@ use crate::{response::IntoResponse, Context, Response};
 /// ```rust, no_run
 /// # #![feature(futures_api)]
 /// # use core::future::Future;
-/// use futures::future::{ready as fut_ready};
-///
 /// fn hello(_cx: tide::Context<()>) -> impl Future<Output = String> {
-///     fut_ready(String::from("hello"))
+///     futures::ready!(String::from("hello"))
 /// }
 ///
 /// fn main() {
