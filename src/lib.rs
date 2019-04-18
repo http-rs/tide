@@ -2,8 +2,13 @@
 #![cfg_attr(feature = "nightly", feature(external_doc))]
 #![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
 #![cfg_attr(test, deny(warnings))]
-#![allow(unused_variables)]
 #![feature(futures_api, async_await, await_macro, existential_type)]
+#![allow(unused_variables)]
+#![deny(nonstandard_style)]
+#![forbid(rust_2018_idioms)]
+// Remove this clippy bug with async await is resolved.
+// ISSUE: https://github.com/rust-lang/rust-clippy/issues/3988
+#![allow(clippy::needless_lifetimes)]
 
 //!
 //! Welcome to Tide.
