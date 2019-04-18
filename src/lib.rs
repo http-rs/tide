@@ -6,7 +6,6 @@
 #![allow(unused_variables)]
 #![deny(nonstandard_style)]
 #![forbid(rust_2018_idioms)]
-
 // Remove this clippy bug with async await is resolved.
 // ISSUE: https://github.com/rust-lang/rust-clippy/issues/3988
 #![allow(clippy::needless_lifetimes)]
