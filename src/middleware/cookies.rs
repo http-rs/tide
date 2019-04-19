@@ -7,11 +7,15 @@ use crate::{
     Context, Response,
 };
 
-/// `CookiesMiddleware middleware is required for `CookiesExt` implementation on `Context` to work.
+/// Middleware to work with cookies.
+///
+/// [`CookiesMiddleware`] along with [`CookiesExt`](crate::cookies::CookiesExt) provide smooth
+/// access to request cookies and setting/removing cookies from response. This leverages the
+/// [cookie](https://crates.io/crates/cookie) crate.
 /// This middleware parses cookies from request and caches them in the extension. Once the request
 /// is processed by endpoints and other middlewares, all the added and removed cookies are set on
-/// on the respone. You will need to add this middle before any other middlewares that might need to
-/// access Cookies.
+/// on the response. You will need to add this middle before any other middlewares that might need
+/// to access Cookies.
 #[derive(Clone, Default)]
 pub struct CookiesMiddleware {}
 
@@ -43,7 +47,7 @@ impl<Data: Send + Sync + 'static> Middleware<Data> for CookiesMiddleware {
                 if let Ok(val) = hv {
                     headers.append(http::header::SET_COOKIE, val);
                 } else {
-                    // It would be useful to log this error here.
+                    // TODO It would be useful to log this error here.
                     return http::Response::builder()
                         .status(http::status::StatusCode::INTERNAL_SERVER_ERROR)
                         .header("Content-Type", "text/plain; charset=utf-8")
