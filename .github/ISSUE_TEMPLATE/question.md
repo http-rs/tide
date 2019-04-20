@@ -1,6 +1,6 @@
 ---
-name: Bug Report
-about: Create a report to help us improve
+name: Question
+about: Ask any question about the tide framework
 ---
 
 <!--- Provide a general summary of the issue in the Title above -->
