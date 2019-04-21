@@ -4,9 +4,8 @@
 #![cfg_attr(test, deny(warnings))]
 #![feature(futures_api, async_await, await_macro, existential_type)]
 #![allow(unused_variables)]
-#![deny(nonstandard_style)]
-#![forbid(rust_2018_idioms)]
-// Remove this clippy bug with async await is resolved.
+#![deny(nonstandard_style, rust_2018_idioms, future_incompatible)]
+// TODO: Remove this after clippy bug due to async await is resolved.
 // ISSUE: https://github.com/rust-lang/rust-clippy/issues/3988
 #![allow(clippy::needless_lifetimes)]
 
