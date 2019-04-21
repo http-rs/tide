@@ -22,7 +22,7 @@ impl<AppData: Send + Sync + 'static> ExtractForms for Context<AppData> {
         let body = self.take_body();
         box_async! {
             let body = await!(body.into_vec()).client_err()?;
-            Ok(serde_qs::from_bytes(&body).map_err(|e| err_fmt!("could not decode form: {}", e)).client_err()?)
+            Ok(serde_urlencoded::from_bytes(&body).map_err(|e| err_fmt!("could not decode form: {}", e)).client_err()?)
         }
     }
 
@@ -50,6 +50,8 @@ pub fn form<T: serde::Serialize>(t: T) -> Response {
     http::Response::builder()
         .status(http::status::StatusCode::OK)
         .header("Content-Type", "application/x-www-form-urlencoded")
-        .body(Body::from(serde_qs::to_string(&t).unwrap().into_bytes()))
+        .body(Body::from(
+            serde_urlencoded::to_string(&t).unwrap().into_bytes(),
+        ))
         .unwrap()
 }
