@@ -1,6 +1,6 @@
 ---
 name: Question
-about: Ask any question about the tide framework
+about: Ask any question about the Tide framework
 ---
 
 <!--- Provide a general summary of the issue in the Title above -->
