@@ -1,9 +1,7 @@
 #![feature(async_await, futures_api, await_macro)]
 
-#[macro_use]
-extern crate serde_derive;
-
 use http::status::StatusCode;
+use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use tide::{error::ResultExt, response, App, Context, EndpointResult};
 

@@ -1,8 +1,6 @@
 #![feature(async_await, futures_api, await_macro)]
 
-#[macro_use]
-extern crate serde_derive;
-
+use serde::{Deserialize, Serialize};
 use tide::{
     error::ResultExt,
     forms::{self, ExtractForms},
