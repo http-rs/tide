@@ -28,6 +28,7 @@ slog = "2.4.1"
 slog-async = "2.3.0"
 slog-term = "2.4.0"
 typemap = "0.3.3"
+serde_urlencoded = "0.5.5"
 
 [dependencies.http-service-hyper]
 optional = true
