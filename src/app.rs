@@ -232,6 +232,12 @@ impl<AppData: Send + Sync + 'static> App<AppData> {
     }
 }
 
+impl Default for App<()> {
+    fn default() -> Self {
+        Self::new(())
+    }
+}
+
 /// An instantiated Tide server.
 ///
 /// This type is useful only in conjunction with the [`HttpService`] trait,
