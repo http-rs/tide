@@ -48,10 +48,10 @@ impl<AppData> CookiesExt for Context<AppData> {
             .get::<CookieData>()
             .ok_or_else(|| StringError(MIDDLEWARE_MISSING_MSG.to_owned()))?;
 
-        let arc_jar = cookie_data.content.clone();
-        let locked_jar = arc_jar
+        let locked_jar = cookie_data
+            .content
             .read()
-            .map_err(|e| StringError(format!("Failed to get write lock: {}", e)))?;
+            .map_err(|e| StringError(format!("Failed to get read lock: {}", e)))?;
         Ok(locked_jar.get(name).cloned())
     }
 
@@ -60,8 +60,9 @@ impl<AppData> CookiesExt for Context<AppData> {
             .extensions()
             .get::<CookieData>()
             .ok_or_else(|| StringError(MIDDLEWARE_MISSING_MSG.to_owned()))?;
-        let jar = cookie_data.content.clone();
-        let mut locked_jar = jar
+
+        let mut locked_jar = cookie_data
+            .content
             .write()
             .map_err(|e| StringError(format!("Failed to get write lock: {}", e)))?;
         locked_jar.add(cookie);
@@ -74,8 +75,8 @@ impl<AppData> CookiesExt for Context<AppData> {
             .get::<CookieData>()
             .ok_or_else(|| StringError(MIDDLEWARE_MISSING_MSG.to_owned()))?;
 
-        let jar = cookie_data.content.clone();
-        let mut locked_jar = jar
+        let mut locked_jar = cookie_data
+            .content
             .write()
             .map_err(|e| StringError(format!("Failed to get write lock: {}", e)))?;
         locked_jar.remove(cookie);
