@@ -1,9 +1,11 @@
+use core::pin::Pin;
+use futures::future::Future;
 use http::{HttpTryFrom, Response, StatusCode};
 use http_service::Body;
 
 use crate::response::IntoResponse;
 
-pub(crate) type BoxTryFuture<T> = futures::future::FutureObj<'static, EndpointResult<T>>;
+pub(crate) type BoxTryFuture<T> = Pin<Box<dyn Future<Output = EndpointResult<T>> + Send + 'static>>;
 
 /// A convenient `Result` instantiation appropriate for most endpoints.
 pub type EndpointResult<T = Response<Body>> = Result<T, Error>;

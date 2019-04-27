@@ -3,7 +3,7 @@
 //
 // [the Juniper book]: https://graphql-rust.github.io/
 
-#![feature(async_await, futures_api, await_macro)]
+#![feature(async_await, await_macro)]
 
 use http::status::StatusCode;
 use juniper::graphql_object;

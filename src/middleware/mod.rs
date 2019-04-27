@@ -1,4 +1,4 @@
-use futures::future::FutureObj;
+use futures::future::BoxFuture;
 use std::sync::Arc;
 
 use crate::{endpoint::DynEndpoint, Context, Response};
@@ -16,14 +16,14 @@ pub trait Middleware<AppData>: 'static + Send + Sync {
         &'a self,
         cx: Context<AppData>,
         next: Next<'a, AppData>,
-    ) -> FutureObj<'a, Response>;
+    ) -> BoxFuture<'a, Response>;
 }
 
 impl<Data, F> Middleware<Data> for F
 where
-    F: Send + Sync + 'static + for<'a> Fn(Context<Data>, Next<'a, Data>) -> FutureObj<'a, Response>,
+    F: Send + Sync + 'static + for<'a> Fn(Context<Data>, Next<'a, Data>) -> BoxFuture<'a, Response>,
 {
-    fn handle<'a>(&'a self, cx: Context<Data>, next: Next<'a, Data>) -> FutureObj<'a, Response> {
+    fn handle<'a>(&'a self, cx: Context<Data>, next: Next<'a, Data>) -> BoxFuture<'a, Response> {
         (self)(cx, next)
     }
 }
@@ -36,7 +36,7 @@ pub struct Next<'a, AppData> {
 
 impl<'a, AppData: 'static> Next<'a, AppData> {
     /// Asynchronously execute the remaining middleware chain.
-    pub fn run(mut self, cx: Context<AppData>) -> FutureObj<'a, Response> {
+    pub fn run(mut self, cx: Context<AppData>) -> BoxFuture<'a, Response> {
         if let Some((current, next)) = self.next_middleware.split_first() {
             self.next_middleware = next;
             current.handle(cx, self)

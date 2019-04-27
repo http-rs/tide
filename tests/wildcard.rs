@@ -1,4 +1,4 @@
-#![feature(futures_api, async_await)]
+#![feature(async_await)]
 
 use futures::executor::block_on;
 use http_service::Body;

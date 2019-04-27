@@ -1,4 +1,4 @@
-#![feature(async_await, futures_api, await_macro)]
+#![feature(async_await, await_macro)]
 
 use serde::{Deserialize, Serialize};
 use tide::{

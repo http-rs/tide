@@ -2,7 +2,7 @@ use slog::{info, o, Drain};
 use slog_async;
 use slog_term;
 
-use futures::future::FutureObj;
+use futures::future::BoxFuture;
 
 use crate::{
     middleware::{Middleware, Next},
@@ -35,7 +35,7 @@ impl Default for RootLogger {
 /// Stores information during request phase and logs information once the response
 /// is generated.
 impl<Data: Send + Sync + 'static> Middleware<Data> for RootLogger {
-    fn handle<'a>(&'a self, cx: Context<Data>, next: Next<'a, Data>) -> FutureObj<'a, Response> {
+    fn handle<'a>(&'a self, cx: Context<Data>, next: Next<'a, Data>) -> BoxFuture<'a, Response> {
         box_async! {
             let path = cx.uri().path().to_owned();
             let method = cx.method().as_str().to_owned();

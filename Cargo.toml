@@ -14,10 +14,10 @@ version = "0.1.1"
 
 [dependencies]
 cookie = { version="0.11", features = ["percent-encode"] }
-futures-preview = "0.3.0-alpha.14"
+futures-preview = "0.3.0-alpha.15"
 fnv = "1.0.6"
 http = "0.1"
-http-service = "0.1.5"
+http-service = "0.2.0"
 pin-utils = "0.1.0-alpha.4"
 route-recognizer = "0.1.12"
 serde = "1.0.90"
@@ -31,7 +31,7 @@ serde_urlencoded = "0.5.5"
 
 [dependencies.http-service-hyper]
 optional = true
-version = "0.1.1"
+version = "0.2.0"
 
 [dependencies.multipart]
 default-features = false
@@ -46,5 +46,5 @@ hyper = ["http-service-hyper"]
 basic-cookies = "0.1.3"
 juniper = "0.10.0"
 structopt = "0.2.15"
-http-service-mock = "0.1.1"
+http-service-mock = "0.2.0"
 serde = { version = "1.0.90", features = ["derive"] }
