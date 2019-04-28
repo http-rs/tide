@@ -11,7 +11,7 @@ use crate::{
 };
 
 /// Middleware for providing a set of default headers for all responses.
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct DefaultHeaders {
     headers: HeaderMap,
 }

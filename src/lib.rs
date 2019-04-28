@@ -4,7 +4,12 @@
 #![cfg_attr(test, deny(warnings))]
 #![feature(async_await, existential_type)]
 #![allow(unused_variables)]
-#![deny(nonstandard_style, rust_2018_idioms, future_incompatible)]
+#![deny(
+    nonstandard_style,
+    rust_2018_idioms,
+    future_incompatible,
+    missing_debug_implementations
+)]
 // TODO: Remove this after clippy bug due to async await is resolved.
 // ISSUE: https://github.com/rust-lang/rust-clippy/issues/3988
 #![allow(clippy::needless_lifetimes)]

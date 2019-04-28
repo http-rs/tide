@@ -101,6 +101,7 @@ impl<T: Send + Into<Body>> IntoResponse for http::Response<T> {
 }
 
 /// A response type that modifies the status code.
+#[derive(Debug)]
 pub struct WithStatus<R> {
     inner: R,
     status: http::status::StatusCode,

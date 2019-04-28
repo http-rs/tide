@@ -127,6 +127,7 @@ use crate::{
 /// }
 /// ```
 
+#[allow(missing_debug_implementations)]
 pub struct App<State> {
     router: Router<State>,
     middleware: Vec<Arc<dyn Middleware<State>>>,
@@ -252,6 +253,7 @@ impl<State: Send + Sync + 'static> App<State> {
 /// This type is useful only in conjunction with the [`HttpService`] trait,
 /// i.e. for hosting a Tide app within some custom HTTP server.
 #[derive(Clone)]
+#[allow(missing_debug_implementations)]
 pub struct Server<State> {
     router: Arc<Router<State>>,
     data: Arc<State>,

@@ -27,6 +27,7 @@ macro_rules! err_fmt {
 }
 
 /// A generic endpoint error, which can be converted into a response.
+#[derive(Debug)]
 pub struct Error {
     resp: Response<Body>,
 }

@@ -10,6 +10,7 @@ use crate::{
 };
 
 /// Root logger for Tide. Wraps over logger provided by slog.SimpleLogger
+#[derive(Debug)]
 pub struct RootLogger {
     // drain: dyn slog::Drain,
     inner_logger: slog::Logger,

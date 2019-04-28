@@ -16,7 +16,7 @@ use crate::{
 /// is processed by endpoints and other middlewares, all the added and removed cookies are set on
 /// on the response. You will need to add this middle before any other middlewares that might need
 /// to access Cookies.
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct CookiesMiddleware {}
 
 impl CookiesMiddleware {
