@@ -86,7 +86,7 @@ Read about the design here:
 
 ### Supported Rust Versions
 
-Tide is built against the latest Rust nightly releases and as such, due to it's use of `std` futures,
+Tide is built against the latest Rust nightly releases and as such, due to it's use of `std` futures, 
 it has the following specific breakpoints that align with std future API changes:
 
 Tide | Rust
@@ -95,7 +95,7 @@ Tide | Rust
 &ge; v0.1.1 | &ge; nightly-2019-04-08
 
 
-_**Note:** Since these are changes are in `std`, projects with dependencies that use conflicting versions of `std::futures` will not build successfully._
+_**Note:** Since these are due to changes in `std`, projects with dependencies that use conflicting versions of `std::futures` will not build successfully._
 
 ## Contributing
 Want to join us? Check out our [The "Contributing" section of the
