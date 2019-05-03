@@ -10,7 +10,7 @@ license = "MIT OR Apache-2.0"
 name = "tide"
 readme = "README.md"
 repository = "https://github.com/rustasync/tide"
-version = "0.1.1"
+version = "0.2.0"
 
 [dependencies]
 cookie = { version="0.11", features = ["percent-encode"] }
