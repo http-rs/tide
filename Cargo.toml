@@ -5,6 +5,7 @@ authors = [
 ]
 description = "WIP modular web framework"
 documentation = "https://docs.rs/tide"
+keywords = ["tide", "http", "web", "framework", "async"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
 name = "tide"
