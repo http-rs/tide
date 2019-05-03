@@ -1,4 +1,4 @@
-use futures::future::{Future, FutureObj};
+use futures::future::{BoxFuture, Future};
 
 use crate::{response::IntoResponse, Context, Response};
 
@@ -58,7 +58,7 @@ pub trait Endpoint<AppData>: Send + Sync + 'static {
 }
 
 pub(crate) type DynEndpoint<AppData> =
-    dyn (Fn(Context<AppData>) -> FutureObj<'static, Response>) + 'static + Send + Sync;
+    dyn (Fn(Context<AppData>) -> BoxFuture<'static, Response>) + 'static + Send + Sync;
 
 impl<AppData, F: Send + Sync + 'static, Fut> Endpoint<AppData> for F
 where
@@ -66,7 +66,7 @@ where
     Fut: Future + Send + 'static,
     Fut::Output: IntoResponse,
 {
-    type Fut = FutureObj<'static, Response>;
+    type Fut = BoxFuture<'static, Response>;
     fn call(&self, cx: Context<AppData>) -> Self::Fut {
         let fut = (self)(cx);
         box_async! {

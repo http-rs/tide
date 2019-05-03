@@ -1,4 +1,4 @@
-#![feature(async_await, futures_api)]
+#![feature(async_await)]
 
 use tide::Context;
 

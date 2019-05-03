@@ -1,4 +1,4 @@
-#![feature(async_await, futures_api)]
+#![feature(async_await)]
 
 use cookie::Cookie;
 use tide::{cookies::CookiesExt, middleware::CookiesMiddleware, Context};

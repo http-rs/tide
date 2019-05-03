@@ -1,4 +1,4 @@
-use futures::future::{self, FutureObj};
+use futures::future::{self, BoxFuture};
 use http_service::HttpService;
 use std::sync::Arc;
 
@@ -227,7 +227,7 @@ impl<AppData: Send + Sync + 'static> App<AppData> {
             .ok_or(std::io::ErrorKind::InvalidInput)?;
 
         println!("Server is listening on: http://{}", addr);
-        http_service_hyper::serve(self.into_http_service(), addr);
+        http_service_hyper::run(self.into_http_service(), addr);
         Ok(())
     }
 }
@@ -246,7 +246,7 @@ pub struct Server<AppData> {
 impl<AppData: Sync + Send + 'static> HttpService for Server<AppData> {
     type Connection = ();
     type ConnectionFuture = future::Ready<Result<(), std::io::Error>>;
-    type Fut = FutureObj<'static, Result<http_service::Response, std::io::Error>>;
+    type Fut = BoxFuture<'static, Result<http_service::Response, std::io::Error>>;
 
     fn connect(&self) -> Self::ConnectionFuture {
         future::ok(())
@@ -289,7 +289,7 @@ mod tests {
         app: &'a App<Data>,
         path: &'a str,
         method: http::Method,
-    ) -> FutureObj<'a, Response> {
+    ) -> BoxFuture<'a, Response> {
         let Selection { endpoint, params } = app.router.route(path, method.clone());
 
         let data = Arc::new(Data::default());

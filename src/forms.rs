@@ -1,4 +1,3 @@
-use futures::future::FutureObj;
 use http_service::Body;
 use multipart::server::Multipart;
 use std::io::Cursor;

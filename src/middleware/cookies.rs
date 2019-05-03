@@ -1,5 +1,5 @@
 use crate::cookies::CookieData;
-use futures::future::FutureObj;
+use futures::future::BoxFuture;
 use http::header::HeaderValue;
 
 use crate::{
@@ -30,7 +30,7 @@ impl<Data: Send + Sync + 'static> Middleware<Data> for CookiesMiddleware {
         &'a self,
         mut cx: Context<Data>,
         next: Next<'a, Data>,
-    ) -> FutureObj<'a, Response> {
+    ) -> BoxFuture<'a, Response> {
         box_async! {
             let cookie_data = cx
                 .extensions_mut()

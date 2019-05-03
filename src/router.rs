@@ -1,5 +1,5 @@
 use fnv::FnvHashMap;
-use futures::future::FutureObj;
+use futures::future::{BoxFuture, FutureExt};
 use http_service::Body;
 use route_recognizer::{Match, Params, Router as MethodRouter};
 
@@ -33,10 +33,7 @@ impl<AppData: 'static> Router<AppData> {
         self.method_map
             .entry(method)
             .or_insert_with(MethodRouter::new)
-            .add(
-                path,
-                Box::new(move |cx| FutureObj::new(Box::new(ep.call(cx)))),
-            )
+            .add(path, Box::new(move |cx| ep.call(cx).boxed()))
     }
 
     pub(crate) fn route(&self, path: &str, method: http::Method) -> Selection<'_, AppData> {
@@ -63,7 +60,7 @@ impl<AppData: 'static> Router<AppData> {
     }
 }
 
-fn not_found_endpoint<Data>(_cx: Context<Data>) -> FutureObj<'static, Response> {
+fn not_found_endpoint<Data>(_cx: Context<Data>) -> BoxFuture<'static, Response> {
     box_async! {
         http::Response::builder().status(http::StatusCode::NOT_FOUND).body(Body::empty()).unwrap()
     }
