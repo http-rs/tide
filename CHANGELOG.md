@@ -1,3 +1,66 @@
+## 2019-05-03, Version 0.2.0
+### Commits
+- [[`d887e16`](https://github.com/rustasync/tide/commit/d887e162d88289b43a6dba4ac8a98040af35d02d)] (cargo-release) version 0.2.0 (Wonwoo Choi)
+- [[`6d8577b`](https://github.com/rustasync/tide/commit/6d8577b5411c4a5ad636debc056e9af69d3a107b)] Fix wrong changelog (Wonwoo Choi)
+- [[`69b5762`](https://github.com/rustasync/tide/commit/69b576208f6191029476e7cbec90b19b057f4081)] Merge pull request #193 from Nemo157/futures-alpha.15 (Wonwoo Choi)
+- [[`a676391`](https://github.com/rustasync/tide/commit/a6763919525ed6b9d7ee5a5a3ef1dda5b47b495c)] Update for futures v0.3.0-alpha.15 (Wim Looman)
+- [[`6b6a7a1`](https://github.com/rustasync/tide/commit/6b6a7a18a196e94aa532dd5059df2e116950bf03)] fix: readme typos (Prasanna V. Loganathar)
+- [[`676b497`](https://github.com/rustasync/tide/commit/676b497f8cafcc2709a5fcc91ec430265af34d2d)] Fix minor bugs found during review (#188) (Murali)
+- [[`a4464e8`](https://github.com/rustasync/tide/commit/a4464e8806dbfb817104fa15da7a107128fe53f0)] Merge pull request #170 from mmrath/cookie-improvement (Aaron Turon)
+- [[`d76a6d2`](https://github.com/rustasync/tide/commit/d76a6d23556caa0368b958d16e534942c4c6a2c9)] Merge pull request #180 from secretfader/serde_urlencoded (Aaron Turon)
+- [[`4263895`](https://github.com/rustasync/tide/commit/4263895dcc8729883b9d8d0cd5c87da192963905)] Merge pull request #175 from secretfader/feat/querystring (Aaron Turon)
+- [[`85065cf`](https://github.com/rustasync/tide/commit/85065cf36e8b84bd7a95ca4a49b960f87f8b7fc7)] Add query string extension trait (Nicholas Young)
+- [[`998fa45`](https://github.com/rustasync/tide/commit/998fa45af2a8b7dd8c1ac3ccc70c785003fd015d)] Merge pull request #183 from secretfader/serde-2018 (Justin Seabrook-Rocha)
+- [[`6438a3d`](https://github.com/rustasync/tide/commit/6438a3db79b4bdda4c75a9595e9f1ff7764c0050)] docs: add supported rust versions (#185) (Prasanna V. Loganathar)
+- [[`cf3eee2`](https://github.com/rustasync/tide/commit/cf3eee2252f5e3cdc3a0d91a0f89a1a9d9a5149d)] pragma updates (#182) (Prasanna V. Loganathar)
+- [[`4476c69`](https://github.com/rustasync/tide/commit/4476c6976217b9eda116b8e15b4697c71a250eb4)] Merge pull request #178 from rustasync/fix-github-templates (Nicholas)
+- [[`87ff6ff`](https://github.com/rustasync/tide/commit/87ff6ff77132686aecdcbee1a47be2395a7bf187)] Update question.md (Theodore Zilist)
+- [[`8f1daf7`](https://github.com/rustasync/tide/commit/8f1daf772c44798dc63aae61a7561cfffe61d341)] Use Rust 2018 imports for Serde (Nicholas Young)
+- [[`0dedfc0`](https://github.com/rustasync/tide/commit/0dedfc0ec98162e9cffe8244028f5899bf5d5002)] Migrate to serde_urlencoded, and away from serde_qs (Nicholas Young)
+- [[`d78001f`](https://github.com/rustasync/tide/commit/d78001f3d776c9a16375597572f2c84b1eff18d5)] Merge pull request #181 from sangheestyle/fix_example_readme (Nicholas)
+- [[`0ac0168`](https://github.com/rustasync/tide/commit/0ac01681a13ec46f9dc3c9873a1073c2429aeba8)] fix: error on example code (Sanghee Kim)
+- [[`6dab8f7`](https://github.com/rustasync/tide/commit/6dab8f777048e37735a48b9aebbf8441c0254dc4)] Update question.md (Theodore Zilist)
+- [[`1a185c5`](https://github.com/rustasync/tide/commit/1a185c57ce60d034b12edf31a65eabc3a72b2cfe)] Fix documentation (Murali Mohan Rath)
+- [[`8e3fd26`](https://github.com/rustasync/tide/commit/8e3fd26236bf4b436334ab4400e5c5893aa69235)] Merge branch 'master' of https://github.com/rustasync/tide into cookie-improvement (Murali Mohan Rath)
+- [[`e06ae37`](https://github.com/rustasync/tide/commit/e06ae375aa31e8fe2dad3689c72bd33e84775d4e)] Update changelog (Yoshua Wuyts)
+- [[`31df6c2`](https://github.com/rustasync/tide/commit/31df6c2cec56157ec675d42ebb7cf41c9fc5476b)] Add test cases (Murali Mohan Rath)
+- [[`03cf8f1`](https://github.com/rustasync/tide/commit/03cf8f16d6182f05e27b9d9e90771b4ccd963ff9)] Add documentation (Murali Mohan Rath)
+- [[`ca059c0`](https://github.com/rustasync/tide/commit/ca059c0f238b93117d04f30befdfc80453bac074)] Merge branch 'master' of https://github.com/rustasync/tide into cookie-improvement (Murali Mohan Rath)
+- [[`f8f6203`](https://github.com/rustasync/tide/commit/f8f6203e83bac4ca923de21a0899af4dce069b8e)] improve error handling (Murali Mohan Rath)
+- [[`935151a`](https://github.com/rustasync/tide/commit/935151a56ace7356f6123df92f93f827a0b71785)] Cookie revamp (Murali Mohan Rath)
+- [[`2e44305`](https://github.com/rustasync/tide/commit/2e443055ab4f8da80b1a22e315ed47a53b504712)] cookie revamp (Murali Mohan Rath)
+
+### Stats
+```diff
+ .github/ISSUE_TEMPLATE/question.md |   4 +-
+ .travis.yml                        |   2 +-
+ CHANGELOG.md                       | 107 +++++++++++++++++------
+ Cargo.toml                         |  17 ++--
+ README.md                          |  19 ++++-
+ examples/body_types.rs             |   6 +-
+ examples/catch_all.rs              |   2 +-
+ examples/cookie_extractor.rs       |  15 ----
+ examples/cookies.rs                |  26 ++++++
+ examples/graphql.rs                |   2 +-
+ examples/messages.rs               |   6 +-
+ examples/multipart-form/main.rs    |   6 +-
+ src/app.rs                         |   8 +-
+ src/cookies.rs                     |  92 +++++++++++++++-----
+ src/endpoint.rs                    |   6 +-
+ src/error.rs                       |   4 +-
+ src/forms.rs                       |   7 +-
+ src/lib.rs                         |  10 +--
+ src/middleware/cookies.rs          | 170 +++++++++++++++++++++++++++++++++++++
+ src/middleware/default_headers.rs  |   4 +-
+ src/middleware/logger.rs           |   4 +-
+ src/middleware/mod.rs              |  13 +--
+ src/querystring.rs                 |  80 +++++++++++++++++
+ src/router.rs                      |   9 +-
+ tests/wildcard.rs                  |   2 +-
+ 25 files changed, 498 insertions(+), 123 deletions(-)
+```
+
+
 ## 2019-04-18, Version 0.1.1
 ### Commits
 - [[`8c247b8`](https://github.com/rustasync/tide/commit/8c247b884fe6795c9489a76d7ee9f265a2d6539c)] (cargo-release) version 0.1.1 (Yoshua Wuyts)
