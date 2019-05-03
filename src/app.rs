@@ -364,9 +364,7 @@ mod tests {
     #[test]
     fn multiple_methods() {
         let mut router = App::new(());
-        router.at("/a").nest(|router| {
-            router.at("/b").get(async move |_| "/a/b GET");
-        });
+        router.at("/a/b").get(async move |_| "/a/b GET");
         router.at("/a/b").post(async move |_| "/a/b POST");
 
         for (path, method) in &[("/a/b", http::Method::GET), ("/a/b", http::Method::POST)] {
