@@ -131,13 +131,20 @@ pub struct App<State> {
     data: State,
 }
 
-impl<State: Send + Sync + 'static> App<State> {
+impl App<()> {
     /// Create an empty `App`, with no initial middleware or configuration.
-    pub fn new(data: State) -> App<State> {
+    pub fn new() -> App<()> {
+        Self::with_state(())
+    }
+}
+
+impl<State: Send + Sync + 'static> App<State> {
+    /// Create an `App`, with initial middleware or configuration.
+    pub fn with_state(state: State) -> App<State> {
         App {
             router: Router::new(),
             middleware: Vec::new(),
-            data,
+            data: state,
         }
     }
 
