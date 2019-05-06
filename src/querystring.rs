@@ -40,7 +40,7 @@ mod tests {
     }
 
     fn app() -> crate::App<()> {
-        let mut app = crate::App::new(());
+        let mut app = crate::App::new();
         app.at("/").get(handler);
         app
     }

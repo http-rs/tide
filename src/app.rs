@@ -32,7 +32,7 @@ use crate::{
 /// ```rust, no_run
 /// #![feature(async_await)]
 ///
-/// let mut app = tide::App::new(());
+/// let mut app = tide::App::new();
 /// app.at("/hello").get(async move |_| "Hello, world!");
 /// app.serve("127.0.0.1:8000");
 ///```
@@ -59,7 +59,7 @@ use crate::{
 ///     Ok(format!("Goodbye, {}.", user))
 /// }
 ///
-/// let mut app = tide::App::new(());
+/// let mut app = tide::App::new();
 ///
 /// app.at("/hello/:user").get(hello);
 /// app.at("/goodbye/:user").get(goodbye);
@@ -158,7 +158,7 @@ impl<State: Send + Sync + 'static> App<State> {
     ///
     /// ```rust,no_run
     /// # #![feature(async_await)]
-    /// # let mut app = tide::App::new(());
+    /// # let mut app = tide::App::new();
     /// app.at("/").get(async move |_| "Hello, world!");
     /// ```
     ///
@@ -182,7 +182,7 @@ impl<State: Send + Sync + 'static> App<State> {
     /// Here are some examples omitting the HTTP verb based endpoint selection:
     ///
     /// ```rust,no_run
-    /// # let mut app = tide::App::new(());
+    /// # let mut app = tide::App::new();
     /// app.at("/");
     /// app.at("/hello");
     /// app.at("add_two/:num");
@@ -315,7 +315,7 @@ mod tests {
 
     #[test]
     fn simple_static() {
-        let mut router = App::new(());
+        let mut router = App::new();
         router.at("/").get(async move |_| "/");
         router.at("/foo").get(async move |_| "/foo");
         router.at("/foo/bar").get(async move |_| "/foo/bar");
@@ -329,7 +329,7 @@ mod tests {
 
     #[test]
     fn nested_static() {
-        let mut router = App::new(());
+        let mut router = App::new();
         router.at("/a").get(async move |_| "/a");
         router.at("/b").nest(|router| {
             router.at("/").get(async move |_| "/b");
@@ -370,7 +370,7 @@ mod tests {
 
     #[test]
     fn multiple_methods() {
-        let mut router = App::new(());
+        let mut router = App::new();
         router.at("/a").nest(|router| {
             router.at("/b").get(async move |_| "/a/b GET");
         });

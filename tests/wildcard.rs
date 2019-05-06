@@ -12,7 +12,7 @@ async fn add_one(cx: Context<()>) -> Result<String, tide::Error> {
 
 #[test]
 fn wildcard() {
-    let mut app = tide::App::new(());
+    let mut app = tide::App::new();
     app.at("/add_one/:num").get(add_one);
     let mut server = make_server(app.into_http_service()).unwrap();
 
@@ -35,7 +35,7 @@ fn wildcard() {
 
 #[test]
 fn invalid_segment_error() {
-    let mut app = tide::App::new(());
+    let mut app = tide::App::new();
     app.at("/add_one/:num").get(add_one);
     let mut server = make_server(app.into_http_service()).unwrap();
 
@@ -48,7 +48,7 @@ fn invalid_segment_error() {
 
 #[test]
 fn not_found_error() {
-    let mut app = tide::App::new(());
+    let mut app = tide::App::new();
     app.at("/add_one/:num").get(add_one);
     let mut server = make_server(app.into_http_service()).unwrap();
 

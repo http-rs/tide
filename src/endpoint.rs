@@ -26,7 +26,7 @@ use crate::{response::IntoResponse, Context, Response};
 /// }
 ///
 /// fn main() {
-///     let mut app = tide::App::new(());
+///     let mut app = tide::App::new();
 ///     app.at("/hello").get(hello);
 ///     app.serve("127.0.0.1:8000").unwrap()
 /// }
@@ -42,7 +42,7 @@ use crate::{response::IntoResponse, Context, Response};
 /// }
 ///
 /// fn main() {
-///     let mut app = tide::App::new(());
+///     let mut app = tide::App::new();
 ///     app.at("/hello").get(hello);
 ///     app.serve("127.0.0.1:8000").unwrap()
 /// }
