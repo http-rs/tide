@@ -42,6 +42,10 @@ If people "just want a Tide app", the `new` method should feel intuitive. But if
 introduce some state, the `with_state` method will be there. This should also create a clearer
 relationship between the constructors, and the generic parameters we have in Tide.
 
+In addition
+[`Context::app_data`](https://docs.rs/tide/0.1.1/tide/struct.Context.html#method.app_data) should be
+renamed to `Context::state`.
+
 __no state__
 ```rust
 #![feature(async_await)]
