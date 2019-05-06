@@ -138,6 +138,12 @@ impl App<()> {
     }
 }
 
+impl Default for App<()> {
+    fn default() -> App<()> {
+        Self::new()
+    }
+}
+
 impl<State: Send + Sync + 'static> App<State> {
     /// Create an `App`, with initial middleware or configuration.
     pub fn with_state(state: State) -> App<State> {
