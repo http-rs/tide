@@ -9,7 +9,6 @@ const MIDDLEWARE_MISSING_MSG: &str =
     "CookiesMiddleware must be used to populate request and response cookies";
 
 /// A representation of cookies which wraps `CookieJar` from `cookie` crate
-///
 #[derive(Debug)]
 pub(crate) struct CookieData {
     pub(crate) content: Arc<RwLock<CookieJar>>,
