@@ -2,7 +2,7 @@ use crate::{router::Router, Endpoint};
 
 /// A handle to a route.
 ///
-/// All HTTP requests are made against resources. After using [`App::at`] (or
+/// All HTTP requests are made against resources. After using [`App::at`](crate::app::App::new) (or
 /// [`Route::at`]) to establish a route, the `Route` type can be used to
 /// establish endpoints for various HTTP methods at that path. Also, using
 /// `nest`, it can be used to set up a subrouter.
