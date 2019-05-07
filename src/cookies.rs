@@ -41,7 +41,7 @@ pub trait CookiesExt {
     fn remove_cookie(&mut self, cookie: Cookie<'static>) -> Result<(), StringError>;
 }
 
-impl<AppData> CookiesExt for Context<AppData> {
+impl<State> CookiesExt for Context<State> {
     fn get_cookie(&mut self, name: &str) -> Result<Option<Cookie<'static>>, StringError> {
         let cookie_data = self
             .extensions()

@@ -10,12 +10,12 @@ mod logger;
 pub use self::{cookies::CookiesMiddleware, default_headers::DefaultHeaders, logger::RootLogger};
 
 /// Middleware that wraps around remaining middleware chain.
-pub trait Middleware<AppData>: 'static + Send + Sync {
+pub trait Middleware<State>: 'static + Send + Sync {
     /// Asynchronously handle the request, and return a response.
     fn handle<'a>(
         &'a self,
-        cx: Context<AppData>,
-        next: Next<'a, AppData>,
+        cx: Context<State>,
+        next: Next<'a, State>,
     ) -> BoxFuture<'a, Response>;
 }
 
@@ -29,14 +29,14 @@ where
 }
 
 /// The remainder of a middleware chain, including the endpoint.
-pub struct Next<'a, AppData> {
-    pub(crate) endpoint: &'a DynEndpoint<AppData>,
-    pub(crate) next_middleware: &'a [Arc<dyn Middleware<AppData>>],
+pub struct Next<'a, State> {
+    pub(crate) endpoint: &'a DynEndpoint<State>,
+    pub(crate) next_middleware: &'a [Arc<dyn Middleware<State>>],
 }
 
-impl<'a, AppData: 'static> Next<'a, AppData> {
+impl<'a, State: 'static> Next<'a, State> {
     /// Asynchronously execute the remaining middleware chain.
-    pub fn run(mut self, cx: Context<AppData>) -> BoxFuture<'a, Response> {
+    pub fn run(mut self, cx: Context<State>) -> BoxFuture<'a, Response> {
         if let Some((current, next)) = self.next_middleware.split_first() {
             self.next_middleware = next;
             current.handle(cx, self)

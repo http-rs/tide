@@ -7,7 +7,7 @@ use crate::{response::IntoResponse, Context, Response};
 /// This trait is automatically implemented for `Fn` types, and so is rarely implemented
 /// directly by Tide users.
 ///
-/// In practice, endpoints are functions that take a `Context<AppData>` as an argument and
+/// In practice, endpoints are functions that take a `Context<State>` as an argument and
 /// return a type `T` that implements [`IntoResponse`].
 ///
 /// # Examples
@@ -49,25 +49,25 @@ use crate::{response::IntoResponse, Context, Response};
 /// ```
 ///
 /// Tide routes will also accept endpoints with `Fn` signatures of this form, but using the `async` keyword has better ergonomics.
-pub trait Endpoint<AppData>: Send + Sync + 'static {
+pub trait Endpoint<State>: Send + Sync + 'static {
     /// The async result of `call`.
     type Fut: Future<Output = Response> + Send + 'static;
 
     /// Invoke the endpoint within the given context
-    fn call(&self, cx: Context<AppData>) -> Self::Fut;
+    fn call(&self, cx: Context<State>) -> Self::Fut;
 }
 
-pub(crate) type DynEndpoint<AppData> =
-    dyn (Fn(Context<AppData>) -> BoxFuture<'static, Response>) + 'static + Send + Sync;
+pub(crate) type DynEndpoint<State> =
+    dyn (Fn(Context<State>) -> BoxFuture<'static, Response>) + 'static + Send + Sync;
 
-impl<AppData, F: Send + Sync + 'static, Fut> Endpoint<AppData> for F
+impl<State, F: Send + Sync + 'static, Fut> Endpoint<State> for F
 where
-    F: Fn(Context<AppData>) -> Fut,
+    F: Fn(Context<State>) -> Fut,
     Fut: Future + Send + 'static,
     Fut::Output: IntoResponse,
 {
     type Fut = BoxFuture<'static, Response>;
-    fn call(&self, cx: Context<AppData>) -> Self::Fut {
+    fn call(&self, cx: Context<State>) -> Self::Fut {
         let fut = (self)(cx);
         box_async! {
             await!(fut).into_response()

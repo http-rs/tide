@@ -125,15 +125,15 @@ use crate::{
 ///     app.serve("127.0.0.1:8000").unwrap();
 /// }
 
-pub struct App<AppData> {
-    router: Router<AppData>,
-    middleware: Vec<Arc<dyn Middleware<AppData>>>,
-    data: AppData,
+pub struct App<State> {
+    router: Router<State>,
+    middleware: Vec<Arc<dyn Middleware<State>>>,
+    data: State,
 }
 
-impl<AppData: Send + Sync + 'static> App<AppData> {
+impl<State: Send + Sync + 'static> App<State> {
     /// Create an empty `App`, with no initial middleware or configuration.
-    pub fn new(data: AppData) -> App<AppData> {
+    pub fn new(data: State) -> App<State> {
         App {
             router: Router::new(),
             middleware: Vec::new(),
@@ -185,7 +185,7 @@ impl<AppData: Send + Sync + 'static> App<AppData> {
     /// There is no fallback route matching, i.e. either a resource is a full
     /// match or not, which means that the order of adding resources has no
     /// effect.
-    pub fn at<'a>(&'a mut self, path: &'a str) -> Route<'a, AppData> {
+    pub fn at<'a>(&'a mut self, path: &'a str) -> Route<'a, State> {
         Route::new(&mut self.router, path.to_owned())
     }
 
@@ -199,7 +199,7 @@ impl<AppData: Send + Sync + 'static> App<AppData> {
     ///
     /// Middleware can only be added at the "top level" of an application,
     /// and is processed in the order in which it is applied.
-    pub fn middleware(&mut self, m: impl Middleware<AppData>) -> &mut Self {
+    pub fn middleware(&mut self, m: impl Middleware<State>) -> &mut Self {
         self.middleware.push(Arc::new(m));
         self
     }
@@ -208,7 +208,7 @@ impl<AppData: Send + Sync + 'static> App<AppData> {
     ///
     /// This lower-level method lets you host a Tide application within an HTTP
     /// server of your choice, via the `http_service` interface crate.
-    pub fn into_http_service(self) -> Server<AppData> {
+    pub fn into_http_service(self) -> Server<State> {
         Server {
             router: Arc::new(self.router),
             data: Arc::new(self.data),
@@ -237,13 +237,13 @@ impl<AppData: Send + Sync + 'static> App<AppData> {
 /// This type is useful only in conjunction with the [`HttpService`] trait,
 /// i.e. for hosting a Tide app within some custom HTTP server.
 #[derive(Clone)]
-pub struct Server<AppData> {
-    router: Arc<Router<AppData>>,
-    data: Arc<AppData>,
-    middleware: Arc<Vec<Arc<dyn Middleware<AppData>>>>,
+pub struct Server<State> {
+    router: Arc<Router<State>>,
+    data: Arc<State>,
+    middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
 }
 
-impl<AppData: Sync + Send + 'static> HttpService for Server<AppData> {
+impl<State: Sync + Send + 'static> HttpService for Server<State> {
     type Connection = ();
     type ConnectionFuture = future::Ready<Result<(), std::io::Error>>;
     type Fut = BoxFuture<'static, Result<http_service::Response, std::io::Error>>;
