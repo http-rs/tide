@@ -12,11 +12,7 @@ pub use self::{cookies::CookiesMiddleware, default_headers::DefaultHeaders, logg
 /// Middleware that wraps around remaining middleware chain.
 pub trait Middleware<State>: 'static + Send + Sync {
     /// Asynchronously handle the request, and return a response.
-    fn handle<'a>(
-        &'a self,
-        cx: Context<State>,
-        next: Next<'a, State>,
-    ) -> BoxFuture<'a, Response>;
+    fn handle<'a>(&'a self, cx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response>;
 }
 
 impl<Data, F> Middleware<Data> for F
