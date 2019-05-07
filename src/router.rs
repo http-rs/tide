@@ -12,31 +12,31 @@ use crate::{
 ///
 /// Internally, we have a separate state machine per http method; indexing
 /// by the method first allows the table itself to be more efficient.
-pub(crate) struct Router<AppData> {
-    method_map: FnvHashMap<http::Method, MethodRouter<Box<DynEndpoint<AppData>>>>,
+pub(crate) struct Router<State> {
+    method_map: FnvHashMap<http::Method, MethodRouter<Box<DynEndpoint<State>>>>,
 }
 
 /// The result of routing a URL
-pub(crate) struct Selection<'a, AppData> {
-    pub(crate) endpoint: &'a DynEndpoint<AppData>,
+pub(crate) struct Selection<'a, State> {
+    pub(crate) endpoint: &'a DynEndpoint<State>,
     pub(crate) params: Params,
 }
 
-impl<AppData: 'static> Router<AppData> {
-    pub(crate) fn new() -> Router<AppData> {
+impl<State: 'static> Router<State> {
+    pub(crate) fn new() -> Router<State> {
         Router {
             method_map: FnvHashMap::default(),
         }
     }
 
-    pub(crate) fn add(&mut self, path: &str, method: http::Method, ep: impl Endpoint<AppData>) {
+    pub(crate) fn add(&mut self, path: &str, method: http::Method, ep: impl Endpoint<State>) {
         self.method_map
             .entry(method)
             .or_insert_with(MethodRouter::new)
             .add(path, Box::new(move |cx| ep.call(cx).boxed()))
     }
 
-    pub(crate) fn route(&self, path: &str, method: http::Method) -> Selection<'_, AppData> {
+    pub(crate) fn route(&self, path: &str, method: http::Method) -> Selection<'_, State> {
         if let Some(Match { handler, params }) = self
             .method_map
             .get(&method)

@@ -3,7 +3,7 @@
 use tide::middleware::DefaultHeaders;
 
 fn main() {
-    let mut app = tide::App::new(());
+    let mut app = tide::App::new();
 
     app.middleware(
         DefaultHeaders::new()

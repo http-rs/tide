@@ -56,7 +56,7 @@ async fn upload_file(mut cx: Context<()>) -> EndpointResult {
 }
 
 fn main() {
-    let mut app = App::new(());
+    let mut app = App::new();
     app.at("/upload_file").post(upload_file);
     app.serve("127.0.0.1:8000").unwrap();
 }

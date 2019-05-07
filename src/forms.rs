@@ -16,7 +16,7 @@ pub trait ExtractForms {
     fn body_multipart(&mut self) -> BoxTryFuture<Multipart<Cursor<Vec<u8>>>>;
 }
 
-impl<AppData: Send + Sync + 'static> ExtractForms for Context<AppData> {
+impl<State: Send + Sync + 'static> ExtractForms for Context<State> {
     fn body_form<T: serde::de::DeserializeOwned>(&mut self) -> BoxTryFuture<T> {
         let body = self.take_body();
         box_async! {

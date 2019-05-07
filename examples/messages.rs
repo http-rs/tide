@@ -41,14 +41,14 @@ impl Database {
 
 async fn new_message(mut cx: Context<Database>) -> EndpointResult<String> {
     let msg = await!(cx.body_json()).client_err()?;
-    Ok(cx.app_data().insert(msg).to_string())
+    Ok(cx.state().insert(msg).to_string())
 }
 
 async fn set_message(mut cx: Context<Database>) -> EndpointResult<()> {
     let msg = await!(cx.body_json()).client_err()?;
     let id = cx.param("id").client_err()?;
 
-    if cx.app_data().set(id, msg) {
+    if cx.state().set(id, msg) {
         Ok(())
     } else {
         Err(StatusCode::NOT_FOUND)?
@@ -57,7 +57,7 @@ async fn set_message(mut cx: Context<Database>) -> EndpointResult<()> {
 
 async fn get_message(cx: Context<Database>) -> EndpointResult {
     let id = cx.param("id").client_err()?;
-    if let Some(msg) = cx.app_data().get(id) {
+    if let Some(msg) = cx.state().get(id) {
         Ok(response::json(msg))
     } else {
         Err(StatusCode::NOT_FOUND)?
@@ -65,7 +65,7 @@ async fn get_message(cx: Context<Database>) -> EndpointResult {
 }
 
 fn main() {
-    let mut app = App::new(Database::default());
+    let mut app = App::with_state(Database::default());
     app.at("/message").post(new_message);
     app.at("/message/:id").get(get_message).post(set_message);
     app.serve("127.0.0.1:8000").unwrap();

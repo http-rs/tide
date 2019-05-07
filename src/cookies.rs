@@ -9,7 +9,6 @@ const MIDDLEWARE_MISSING_MSG: &str =
     "CookiesMiddleware must be used to populate request and response cookies";
 
 /// A representation of cookies which wraps `CookieJar` from `cookie` crate
-///
 #[derive(Debug)]
 pub(crate) struct CookieData {
     pub(crate) content: Arc<RwLock<CookieJar>>,
@@ -41,7 +40,7 @@ pub trait CookiesExt {
     fn remove_cookie(&mut self, cookie: Cookie<'static>) -> Result<(), StringError>;
 }
 
-impl<AppData> CookiesExt for Context<AppData> {
+impl<State> CookiesExt for Context<State> {
     fn get_cookie(&mut self, name: &str) -> Result<Option<Cookie<'static>>, StringError> {
         let cookie_data = self
             .extensions()

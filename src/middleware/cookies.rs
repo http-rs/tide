@@ -89,7 +89,7 @@ mod tests {
     }
 
     fn app() -> crate::App<()> {
-        let mut app = crate::App::new(());
+        let mut app = crate::App::new();
         app.middleware(CookiesMiddleware::new());
 
         app.at("/get").get(retrieve_cookie);

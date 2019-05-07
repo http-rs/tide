@@ -38,7 +38,7 @@ async fn echo_form(mut cx: Context<()>) -> EndpointResult {
 }
 
 fn main() {
-    let mut app = App::new(());
+    let mut app = App::new();
 
     app.at("/echo/string").post(echo_string);
     app.at("/echo/bytes").post(echo_bytes);

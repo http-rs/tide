@@ -10,20 +10,20 @@ use std::{str::FromStr, sync::Arc};
 ///
 /// Contexts also provide *extensions*, a type map primarily used for low-level
 /// communication between middleware and endpoints.
-pub struct Context<AppData> {
-    app_data: Arc<AppData>,
+pub struct Context<State> {
+    state: Arc<State>,
     request: http_service::Request,
     route_params: Params,
 }
 
-impl<AppData> Context<AppData> {
+impl<State> Context<State> {
     pub(crate) fn new(
-        app_data: Arc<AppData>,
+        state: Arc<State>,
         request: http::Request<Body>,
         route_params: Params,
-    ) -> Context<AppData> {
+    ) -> Context<State> {
         Context {
-            app_data,
+            state,
             request,
             route_params,
         }
@@ -55,8 +55,8 @@ impl<AppData> Context<AppData> {
     }
 
     ///  Access app-global data.
-    pub fn app_data(&self) -> &AppData {
-        &self.app_data
+    pub fn state(&self) -> &State {
+        &self.state
     }
 
     /// Extract and parse a route parameter by name.
