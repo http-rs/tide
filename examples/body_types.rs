@@ -1,4 +1,4 @@
-#![feature(async_await, await_macro)]
+#![feature(async_await)]
 
 use serde::{Deserialize, Serialize};
 use tide::{
@@ -14,25 +14,25 @@ struct Message {
 }
 
 async fn echo_string(mut cx: Context<()>) -> String {
-    let msg = await!(cx.body_string()).unwrap();
+    let msg = cx.body_string().await.unwrap();
     println!("String: {}", msg);
     msg
 }
 
 async fn echo_bytes(mut cx: Context<()>) -> Vec<u8> {
-    let msg = await!(cx.body_bytes()).unwrap();
+    let msg = cx.body_bytes().await.unwrap();
     println!("Bytes: {:?}", msg);
     msg
 }
 
 async fn echo_json(mut cx: Context<()>) -> EndpointResult {
-    let msg = await!(cx.body_json()).client_err()?;
+    let msg = cx.body_json().await.client_err()?;
     println!("JSON: {:?}", msg);
     Ok(response::json(msg))
 }
 
 async fn echo_form(mut cx: Context<()>) -> EndpointResult {
-    let msg = await!(cx.body_form())?;
+    let msg = cx.body_form().await?;
     println!("Form: {:?}", msg);
     Ok(forms::form(msg))
 }

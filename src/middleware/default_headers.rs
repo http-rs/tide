@@ -42,7 +42,7 @@ impl DefaultHeaders {
 impl<Data: Send + Sync + 'static> Middleware<Data> for DefaultHeaders {
     fn handle<'a>(&'a self, cx: Context<Data>, next: Next<'a, Data>) -> BoxFuture<'a, Response> {
         box_async! {
-            let mut res = await!(next.run(cx));
+            let mut res = next.run(cx).await;
 
             let headers = res.headers_mut();
             for (key, value) in self.headers.iter() {

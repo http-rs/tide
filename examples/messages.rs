@@ -1,4 +1,4 @@
-#![feature(async_await, await_macro)]
+#![feature(async_await)]
 
 use http::status::StatusCode;
 use serde::{Deserialize, Serialize};
@@ -40,12 +40,12 @@ impl Database {
 }
 
 async fn new_message(mut cx: Context<Database>) -> EndpointResult<String> {
-    let msg = await!(cx.body_json()).client_err()?;
+    let msg = cx.body_json().await.client_err()?;
     Ok(cx.state().insert(msg).to_string())
 }
 
 async fn set_message(mut cx: Context<Database>) -> EndpointResult<()> {
-    let msg = await!(cx.body_json()).client_err()?;
+    let msg = cx.body_json().await.client_err()?;
     let id = cx.param("id").client_err()?;
 
     if cx.state().set(id, msg) {

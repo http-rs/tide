@@ -70,7 +70,7 @@ where
     fn call(&self, cx: Context<State>) -> Self::Fut {
         let fut = (self)(cx);
         box_async! {
-            await!(fut).into_response()
+            fut.await.into_response()
         }
     }
 }

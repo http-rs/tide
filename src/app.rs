@@ -75,7 +75,7 @@ use crate::{
 /// # Application state
 ///
 /// ```rust, no_run, ignore
-/// #![feature(async_await, futures_api, await_macro)]
+/// #![feature(async_await, futures_api)]
 ///
 /// use tide::{Context, EndpointResult, error::ResultExt, response, App};
 /// use http::StatusCode;
@@ -99,7 +99,7 @@ use crate::{
 /// }
 ///
 /// async fn new_message(cx: Context<Database>) -> EndpointResult<String> {
-///     let msg = await!(cx.body_json()).client_err()?;
+///     let msg = cx.body_json().await.client_err()?;
 ///
 ///     let mut messages = cx.app_data().messages();
 ///     let id = messages.len();
@@ -285,7 +285,7 @@ impl<State: Sync + Send + 'static> HttpService for Server<State> {
                 next.run(cx)
             };
 
-            Ok(await!(fut))
+            Ok(fut.await)
         }
     }
 }
