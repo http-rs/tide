@@ -72,7 +72,7 @@ mod tests {
     static COOKIE_NAME: &str = "testCookie";
 
     /// Tide will use the the `Cookies`'s `Extract` implementation to build this parameter.
-    #[allow(unused_mut)] // Workaround clippy bug    
+    #[allow(unused_mut)] // Workaround clippy bug
     async fn retrieve_cookie(mut cx: Context<()>) -> String {
         format!("{}", cx.get_cookie(COOKIE_NAME).unwrap().unwrap().value())
     }
