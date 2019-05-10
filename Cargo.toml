@@ -19,8 +19,8 @@ repository = "https://github.com/rustasync/tide"
 version = "0.2.0"
 
 [dependencies]
-cookie = { version="0.11", features = ["percent-encode"] }
-futures-preview = "0.3.0-alpha.15"
+cookie = { version = "0.11", features = ["percent-encode"] }
+futures-preview = "0.3.0-alpha.16"
 fnv = "1.0.6"
 http = "0.1"
 http-service = "0.2.0"
@@ -54,3 +54,6 @@ juniper = "0.10.0"
 structopt = "0.2.15"
 http-service-mock = "0.2.0"
 serde = { version = "1.0.90", features = ["derive"] }
+
+[patch.crates-io]
+http-service = { git = "https://github.com/taiki-e/http-service", branch = "await" }

@@ -14,13 +14,13 @@ use crate::{response::IntoResponse, Context, Response};
 ///
 /// Endpoints are implemented as asynchronous functions that make use of language features
 /// currently only available in Rust Nightly. For this reason, we have to explicitly enable
-/// those features with `#![feature(async_await, futures_api)]`. To keep examples concise,
+/// those features with `#![feature(async_await)]`. To keep examples concise,
 /// the attribute will be omitted in most of the documentation.
 ///
 /// A simple endpoint that is invoked on a `GET` request and returns a `String`:
 ///
 /// ```rust, no_run
-/// # #![feature(async_await, futures_api)]
+/// # #![feature(async_await)]
 /// async fn hello(_cx: tide::Context<()>) -> String {
 ///     String::from("hello")
 /// }
@@ -35,7 +35,6 @@ use crate::{response::IntoResponse, Context, Response};
 /// An endpoint with similar functionality that does not make use of the `async` keyword would look something like this:
 ///
 /// ```rust, no_run
-/// # #![feature(futures_api)]
 /// # use core::future::Future;
 /// fn hello(_cx: tide::Context<()>) -> impl Future<Output = String> {
 ///     futures::future::ready(String::from("hello"))

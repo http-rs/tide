@@ -45,7 +45,7 @@ use crate::{
 /// segments as parameters to endpoints:
 ///
 /// ```rust, no_run
-/// #![feature(async_await, futures_api)]
+/// #![feature(async_await)]
 ///
 /// use tide::error::ResultExt;
 ///
@@ -75,7 +75,7 @@ use crate::{
 /// # Application state
 ///
 /// ```rust, no_run, ignore
-/// #![feature(async_await, futures_api)]
+/// #![feature(async_await)]
 ///
 /// use tide::{Context, EndpointResult, error::ResultExt, response, App};
 /// use http::StatusCode;
