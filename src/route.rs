@@ -6,6 +6,8 @@ use crate::{router::Router, Endpoint};
 /// [`Route::at`]) to establish a route, the `Route` type can be used to
 /// establish endpoints for various HTTP methods at that path. Also, using
 /// `nest`, it can be used to set up a subrouter.
+///
+/// [`App::at`]: ./struct.App.html#method.at
 pub struct Route<'a, State> {
     router: &'a mut Router<State>,
     path: String,

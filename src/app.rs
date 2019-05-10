@@ -12,7 +12,7 @@ use crate::{
 ///
 /// Apps are built up as a combination of *state*, *endpoints* and *middleware*:
 ///
-/// - Application state is user-defined, and is provided via the [`App:new`]
+/// - Application state is user-defined, and is provided via the [`App::new`]
 /// function. The state is available as a shared reference to all app endpoints.
 ///
 /// - Endpoints provide the actual application-level code corresponding to
