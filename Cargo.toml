@@ -56,4 +56,6 @@ http-service-mock = "0.2.0"
 serde = { version = "1.0.90", features = ["derive"] }
 
 [patch.crates-io]
-http-service = { git = "https://github.com/taiki-e/http-service", branch = "await" }
+http-service = { git = "https://github.com/rustasync/http-service", branch = "master" }
+http-service-hyper = { git = "https://github.com/rustasync/http-service", branch = "master" }
+http-service-mock = { git = "https://github.com/rustasync/http-service", branch = "master" }
