@@ -2,7 +2,7 @@
 #![cfg_attr(feature = "nightly", feature(external_doc))]
 #![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
 #![cfg_attr(test, deny(warnings))]
-#![feature(async_await, await_macro, existential_type)]
+#![feature(async_await, existential_type)]
 #![allow(unused_variables)]
 #![deny(nonstandard_style, rust_2018_idioms, future_incompatible)]
 // TODO: Remove this after clippy bug due to async await is resolved.

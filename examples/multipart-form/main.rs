@@ -1,4 +1,4 @@
-#![feature(async_await, await_macro)]
+#![feature(async_await)]
 
 use serde::{Deserialize, Serialize};
 use std::io::Read;
@@ -19,7 +19,8 @@ async fn upload_file(mut cx: Context<()>) -> EndpointResult {
         file: None,
     };
 
-    await!(cx.body_multipart())?
+    cx.body_multipart()
+        .await?
         .foreach_entry(|mut entry| match entry.headers.name.as_str() {
             "file" => {
                 let mut vec = Vec::new();

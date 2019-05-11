@@ -40,7 +40,7 @@ impl<Data: Send + Sync + 'static> Middleware<Data> for RootLogger {
             let path = cx.uri().path().to_owned();
             let method = cx.method().as_str().to_owned();
 
-            let res = await!(next.run(cx));
+            let res = next.run(cx).await;
             let status = res.status();
             info!(self.inner_logger, "{} {} {}", method, path, status.as_str());
             res

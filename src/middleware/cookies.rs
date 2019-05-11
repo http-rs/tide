@@ -40,7 +40,7 @@ impl<Data: Send + Sync + 'static> Middleware<Data> for CookiesMiddleware {
             let cookie_jar = cookie_data.content.clone();
 
             cx.extensions_mut().insert(cookie_data);
-            let mut res = await!(next.run(cx));
+            let mut res = next.run(cx).await;
             let headers = res.headers_mut();
             for cookie in cookie_jar.read().unwrap().delta() {
                 let hv = HeaderValue::from_str(cookie.encoded().to_string().as_str());

@@ -89,7 +89,7 @@ impl<State> Context<State> {
     /// Any I/O error encountered while reading the body is immediately returned
     /// as an `Err`.
     pub async fn body_bytes(&mut self) -> std::io::Result<Vec<u8>> {
-        await!(self.take_body().into_vec())
+        self.take_body().into_vec().await
     }
 
     /// Reads the entire request body into a string.
@@ -104,7 +104,7 @@ impl<State> Context<State> {
     ///
     /// If the body cannot be interpreted as valid UTF-8, an `Err` is returned.
     pub async fn body_string(&mut self) -> std::io::Result<String> {
-        let body_bytes = await!(self.body_bytes())?;
+        let body_bytes = self.body_bytes().await?;
         Ok(String::from_utf8(body_bytes).map_err(|_| std::io::ErrorKind::InvalidData)?)
     }
 
@@ -118,7 +118,7 @@ impl<State> Context<State> {
     /// If the body cannot be interpreted as valid json for the target type `T`,
     /// an `Err` is returned.
     pub async fn body_json<T: serde::de::DeserializeOwned>(&mut self) -> std::io::Result<T> {
-        let body_bytes = await!(self.body_bytes())?;
+        let body_bytes = self.body_bytes().await?;
         Ok(serde_json::from_slice(&body_bytes).map_err(|_| std::io::ErrorKind::InvalidData)?)
     }
 
