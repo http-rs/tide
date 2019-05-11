@@ -259,13 +259,13 @@ pub struct Server<State> {
 impl<State: Sync + Send + 'static> HttpService for Server<State> {
     type Connection = ();
     type ConnectionFuture = future::Ready<Result<(), std::io::Error>>;
-    type Fut = BoxFuture<'static, Result<http_service::Response, std::io::Error>>;
+    type ResponseFuture = BoxFuture<'static, Result<http_service::Response, std::io::Error>>;
 
     fn connect(&self) -> Self::ConnectionFuture {
         future::ok(())
     }
 
-    fn respond(&self, _conn: &mut (), req: http_service::Request) -> Self::Fut {
+    fn respond(&self, _conn: &mut (), req: http_service::Request) -> Self::ResponseFuture {
         let path = req.uri().path().to_owned();
         let method = req.method().to_owned();
         let router = self.router.clone();
