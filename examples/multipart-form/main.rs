@@ -22,7 +22,7 @@ async fn upload_file(mut cx: Context<()>) -> EndpointResult {
 
     cx.body_multipart()
         .await?
-        .foreach_entry(|mut entry| match entry.headers.name.as_str() {
+        .foreach_entry(|mut entry| match &*entry.headers.name {
             "file" => {
                 let mut vec = Vec::new();
                 entry.data.read_to_end(&mut vec).expect("can't read");
