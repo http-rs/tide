@@ -1,7 +1,7 @@
 #![feature(async_await)]
 
 use cookie::Cookie;
-use tide::{cookies::CookiesExt, middleware::CookiesMiddleware, Context};
+use tide::{cookies::ContextExt, middleware::CookiesMiddleware, Context};
 
 /// Tide will use the the `Cookies`'s `Extract` implementation to build this parameter.
 ///
