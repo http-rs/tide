@@ -47,7 +47,8 @@ type Schema = juniper::RootNode<'static, Query, Mutation>;
 // `Deserialize`, so we use `Json` extractor to deserialize the request body.
 async fn handle_graphql(mut cx: Context<Data>) -> EndpointResult {
     let query: juniper::http::GraphQLRequest = cx.body_json().await.client_err()?;
-    let response = query.execute(&Schema::new(Query, Mutation), cx.state());
+    let schema = Schema::new(Query, Mutation);
+    let response = query.execute(&schema, cx.state());
     let status = if response.is_ok() {
         StatusCode::OK
     } else {
