@@ -3,11 +3,11 @@ use http::StatusCode;
 use serde::Deserialize;
 
 /// An extension trait for `Context`, providing query string deserialization.
-pub trait ExtractQuery<'de> {
+pub trait ContextExt<'de> {
     fn url_query<T: Deserialize<'de>>(&'de self) -> Result<T, Error>;
 }
 
-impl<'de, Data> ExtractQuery<'de> for Context<Data> {
+impl<'de, Data> ContextExt<'de> for Context<Data> {
     #[inline]
     fn url_query<T: Deserialize<'de>>(&'de self) -> Result<T, Error> {
         let query = self.uri().query();
