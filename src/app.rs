@@ -35,7 +35,7 @@ use crate::{
 /// let mut app = tide::App::new();
 /// app.at("/hello").get(async move |_| "Hello, world!");
 /// app.serve("127.0.0.1:8000");
-///```
+/// ```
 ///
 /// # Routing and parameters
 ///
@@ -68,28 +68,23 @@ use crate::{
 /// });
 ///
 /// app.serve("127.0.0.1:8000");
-///```
+/// ```
 ///
 /// You can learn more about routing in the [`App::at`] documentation.
 ///
 /// # Application state
 ///
-/// ```rust, no_run, ignore
+/// ```rust, no_run
 /// #![feature(async_await)]
 ///
-/// use tide::{Context, EndpointResult, error::ResultExt, response, App};
-/// use http::StatusCode;
+/// use http::status::StatusCode;
+/// use serde::{Deserialize, Serialize};
 /// use std::sync::Mutex;
+/// use tide::{error::ResultExt, response, App, Context, EndpointResult};
 ///
 /// #[derive(Default)]
 /// struct Database {
 ///     contents: Mutex<Vec<Message>>,
-/// }
-///
-/// impl Database {
-///     fn messages(&self) -> std::sync::MutexGuard<Vec<Message>> {
-///         self.contents.lock().unwrap()
-///     }
 /// }
 ///
 /// #[derive(Serialize, Deserialize, Clone)]
@@ -98,20 +93,26 @@ use crate::{
 ///     contents: String,
 /// }
 ///
-/// async fn new_message(cx: Context<Database>) -> EndpointResult<String> {
+/// impl Database {
+///     fn insert(&self, msg: Message) -> usize {
+///         let mut table = self.contents.lock().unwrap();
+///         table.push(msg);
+///         table.len() - 1
+///     }
+///
+///     fn get(&self, id: usize) -> Option<Message> {
+///         self.contents.lock().unwrap().get(id).cloned()
+///     }
+/// }
+///
+/// async fn new_message(mut cx: Context<Database>) -> EndpointResult<String> {
 ///     let msg = cx.body_json().await.client_err()?;
-///
-///     let mut messages = cx.app_data().messages();
-///     let id = messages.len();
-///     messages.push(msg);
-///
-///     Ok(id.to_string())
+///     Ok(cx.state().insert(msg).to_string())
 /// }
 ///
 /// async fn get_message(cx: Context<Database>) -> EndpointResult {
-///     let id: usize = cx.param("id").client_err()?;
-///
-///     if let Some(msg) = cx.app_data().messages().get(id) {
+///     let id = cx.param("id").client_err()?;
+///     if let Some(msg) = cx.state().get(id) {
 ///         Ok(response::json(msg))
 ///     } else {
 ///         Err(StatusCode::NOT_FOUND)?
@@ -119,11 +120,12 @@ use crate::{
 /// }
 ///
 /// fn main() {
-///     let mut app = App::new(Database::default());
+///     let mut app = App::with_state(Database::default());
 ///     app.at("/message").post(new_message);
 ///     app.at("/message/:id").get(get_message);
 ///     app.serve("127.0.0.1:8000").unwrap();
 /// }
+/// ```
 
 pub struct App<State> {
     router: Router<State>,
