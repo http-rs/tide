@@ -12,6 +12,7 @@ use crate::{
 ///
 /// Internally, we have a separate state machine per http method; indexing
 /// by the method first allows the table itself to be more efficient.
+#[allow(missing_debug_implementations)]
 pub(crate) struct Router<State> {
     method_map: FnvHashMap<http::Method, MethodRouter<Box<DynEndpoint<State>>>>,
 }

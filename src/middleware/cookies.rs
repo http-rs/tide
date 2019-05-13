@@ -16,7 +16,7 @@ use crate::{
 /// is processed by endpoints and other middlewares, all the added and removed cookies are set on
 /// on the response. You will need to add this middle before any other middlewares that might need
 /// to access Cookies.
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct CookiesMiddleware {}
 
 impl CookiesMiddleware {
@@ -72,17 +72,23 @@ mod tests {
     static COOKIE_NAME: &str = "testCookie";
 
     /// Tide will use the the `Cookies`'s `Extract` implementation to build this parameter.
+    #[allow(unused_mut)] // Workaround clippy bug
     async fn retrieve_cookie(mut cx: Context<()>) -> String {
         format!("{}", cx.get_cookie(COOKIE_NAME).unwrap().unwrap().value())
     }
+
+    #[allow(unused_mut)] // Workaround clippy bug
     async fn set_cookie(mut cx: Context<()>) {
         cx.set_cookie(Cookie::new(COOKIE_NAME, "NewCookieValue"))
             .unwrap();
     }
+
+    #[allow(unused_mut)] // Workaround clippy bug
     async fn remove_cookie(mut cx: Context<()>) {
         cx.remove_cookie(Cookie::named(COOKIE_NAME)).unwrap();
     }
 
+    #[allow(unused_mut)] // Workaround clippy bug
     async fn set_multiple_cookie(mut cx: Context<()>) {
         cx.set_cookie(Cookie::new("C1", "V1")).unwrap();
         cx.set_cookie(Cookie::new("C2", "V2")).unwrap();

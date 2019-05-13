@@ -8,6 +8,7 @@ use crate::{router::Router, Endpoint};
 /// `nest`, it can be used to set up a subrouter.
 ///
 /// [`App::at`]: ./struct.App.html#method.at
+#[allow(missing_debug_implementations)]
 pub struct Route<'a, State> {
     router: &'a mut Router<State>,
     path: String,

@@ -25,6 +25,7 @@ where
 }
 
 /// The remainder of a middleware chain, including the endpoint.
+#[allow(missing_debug_implementations)]
 pub struct Next<'a, State> {
     pub(crate) endpoint: &'a DynEndpoint<State>,
     pub(crate) next_middleware: &'a [Arc<dyn Middleware<State>>],

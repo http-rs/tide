@@ -13,24 +13,28 @@ struct Message {
     contents: String,
 }
 
+#[allow(unused_mut)] // Workaround clippy bug
 async fn echo_string(mut cx: Context<()>) -> String {
     let msg = cx.body_string().await.unwrap();
     println!("String: {}", msg);
     msg
 }
 
+#[allow(unused_mut)] // Workaround clippy bug
 async fn echo_bytes(mut cx: Context<()>) -> Vec<u8> {
     let msg = cx.body_bytes().await.unwrap();
     println!("Bytes: {:?}", msg);
     msg
 }
 
+#[allow(unused_mut)] // Workaround clippy bug
 async fn echo_json(mut cx: Context<()>) -> EndpointResult {
     let msg = cx.body_json().await.client_err()?;
     println!("JSON: {:?}", msg);
     Ok(response::json(msg))
 }
 
+#[allow(unused_mut)] // Workaround clippy bug
 async fn echo_form(mut cx: Context<()>) -> EndpointResult {
     let msg = cx.body_form().await?;
     println!("Form: {:?}", msg);

@@ -8,9 +8,13 @@ use tide::{cookies::CookiesExt, middleware::CookiesMiddleware, Context};
 async fn retrieve_cookie(mut cx: Context<()>) -> String {
     format!("hello cookies: {:?}", cx.get_cookie("hello").unwrap())
 }
+
+#[allow(unused_mut)] // Workaround clippy bug
 async fn set_cookie(mut cx: Context<()>) {
     cx.set_cookie(Cookie::new("hello", "world")).unwrap();
 }
+
+#[allow(unused_mut)] // Workaround clippy bug
 async fn remove_cookie(mut cx: Context<()>) {
     cx.remove_cookie(Cookie::named("hello")).unwrap();
 }

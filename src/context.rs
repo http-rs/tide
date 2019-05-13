@@ -10,6 +10,7 @@ use std::{str::FromStr, sync::Arc};
 ///
 /// Contexts also provide *extensions*, a type map primarily used for low-level
 /// communication between middleware and endpoints.
+#[derive(Debug)]
 pub struct Context<State> {
     state: Arc<State>,
     request: http_service::Request,
