@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "nightly", deny(missing_docs))]
 #![cfg_attr(test, deny(warnings))]
 #![feature(async_await, existential_type)]
 #![deny(
@@ -6,7 +7,11 @@
     future_incompatible,
     missing_debug_implementations
 )]
+// TODO: Remove this after clippy bug due to async await is resolved.
+// ISSUE: https://github.com/rust-lang/rust-clippy/issues/3988
+#![allow(clippy::needless_lifetimes)]
 
+#[macro_export]
 macro_rules! box_async {
     {$($t:tt)*} => {
         ::futures::future::FutureExt::boxed(async move { $($t)* })

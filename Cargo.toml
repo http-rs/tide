@@ -2,6 +2,7 @@
 members = [
     "tide",
     "tide-compression",
+    "tide-cookies",
     "tide-core",
     "examples",
 ]

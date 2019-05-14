@@ -1,9 +1,8 @@
 use cookie::{Cookie, CookieJar, ParseError};
 
-use crate::error::StringError;
-use crate::Context;
 use http::HeaderMap;
 use std::sync::{Arc, RwLock};
+use tide_core::{error::StringError, Context};
 
 const MIDDLEWARE_MISSING_MSG: &str =
     "CookiesMiddleware must be used to populate request and response cookies";

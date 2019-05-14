@@ -31,7 +31,6 @@ use crate::{
 ///
 /// ```rust, no_run
 /// #![feature(async_await)]
-/// # use tide_core as tide;
 ///
 /// let mut app = tide::App::new();
 /// app.at("/hello").get(async move |_| "Hello, world!");
@@ -47,7 +46,6 @@ use crate::{
 ///
 /// ```rust, no_run
 /// #![feature(async_await)]
-/// # use tide_core as tide;
 ///
 /// use tide::error::ResultExt;
 ///
@@ -78,7 +76,7 @@ use crate::{
 ///
 /// ```rust, no_run
 /// #![feature(async_await)]
-/// # use tide_core as tide;
+/// #[macro_use] extern crate serde_derive;
 ///
 /// use http::status::StatusCode;
 /// use serde::{Deserialize, Serialize};
@@ -170,7 +168,7 @@ impl<State: Send + Sync + 'static> App<State> {
     ///
     /// ```rust,no_run
     /// # #![feature(async_await)]
-    /// # let mut app = tide_core::App::new();
+    /// # let mut app = tide::App::new();
     /// app.at("/").get(async move |_| "Hello, world!");
     /// ```
     ///
@@ -194,7 +192,7 @@ impl<State: Send + Sync + 'static> App<State> {
     /// Here are some examples omitting the HTTP verb based endpoint selection:
     ///
     /// ```rust,no_run
-    /// # let mut app = tide_core::App::new();
+    /// # let mut app = tide::App::new();
     /// app.at("/");
     /// app.at("/hello");
     /// app.at("add_two/:num");

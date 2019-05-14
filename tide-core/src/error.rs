@@ -5,6 +5,23 @@ use http_service::Body;
 
 use crate::response::IntoResponse;
 
+#[derive(Debug)]
+pub struct StringError(pub String);
+impl std::error::Error for StringError {}
+
+impl std::fmt::Display for StringError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        self.0.fmt(f)
+    }
+}
+
+#[macro_export]
+macro_rules! err_fmt {
+    {$($t:tt)*} => {
+        crate::error::StringError(format!($($t)*))
+    }
+}
+
 /// A convenient `Result` instantiation appropriate for most endpoints.
 pub type EndpointResult<T = Response<Body>> = Result<T, Error>;
 

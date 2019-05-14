@@ -21,7 +21,6 @@ use crate::{response::IntoResponse, Context, Response};
 ///
 /// ```rust, no_run
 /// # #![feature(async_await)]
-/// # use tide_core as tide;
 /// async fn hello(_cx: tide::Context<()>) -> String {
 ///     String::from("hello")
 /// }
@@ -36,7 +35,6 @@ use crate::{response::IntoResponse, Context, Response};
 /// An endpoint with similar functionality that does not make use of the `async` keyword would look something like this:
 ///
 /// ```rust, no_run
-/// # use tide_core as tide;
 /// # use core::future::Future;
 /// fn hello(_cx: tide::Context<()>) -> impl Future<Output = String> {
 ///     futures::future::ready(String::from("hello"))
