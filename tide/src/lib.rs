@@ -34,25 +34,14 @@ macro_rules! box_async {
 #[macro_use]
 pub mod error;
 
-mod app;
-mod context;
 pub mod cookies;
-mod endpoint;
 pub mod forms;
 pub mod middleware;
 pub mod querystring;
-pub mod response;
-mod route;
-mod router;
+
+pub use tide_core::response;
 
 #[doc(inline)]
-pub use crate::{
-    app::{App, Server},
-    context::Context,
-    endpoint::Endpoint,
-    error::{EndpointResult, Error},
-    response::Response,
-    route::Route,
-};
+pub use tide_core::{App, Context, Endpoint, EndpointResult, Error, Response, Route, Server};
 
 pub use http;

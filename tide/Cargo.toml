@@ -35,6 +35,10 @@ slog-term = "2.4.0"
 typemap = "0.3.3"
 serde_urlencoded = "0.5.5"
 
+[dependencies.tide-core]
+path = "../tide-core"
+optional = true
+
 [dependencies.http-service-hyper]
 optional = true
 version = "0.2.0"
@@ -46,7 +50,7 @@ version = "0.16.1"
 
 [features]
 default = ["hyper"]
-hyper = ["http-service-hyper"]
+hyper = ["tide-core/http-service-hyper"]
 
 [dev-dependencies]
 http-service-mock = "0.2.0"
