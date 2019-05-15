@@ -1,5 +1,3 @@
-#![feature(async_await)]
-
 use serde::{Deserialize, Serialize};
 use std::io::Read;
 use tide::{forms::ExtractForms, response, App, Context, EndpointResult};
@@ -57,7 +55,7 @@ async fn upload_file(mut cx: Context<()>) -> EndpointResult {
     Ok(response::json(message))
 }
 
-fn main() {
+pub fn run() {
     let mut app = App::new();
     app.at("/upload_file").post(upload_file);
     app.serve("127.0.0.1:8000").unwrap();

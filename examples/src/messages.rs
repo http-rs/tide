@@ -1,5 +1,3 @@
-#![feature(async_await)]
-
 use http::status::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
@@ -66,7 +64,7 @@ async fn get_message(cx: Context<Database>) -> EndpointResult {
     }
 }
 
-fn main() {
+pub fn main() {
     let mut app = App::with_state(Database::default());
     app.at("/message").post(new_message);
     app.at("/message/:id").get(get_message).post(set_message);

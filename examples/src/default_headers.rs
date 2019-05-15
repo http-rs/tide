@@ -1,8 +1,6 @@
-#![feature(async_await)]
-
 use tide::middleware::DefaultHeaders;
 
-fn main() {
+pub fn main() {
     let mut app = tide::App::new();
 
     app.middleware(
