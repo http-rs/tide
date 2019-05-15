@@ -12,5 +12,5 @@ You can test the simple example by running `cargo run --example simple` while in
 
 ```console
 $ curl http://127.0.0.1:8000/ -v
-$ curl http://127.0.0.1:8000/echo -v -d "why hello there"
+$ echo 'why hello there' | gzip | curl -v --compressed -H 'Content-Encoding: gzip' 'http://127.0.0.1:8000/echo' --data-binary @-
 ```
