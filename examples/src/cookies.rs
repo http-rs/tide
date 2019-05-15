@@ -23,5 +23,5 @@ pub fn main() {
     app.at("/").get(retrieve_cookie);
     app.at("/set").get(set_cookie);
     app.at("/remove").get(remove_cookie);
-    app.serve("127.0.0.1:8000").unwrap();
+    app.run("127.0.0.1:8000").unwrap();
 }
