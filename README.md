@@ -59,7 +59,7 @@ Ecosystem WG, and **not ready for production use yet**.
 
 **Hello World**
 
-```rust
+```rust,no_run
 #![feature(async_await)]
 
 fn main() -> Result<(), std::io::Error> {
