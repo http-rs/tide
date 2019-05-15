@@ -65,7 +65,7 @@ Ecosystem WG, and **not ready for production use yet**.
 fn main() -> Result<(), std::io::Error> {
     let mut app = tide::App::new();
     app.at("/").get(async move |_| "Hello, world!");
-    Ok(app.serve("127.0.0.1:8000")?)
+    Ok(app.run("127.0.0.1:8000")?)
 }
 ```
 

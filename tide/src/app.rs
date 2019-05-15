@@ -34,7 +34,7 @@ use crate::{
 ///
 /// let mut app = tide::App::new();
 /// app.at("/hello").get(async move |_| "Hello, world!");
-/// app.serve("127.0.0.1:8000");
+/// app.run("127.0.0.1:8000");
 /// ```
 ///
 /// # Routing and parameters
@@ -67,7 +67,7 @@ use crate::{
 ///     "Use /hello/{your name} or /goodbye/{your name}"
 /// });
 ///
-/// app.serve("127.0.0.1:8000");
+/// app.run("127.0.0.1:8000");
 /// ```
 ///
 /// You can learn more about routing in the [`App::at`] documentation.
@@ -123,7 +123,7 @@ use crate::{
 ///     let mut app = App::with_state(Database::default());
 ///     app.at("/message").post(new_message);
 ///     app.at("/message/:id").get(get_message);
-///     app.serve("127.0.0.1:8000").unwrap();
+///     app.run("127.0.0.1:8000").unwrap();
 /// }
 /// ```
 
@@ -232,11 +232,11 @@ impl<State: Send + Sync + 'static> App<State> {
         }
     }
 
-    /// Start serving the app at the given address.
+    /// Run the app at the given address.
     ///
     /// Blocks the calling thread indefinitely.
     #[cfg(feature = "hyper")]
-    pub fn serve(self, addr: impl std::net::ToSocketAddrs) -> std::io::Result<()> {
+    pub fn run(self, addr: impl std::net::ToSocketAddrs) -> std::io::Result<()> {
         let addr = addr
             .to_socket_addrs()?
             .next()
@@ -244,6 +244,19 @@ impl<State: Send + Sync + 'static> App<State> {
 
         println!("Server is listening on: http://{}", addr);
         http_service_hyper::run(self.into_http_service(), addr);
+        Ok(())
+    }
+
+    /// Asynchronously serve the app at the given address.
+    #[cfg(feature = "hyper")]
+    pub async fn serve(self, addr: impl std::net::ToSocketAddrs) -> std::io::Result<()> {
+        let addr = addr
+            .to_socket_addrs()?
+            .next()
+            .ok_or(std::io::ErrorKind::InvalidInput)?;
+
+        // TODO: propagate the error from hyper
+        http_service_hyper::serve(self.into_http_service(), addr).await.ok();
         Ok(())
     }
 }
