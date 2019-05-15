@@ -1,3 +1,5 @@
+#![feature(async_await)]
+
 use cookie::Cookie;
 use tide::{cookies::ContextExt, middleware::CookiesMiddleware, Context};
 
@@ -14,7 +16,7 @@ async fn remove_cookie(mut cx: Context<()>) {
     cx.remove_cookie(Cookie::named("hello")).unwrap();
 }
 
-pub fn main() {
+fn main() {
     let mut app = tide::App::new();
     app.middleware(CookiesMiddleware::new());
 

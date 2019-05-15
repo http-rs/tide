@@ -1,3 +1,5 @@
+#![feature(async_await)]
+
 use serde::{Deserialize, Serialize};
 use std::io::Read;
 use tide::{forms::ExtractForms, response, App, Context, EndpointResult};
@@ -54,12 +56,12 @@ async fn upload_file(mut cx: Context<()>) -> EndpointResult {
     Ok(response::json(message))
 }
 
-pub fn run() {
+fn main() {
     let mut app = App::new();
     app.at("/upload_file").post(upload_file);
     app.run("127.0.0.1:8000").unwrap();
 }
 
 // Test with:
-// curl -X POST http://localhost:8000/upload_file -H 'content-type: multipart/form-data' -F file=@examples/multipart-form/test.txt
+// curl -X POST http://localhost:8000/upload_file -H 'content-type: multipart/form-data' -F file=@examples/data/test.txt
 // curl -X POST http://localhost:8000/upload_file -H 'content-type: multipart/form-data' -F key1=v1, -F key2=v2

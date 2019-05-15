@@ -1,3 +1,5 @@
+#![feature(async_await)]
+
 use serde::{Deserialize, Serialize};
 use tide::{
     error::ResultExt,
@@ -35,7 +37,7 @@ async fn echo_form(mut cx: Context<()>) -> EndpointResult {
     Ok(forms::form(msg))
 }
 
-pub fn main() {
+fn main() {
     let mut app = App::new();
 
     app.at("/echo/string").post(echo_string);

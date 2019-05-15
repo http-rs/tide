@@ -1,3 +1,5 @@
+#![feature(async_await)]
+
 // This example uses Juniper to process GraphQL requests. If you're not familiar with Juniper, take
 // a look at [the Juniper book].
 //
@@ -56,7 +58,7 @@ async fn handle_graphql(mut cx: Context<Data>) -> EndpointResult {
     Ok(resp)
 }
 
-pub fn main() {
+fn main() {
     let mut app = App::with_state(Data::default());
     app.at("/graphql").post(handle_graphql);
     app.run("127.0.0.1:8000").unwrap();
