@@ -71,14 +71,14 @@ fn main() -> Result<(), std::io::Error> {
 
 **More Examples**
 
-- [Hello World](https://github.com/rustasync/tide/tree/master/examples/hello.rs)
-- [Messages](https://github.com/rustasync/tide/blob/master/examples/messages.rs)
-- [Body Types](https://github.com/rustasync/tide/blob/master/examples/body_types.rs)
-- [Multipart Form](https://github.com/rustasync/tide/tree/master/examples/multipart-form/main.rs)
-- [Catch All](https://github.com/rustasync/tide/tree/master/examples/catch_all.rs)
-- [Cookies](https://github.com/rustasync/tide/tree/master/examples/cookies.rs)
-- [Default Headers](https://github.com/rustasync/tide/tree/master/examples/default_headers.rs)
-- [GraphQL](https://github.com/rustasync/tide/tree/master/examples/graphql.rs)
+- [Hello World](https://github.com/rustasync/tide/tree/master/examples/src/hello.rs)
+- [Messages](https://github.com/rustasync/tide/blob/master/examples/src/messages.rs)
+- [Body Types](https://github.com/rustasync/tide/blob/master/examples/src/body_types.rs)
+- [Multipart Form](https://github.com/rustasync/tide/tree/master/examples/src/multipart-form/main.rs)
+- [Catch All](https://github.com/rustasync/tide/tree/master/examples/src/catch_all.rs)
+- [Cookies](https://github.com/rustasync/tide/tree/master/examples/src/cookies.rs)
+- [Default Headers](https://github.com/rustasync/tide/tree/master/src/examples/default_headers.rs)
+- [GraphQL](https://github.com/rustasync/tide/tree/master/examples/src/graphql.rs)
 
 ## Resources
 
