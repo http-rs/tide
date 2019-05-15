@@ -74,7 +74,11 @@ mod tests {
 
     /// Tide will use the the `Cookies`'s `Extract` implementation to build this parameter.
     async fn retrieve_cookie(mut cx: Context<()>) -> String {
-        format!("{}", cx.get_cookie(COOKIE_NAME).unwrap().unwrap().value())
+        cx.get_cookie(COOKIE_NAME)
+            .unwrap()
+            .unwrap()
+            .value()
+            .to_string()
     }
 
     async fn set_cookie(mut cx: Context<()>) {
@@ -109,8 +113,7 @@ mod tests {
             .header(http::header::COOKIE, "testCookie=RequestCookieValue")
             .body(Body::empty())
             .unwrap();
-        let res = server.simulate(req).unwrap();
-        res
+        server.simulate(req).unwrap()
     }
 
     #[test]
