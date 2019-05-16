@@ -1,5 +1,5 @@
 #![cfg_attr(feature = "nightly", deny(missing_docs))]
-#![cfg_attr(feature = "nightly", feature(external_doc))]
+#![cfg_attr(any(feature = "nightly", test), feature(external_doc))]
 #![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
 #![cfg_attr(test, deny(warnings))]
 #![feature(async_await, existential_type)]
@@ -20,6 +20,10 @@
 //! The [`App`](struct.App.html) docs are a good place to get started.
 //!
 //!
+
+#[cfg(test)]
+#[doc(include = "../../README.md")]
+const _README: () = ();
 
 macro_rules! box_async {
     {$($t:tt)*} => {
