@@ -21,27 +21,18 @@ version = "0.2.0"
 [dependencies]
 cookie = { version = "0.12", features = ["percent-encode"] }
 futures-preview = "0.3.0-alpha.16"
-fnv = "1.0.6"
 http = "0.1"
 http-service = "0.2.0"
-pin-utils = "0.1.0-alpha.4"
-route-recognizer = "0.1.12"
 serde = "1.0.91"
 serde_derive = "1.0.91"
-serde_json = "1.0.39"
 slog = "2.4.1"
 slog-async = "2.3.0"
 slog-term = "2.4.0"
-typemap = "0.3.3"
 serde_urlencoded = "0.5.5"
 
 [dependencies.tide-core]
 path = "../tide-core"
 optional = true
-
-[dependencies.http-service-hyper]
-optional = true
-version = "0.2.0"
 
 [dependencies.multipart]
 default-features = false
