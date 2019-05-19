@@ -10,9 +10,6 @@
     future_incompatible,
     missing_debug_implementations
 )]
-// TODO: Remove this after clippy bug due to async await is resolved.
-// ISSUE: https://github.com/rust-lang/rust-clippy/issues/3988
-#![allow(clippy::needless_lifetimes)]
 
 //!
 //! Welcome to Tide.
@@ -32,27 +29,20 @@ macro_rules! box_async {
 }
 
 #[macro_use]
-pub mod error;
+extern crate tide_core;
 
-mod app;
-mod context;
-pub mod cookies;
-mod endpoint;
+#[cfg(feature = "cookies")]
+#[doc(inline)]
+pub use tide_cookies as cookies;
+
+pub mod error;
 pub mod forms;
 pub mod middleware;
 pub mod querystring;
-pub mod response;
-mod route;
-mod router;
 
 #[doc(inline)]
-pub use crate::{
-    app::{App, Server},
-    context::Context,
-    endpoint::Endpoint,
-    error::{EndpointResult, Error},
-    response::Response,
-    route::Route,
+pub use tide_core::{
+    response, App, Context, Endpoint, EndpointResult, Error, Response, Route, Server,
 };
 
 pub use http;

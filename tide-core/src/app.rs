@@ -76,6 +76,7 @@ use crate::{
 ///
 /// ```rust, no_run
 /// #![feature(async_await)]
+/// #[macro_use] extern crate serde_derive;
 ///
 /// use http::status::StatusCode;
 /// use serde::{Deserialize, Serialize};

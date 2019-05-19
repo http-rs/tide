@@ -1,8 +1,8 @@
-use crate::cookies::CookieData;
+use crate::data::CookieData;
 use futures::future::BoxFuture;
 use http::header::HeaderValue;
 
-use crate::{
+use tide_core::{
     middleware::{Middleware, Next},
     Context, Response,
 };
@@ -63,11 +63,12 @@ impl<Data: Send + Sync + 'static> Middleware<Data> for CookiesMiddleware {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{cookies::ContextExt, Context};
+    use crate::data::ContextExt;
     use cookie::Cookie;
     use futures::executor::block_on;
     use http_service::Body;
     use http_service_mock::make_server;
+    use tide_core::Context;
 
     static COOKIE_NAME: &str = "testCookie";
 
@@ -90,8 +91,8 @@ mod tests {
         cx.set_cookie(Cookie::new("C2", "V2")).unwrap();
     }
 
-    fn app() -> crate::App<()> {
-        let mut app = crate::App::new();
+    fn app() -> tide_core::App<()> {
+        let mut app = tide_core::App::new();
         app.middleware(CookiesMiddleware::new());
 
         app.at("/get").get(retrieve_cookie);
@@ -168,5 +169,4 @@ mod tests {
 
         assert!(iter.next().is_none());
     }
-
 }

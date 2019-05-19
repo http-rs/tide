@@ -1,6 +1,6 @@
 [package]
 authors = [
-    "Tide Developers",
+  "Tide Developers",
 ]
 description = "Tide web server examples"
 documentation = "https://docs.rs/tide"
@@ -15,32 +15,18 @@ publish = false
 [dependencies]
 tide = { path = "../tide" }
 cookie = { version = "0.12", features = ["percent-encode"] }
-futures-preview = "0.3.0-alpha.16"
-fnv = "1.0.6"
 http = "0.1"
 http-service = "0.2.0"
-pin-utils = "0.1.0-alpha.4"
-route-recognizer = "0.1.12"
-serde_json = "1.0.39"
-slog = "2.4.1"
-slog-async = "2.3.0"
-slog-term = "2.4.0"
-typemap = "0.3.3"
-serde_urlencoded = "0.5.5"
-basic-cookies = "0.1.3"
 bytes = "0.4.12"
 futures-fs = "0.0.5"
 futures-util-preview = { version = "0.3.0-alpha.16", features = ["compat"] }
-http-service-mock = "0.2.0"
 juniper = "0.11.1"
 mime = "0.3.13"
 mime_guess = "2.0.0-alpha.6"
 percent-encoding = "1.0.1"
 serde = { version = "1.0.91", features = ["derive"] }
-structopt = "0.2.15"
 
 [dependencies.multipart]
 default-features = false
 features = ["server"]
 version = "0.16.1"
-
