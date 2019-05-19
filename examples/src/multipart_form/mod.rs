@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::io::Read;
-use tide::{forms::ExtractForms, response, App, Context, EndpointResult};
+use tide::{forms::ContextExt, response, App, Context, EndpointResult};
 
 #[derive(Serialize, Deserialize, Clone)]
 struct Message {
