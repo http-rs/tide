@@ -289,8 +289,7 @@ mod tests {
             .header(ACCEPT_ENCODING, hval)
             .body(Body::empty())
             .unwrap();
-        let res = server.simulate(req).unwrap();
-        res
+        server.simulate(req).unwrap()
     }
 
     // Generates a decoded response given a request body and the header value representing its encoding.
@@ -301,8 +300,7 @@ mod tests {
             .header(CONTENT_ENCODING, hval)
             .body(body)
             .unwrap();
-        let res = server.simulate(req).unwrap();
-        res
+        server.simulate(req).unwrap()
     }
 
     #[test]

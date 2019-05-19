@@ -1,13 +1,30 @@
 language: rust
-rust:
-  - nightly-2019-05-09
-
-before_script: |
-  rustup component add rustfmt clippy
-script: |
-  cargo fmt --all -- --check &&
-  cargo clippy --all --all-features -- -D clippy::all &&
-  cargo build --no-default-features --verbose &&
-  cargo build --all --all-features --verbose &&
-  cargo test --all --all-features --verbose
+rust: nightly-2019-05-09
 cache: cargo
+
+matrix:
+  include:
+  - name: cargo doc
+    env: [CACHE_NAME=docs]
+    script:
+    - RUSTDOCFLAGS=-Dwarnings
+      cargo doc --all --all-features --no-deps --exclude tide
+
+  - name: cargo fmt
+    cache: false
+    before_script: rustup component add rustfmt
+    script: cargo fmt --all -- --check
+
+  - name: cargo clippy
+    env: [CACHE_NAME=clippy]
+    before_script: rustup component add clippy
+    script: cargo clippy --all --all-targets --exclude examples -- -Dwarnings
+
+  - name: cargo build --no-default-features
+    env: [CACHE_NAME=no-default-features]
+    script:
+    - cargo build --manifest-path tide/Cargo.toml --no-default-features
+    - cargo build --manifest-path tide-core/Cargo.toml --no-default-features
+
+  - name: cargo test
+    script: cargo test --all --verbose
