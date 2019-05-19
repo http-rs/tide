@@ -51,32 +51,38 @@
 </div>
 
 ## About
+
 A modular web framework built around async/await. It's actively being developed by the Rust Async
-Ecosystem WG, and __not ready for production use yet__.
+Ecosystem WG, and **not ready for production use yet**.
 
 ## Examples
-__Hello World__
-```rust
+
+**Hello World**
+
+```rust,no_run
 #![feature(async_await)]
 
-fn main() -> Result<(), failure::Error> {
-    let mut app = tide::App::new(());
+fn main() -> Result<(), std::io::Error> {
+    let mut app = tide::App::new();
     app.at("/").get(async move |_| "Hello, world!");
-    app.serve("127.0.0.1:8000")?;
+    Ok(app.run("127.0.0.1:8000")?)
 }
 ```
 
-__More Examples__
-- [Hello World](https://github.com/rustasync/tide/tree/master/examples/hello.rs)
-- [Messages](https://github.com/rustasync/tide/blob/master/examples/messages.rs)
-- [Body Types](https://github.com/rustasync/tide/blob/master/examples/body_types.rs)
-- [Multipart Form](https://github.com/rustasync/tide/tree/master/examples/multipart-form/main.rs)
-- [Catch All](https://github.com/rustasync/tide/tree/master/examples/catch_all.rs)
-- [Cookie Extractor](https://github.com/rustasync/tide/tree/master/examples/cookie_extractor.rs)
-- [Default Headers](https://github.com/rustasync/tide/tree/master/examples/default_headers.rs)
-- [GraphQL](https://github.com/rustasync/tide/tree/master/examples/graphql.rs)
+**More Examples**
+
+- [Hello World](https://github.com/rustasync/tide/blob/master/examples/src/hello.rs)
+- [Messages](https://github.com/rustasync/tide/blob/master/examples/src/messages.rs)
+- [Body Types](https://github.com/rustasync/tide/blob/master/examples/src/body_types.rs)
+- [Multipart Form](https://github.com/rustasync/tide/blob/master/examples/src/multipart-form/main.rs)
+- [Catch All](https://github.com/rustasync/tide/blob/master/examples/src/catch_all.rs)
+- [Cookies](https://github.com/rustasync/tide/blob/master/examples/src/cookies.rs)
+- [Default Headers](https://github.com/rustasync/tide/blob/master/examples/src/default_headers.rs)
+- [GraphQL](https://github.com/rustasync/tide/blob/master/examples/src/graphql.rs)
+- [Staticfile](https://github.com/rustasync/tide/blob/master/examples/src/staticfile.rs)
 
 ## Resources
+
 Read about the design here:
 
 - [Rising Tide: building a modular web framework in the open](https://rustasync.github.io/team/2018/09/11/tide.html)
@@ -84,7 +90,20 @@ Read about the design here:
 - [Middleware in Tide](https://rustasync.github.io/team/2018/11/07/tide-middleware.html)
 - [Tide's evolving middleware approach](https://rustasync.github.io/team/2018/11/27/tide-middleware-evolution.html)
 
+### Supported Rust Versions
+
+Tide is built against the latest Rust nightly releases and as such, due to it's use of `std` futures,
+it has the following specific breakpoints that align with std future API changes:
+
+| Tide        | Rust                    |
+| ----------- | ----------------------- |
+| &le; v0.1.0 | &le; nightly-2019-04-07 |
+| &ge; v0.1.1 | &ge; nightly-2019-04-08 |
+
+_**Note:** Since these are due to changes in `std`, projects with dependencies that use conflicting versions of `std::futures` will not build successfully._
+
 ## Contributing
+
 Want to join us? Check out our [The "Contributing" section of the
 guide][contributing] and take a look at some of these issues:
 
@@ -92,19 +111,22 @@ guide][contributing] and take a look at some of these issues:
 - [Issues labeled "help wanted"][help-wanted]
 
 #### Conduct
+
 The Tide project adheres to the [Contributor Covenant Code of
-Conduct](https://github.com/rustasync/tide/blob/master/.github/CODE_OF_CONDUCT.md).  This
+Conduct](https://github.com/rustasync/tide/blob/master/.github/CODE_OF_CONDUCT.md). This
 describes the minimum behavior expected from all contributors.
 
 ## License
+
 Licensed under either of
 
- * Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
- * MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
 
 at your option.
 
 #### Contribution
+
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 dual licensed as above, without any additional terms or conditions.

@@ -1,62 +1,153 @@
-## 2019-02-26, Version 0.0.5
+## 2019-05-03, Version 0.2.0
 ### Commits
-- [[`990c80f78e`](https://github.com/rustasync/tide/commit/990c80f78e5622a751a5d2d4948cd005616e84f8)] (cargo-release) version 0.0.5 (Yoshua Wuyts)
-- [[`61f2aa5bf7`](https://github.com/rustasync/tide/commit/61f2aa5bf71f8eff34b1f9dcbb97e83a86f33b92)] Extract serve.rs into a separate crate (#140) (Wonwoo Choi)
-- [[`b4d0806a15`](https://github.com/rustasync/tide/commit/b4d0806a15e50ccbfcffeaf5bb6f767019269670)] Merge pull request #139 from aturon/http-service (Aaron Turon)
-- [[`092fc7f4e4`](https://github.com/rustasync/tide/commit/092fc7f4e4764b3a4c0101046f0ceced95f09194)] update rust version (Aaron Turon)
-- [[`703d41b79a`](https://github.com/rustasync/tide/commit/703d41b79a3089640731cae2de54b4dec0c0c93a)] rustfmt (Aaron Turon)
-- [[`fe0c39cc60`](https://github.com/rustasync/tide/commit/fe0c39cc60b0ff54bc577a3d8d21b4821c13841a)] Update to use new Body::into_vec method (Aaron Turon)
-- [[`369095140d`](https://github.com/rustasync/tide/commit/369095140d0acdad0656e0d79a3a64c9aae87436)] update tests (Aaron Turon)
-- [[`9fee015612`](https://github.com/rustasync/tide/commit/9fee015612fc89c78fb5555a837ad03af2c32ef1)] Refactor to use HttpService internally (Aaron Turon)
-- [[`1fb71bf421`](https://github.com/rustasync/tide/commit/1fb71bf421ef27b6acf8c23d5d0a267a9b385d62)] Move to http_service::Body (Aaron Turon)
-- [[`c727750a69`](https://github.com/rustasync/tide/commit/c727750a694b0a2f217eb391a5d8d9f07b722802)] docs: updated docs to have correct default port (#137) (Matt Gathu)
-- [[`b02220a06a`](https://github.com/rustasync/tide/commit/b02220a06aac5bf42455bcc6c9bdc36368fe9a9f)] Update changelog (Yoshua Wuyts)
+- [[`d887e16`](https://github.com/rustasync/tide/commit/d887e162d88289b43a6dba4ac8a98040af35d02d)] (cargo-release) version 0.2.0 (Wonwoo Choi)
+- [[`6d8577b`](https://github.com/rustasync/tide/commit/6d8577b5411c4a5ad636debc056e9af69d3a107b)] Fix wrong changelog (Wonwoo Choi)
+- [[`69b5762`](https://github.com/rustasync/tide/commit/69b576208f6191029476e7cbec90b19b057f4081)] Merge pull request #193 from Nemo157/futures-alpha.15 (Wonwoo Choi)
+- [[`a676391`](https://github.com/rustasync/tide/commit/a6763919525ed6b9d7ee5a5a3ef1dda5b47b495c)] Update for futures v0.3.0-alpha.15 (Wim Looman)
+- [[`6b6a7a1`](https://github.com/rustasync/tide/commit/6b6a7a18a196e94aa532dd5059df2e116950bf03)] fix: readme typos (Prasanna V. Loganathar)
+- [[`676b497`](https://github.com/rustasync/tide/commit/676b497f8cafcc2709a5fcc91ec430265af34d2d)] Fix minor bugs found during review (#188) (Murali)
+- [[`a4464e8`](https://github.com/rustasync/tide/commit/a4464e8806dbfb817104fa15da7a107128fe53f0)] Merge pull request #170 from mmrath/cookie-improvement (Aaron Turon)
+- [[`d76a6d2`](https://github.com/rustasync/tide/commit/d76a6d23556caa0368b958d16e534942c4c6a2c9)] Merge pull request #180 from secretfader/serde_urlencoded (Aaron Turon)
+- [[`4263895`](https://github.com/rustasync/tide/commit/4263895dcc8729883b9d8d0cd5c87da192963905)] Merge pull request #175 from secretfader/feat/querystring (Aaron Turon)
+- [[`85065cf`](https://github.com/rustasync/tide/commit/85065cf36e8b84bd7a95ca4a49b960f87f8b7fc7)] Add query string extension trait (Nicholas Young)
+- [[`998fa45`](https://github.com/rustasync/tide/commit/998fa45af2a8b7dd8c1ac3ccc70c785003fd015d)] Merge pull request #183 from secretfader/serde-2018 (Justin Seabrook-Rocha)
+- [[`6438a3d`](https://github.com/rustasync/tide/commit/6438a3db79b4bdda4c75a9595e9f1ff7764c0050)] docs: add supported rust versions (#185) (Prasanna V. Loganathar)
+- [[`cf3eee2`](https://github.com/rustasync/tide/commit/cf3eee2252f5e3cdc3a0d91a0f89a1a9d9a5149d)] pragma updates (#182) (Prasanna V. Loganathar)
+- [[`4476c69`](https://github.com/rustasync/tide/commit/4476c6976217b9eda116b8e15b4697c71a250eb4)] Merge pull request #178 from rustasync/fix-github-templates (Nicholas)
+- [[`87ff6ff`](https://github.com/rustasync/tide/commit/87ff6ff77132686aecdcbee1a47be2395a7bf187)] Update question.md (Theodore Zilist)
+- [[`8f1daf7`](https://github.com/rustasync/tide/commit/8f1daf772c44798dc63aae61a7561cfffe61d341)] Use Rust 2018 imports for Serde (Nicholas Young)
+- [[`0dedfc0`](https://github.com/rustasync/tide/commit/0dedfc0ec98162e9cffe8244028f5899bf5d5002)] Migrate to serde_urlencoded, and away from serde_qs (Nicholas Young)
+- [[`d78001f`](https://github.com/rustasync/tide/commit/d78001f3d776c9a16375597572f2c84b1eff18d5)] Merge pull request #181 from sangheestyle/fix_example_readme (Nicholas)
+- [[`0ac0168`](https://github.com/rustasync/tide/commit/0ac01681a13ec46f9dc3c9873a1073c2429aeba8)] fix: error on example code (Sanghee Kim)
+- [[`6dab8f7`](https://github.com/rustasync/tide/commit/6dab8f777048e37735a48b9aebbf8441c0254dc4)] Update question.md (Theodore Zilist)
+- [[`1a185c5`](https://github.com/rustasync/tide/commit/1a185c57ce60d034b12edf31a65eabc3a72b2cfe)] Fix documentation (Murali Mohan Rath)
+- [[`8e3fd26`](https://github.com/rustasync/tide/commit/8e3fd26236bf4b436334ab4400e5c5893aa69235)] Merge branch 'master' of https://github.com/rustasync/tide into cookie-improvement (Murali Mohan Rath)
+- [[`e06ae37`](https://github.com/rustasync/tide/commit/e06ae375aa31e8fe2dad3689c72bd33e84775d4e)] Update changelog (Yoshua Wuyts)
+- [[`31df6c2`](https://github.com/rustasync/tide/commit/31df6c2cec56157ec675d42ebb7cf41c9fc5476b)] Add test cases (Murali Mohan Rath)
+- [[`03cf8f1`](https://github.com/rustasync/tide/commit/03cf8f16d6182f05e27b9d9e90771b4ccd963ff9)] Add documentation (Murali Mohan Rath)
+- [[`ca059c0`](https://github.com/rustasync/tide/commit/ca059c0f238b93117d04f30befdfc80453bac074)] Merge branch 'master' of https://github.com/rustasync/tide into cookie-improvement (Murali Mohan Rath)
+- [[`f8f6203`](https://github.com/rustasync/tide/commit/f8f6203e83bac4ca923de21a0899af4dce069b8e)] improve error handling (Murali Mohan Rath)
+- [[`935151a`](https://github.com/rustasync/tide/commit/935151a56ace7356f6123df92f93f827a0b71785)] Cookie revamp (Murali Mohan Rath)
+- [[`2e44305`](https://github.com/rustasync/tide/commit/2e443055ab4f8da80b1a22e315ed47a53b504712)] cookie revamp (Murali Mohan Rath)
 
 ### Stats
 ```diff
- .travis.yml       |   3 +-
- CHANGELOG.md      |  18 +++++++-
- Cargo.toml        |  25 ++++++----
- src/app.rs        |  58 ++++++++----------------
- src/body.rs       | 133 +++++--------------------------------------------------
- src/lib.rs        |   4 +-
- src/request.rs    |   3 +-
- src/response.rs   |   3 +-
- src/router.rs     |  27 ++++-------
- src/serve.rs      |   4 ++-
- tests/wildcard.rs |  96 ++++++++++++++++++++++++++++++++++++++++-
- 11 files changed, 189 insertions(+), 185 deletions(-)
+ .github/ISSUE_TEMPLATE/question.md |   4 +-
+ .travis.yml                        |   2 +-
+ CHANGELOG.md                       | 107 +++++++++++++++++------
+ Cargo.toml                         |  17 ++--
+ README.md                          |  19 ++++-
+ examples/body_types.rs             |   6 +-
+ examples/catch_all.rs              |   2 +-
+ examples/cookie_extractor.rs       |  15 ----
+ examples/cookies.rs                |  26 ++++++
+ examples/graphql.rs                |   2 +-
+ examples/messages.rs               |   6 +-
+ examples/multipart-form/main.rs    |   6 +-
+ src/app.rs                         |   8 +-
+ src/cookies.rs                     |  92 +++++++++++++++-----
+ src/endpoint.rs                    |   6 +-
+ src/error.rs                       |   4 +-
+ src/forms.rs                       |   7 +-
+ src/lib.rs                         |  10 +--
+ src/middleware/cookies.rs          | 170 +++++++++++++++++++++++++++++++++++++
+ src/middleware/default_headers.rs  |   4 +-
+ src/middleware/logger.rs           |   4 +-
+ src/middleware/mod.rs              |  13 +--
+ src/querystring.rs                 |  80 +++++++++++++++++
+ src/router.rs                      |   9 +-
+ tests/wildcard.rs                  |   2 +-
+ 25 files changed, 498 insertions(+), 123 deletions(-)
 ```
 
 
-## 2019-02-26, Version 0.0.5
+## 2019-04-18, Version 0.1.1
 ### Commits
-- [[`990c80f78e`](https://github.com/rustasync/tide/commit/990c80f78e5622a751a5d2d4948cd005616e84f8)] (cargo-release) version 0.0.5 (Yoshua Wuyts)
-- [[`61f2aa5bf7`](https://github.com/rustasync/tide/commit/61f2aa5bf71f8eff34b1f9dcbb97e83a86f33b92)] Extract serve.rs into a separate crate (#140) (Wonwoo Choi)
-- [[`b4d0806a15`](https://github.com/rustasync/tide/commit/b4d0806a15e50ccbfcffeaf5bb6f767019269670)] Merge pull request #139 from aturon/http-service (Aaron Turon)
-- [[`092fc7f4e4`](https://github.com/rustasync/tide/commit/092fc7f4e4764b3a4c0101046f0ceced95f09194)] update rust version (Aaron Turon)
-- [[`703d41b79a`](https://github.com/rustasync/tide/commit/703d41b79a3089640731cae2de54b4dec0c0c93a)] rustfmt (Aaron Turon)
-- [[`fe0c39cc60`](https://github.com/rustasync/tide/commit/fe0c39cc60b0ff54bc577a3d8d21b4821c13841a)] Update to use new Body::into_vec method (Aaron Turon)
-- [[`369095140d`](https://github.com/rustasync/tide/commit/369095140d0acdad0656e0d79a3a64c9aae87436)] update tests (Aaron Turon)
-- [[`9fee015612`](https://github.com/rustasync/tide/commit/9fee015612fc89c78fb5555a837ad03af2c32ef1)] Refactor to use HttpService internally (Aaron Turon)
-- [[`1fb71bf421`](https://github.com/rustasync/tide/commit/1fb71bf421ef27b6acf8c23d5d0a267a9b385d62)] Move to http_service::Body (Aaron Turon)
-- [[`c727750a69`](https://github.com/rustasync/tide/commit/c727750a694b0a2f217eb391a5d8d9f07b722802)] docs: updated docs to have correct default port (#137) (Matt Gathu)
-- [[`b02220a06a`](https://github.com/rustasync/tide/commit/b02220a06aac5bf42455bcc6c9bdc36368fe9a9f)] Update changelog (Yoshua Wuyts)
+- [[`8c247b8`](https://github.com/rustasync/tide/commit/8c247b884fe6795c9489a76d7ee9f265a2d6539c)] (cargo-release) version 0.1.1 (Yoshua Wuyts)
+- [[`7e57a55`](https://github.com/rustasync/tide/commit/7e57a55e8ff1229594a439141e9bb6c204f74703)] fix: sync up with nightly futures_api (#176) (Prasanna V. Loganathar)
+- [[`69c0c60`](https://github.com/rustasync/tide/commit/69c0c60bacef29dd0e0071c799ace3a2f0977aaa)] fix: cargo fmt check in the last commit (Prasanna V. Loganathar)
+- [[`0281fa6`](https://github.com/rustasync/tide/commit/0281fa671cafa9761f08282c5df823bb13c3082d)] fix: 2018 edition lints (Prasanna V. Loganathar)
+- [[`b09fcda`](https://github.com/rustasync/tide/commit/b09fcdaee34e338e178a8ce51d0bd52b621e5570)] compiler pragmas (Prasanna V. Loganathar)
+- [[`9e0a19a`](https://github.com/rustasync/tide/commit/9e0a19ad2ed6168737a44d9f82c00453f9ef8260)] Documents acceptable endpoint fns (#177) (Allen)
+- [[`3d22441`](https://github.com/rustasync/tide/commit/3d224417398d81e83edac230d8d0ad2c16849d23)] redo readme (#172) (Yoshua Wuyts)
+- [[`be9832d`](https://github.com/rustasync/tide/commit/be9832d3a677944acd904821652eb027853eb7c0)] Update changelog (Yoshua Wuyts)
 
 ### Stats
 ```diff
- .travis.yml       |   3 +-
- CHANGELOG.md      |  18 +++++++-
- Cargo.toml        |  25 ++++++----
- src/app.rs        |  58 ++++++++----------------
- src/body.rs       | 133 +++++--------------------------------------------------
- src/lib.rs        |   4 +-
- src/request.rs    |   3 +-
- src/response.rs   |   3 +-
- src/router.rs     |  27 ++++-------
- src/serve.rs      |   4 ++-
- tests/wildcard.rs |  96 ++++++++++++++++++++++++++++++++++++++++-
- 11 files changed, 189 insertions(+), 185 deletions(-)
+ .travis.yml     |   2 +-
+ CHANGELOG.md    |  31 ++++++++++++++++
+ Cargo.toml      |  24 ++++++-------
+ README.md       | 109 ++++++++++++++++++++++++++++++++++++++++++++++++++++----
+ src/endpoint.rs |  20 ++++++++++-
+ src/error.rs    |   2 +-
+ src/lib.rs      |   7 +++-
+ 7 files changed, 173 insertions(+), 22 deletions(-)
+```
+
+
+## 2019-04-15, Version 0.1.0
+### Commits
+- [[`8c6ecd6`](https://github.com/rustasync/tide/commit/8c6ecd695845b7460ee9098c29ac9c0292886a45)] (cargo-release) version 0.1.0 (Yoshua Wuyts)
+- [[`2791a61`](https://github.com/rustasync/tide/commit/2791a61b334da2cc309a2e8206c69b4c2e6e8346)] re-export http crate (#166) (Thomas Lee)
+- [[`dc36c89`](https://github.com/rustasync/tide/commit/dc36c898ff145a4175aee074bea0e291a1d47ffb)] fix: Capture wildcard path correctly, resolve #167. (#171) (Nicholas)
+- [[`c70d2bc`](https://github.com/rustasync/tide/commit/c70d2bcd5ee4c0a09a87055ba7973e4c59d09156)] example: remove asterisk from route params. Resolves #167. (#168) (Nicholas)
+- [[`dc28fd5`](https://github.com/rustasync/tide/commit/dc28fd5601d8b8d071de999e080f2c347c3fd61d)] Follow up to #156 (Aaron Turon)
+- [[`7a9519a`](https://github.com/rustasync/tide/commit/7a9519a308f1dcc2572a8887040cdeae4590bfb6)] Merge pull request #161 from rustasync/inline-docs (Aaron Turon)
+- [[`e51c0c8`](https://github.com/rustasync/tide/commit/e51c0c863be21760e90b8c3b640e7892df28a207)] inline docs (Yoshua Wuyts)
+- [[`f8d00ad`](https://github.com/rustasync/tide/commit/f8d00adfb2c72733fb47a5b11e311af455074a3b)] Merge pull request #156 from aturon/revamp (Aaron Turon)
+- [[`adba649`](https://github.com/rustasync/tide/commit/adba649a79a992e1eb1d5db4abfdf3ca805d76b1)] Revamp Tide, dropping Extractors and simplifying the framework (Aaron Turon)
+- [[`d14e8f8`](https://github.com/rustasync/tide/commit/d14e8f82f0df3dec25f55a8f26749a4aca384837)] Update references to old repository (#157) (Pradip Caulagi)
+- [[`7e87e4e`](https://github.com/rustasync/tide/commit/7e87e4e0699a3fff4453c8a25d3f8f5fa186fdbb)] Update to nightly-2019-02-27 and make it default (#146) (Wonwoo Choi)
+- [[`70ed8aa`](https://github.com/rustasync/tide/commit/70ed8aa44a9eba129d879304630c406caab2fee5)] Merge pull request #142 from gruberb/use_external_http_service_mock (Wonwoo Choi)
+- [[`56e5076`](https://github.com/rustasync/tide/commit/56e5076c469fc525bf8fec241aece8f2eb14045e)] Update the CI badge to point to rustasync/tide (#145) (David Cornu)
+- [[`9bef037`](https://github.com/rustasync/tide/commit/9bef0370dc0554a2f1d49952d893d4d3dfe9da83)] Update blog post URLs after wg-net repo move (#144) (Tim Neumann)
+- [[`644f47e`](https://github.com/rustasync/tide/commit/644f47e8ddc614de9786954f1e0e68965516f70a)] Add routes to each test (Bastian Gruber)
+- [[`8170c5f`](https://github.com/rustasync/tide/commit/8170c5f27ad52b8b096fe9d541f9a9ca200ef5a4)] Add external crate http_service_mock, delete local TestBackend (Bastian Gruber)
+- [[`bb7ad2b`](https://github.com/rustasync/tide/commit/bb7ad2bdcf7a451e7c9211fc13098baa96042a0a)] Update changelog (Yoshua Wuyts)
+
+### Stats
+```diff
+ .github/PULL_REQUEST_TEMPLATE.md    |   2 +-
+ .travis.yml                         |   5 +-
+ CHANGELOG.md                        |  31 ++
+ Cargo.toml                          |  10 +-
+ README.md                           |  12 +-
+ examples/body_types.rs              |  53 ++-
+ examples/catch_all.rs               |  14 +-
+ examples/cli_parsing.rs             |  48 ---
+ examples/computed_values.rs         |  38 ---
+ examples/configuration.rs           |  34 --
+ examples/cookie_extractor.rs        |  11 +-
+ examples/default_handler.rs         |  13 -
+ examples/default_headers.rs         |   4 +-
+ examples/graphql.rs                 |  32 +-
+ examples/hello.rs                   |   5 +-
+ examples/messages.rs                |  53 ++-
+ examples/multipart-form/main.rs     |  17 +-
+ examples/named_path.rs              |  29 --
+ examples/simple_nested_router.rs    |  38 ---
+ src/app.rs                          | 464 ++++++++++++++++---------
+ src/body.rs                         | 351 -------------------
+ src/configuration/default_config.rs |  79 -----
+ src/configuration/mod.rs            | 156 ---------
+ src/context.rs                      | 141 ++++++++
+ src/cookies.rs                      |  51 ++-
+ src/endpoint.rs                     | 167 ++-------
+ src/error.rs                        | 102 ++++++
+ src/extract.rs                      |  20 --
+ src/forms.rs                        |  55 +++
+ src/head.rs                         | 225 ------------
+ src/lib.rs                          |  41 ++-
+ src/middleware/default_headers.rs   |  32 +-
+ src/middleware/logger.rs            |  39 ++-
+ src/middleware/mod.rs               |  63 ++--
+ src/request.rs                      |  65 ----
+ src/response.rs                     |  25 +-
+ src/route.rs                        | 101 ++++++
+ src/router.rs                       | 657 +++---------------------------------
+ src/serve.rs                        |   4 -
+ tests/wildcard.rs                   |  70 +---
+ 40 files changed, 1036 insertions(+), 2321 deletions(-)
 ```
 
 

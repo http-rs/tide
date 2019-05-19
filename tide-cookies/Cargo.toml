@@ -1,0 +1,21 @@
+[package]
+name = "tide-cookies"
+version = "0.2.0"
+edition = "2018"
+authors = [
+  "Tide Developers",
+]
+description = "Cookie management for Tide web framework"
+documentation = "https://docs.rs/tide-core"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/rustasync/tide"
+
+[dependencies]
+cookie = { version = "0.12", features = ["percent-encode"] }
+futures-preview = "0.3.0-alpha.16"
+http = "0.1"
+http-service = "0.2.0"
+tide-core = { path = "../tide-core" }
+
+[dev-dependencies]
+http-service-mock = "0.2.0"
