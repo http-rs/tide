@@ -1,5 +1,3 @@
-#![cfg_attr(feature = "nightly", deny(missing_docs))]
-#![cfg_attr(test, deny(warnings))]
 #![feature(async_await)]
 #![warn(
     nonstandard_style,
