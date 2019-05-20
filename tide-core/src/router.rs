@@ -1,5 +1,6 @@
 use fnv::FnvHashMap;
-use futures::future::{BoxFuture, FutureExt};
+use futures::future::BoxFuture;
+use futures::prelude::*;
 use http_service::Body;
 use route_recognizer::{Match, Params, Router as MethodRouter};
 
@@ -62,7 +63,7 @@ impl<State: 'static> Router<State> {
 }
 
 fn not_found_endpoint<Data>(_cx: Context<Data>) -> BoxFuture<'static, Response> {
-    box_async! {
+    FutureExt::boxed(async move {
         http::Response::builder().status(http::StatusCode::NOT_FOUND).body(Body::empty()).unwrap()
-    }
+    })
 }

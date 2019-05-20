@@ -1,5 +1,6 @@
 use http_service::Body;
 use multipart::server::Multipart;
+use futures::prelude::*;
 use std::io::Cursor;
 
 use crate::{
@@ -19,10 +20,10 @@ pub trait ExtractForms {
 impl<State: Send + Sync + 'static> ExtractForms for Context<State> {
     fn body_form<T: serde::de::DeserializeOwned>(&mut self) -> BoxTryFuture<T> {
         let body = self.take_body();
-        box_async! {
+        FutureExt::boxed(async move {
             let body = body.into_vec().await.client_err()?;
             Ok(serde_urlencoded::from_bytes(&body).map_err(|e| err_fmt!("could not decode form: {}", e)).client_err()?)
-        }
+        })
     }
 
     fn body_multipart(&mut self) -> BoxTryFuture<Multipart<Cursor<Vec<u8>>>> {
@@ -35,11 +36,11 @@ impl<State: Send + Sync + 'static> ExtractForms for Context<State> {
 
         let body = self.take_body();
 
-        box_async! {
+        FutureExt::boxed(async move {
             let body = body.into_vec().await.client_err()?;
             let boundary = boundary.ok_or_else(|| err_fmt!("no boundary found")).client_err()?;
             Ok(Multipart::with_body(Cursor::new(body), boundary))
-        }
+        })
     }
 }
 

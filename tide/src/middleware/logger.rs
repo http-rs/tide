@@ -3,6 +3,7 @@ use slog_async;
 use slog_term;
 
 use futures::future::BoxFuture;
+use futures::prelude::*;
 
 use crate::{
     middleware::{Middleware, Next},
@@ -37,7 +38,7 @@ impl Default for RootLogger {
 /// is generated.
 impl<Data: Send + Sync + 'static> Middleware<Data> for RootLogger {
     fn handle<'a>(&'a self, cx: Context<Data>, next: Next<'a, Data>) -> BoxFuture<'a, Response> {
-        box_async! {
+        FutureExt::boxed(async move {
             let path = cx.uri().path().to_owned();
             let method = cx.method().as_str().to_owned();
 
@@ -45,6 +46,6 @@ impl<Data: Send + Sync + 'static> Middleware<Data> for RootLogger {
             let status = res.status();
             info!(self.inner_logger, "{} {} {}", method, path, status.as_str());
             res
-        }
+        })
     }
 }
