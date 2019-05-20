@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use tide::{
     error::ResultExt,
     forms::{self, ExtractForms},
-    response, App, Context, EndpointResult,
+    response, App, Context,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -23,13 +23,13 @@ async fn echo_bytes(mut cx: Context<()>) -> Vec<u8> {
     msg
 }
 
-async fn echo_json(mut cx: Context<()>) -> EndpointResult {
+async fn echo_json(mut cx: Context<()>) -> tide::Result {
     let msg = cx.body_json().await.client_err()?;
     println!("JSON: {:?}", msg);
     Ok(response::json(msg))
 }
 
-async fn echo_form(mut cx: Context<()>) -> EndpointResult {
+async fn echo_form(mut cx: Context<()>) -> tide::Result {
     let msg = cx.body_form().await?;
     println!("Form: {:?}", msg);
     Ok(forms::form(msg))

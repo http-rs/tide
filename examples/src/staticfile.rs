@@ -6,7 +6,7 @@ use http::{
     StatusCode,
 };
 use http_service::Body;
-use tide::{App, Context, EndpointResult, Response};
+use tide::{App, Context, Response};
 
 use std::path::{Component, Path, PathBuf};
 use std::{fs, io};
@@ -106,7 +106,7 @@ impl StaticFile {
     }
 }
 
-async fn handle_path(ctx: Context<StaticFile>) -> EndpointResult {
+async fn handle_path(ctx: Context<StaticFile>) -> tide::Result {
     let path = ctx.uri().path();
     ctx.state()
         .stream_bytes(path, ctx.headers())

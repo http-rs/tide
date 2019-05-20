@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::io::Read;
-use tide::{forms::ExtractForms, response, App, Context, EndpointResult};
+use tide::{forms::ExtractForms, response, App, Context};
 
 #[derive(Serialize, Deserialize, Clone)]
 struct Message {
@@ -9,7 +9,7 @@ struct Message {
     file: Option<String>,
 }
 
-async fn upload_file(mut cx: Context<()>) -> EndpointResult {
+async fn upload_file(mut cx: Context<()>) -> tide::Result {
     // https://stackoverflow.com/questions/43424982/how-to-parse-multipart-forms-using-abonander-multipart-with-rocket
     let mut message = Message {
         key1: None,
