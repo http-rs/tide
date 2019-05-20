@@ -31,7 +31,7 @@ pub use crate::{
     app::{App, Server},
     context::Context,
     endpoint::Endpoint,
-    error::{EndpointResult, Error},
+    error::{Error, Result},
     response::Response,
     route::Route,
 };

@@ -41,8 +41,6 @@ pub mod middleware;
 pub mod querystring;
 
 #[doc(inline)]
-pub use tide_core::{
-    response, App, Context, Endpoint, EndpointResult, Error, Response, Route, Server,
-};
+pub use tide_core::{response, App, Context, Endpoint, Error, Response, Result, Route, Server};
 
 pub use http;

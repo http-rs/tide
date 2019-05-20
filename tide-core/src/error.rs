@@ -23,7 +23,7 @@ macro_rules! err_fmt {
 }
 
 /// A convenient `Result` instantiation appropriate for most endpoints.
-pub type EndpointResult<T = Response<Body>> = Result<T, Error>;
+pub type Result<T = Response<Body>> = std::result::Result<T, Error>;
 
 /// A generic endpoint error, which can be converted into a response.
 #[derive(Debug)]
@@ -59,19 +59,19 @@ impl From<StatusCode> for Error {
 pub trait ResultExt<T>: Sized {
     /// Convert to an `EndpointResult`, treating the `Err` case as a client
     /// error (response code 400).
-    fn client_err(self) -> EndpointResult<T> {
+    fn client_err(self) -> Result<T> {
         self.with_err_status(400)
     }
 
     /// Convert to an `EndpointResult`, treating the `Err` case as a server
     /// error (response code 500).
-    fn server_err(self) -> EndpointResult<T> {
+    fn server_err(self) -> Result<T> {
         self.with_err_status(500)
     }
 
     /// Convert to an `EndpointResult`, wrapping the `Err` case with a custom
     /// response status.
-    fn with_err_status<S>(self, status: S) -> EndpointResult<T>
+    fn with_err_status<S>(self, status: S) -> Result<T>
     where
         StatusCode: HttpTryFrom<S>;
 }
@@ -89,7 +89,7 @@ impl<T> ResponseExt for Response<T> {
 }
 
 impl<T, E: std::error::Error + Send + Sync + 'static> ResultExt<T> for std::result::Result<T, E> {
-    fn with_err_status<S>(self, status: S) -> EndpointResult<T>
+    fn with_err_status<S>(self, status: S) -> Result<T>
     where
         StatusCode: HttpTryFrom<S>,
     {
