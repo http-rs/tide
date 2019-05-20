@@ -57,19 +57,19 @@ impl From<StatusCode> for Error {
 
 /// Extends the `Result` type with convenient methods for constructing Tide errors.
 pub trait ResultExt<T>: Sized {
-    /// Convert to an `EndpointResult`, treating the `Err` case as a client
+    /// Convert to an `tide::Result`, treating the `Err` case as a client
     /// error (response code 400).
     fn client_err(self) -> Result<T> {
         self.with_err_status(400)
     }
 
-    /// Convert to an `EndpointResult`, treating the `Err` case as a server
+    /// Convert to an `tide::Result`, treating the `Err` case as a server
     /// error (response code 500).
     fn server_err(self) -> Result<T> {
         self.with_err_status(500)
     }
 
-    /// Convert to an `EndpointResult`, wrapping the `Err` case with a custom
+    /// Convert to an `tide::Result`, wrapping the `Err` case with a custom
     /// response status.
     fn with_err_status<S>(self, status: S) -> Result<T>
     where
