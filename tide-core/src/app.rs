@@ -49,12 +49,12 @@ use crate::{
 ///
 /// use tide::error::ResultExt;
 ///
-/// async fn hello(cx: tide::Context<()>) -> tide::EndpointResult<String> {
+/// async fn hello(cx: tide::Context<()>) -> tide::Result<String> {
 ///     let user: String = cx.param("user").client_err()?;
 ///     Ok(format!("Hello, {}!", user))
 /// }
 ///
-/// async fn goodbye(cx: tide::Context<()>) -> tide::EndpointResult<String> {
+/// async fn goodbye(cx: tide::Context<()>) -> tide::Result<String> {
 ///     let user: String = cx.param("user").client_err()?;
 ///     Ok(format!("Goodbye, {}.", user))
 /// }
@@ -81,7 +81,7 @@ use crate::{
 /// use http::status::StatusCode;
 /// use serde::{Deserialize, Serialize};
 /// use std::sync::Mutex;
-/// use tide::{error::ResultExt, response, App, Context, EndpointResult};
+/// use tide::{error::ResultExt, response, App, Context};
 ///
 /// #[derive(Default)]
 /// struct Database {
@@ -106,12 +106,12 @@ use crate::{
 ///     }
 /// }
 ///
-/// async fn new_message(mut cx: Context<Database>) -> EndpointResult<String> {
+/// async fn new_message(mut cx: Context<Database>) -> tide::Result<String> {
 ///     let msg = cx.body_json().await.client_err()?;
 ///     Ok(cx.state().insert(msg).to_string())
 /// }
 ///
-/// async fn get_message(cx: Context<Database>) -> EndpointResult {
+/// async fn get_message(cx: Context<Database>) -> tide::Result {
 ///     let id = cx.param("id").client_err()?;
 ///     if let Some(msg) = cx.state().get(id) {
 ///         Ok(response::json(msg))
