@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "tide",
+    "tide-log",
     "tide-compression",
     "tide-cookies",
     "tide-core",
