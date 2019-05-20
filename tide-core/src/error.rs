@@ -1,5 +1,3 @@
-// use core::pin::Pin;
-// use futures::future::Future;
 use http::{HttpTryFrom, Response, StatusCode};
 use http_service::Body;
 
@@ -55,6 +53,18 @@ impl From<StatusCode> for Error {
     }
 }
 
+/// Extends the `Response` type with a method to extract error causes when applicable.
+pub trait ResponseExt {
+    /// Extract the cause of the unsuccessful response, if any
+    fn err_cause(&self) -> Option<&(dyn std::error::Error + Send + Sync + 'static)>;
+}
+
+impl<T> ResponseExt for Response<T> {
+    fn err_cause(&self) -> Option<&(dyn std::error::Error + Send + Sync + 'static)> {
+        self.extensions().get().map(|Cause(c)| &**c)
+    }
+}
+
 /// Extends the `Result` type with convenient methods for constructing Tide errors.
 pub trait ResultExt<T>: Sized {
     /// Convert to an `tide::Result`, treating the `Err` case as a client
@@ -76,19 +86,39 @@ pub trait ResultExt<T>: Sized {
         StatusCode: HttpTryFrom<S>;
 }
 
-/// Extends the `Response` type with a method to extract error causes when applicable.
-pub trait ResponseExt {
-    /// Extract the cause of the unsuccessful response, if any
-    fn err_cause(&self) -> Option<&(dyn std::error::Error + Send + Sync + 'static)>;
-}
-
-impl<T> ResponseExt for Response<T> {
-    fn err_cause(&self) -> Option<&(dyn std::error::Error + Send + Sync + 'static)> {
-        self.extensions().get().map(|Cause(c)| &**c)
+impl<T, E: std::error::Error + Send + Sync + 'static> ResultExt<T> for std::result::Result<T, E> {
+    fn with_err_status<S>(self, status: S) -> Result<T>
+    where
+        StatusCode: HttpTryFrom<S>,
+    {
+        let r = self.map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>);
+        r.with_err_status(status)
     }
 }
 
-impl<T, E: std::error::Error + Send + Sync + 'static> ResultExt<T> for std::result::Result<T, E> {
+/// Extends the `Result` type using `std::error::Error` trait object as the error type with
+/// convenient methods for constructing Tide errors.
+pub trait ResultDynErrExt<T>: Sized {
+    /// Convert to an `tide::Result`, treating the `Err` case as a client
+    /// error (response code 400).
+    fn client_err(self) -> Result<T> {
+        self.with_err_status(400)
+    }
+
+    /// Convert to an `tide::Result`, treating the `Err` case as a server
+    /// error (response code 500).
+    fn server_err(self) -> Result<T> {
+        self.with_err_status(500)
+    }
+
+    /// Convert to an `tide::Result`, wrapping the `Err` case with a custom
+    /// response status.
+    fn with_err_status<S>(self, status: S) -> Result<T>
+    where
+        StatusCode: HttpTryFrom<S>;
+}
+
+impl<T> ResultDynErrExt<T> for std::result::Result<T, Box<dyn std::error::Error + Send + Sync>> {
     fn with_err_status<S>(self, status: S) -> Result<T>
     where
         StatusCode: HttpTryFrom<S>,
@@ -96,7 +126,7 @@ impl<T, E: std::error::Error + Send + Sync + 'static> ResultExt<T> for std::resu
         self.map_err(|e| Error {
             resp: Response::builder()
                 .status(status)
-                .extension(Cause(Box::new(e)))
+                .extension(Cause(e))
                 .body(Body::empty())
                 .unwrap(),
         })
