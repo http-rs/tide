@@ -1,7 +1,7 @@
 use crate::data::CookieData;
 use futures::future::BoxFuture;
-use http::header::HeaderValue;
 use futures::prelude::*;
+use http::header::HeaderValue;
 
 use tide_core::{
     middleware::{Middleware, Next},

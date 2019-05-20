@@ -69,8 +69,6 @@ where
     type Fut = BoxFuture<'static, Response>;
     fn call(&self, cx: Context<State>) -> Self::Fut {
         let fut = (self)(cx);
-        FutureExt::boxed(async move {
-            fut.await.into_response()
-        })
+        FutureExt::boxed(async move { fut.await.into_response() })
     }
 }
