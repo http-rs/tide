@@ -22,12 +22,6 @@
 #[doc(include = "../README.md")]
 const _README: () = ();
 
-macro_rules! box_async {
-    {$($t:tt)*} => {
-        ::futures::future::FutureExt::boxed(async move { $($t)* })
-    };
-}
-
 #[macro_use]
 extern crate tide_core;
 
