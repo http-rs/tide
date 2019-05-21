@@ -3,7 +3,7 @@ authors = [
     "Tide Developers"
 ]
 description = "Header related middleware for tide"
-documentation = "https://docs.rs/tide-log"
+documentation = "https://docs.rs/tide-headers"
 keywords = ["tide", "web", "async", "middleware", "headers"]
 categories = [
   "network-programming",

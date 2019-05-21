@@ -5,8 +5,8 @@ edition = "2018"
 authors = [
   "Tide Developers",
 ]
-description = "Cookie management for Tide web framework"
-documentation = "https://docs.rs/tide-core"
+description = "Cookie middleware and extensions for tide"
+documentation = "https://docs.rs/tide-cookies"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/rustasync/tide"
 
