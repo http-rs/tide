@@ -1,3 +1,6 @@
+//! Crate that provides helpers and/or middlewares for tide
+//! related to logging.
+//!
 #![feature(async_await)]
 #![warn(
     nonstandard_style,
@@ -9,7 +12,8 @@
 use futures::future::BoxFuture;
 use futures::prelude::*;
 use log::{info, trace};
-use tide::{
+
+use tide_core::{
     middleware::{Middleware, Next},
     Context, Response,
 };
@@ -24,25 +28,38 @@ use tide::{
 /// app.middleware(tide_log::RequestLogger::new());
 /// ```
 #[derive(Debug, Clone, Default)]
-pub struct RequestLogger;
+pub struct RequestLogger {
+    target: String,
+}
 
 impl RequestLogger {
+    /// Create a new instance of logger with default target as
+    /// "requests"
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            target: "requests".to_owned(),
+        }
+    }
+
+    /// Create a new instance of logger with supplied `target` for
+    /// logging.
+    pub fn with_target(target: String) -> Self {
+        Self { target }
     }
 
     async fn log_basic<'a, Data: Send + Sync + 'static>(
         &'a self,
         ctx: Context<Data>,
         next: Next<'a, Data>,
-    ) -> tide::Response {
+    ) -> Response {
         let path = ctx.uri().path().to_owned();
         let method = ctx.method().as_str().to_owned();
-        trace!("IN => {} {}", method, path);
+        trace!(target: &self.target, "IN => {} {}", method, path);
         let start = std::time::Instant::now();
         let res = next.run(ctx).await;
         let status = res.status();
         info!(
+            target: &self.target,
             "{} {} {} {}ms",
             method,
             path,

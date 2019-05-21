@@ -27,4 +27,5 @@ features = ["stream", "gzip", "zlib", "brotli", "zstd"]
 version = "0.1.0-alpha.1"
 
 [dev-dependencies]
+tide = { path = "../" }
 http-service-mock = "0.2.0"
