@@ -8,9 +8,6 @@
     missing_debug_implementations
 )]
 
-#[macro_use]
-extern crate tide_core;
-
 mod data;
 mod middleware;
 

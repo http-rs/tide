@@ -18,7 +18,7 @@ repository = "https://github.com/rustasync/tide"
 version = "0.1.0"
 
  [dependencies]
-tide = { path = "../tide" } 
+tide = { path = "../" }
 futures-preview = "0.3.0-alpha.16"
 http = "0.1"
 log = "0.4.6" 

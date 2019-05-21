@@ -1,3 +1,5 @@
+#![feature(async_await)]
+
 use bytes::Bytes;
 use futures_fs::FsPool;
 use futures_util::compat::*;
@@ -119,7 +121,7 @@ async fn handle_path(ctx: Context<StaticFile>) -> EndpointResult {
         })
 }
 
-pub fn main() {
+fn main() {
     let mut app = App::with_state(StaticFile::new("./"));
     app.at("/*").get(handle_path);
     app.run("127.0.0.1:8000").unwrap();
