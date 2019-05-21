@@ -2,7 +2,7 @@
 authors = [
     "Tide Developers"
 ]
-description = "Header related middleware for tide"
+description = "Header related middleware for Tide"
 documentation = "https://docs.rs/tide-headers"
 keywords = ["tide", "web", "async", "middleware", "headers"]
 categories = [

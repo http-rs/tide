@@ -5,7 +5,7 @@ edition = "2018"
 authors = [
   "Tide Developers",
 ]
-description = "Cookie middleware and extensions for tide"
+description = "Cookie middleware and extensions for Tide"
 documentation = "https://docs.rs/tide-cookies"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/rustasync/tide"

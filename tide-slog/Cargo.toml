@@ -2,7 +2,7 @@
 authors = [
     "Tide Developers"
 ]
-description = "Logging middleware for tide based on slog"
+description = "Logging middleware for Tide based on slog"
 documentation = "https://docs.rs/tide-slog"
 keywords = ["tide", "web", "async", "middleware", "logging", "slog"]
 categories = [
