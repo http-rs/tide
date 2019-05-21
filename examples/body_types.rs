@@ -1,7 +1,8 @@
+#![feature(async_await)]
 use serde::{Deserialize, Serialize};
 use tide::{
     error::ResultExt,
-    forms::{self, ExtractForms},
+    forms::{self, ContextExt},
     response, App, Context, EndpointResult,
 };
 
@@ -24,18 +25,18 @@ async fn echo_bytes(mut cx: Context<()>) -> Vec<u8> {
 }
 
 async fn echo_json(mut cx: Context<()>) -> EndpointResult {
-    let msg = cx.body_json().await.client_err()?;
+    let msg: Message = cx.body_json().await.client_err()?;
     println!("JSON: {:?}", msg);
     Ok(response::json(msg))
 }
 
 async fn echo_form(mut cx: Context<()>) -> EndpointResult {
-    let msg = cx.body_form().await?;
+    let msg: Message = cx.body_form().await?;
     println!("Form: {:?}", msg);
     Ok(forms::form(msg))
 }
 
-pub fn main() {
+fn main() {
     let mut app = App::new();
 
     app.at("/echo/string").post(echo_string);

@@ -1,9 +1,7 @@
-#![cfg_attr(feature = "nightly", deny(missing_docs))]
 #![cfg_attr(feature = "nightly", feature(external_doc))]
 #![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
-#![cfg_attr(test, deny(warnings))]
 #![feature(async_await)]
-#![deny(
+#![warn(
     nonstandard_style,
     rust_2018_idioms,
     future_incompatible,
@@ -13,6 +11,7 @@
 pub use accept_encoding::Encoding;
 use async_compression::stream;
 use futures::future::BoxFuture;
+use futures::prelude::*;
 use http::{header::CONTENT_ENCODING, status::StatusCode, HeaderMap};
 use http_service::{Body, Request};
 use tide::{
@@ -20,12 +19,6 @@ use tide::{
     response::IntoResponse,
     Context, Error, Response,
 };
-
-macro_rules! box_async {
-    {$($t:tt)*} => {
-        ::futures::future::FutureExt::boxed(async move { $($t)* })
-    };
-}
 
 /// Encode settings for the compression middleware.
 ///
@@ -137,14 +130,14 @@ impl Compression {
 
 impl<Data: Send + Sync + 'static> Middleware<Data> for Compression {
     fn handle<'a>(&'a self, cx: Context<Data>, next: Next<'a, Data>) -> BoxFuture<'a, Response> {
-        box_async! {
+        FutureExt::boxed(async move {
             let encoding = match self.preferred_encoding(cx.headers()) {
                 Ok(encoding) => encoding,
                 Err(e) => return e.into_response(),
             };
             let res = next.run(cx).await;
             self.encode(res, encoding)
-        }
+        })
     }
 }
 
@@ -225,13 +218,13 @@ impl<Data: Send + Sync + 'static> Middleware<Data> for Decompression {
         mut cx: Context<Data>,
         next: Next<'a, Data>,
     ) -> BoxFuture<'a, Response> {
-        box_async! {
+        FutureExt::boxed(async move {
             match self.decode(cx.request_mut()) {
                 Ok(_) => (),
                 Err(e) => return e.into_response(),
             };
             next.run(cx).await
-        }
+        })
     }
 }
 

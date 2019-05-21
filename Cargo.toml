@@ -1,10 +1,64 @@
+[package]
+authors = [
+    "Aaron Turon <aturon@mozilla.com>",
+    "Yoshua Wuyts <yoshuawuyts@gmail.com>",
+]
+description = "WIP modular web framework"
+documentation = "https://docs.rs/tide"
+keywords = ["tide", "http", "web", "framework", "async"]
+categories = [
+  "network-programming",
+  "asynchronous",
+  "web-programming::http-server"
+]
+edition = "2018"
+license = "MIT OR Apache-2.0"
+name = "tide"
+readme = "README.md"
+repository = "https://github.com/rustasync/tide"
+version = "0.2.0"
+
+[features]
+default = ["hyper", "cookies"]
+cookies = ["tide-cookies"]
+hyper = ["tide-core/http-service-hyper"]
+
+[dependencies]
+futures-preview = "0.3.0-alpha.16"
+http = "0.1"
+http-service = "0.2.0"
+serde = "1.0.91"
+serde_derive = "1.0.91"
+serde_urlencoded = "0.5.5"
+slog = "2.4.1"
+slog-async = "2.3.0"
+slog-term = "2.4.0"
+tide-cookies = { path = "./tide-cookies", optional = true }
+tide-core = { path = "./tide-core" }
+
+[dependencies.multipart]
+default-features = false
+features = ["server"]
+version = "0.16.1"
+
+[dev-dependencies]
+bytes = "0.4.12"
+cookie = { version = "0.12", features = ["percent-encode"] }
+futures-fs = "0.0.5"
+futures-util-preview = { version = "0.3.0-alpha.16", features = ["compat"] }
+http-service-mock = "0.2.0"
+juniper = "0.11.1"
+mime = "0.3.13"
+mime_guess = "2.0.0-alpha.6"
+percent-encoding = "1.0.1"
+serde = { version = "1.0.91", features = ["derive"] }
+
 [workspace]
 members = [
-    "tide",
     "tide-compression",
     "tide-cookies",
     "tide-core",
-    "examples",
+    "tide-log",
 ]
 
 [patch.crates-io]
