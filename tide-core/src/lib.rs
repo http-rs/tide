@@ -5,11 +5,18 @@
     nonstandard_style,
     rust_2018_idioms,
     future_incompatible,
-    missing_debug_implementations
+    missing_debug_implementations,
+    missing_docs
 )]
 // TODO: Remove this after clippy bug due to async await is resolved.
 // ISSUE: https://github.com/rust-lang/rust-clippy/issues/3988
 #![allow(clippy::needless_lifetimes)]
+
+//!
+//! Tide core api document
+//!
+//! The [`App`] docs are a good place to get started.
+//!
 
 mod app;
 mod context;
