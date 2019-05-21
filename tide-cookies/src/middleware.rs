@@ -21,6 +21,7 @@ use tide_core::{
 pub struct CookiesMiddleware {}
 
 impl CookiesMiddleware {
+    /// CookieMiddleware constructor
     pub fn new() -> Self {
         Self {}
     }
