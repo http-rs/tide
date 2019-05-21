@@ -1,3 +1,4 @@
+#![feature(async_await)]
 use tide::Context;
 
 async fn echo_path(cx: Context<()>) -> String {
@@ -5,7 +6,7 @@ async fn echo_path(cx: Context<()>) -> String {
     format!("Your path is: {}", path)
 }
 
-pub fn main() {
+fn main() {
     let mut app = tide::App::new();
     app.at("/echo_path/*path").get(echo_path);
     app.run("127.0.0.1:8000").unwrap();

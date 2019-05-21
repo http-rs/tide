@@ -24,7 +24,7 @@ optional = true
 version = "0.2.0"
 
 [dev-dependencies]
-tide = { path = "../tide" }
+tide = { path = "../" }
 serde_derive = "1.0.91"
 
 [features]

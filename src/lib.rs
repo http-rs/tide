@@ -19,7 +19,7 @@
 //!
 
 #[cfg(test)]
-#[doc(include = "../../README.md")]
+#[doc(include = "../README.md")]
 const _README: () = ();
 
 #[macro_use]

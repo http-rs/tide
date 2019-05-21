@@ -50,7 +50,6 @@ matrix:
         --no-default-features
     - cargo build
         -Zmtime-on-use
-        --manifest-path tide/Cargo.toml
         --no-default-features
 
   - name: cargo test

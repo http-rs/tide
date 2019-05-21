@@ -2,6 +2,7 @@
 // a look at [the Juniper book].
 //
 // [the Juniper book]: https://graphql-rust.github.io/
+#![feature(async_await)]
 use http::status::StatusCode;
 use juniper::graphql_object;
 use std::sync::{atomic, Arc};
@@ -56,7 +57,7 @@ async fn handle_graphql(mut cx: Context<Data>) -> EndpointResult {
     Ok(resp)
 }
 
-pub fn main() {
+fn main() {
     let mut app = App::with_state(Data::default());
     app.at("/graphql").post(handle_graphql);
     app.run("127.0.0.1:8000").unwrap();
