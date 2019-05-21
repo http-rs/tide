@@ -53,6 +53,9 @@ mime_guess = "2.0.0-alpha.6"
 percent-encoding = "1.0.1"
 serde = { version = "1.0.91", features = ["derive"] }
 failure = "0.1.5"
+memdb = "0.1.0"
+chrono = "0.4.6"
+slug = "0.1.4"
 
 [workspace]
 members = [
