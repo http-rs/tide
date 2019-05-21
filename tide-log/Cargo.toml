@@ -22,3 +22,6 @@ tide-core = { path = "../tide-core" }
 futures-preview = "0.3.0-alpha.16"
 http = "0.1"
 log = "0.4.6"
+
+[dev-dependencies]
+tide = { path = "../" }
