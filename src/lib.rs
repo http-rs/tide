@@ -1,7 +1,6 @@
 #![cfg_attr(any(feature = "nightly", test), feature(external_doc))]
 #![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
 #![feature(async_await, existential_type)]
-#![allow(unused_variables)]
 #![warn(
     nonstandard_style,
     rust_2018_idioms,
@@ -20,21 +19,33 @@
 #[doc(include = "../README.md")]
 const _README: () = ();
 
-#[macro_use]
-extern crate tide_core;
+pub use http;
 
 #[cfg(feature = "cookies")]
 #[doc(inline)]
 pub use tide_cookies as cookies;
 
-pub mod error;
-pub mod forms;
-pub mod middleware;
-pub mod querystring;
-
 #[doc(inline)]
 pub use tide_core::{
-    response, App, Context, Endpoint, EndpointResult, Error, Response, Route, Server,
+    response, App, Context, Endpoint, EndpointResult, Error, Response, Route, Server, err_fmt
+    // TODO: export Body once it's in turn exported by tide_core 
 };
 
-pub use http;
+pub mod error {
+    pub use tide_core::error::{EndpointResult, Error, ResponseExt, ResultExt, ResultDynErrExt, StringError};
+}
+
+pub use tide_forms as forms;
+pub use tide_querystring as querystring;
+
+pub mod middleware {
+    // Core
+    pub use tide_core::middleware::{Middleware, Next};
+
+    // Exports from tide repo.
+    pub use tide_headers::DefaultHeaders;
+    pub use tide_log::RequestLogger;
+
+    #[cfg(feature = "cookies")]
+    pub use tide_cookies::CookiesMiddleware;
+}

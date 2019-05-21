@@ -18,6 +18,9 @@ pub mod response;
 mod route;
 mod router;
 
+// Internal shared API for limited use across crates in our repo
+pub mod internal;
+
 pub use crate::{
     app::{App, Server},
     context::Context,

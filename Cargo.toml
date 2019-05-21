@@ -27,18 +27,12 @@ hyper = ["tide-core/http-service-hyper"]
 futures-preview = "0.3.0-alpha.16"
 http = "0.1"
 http-service = "0.2.0"
-serde = "1.0.91"
-serde_derive = "1.0.91"
-serde_urlencoded = "0.5.5"
 tide-cookies = { path = "./tide-cookies", optional = true }
 tide-core = { path = "./tide-core" }
 tide-headers = { path = "./tide-headers" }
 tide-log = { path = "./tide-log" }
-
-[dependencies.multipart]
-default-features = false
-features = ["server"]
-version = "0.16.1"
+tide-forms = { path = "./tide-forms" }
+tide-querystring = { path = "./tide-querystring" }
 
 [dev-dependencies]
 bytes = "0.4.12"
@@ -61,8 +55,10 @@ members = [
     "tide-compression",
     "tide-cookies",
     "tide-core",
+    "tide-forms",
     "tide-headers",
     "tide-log",
+    "tide-querystring",
     "tide-slog",
 ]
 

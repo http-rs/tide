@@ -1,0 +1,31 @@
+[package]
+authors = [
+    "Tide Developers"
+]
+description = "Query string helpers and extensions for Tide"
+documentation = "https://docs.rs/tide-querystring"
+keywords = ["tide", "web", "async", "helpers", "querystring"]
+categories = [
+  "network-programming",
+  "web-programming::http-server",
+]
+edition = "2018"
+license = "MIT OR Apache-2.0"
+name = "tide-querystring"
+readme = "README.md"
+repository = "https://github.com/rustasync/tide"
+version = "0.1.0"
+
+ [dependencies]
+tide-core = { path = "../tide-core" }
+futures-preview = "0.3.0-alpha.16"
+http = "0.1"
+log = "0.4.6"
+serde = { version = "1.0.91", features = ["derive"] }
+serde_urlencoded = "0.5.5"
+
+[dev-dependencies]
+tide = { path = "../" }
+http-service = "0.2.0"
+http-service-mock = "0.2.0"
+

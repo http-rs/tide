@@ -1,4 +1,12 @@
-use crate::{error::Error, Context};
+#![feature(async_await)]
+#![warn(
+    nonstandard_style,
+    rust_2018_idioms,
+    future_incompatible,
+    missing_debug_implementations
+)]
+
+use tide_core::{error::Error, Context};
 use http::StatusCode;
 use serde::Deserialize;
 
@@ -8,14 +16,11 @@ pub trait ContextExt<'de> {
 }
 
 impl<'de, Data> ContextExt<'de> for Context<Data> {
-    #[inline]
     fn url_query<T: Deserialize<'de>>(&'de self) -> Result<T, Error> {
         let query = self.uri().query();
-
         if query.is_none() {
             return Err(Error::from(StatusCode::BAD_REQUEST));
         }
-
         Ok(serde_urlencoded::from_str(query.unwrap())
             .map_err(|_| Error::from(StatusCode::BAD_REQUEST))?)
     }
@@ -27,7 +32,7 @@ mod tests {
     use futures::executor::block_on;
     use http_service::Body;
     use http_service_mock::make_server;
-    use serde_derive::Deserialize;
+    use serde::de::Deserialize;
 
     #[derive(Deserialize)]
     struct Params {
