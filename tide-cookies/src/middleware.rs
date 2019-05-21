@@ -19,7 +19,7 @@ use tide_core::{
 /// to access Cookies.
 ///
 /// [`CookiesMiddleware`]: crate::middleware::CookiesMiddleware
-/// [`ContextExt`]: crate::data::ContextExt
+/// [`ContextExt`]: ../../tide/cookies/trait.ContextExt.html
 #[derive(Clone, Default, Debug)]
 pub struct CookiesMiddleware {}
 
