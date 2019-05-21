@@ -15,6 +15,7 @@ use tide_core::{error::Error, Context};
 
 /// An extension trait for `Context`, providing query string deserialization.
 pub trait ContextExt<'de> {
+    /// Analyze url and extract query parameters
     fn url_query<T: Deserialize<'de>>(&'de self) -> Result<T, Error>;
 }
 
