@@ -79,8 +79,7 @@ pub trait ResultExt<T>: Sized {
         self.with_err_status(500)
     }
 
-    /// Convert to an `EndpointResult`, wrapping the `Err` case with a custom
-    /// response status.
+    /// Convert to an `EndpointResult`, wrapping the `Err` case with a custom response status.
     fn with_err_status<S>(self, status: S) -> EndpointResult<T>
     where
         StatusCode: HttpTryFrom<S>;
@@ -111,8 +110,7 @@ pub trait ResultDynErrExt<T>: Sized {
         self.with_err_status(500)
     }
 
-    /// Convert to an `EndpointResult`, wrapping the `Err` case with a custom
-    /// response status.
+    /// Convert to an `EndpointResult`, wrapping the `Err` case with a custom response status.
     fn with_err_status<S>(self, status: S) -> EndpointResult<T>
     where
         StatusCode: HttpTryFrom<S>;
