@@ -1,10 +1,8 @@
-#![cfg_attr(feature = "nightly", deny(missing_docs))]
 #![cfg_attr(any(feature = "nightly", test), feature(external_doc))]
 #![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
-#![cfg_attr(test, deny(warnings))]
 #![feature(async_await, existential_type)]
 #![allow(unused_variables)]
-#![deny(
+#![warn(
     nonstandard_style,
     rust_2018_idioms,
     future_incompatible,

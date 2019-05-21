@@ -1,5 +1,5 @@
 #![feature(async_await)]
-#![deny(
+#![warn(
     nonstandard_style,
     rust_2018_idioms,
     future_incompatible,
