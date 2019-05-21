@@ -1,3 +1,5 @@
+//! Core types and traits from Tide
+ 
 #![feature(async_await, existential_type)]
 #![warn(
     nonstandard_style,

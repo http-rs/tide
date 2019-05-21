@@ -1,3 +1,6 @@
+//! Crate that provides helpers and extensions for Tide
+//! related to forms.
+
 #![feature(async_await)]
 #![warn(
     nonstandard_style,

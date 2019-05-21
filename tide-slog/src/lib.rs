@@ -1,3 +1,6 @@
+//! Crate that provides helpers and/or middlewares for Tide
+//! related to structured logging with slog.
+
 #![feature(async_await)]
 #![warn(
     nonstandard_style,
