@@ -37,12 +37,7 @@ impl<'a, State: 'static> Route<'a, State> {
         }
     }
 
-    /// Add endpoint nested routes as in the example
-    ///```rust, no_run
-    /// router.at("/a").nest(|router| {
-    ///     router.at("/").get(async move |_| "/a");
-    ///     router.at("/b").get(async move |_| "/a/b");
-    ///```
+    /// Add endpoint nested routes
     pub fn nest(&mut self, f: impl FnOnce(&mut Route<'a, State>)) -> &mut Self {
         f(self);
         self
