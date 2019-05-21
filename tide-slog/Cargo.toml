@@ -4,7 +4,7 @@ authors = [
 ]
 description = "Logging middleware for Tide based on slog"
 documentation = "https://docs.rs/tide-slog"
-keywords = ["tide", "web", "async", "middleware", "logging", "slog"]
+keywords = ["tide", "web", "middleware", "logging", "slog"]
 categories = [
   "logging",
   "network-programming",
