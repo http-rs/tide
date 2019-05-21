@@ -30,11 +30,10 @@ http-service = "0.2.0"
 serde = "1.0.91"
 serde_derive = "1.0.91"
 serde_urlencoded = "0.5.5"
-slog = "2.4.1"
-slog-async = "2.3.0"
-slog-term = "2.4.0"
 tide-cookies = { path = "./tide-cookies", optional = true }
 tide-core = { path = "./tide-core" }
+tide-headers = { path = "./tide-headers" }
+tide-log = { path = "./tide-log" }
 
 [dependencies.multipart]
 default-features = false
@@ -52,13 +51,19 @@ mime = "0.3.13"
 mime_guess = "2.0.0-alpha.6"
 percent-encoding = "1.0.1"
 serde = { version = "1.0.91", features = ["derive"] }
+tide-log = { path = "./tide-log" }
+env_logger = "0.6.1"
+log4rs = "0.8.3"
+log = "0.4.6"
 
 [workspace]
 members = [
     "tide-compression",
     "tide-cookies",
     "tide-core",
+    "tide-headers",
     "tide-log",
+    "tide-slog",
 ]
 
 [patch.crates-io]
