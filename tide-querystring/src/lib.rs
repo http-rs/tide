@@ -9,9 +9,9 @@
     missing_debug_implementations
 )]
 
-use tide_core::{error::Error, Context};
 use http::StatusCode;
 use serde::Deserialize;
+use tide_core::{error::Error, Context};
 
 /// An extension trait for `Context`, providing query string deserialization.
 pub trait ContextExt<'de> {

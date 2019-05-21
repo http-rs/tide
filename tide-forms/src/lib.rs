@@ -14,12 +14,7 @@ use http_service::Body;
 use multipart::server::Multipart;
 use std::io::Cursor;
 
-use tide_core::{
-    error::ResultExt,
-    Context, Response,
-    err_fmt,
-    internal::BoxTryFuture
-};
+use tide_core::{err_fmt, error::ResultExt, internal::BoxTryFuture, Context, Response};
 
 /// An extension trait for `Context`, providing form extraction.
 pub trait ContextExt {

@@ -27,12 +27,23 @@ pub use tide_cookies as cookies;
 
 #[doc(inline)]
 pub use tide_core::{
-    response, App, Context, Endpoint, EndpointResult, Error, Response, Route, Server, err_fmt
-    // TODO: export Body once it's in turn exported by tide_core 
+    err_fmt,
+    response,
+    App,
+    Context,
+    Endpoint,
+    EndpointResult,
+    Error,
+    Response,
+    Route,
+    Server,
+    // TODO: export Body once it's in turn exported by tide_core
 };
 
 pub mod error {
-    pub use tide_core::error::{EndpointResult, Error, ResponseExt, ResultExt, ResultDynErrExt, StringError};
+    pub use tide_core::error::{
+        EndpointResult, Error, ResponseExt, ResultDynErrExt, ResultExt, StringError,
+    };
 }
 
 pub use tide_forms as forms;
