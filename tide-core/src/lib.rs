@@ -9,13 +9,6 @@
 // ISSUE: https://github.com/rust-lang/rust-clippy/issues/3988
 #![allow(clippy::needless_lifetimes)]
 
-#[macro_export]
-macro_rules! box_async {
-    {$($t:tt)*} => {
-        ::futures::future::FutureExt::boxed(async move { $($t)* })
-    };
-}
-
 mod app;
 mod context;
 mod endpoint;

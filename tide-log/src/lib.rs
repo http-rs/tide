@@ -7,17 +7,12 @@
 )]
 
 use futures::future::BoxFuture;
+use futures::prelude::*;
 use log::{info, trace};
 use tide::{
     middleware::{Middleware, Next},
     Context, Response,
 };
-
-macro_rules! box_async {
-    {$($t:tt)*} => {
-        ::futures::future::FutureExt::boxed(async move { $($t)* })
-    };
-}
 
 /// A simple requests logger
 ///
@@ -60,6 +55,6 @@ impl RequestLogger {
 
 impl<Data: Send + Sync + 'static> Middleware<Data> for RequestLogger {
     fn handle<'a>(&'a self, ctx: Context<Data>, next: Next<'a, Data>) -> BoxFuture<'a, Response> {
-        box_async! { self.log_basic(ctx, next).await }
+        FutureExt::boxed(async move { self.log_basic(ctx, next).await })
     }
 }

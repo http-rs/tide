@@ -12,7 +12,7 @@ async fn echo_bytes(mut cx: Context<()>) -> Vec<u8> {
     cx.body_bytes().await.unwrap()
 }
 
-pub fn main() {
+fn main() {
     let mut app = App::new();
     app.at("/").get(lorem_ipsum);
     app.at("/echo").post(echo_bytes);
