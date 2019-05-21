@@ -58,6 +58,7 @@ members = [
     "tide-compression",
     "tide-cookies",
     "tide-core",
+    "tide-log",
 ]
 
 [patch.crates-io]
