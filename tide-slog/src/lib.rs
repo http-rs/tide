@@ -6,7 +6,7 @@
     missing_debug_implementations
 )]
 
-use slog::{info, trace, o, Drain};
+use slog::{info, o, trace, Drain};
 use slog_async;
 use slog_term;
 

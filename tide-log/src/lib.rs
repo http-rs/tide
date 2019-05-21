@@ -44,9 +44,7 @@ impl RequestLogger {
     /// Create a new instance of logger with supplied `target` for
     /// logging.
     pub fn with_target(target: String) -> Self {
-        Self {
-            target,
-        }
+        Self { target }
     }
 
     async fn log_basic<'a, Data: Send + Sync + 'static>(
