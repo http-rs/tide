@@ -1,3 +1,6 @@
+//! Crate that provides helpers and extensions for Tide
+//! related to query strings.
+
 #![feature(async_await)]
 #![warn(
     nonstandard_style,
@@ -32,20 +35,20 @@ mod tests {
     use futures::executor::block_on;
     use http_service::Body;
     use http_service_mock::make_server;
-    use serde::de::Deserialize;
+    use serde::Deserialize;
 
     #[derive(Deserialize)]
     struct Params {
         msg: String,
     }
 
-    async fn handler(cx: crate::Context<()>) -> Result<String, Error> {
+    async fn handler(cx: tide::Context<()>) -> Result<String, Error> {
         let p = cx.url_query::<Params>()?;
         Ok(p.msg)
     }
 
-    fn app() -> crate::App<()> {
-        let mut app = crate::App::new();
+    fn app() -> tide::App<()> {
+        let mut app = tide::App::new();
         app.at("/").get(handler);
         app
     }
