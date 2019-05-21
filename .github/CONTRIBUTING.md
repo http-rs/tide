@@ -11,7 +11,6 @@ Repository.
 
 - [Code of Conduct](#code-of-conduct)
 - [Bad Actors](#bad-actors)
-- [Developer Certificate of Origin](#developer-certificate-of-origin)
 
 ## Code of Conduct
 The project has a [Code of Conduct](./CODE_OF_CONDUCT.md) that *all*
@@ -54,10 +53,3 @@ contributors the benefit of the doubt and having a sincere willingness to admit
 that you *might* be wrong is critical for any successful open collaboration.
 
 Don't be a bad actor.
-
-## Developer Certificate of Origin
-All contributors must read and agree to the [Developer Certificate of
-Origin (DCO)](../CERTIFICATE).
-
-The DCO allows us to accept contributions from people to the project, similarly
-to how a license allows us to distribute our code.
