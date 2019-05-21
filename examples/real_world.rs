@@ -22,15 +22,26 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
         app.at("/").get(noop);
         app.at("/").post(noop);
         app.at("/feed").get(noop);
-        app.at("/:slug").get(noop);
-        app.at("/:slug").put(noop);
-        app.at("/:slug").delete(noop);
-        app.at("/:slug/favorite").put(noop);
-        app.at("/:slug/favorite").delete(noop);
-        app.at("/:slug/comments").get(noop);
-        app.at("/:slug/comments").post(noop);
-        app.at("/:slug/comments/:id").delete(noop);
+        app.at("/:slug").nest(|app| {
+            app.at("/").get(noop);
+            app.at("/").put(noop);
+            app.at("/").delete(noop);
+            app.at("/favorite").put(noop);
+            app.at("/favorite").delete(noop);
+            app.at("/comments").get(noop);
+            app.at("/comments").post(noop);
+            app.at("/comments/:id").delete(noop);
+        });
     });
+
+    app.at("/profiles").nest(|app| {
+        app.at("/:username").get(noop);
+        app.at("/:username/follow").post(noop);
+        app.at("/:username/follow").delete(noop);
+    });
+
+    app.at("/tags").get(noop);
+
     app.run("localhost:8080")?;
     Ok(())
 }
