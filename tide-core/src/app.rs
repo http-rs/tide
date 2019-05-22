@@ -257,11 +257,9 @@ impl<State: Send + Sync + 'static> App<State> {
             .next()
             .ok_or(std::io::ErrorKind::InvalidInput)?;
 
-        // TODO: propagate the error from hyper
         http_service_hyper::serve(self.into_http_service(), addr)
             .await
-            .ok();
-        Ok(())
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
     }
 }
 
