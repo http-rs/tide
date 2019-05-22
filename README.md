@@ -71,15 +71,15 @@ fn main() -> Result<(), std::io::Error> {
 
 **More Examples**
 
-- [Hello World](https://github.com/rustasync/tide/blob/master/examples/src/hello.rs)
-- [Messages](https://github.com/rustasync/tide/blob/master/examples/src/messages.rs)
-- [Body Types](https://github.com/rustasync/tide/blob/master/examples/src/body_types.rs)
-- [Multipart Form](https://github.com/rustasync/tide/blob/master/examples/src/multipart_form/mod.rs)
-- [Catch All](https://github.com/rustasync/tide/blob/master/examples/src/catch_all.rs)
-- [Cookies](https://github.com/rustasync/tide/blob/master/examples/src/cookies.rs)
-- [Default Headers](https://github.com/rustasync/tide/blob/master/examples/src/default_headers.rs)
-- [GraphQL](https://github.com/rustasync/tide/blob/master/examples/src/graphql.rs)
-- [Staticfile](https://github.com/rustasync/tide/blob/master/examples/src/staticfile.rs)
+- [Hello World](https://github.com/rustasync/tide/blob/master/examples/hello.rs)
+- [Messages](https://github.com/rustasync/tide/blob/master/examples/messages.rs)
+- [Body Types](https://github.com/rustasync/tide/blob/master/examples/body_types.rs)
+- [Multipart Form](https://github.com/rustasync/tide/blob/master/examples/multipart_form/mod.rs)
+- [Catch All](https://github.com/rustasync/tide/blob/master/examples/catch_all.rs)
+- [Cookies](https://github.com/rustasync/tide/blob/master/examples/cookies.rs)
+- [Default Headers](https://github.com/rustasync/tide/blob/master/examples/default_headers.rs)
+- [GraphQL](https://github.com/rustasync/tide/blob/master/examples/graphql.rs)
+- [Staticfile](https://github.com/rustasync/tide/blob/master/examples/staticfile.rs)
 
 ## Resources
 

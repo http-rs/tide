@@ -132,7 +132,7 @@ use crate::{
 pub struct App<State> {
     router: Router<State>,
     middleware: Vec<Arc<dyn Middleware<State>>>,
-    data: State,
+    state: State,
 }
 
 impl App<()> {
@@ -154,7 +154,7 @@ impl<State: Send + Sync + 'static> App<State> {
         App {
             router: Router::new(),
             middleware: Vec::new(),
-            data: state,
+            state,
         }
     }
 
@@ -228,7 +228,7 @@ impl<State: Send + Sync + 'static> App<State> {
     pub fn into_http_service(self) -> Server<State> {
         Server {
             router: Arc::new(self.router),
-            data: Arc::new(self.data),
+            state: Arc::new(self.state),
             middleware: Arc::new(self.middleware),
         }
     }
@@ -272,7 +272,7 @@ impl<State: Send + Sync + 'static> App<State> {
 #[allow(missing_debug_implementations)]
 pub struct Server<State> {
     router: Arc<Router<State>>,
-    data: Arc<State>,
+    state: Arc<State>,
     middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
 }
 
@@ -290,12 +290,12 @@ impl<State: Sync + Send + 'static> HttpService for Server<State> {
         let method = req.method().to_owned();
         let router = self.router.clone();
         let middleware = self.middleware.clone();
-        let data = self.data.clone();
+        let state = self.state.clone();
 
         FutureExt::boxed(async move {
             let fut = {
                 let Selection { endpoint, params } = router.route(&path, method);
-                let cx = Context::new(data, req, params);
+                let cx = Context::new(state, req, params);
 
                 let next = Next {
                     endpoint,
@@ -319,19 +319,19 @@ mod tests {
     use super::*;
     use crate::{middleware::Next, Context, Response};
 
-    fn simulate_request<'a, Data: Default + Clone + Send + Sync + 'static>(
-        app: &'a App<Data>,
+    fn simulate_request<'a, State: Default + Clone + Send + Sync + 'static>(
+        app: &'a App<State>,
         path: &'a str,
         method: http::Method,
     ) -> BoxFuture<'a, Response> {
         let Selection { endpoint, params } = app.router.route(path, method.clone());
 
-        let data = Arc::new(Data::default());
+        let state = Arc::new(State::default());
         let req = http::Request::builder()
             .method(method)
             .body(http_service::Body::empty())
             .unwrap();
-        let cx = Context::new(data, req, params);
+        let cx = Context::new(state, req, params);
         let next = Next {
             endpoint,
             next_middleware: &app.middleware,

@@ -50,8 +50,8 @@ impl DefaultHeaders {
     }
 }
 
-impl<Data: Send + Sync + 'static> Middleware<Data> for DefaultHeaders {
-    fn handle<'a>(&'a self, cx: Context<Data>, next: Next<'a, Data>) -> BoxFuture<'a, Response> {
+impl<State: Send + Sync + 'static> Middleware<State> for DefaultHeaders {
+    fn handle<'a>(&'a self, cx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
         FutureExt::boxed(async move {
             let mut res = next.run(cx).await;
             let headers = res.headers_mut();

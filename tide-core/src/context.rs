@@ -3,7 +3,7 @@ use http_service::Body;
 use route_recognizer::Params;
 use std::{str::FromStr, sync::Arc};
 
-/// Data associated with a request-response lifecycle.
+/// State associated with a request-response lifecycle.
 ///
 /// The `Context` gives endpoints access to basic information about the incoming
 /// request, route parameters, and various ways of accessing the request's body.
@@ -56,7 +56,7 @@ impl<State> Context<State> {
         &mut self.request
     }
 
-    ///  Access app-global data.
+    ///  Access the state.
     pub fn state(&self) -> &State {
         &self.state
     }
