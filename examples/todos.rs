@@ -9,7 +9,7 @@ mod routes {
     use super::cors;
     pub use tide::{Context, EndpointResult};
 
-    pub fn setup(app: &mut tide::App<()>) {
+    pub fn setup(mut app: tide::App<()>) -> tide::App<()> {
         app.middleware(cors::CorsBlanket::new());
         app.at("/").get(get_todos);
         app.at("/").post(noop);
@@ -17,6 +17,7 @@ mod routes {
         app.at("/:todo").get(noop);
         app.at("/:todo").patch(noop);
         app.at("/:todo").delete(noop);
+        app
     }
 
     async fn noop(_cx: tide::Context<()>) -> String {
@@ -29,20 +30,20 @@ mod routes {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
-    let mut app = tide::App::new();
-    routes::setup(&mut app);
+    let app = tide::App::new();
+    let app = routes::setup(app);
     app.run("localhost:8080")?;
     Ok(())
 }
 
 #[cfg(test)]
 mod test {
-    use futures::future::{BoxFuture, Ready};
-    use http::request::Request;
-    use http_service::{HttpService, Response};
+    use http_service::Response;
     use http_service_mock::make_server;
     use std::error::Error;
     use std::io;
+
+    use super::routes;
 
     struct HttpTest<State>{
         req: http::request::Builder,
@@ -80,42 +81,27 @@ mod test {
     }
 
     impl HttpTestResponse {
-        fn status(mut self, status: u16) -> Self {
+        fn status(self, status: u16) -> Self {
             assert_eq!(self.res.status(), status);
             self
         }
 
-        async fn body(mut self, body: &[u8]) -> io::Result<()> {
+        async fn body(self, body: &[u8]) -> io::Result<()> {
             assert_eq!(self.res.into_body().into_vec().await?, body);
             Ok(())
         }
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     #[runtime::test]
     async fn index() -> Result<(), Box<std::error::Error + Send + Sync + 'static>> {
-        let mut app = tide::App::new();
-        super::routes::setup(&mut app);
+        let app = routes::setup(tide::App::new());
 
-        HttpTest::new(app)
+        let response = HttpTest::new(app)
             .method("GET")
             .uri("http://localhost:8080")
-            .send()?
+            .send()?;
+
+        response
             .status(200)
             .body(b"hello world")
             .await?;
