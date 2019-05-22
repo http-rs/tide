@@ -11,21 +11,30 @@ mod routes {
 
     pub fn setup(mut app: tide::App<()>) -> tide::App<()> {
         app.middleware(cors::CorsBlanket::new());
-        app.at("/").get(get_todos);
-        app.at("/").post(noop);
-        app.at("/").delete(noop);
-        app.at("/:todo").get(noop);
-        app.at("/:todo").patch(noop);
-        app.at("/:todo").delete(noop);
+
+        app.at("/")
+            .get(get_todos)
+            .post(post_todo)
+            .delete(noop);
+
+        app.at("/:todo")
+            .get(noop)
+            .patch(noop)
+            .delete(noop);
+
         app
     }
 
     async fn noop(_cx: tide::Context<()>) -> String {
-        "{}".to_string()
+        "".to_string()
     }
 
     pub async fn get_todos(_cx: Context<()>) -> String {
         String::from("hello world")
+    }
+
+    pub async fn post_todo(mut cx: Context<()>) -> Vec<u8> {
+        cx.body_bytes().await.unwrap()
     }
 }
 
@@ -117,8 +126,8 @@ mod test {
 
         let body = response
             .status(200)
-            .header("access-control-allow-origin", "*")
-            .header("access-control-allow-headers", "*")
+            .header("Access-Control-Allow-Origin", "*")
+            .header("Access-Control-Allow-Headers", "*")
             .body_string()
             .await?;
 
@@ -141,8 +150,7 @@ mod test {
             .body_string()
             .await?;
 
-        assert_eq!(&body, "{}");
-
+        assert_eq!(&body, "{title: }");
         Ok(())
     }
 }

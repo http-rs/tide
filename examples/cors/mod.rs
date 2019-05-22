@@ -36,14 +36,15 @@ impl Default for CorsBlanket {
             max_age: HeaderValue::from_static(DEFAULT_MAX_AGE),
             methods: HeaderValue::from_static(DEFAULT_METHODS),
             origin: HeaderValue::from_static(STAR),
-            headers: HeaderValue::from_static(STAR),
+            headers: HeaderValue::from_static(CONTENT_TYPE),
         }
     }
 }
 
 pub const DEFAULT_MAX_AGE: &str = "86400";
-pub const DEFAULT_METHODS: &str = "GET, POST, OPTIONS";
+pub const DEFAULT_METHODS: &str = "GET, POST, OPTIONS, PATCH, DELETE";
 pub const STAR: &str = "*";
+pub const CONTENT_TYPE: &str = "Content-Type";
 
 impl CorsBlanket {
     pub fn new() -> Self {
