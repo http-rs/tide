@@ -47,10 +47,10 @@ impl RequestLogger {
         Self { target }
     }
 
-    async fn log_basic<'a, Data: Send + Sync + 'static>(
+    async fn log_basic<'a, State: Send + Sync + 'static>(
         &'a self,
-        ctx: Context<Data>,
-        next: Next<'a, Data>,
+        ctx: Context<State>,
+        next: Next<'a, State>,
     ) -> Response {
         let path = ctx.uri().path().to_owned();
         let method = ctx.method().as_str().to_owned();
@@ -70,8 +70,8 @@ impl RequestLogger {
     }
 }
 
-impl<Data: Send + Sync + 'static> Middleware<Data> for RequestLogger {
-    fn handle<'a>(&'a self, ctx: Context<Data>, next: Next<'a, Data>) -> BoxFuture<'a, Response> {
+impl<State: Send + Sync + 'static> Middleware<State> for RequestLogger {
+    fn handle<'a>(&'a self, ctx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
         FutureExt::boxed(async move { self.log_basic(ctx, next).await })
     }
 }

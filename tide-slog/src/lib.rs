@@ -48,8 +48,8 @@ impl Default for RequestLogger {
 
 /// Stores information during request phase and logs information once the response
 /// is generated.
-impl<Data: Send + Sync + 'static> Middleware<Data> for RequestLogger {
-    fn handle<'a>(&'a self, cx: Context<Data>, next: Next<'a, Data>) -> BoxFuture<'a, Response> {
+impl<State: Send + Sync + 'static> Middleware<State> for RequestLogger {
+    fn handle<'a>(&'a self, cx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
         FutureExt::boxed(async move {
             let path = cx.uri().path().to_owned();
             let method = cx.method().as_str().to_owned();
