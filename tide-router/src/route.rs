@@ -18,7 +18,7 @@ pub struct Route<'a, State> {
 
 impl<'a, State: 'static> Route<'a, State> {
     pub fn new(router: &'a mut Router<State>, path: String) -> Self {
-        Route { router, path }
+        Self { router, path }
     }
 
     /// Extend the route with the given `path`.

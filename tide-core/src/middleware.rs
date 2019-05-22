@@ -18,6 +18,7 @@ where
     }
 }
 
+// TODO (PR258): We don't want this exposed outside of tide repo
 /// The remainder of a middleware chain, including the endpoint.
 #[allow(missing_debug_implementations)]
 pub struct Next<'a, State> {

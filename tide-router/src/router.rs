@@ -11,10 +11,12 @@ use tide_core::{internal::DynEndpoint, Context, Endpoint, Response};
 /// Internally, we have a separate state machine per http method; indexing
 /// by the method first allows the table itself to be more efficient.
 #[allow(missing_debug_implementations)]
+#[derive(Default)]
 pub struct Router<State> {
     method_map: FnvHashMap<http::Method, MethodRouter<Box<DynEndpoint<State>>>>,
 }
 
+// TODO (PR258): We don't want this exposed outside of tide repo
 /// The result of routing a URL
 #[allow(missing_debug_implementations)]
 pub struct Selection<'a, State> {
@@ -23,8 +25,8 @@ pub struct Selection<'a, State> {
 }
 
 impl<State: 'static> Router<State> {
-    pub fn new() -> Router<State> {
-        Router {
+    pub fn new() -> Self {
+        Self {
             method_map: FnvHashMap::default(),
         }
     }
