@@ -56,6 +56,7 @@ failure = "0.1.5"
 memdb = "0.1.0"
 chrono = "0.4.6"
 slug = "0.1.4"
+runtime = "0.3.0-alpha.4"
 
 [workspace]
 members = [
