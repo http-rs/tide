@@ -68,7 +68,7 @@ mod test {
             self
         }
 
-        pub fn send(mut self) -> Result<HttpTestResponse, Box<Error + Send + Sync + 'static>> {
+        pub async fn send(mut self) -> Result<HttpTestResponse, Box<Error + Send + Sync + 'static>> {
             let req = self.req.body(http_service::Body::empty())?;
             let mut svc = make_server(self.app.into_http_service())?;
             let res = svc.simulate(req)?;
@@ -94,9 +94,14 @@ mod test {
             self
         }
 
-        async fn body(self, body: &[u8]) -> io::Result<()> {
-            assert_eq!(self.res.into_body().into_vec().await?, body);
-            Ok(())
+        async fn body(self) -> io::Result<Vec<u8>> {
+            let body = self.res.into_body().into_vec().await?;
+            Ok(body)
+        }
+
+        async fn body_string(self) -> Result<String, Box<dyn Error + Send + Sync + 'static>> {
+            let body = self.body().await?;
+            Ok(String::from_utf8(body)?)
         }
     }
 
@@ -107,31 +112,36 @@ mod test {
         let response = HttpTest::new(app)
             .method("OPTIONS")
             .uri("http://localhost:8080")
-            .send()?;
+            .send()
+            .await?;
 
-        response
+        let body = response
             .status(200)
             .header("access-control-allow-origin", "*")
             .header("access-control-allow-headers", "*")
-            .body(b"")
+            .body_string()
             .await?;
 
+        assert_eq!(&body, "");
         Ok(())
     }
 
     #[runtime::test]
-    async fn index() -> Result<(), Box<std::error::Error + Send + Sync + 'static>> {
+    async fn post_todo() -> Result<(), Box<std::error::Error + Send + Sync + 'static>> {
         let app = routes::setup(tide::App::new());
 
         let response = HttpTest::new(app)
-            .method("GET")
+            .method("POST")
             .uri("http://localhost:8080")
-            .send()?;
-
-        response
-            .status(200)
-            .body(b"hello world")
+            .send()
             .await?;
+
+        let body = response
+            .status(200)
+            .body_string()
+            .await?;
+
+        assert_eq!(&body, "{}");
 
         Ok(())
     }
