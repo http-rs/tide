@@ -86,10 +86,37 @@ mod test {
             self
         }
 
+        fn header(self, key: &str, value: &'static str) -> Self {
+            let value = http::header::HeaderValue::from_static(value);
+            let header = self.res.headers().get(key);
+            let header = header.expect("Header did not exist in the map");
+            assert_eq!(header, value);
+            self
+        }
+
         async fn body(self, body: &[u8]) -> io::Result<()> {
             assert_eq!(self.res.into_body().into_vec().await?, body);
             Ok(())
         }
+    }
+
+    #[runtime::test]
+    async fn cors() -> Result<(), Box<std::error::Error + Send + Sync + 'static>> {
+        let app = routes::setup(tide::App::new());
+
+        let response = HttpTest::new(app)
+            .method("OPTIONS")
+            .uri("http://localhost:8080")
+            .send()?;
+
+        response
+            .status(200)
+            .header("access-control-allow-origin", "*")
+            .header("access-control-allow-headers", "*")
+            .body(b"")
+            .await?;
+
+        Ok(())
     }
 
     #[runtime::test]
