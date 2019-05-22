@@ -57,9 +57,6 @@ pub trait Endpoint<State>: Send + Sync + 'static {
     fn call(&self, cx: Context<State>) -> Self::Fut;
 }
 
-pub(crate) type DynEndpoint<State> =
-    dyn (Fn(Context<State>) -> BoxFuture<'static, Response>) + 'static + Send + Sync;
-
 impl<State, F: Send + Sync + 'static, Fut> Endpoint<State> for F
 where
     F: Fn(Context<State>) -> Fut,

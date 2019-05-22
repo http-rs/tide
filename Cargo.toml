@@ -21,18 +21,20 @@ version = "0.2.0"
 [features]
 default = ["hyper", "cookies"]
 cookies = ["tide-cookies"]
-hyper = ["tide-core/http-service-hyper"]
+hyper = ["http-service-hyper"]
 
 [dependencies]
 futures-preview = "0.3.0-alpha.16"
 http = "0.1"
 http-service = "0.2.0"
+http-service-hyper = { version = "0.2.0", optional = true }
 tide-cookies = { path = "./tide-cookies", optional = true }
 tide-core = { path = "./tide-core" }
 tide-headers = { path = "./tide-headers" }
 tide-log = { path = "./tide-log" }
 tide-forms = { path = "./tide-forms" }
 tide-querystring = { path = "./tide-querystring" }
+tide-router = { path = "./tide-router" }
 
 [dev-dependencies]
 bytes = "0.4.12"
@@ -59,6 +61,7 @@ members = [
     "tide-headers",
     "tide-log",
     "tide-querystring",
+    "tide-router",
     "tide-slog",
 ]
 

@@ -4,28 +4,26 @@ use futures::prelude::*;
 use http_service::Body;
 use route_recognizer::{Match, Params, Router as MethodRouter};
 
-use crate::{
-    endpoint::{DynEndpoint, Endpoint},
-    Context, Response,
-};
+use tide_core::{internal::DynEndpoint, Context, Endpoint, Response};
 
 /// The routing table used by `App`
 ///
 /// Internally, we have a separate state machine per http method; indexing
 /// by the method first allows the table itself to be more efficient.
 #[allow(missing_debug_implementations)]
-pub(crate) struct Router<State> {
+pub struct Router<State> {
     method_map: FnvHashMap<http::Method, MethodRouter<Box<DynEndpoint<State>>>>,
 }
 
 /// The result of routing a URL
-pub(crate) struct Selection<'a, State> {
-    pub(crate) endpoint: &'a DynEndpoint<State>,
-    pub(crate) params: Params,
+#[allow(missing_debug_implementations)]
+pub struct Selection<'a, State> {
+    pub endpoint: &'a DynEndpoint<State>,
+    pub params: Params,
 }
 
 impl<State: 'static> Router<State> {
-    pub(crate) fn new() -> Router<State> {
+    pub fn new() -> Router<State> {
         Router {
             method_map: FnvHashMap::default(),
         }
@@ -38,7 +36,7 @@ impl<State: 'static> Router<State> {
             .add(path, Box::new(move |cx| ep.call(cx).boxed()))
     }
 
-    pub(crate) fn route(&self, path: &str, method: http::Method) -> Selection<'_, State> {
+    pub fn route(&self, path: &str, method: http::Method) -> Selection<'_, State> {
         if let Some(Match { handler, params }) = self
             .method_map
             .get(&method)

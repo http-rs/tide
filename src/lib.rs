@@ -21,24 +21,16 @@ const _README: () = ();
 
 pub use http;
 
+mod app;
+
+pub use app::{App, Server};
+
 #[cfg(feature = "cookies")]
 #[doc(inline)]
 pub use tide_cookies as cookies;
 
 #[doc(inline)]
-pub use tide_core::{
-    err_fmt,
-    response,
-    App,
-    Context,
-    Endpoint,
-    EndpointResult,
-    Error,
-    Response,
-    Route,
-    Server,
-    // TODO: export Body once it's in turn exported by tide_core
-};
+pub use tide_core::{err_fmt, response, Body, Context, Endpoint, EndpointResult, Error, Response};
 
 pub mod error {
     pub use tide_core::error::{

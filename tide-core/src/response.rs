@@ -1,4 +1,4 @@
-use http_service::Body;
+pub use http_service::Body;
 
 pub type Response = http_service::Response;
 

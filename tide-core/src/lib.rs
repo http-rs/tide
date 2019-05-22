@@ -11,23 +11,19 @@
 // ISSUE: https://github.com/rust-lang/rust-clippy/issues/3988
 #![allow(clippy::needless_lifetimes)]
 
-mod app;
 mod context;
 mod endpoint;
+
 pub mod error;
 pub mod middleware;
 pub mod response;
-mod route;
-mod router;
 
 // Internal shared API for limited use across crates in our repo
 pub mod internal;
 
 pub use crate::{
-    app::{App, Server},
     context::Context,
     endpoint::Endpoint,
     error::{EndpointResult, Error},
-    response::Response,
-    route::Route,
+    response::{Body, Response},
 };

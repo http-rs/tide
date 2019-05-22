@@ -2,11 +2,11 @@ use futures::future::{self, BoxFuture};
 use futures::prelude::*;
 use http_service::HttpService;
 use std::sync::Arc;
+use tide_router::{Router, Route, Selection};
 
 use crate::{
     middleware::{Middleware, Next},
-    router::{Router, Selection},
-    Context, Route,
+    Context,
 };
 
 /// The entry point for building a Tide application.
@@ -77,7 +77,6 @@ use crate::{
 ///
 /// ```rust, no_run
 /// #![feature(async_await)]
-/// #[macro_use] extern crate serde_derive;
 ///
 /// use http::status::StatusCode;
 /// use serde::{Deserialize, Serialize};
@@ -315,9 +314,10 @@ impl<State: Sync + Send + 'static> HttpService for Server<State> {
 mod tests {
     use futures::executor::block_on;
     use std::sync::Arc;
+    use tide_router::Selection;
 
     use super::*;
-    use crate::{middleware::Next, router::Selection, Context, Response};
+    use crate::{middleware::Next, Context, Response};
 
     fn simulate_request<'a, Data: Default + Clone + Send + Sync + 'static>(
         app: &'a App<Data>,

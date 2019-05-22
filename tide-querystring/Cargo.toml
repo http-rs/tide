@@ -16,7 +16,7 @@ readme = "README.md"
 repository = "https://github.com/rustasync/tide"
 version = "0.1.0"
 
- [dependencies]
+[dependencies]
 tide-core = { path = "../tide-core" }
 futures-preview = "0.3.0-alpha.16"
 http = "0.1"

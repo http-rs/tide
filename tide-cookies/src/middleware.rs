@@ -96,8 +96,8 @@ mod tests {
         cx.set_cookie(Cookie::new("C2", "V2")).unwrap();
     }
 
-    fn app() -> tide_core::App<()> {
-        let mut app = tide_core::App::new();
+    fn app() -> tide::App<()> {
+        let mut app = tide::App::new();
         app.middleware(CookiesMiddleware::new());
 
         app.at("/get").get(retrieve_cookie);

@@ -1,4 +1,6 @@
-use crate::{router::Router, Endpoint};
+use tide_core::Endpoint;
+
+use crate::router::Router;
 
 /// A handle to a route.
 ///
@@ -15,7 +17,7 @@ pub struct Route<'a, State> {
 }
 
 impl<'a, State: 'static> Route<'a, State> {
-    pub(crate) fn new(router: &'a mut Router<State>, path: String) -> Route<'a, State> {
+    pub fn new(router: &'a mut Router<State>, path: String) -> Self {
         Route { router, path }
     }
 
