@@ -2,7 +2,7 @@ use futures::future::{self, BoxFuture};
 use futures::prelude::*;
 use http_service::HttpService;
 use std::sync::Arc;
-use tide_router::{Router, Route, Selection};
+use tide_router::{Route, Router, Selection};
 
 use crate::{
     middleware::{Middleware, Next},
