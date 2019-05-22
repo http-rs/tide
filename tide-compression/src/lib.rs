@@ -131,8 +131,8 @@ impl Compression {
     }
 }
 
-impl<Data: Send + Sync + 'static> Middleware<Data> for Compression {
-    fn handle<'a>(&'a self, cx: Context<Data>, next: Next<'a, Data>) -> BoxFuture<'a, Response> {
+impl<State: Send + Sync + 'static> Middleware<State> for Compression {
+    fn handle<'a>(&'a self, cx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
         FutureExt::boxed(async move {
             let encoding = match self.preferred_encoding(cx.headers()) {
                 Ok(encoding) => encoding,
@@ -215,11 +215,11 @@ impl Decompression {
     }
 }
 
-impl<Data: Send + Sync + 'static> Middleware<Data> for Decompression {
+impl<State: Send + Sync + 'static> Middleware<State> for Decompression {
     fn handle<'a>(
         &'a self,
-        mut cx: Context<Data>,
-        next: Next<'a, Data>,
+        mut cx: Context<State>,
+        next: Next<'a, State>,
     ) -> BoxFuture<'a, Response> {
         FutureExt::boxed(async move {
             match self.decode(cx.request_mut()) {
