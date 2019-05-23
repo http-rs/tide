@@ -2,17 +2,16 @@
 authors = [
     "Tide Developers"
 ]
-description = "Logging middleware for Tide based on slog"
-documentation = "https://docs.rs/tide-slog"
-keywords = ["tide", "web", "middleware", "logging", "slog"]
+description = "Query string helpers and extensions for Tide"
+documentation = "https://docs.rs/tide-querystring"
+keywords = ["tide", "web", "async", "helpers", "querystring"]
 categories = [
-  "logging",
   "network-programming",
   "web-programming::http-server",
 ]
 edition = "2018"
 license = "MIT OR Apache-2.0"
-name = "tide-slog"
+name = "tide-querystring"
 readme = "README.md"
 repository = "https://github.com/rustasync/tide"
 version = "0.1.0"
@@ -22,9 +21,11 @@ tide-core = { path = "../tide-core" }
 futures-preview = "0.3.0-alpha.16"
 http = "0.1"
 log = "0.4.6"
-slog = "2.4.1"
-slog-async = "2.3.0"
-slog-term = "2.4.0"
+serde = { version = "1.0.91", features = ["derive"] }
+serde_urlencoded = "0.5.5"
 
 [dev-dependencies]
 tide = { path = "../" }
+http-service = "0.2.0"
+http-service-mock = "0.2.0"
+

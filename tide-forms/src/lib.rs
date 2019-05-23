@@ -1,12 +1,20 @@
+//! Crate that provides helpers and extensions for Tide
+//! related to forms.
+
+#![feature(async_await)]
+#![warn(
+    nonstandard_style,
+    rust_2018_idioms,
+    future_incompatible,
+    missing_debug_implementations
+)]
+
 use futures::prelude::*;
 use http_service::Body;
 use multipart::server::Multipart;
 use std::io::Cursor;
 
-use crate::{
-    error::{BoxTryFuture, ResultExt},
-    Context, Response,
-};
+use tide_core::{err_fmt, error::ResultExt, internal::BoxTryFuture, Context, Response};
 
 /// An extension trait for `Context`, providing form extraction.
 pub trait ContextExt {

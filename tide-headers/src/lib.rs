@@ -1,5 +1,6 @@
-//! Crate that provides helpers, and/or middlewares for tide
+//! Crate that provides helpers and/or middlewares for Tide
 //! related to http headers.
+
 #![feature(async_await)]
 #![warn(
     nonstandard_style,

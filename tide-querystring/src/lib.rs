@@ -1,6 +1,17 @@
-use crate::{error::Error, Context};
+//! Crate that provides helpers and extensions for Tide
+//! related to query strings.
+
+#![feature(async_await)]
+#![warn(
+    nonstandard_style,
+    rust_2018_idioms,
+    future_incompatible,
+    missing_debug_implementations
+)]
+
 use http::StatusCode;
 use serde::Deserialize;
+use tide_core::{error::Error, Context};
 
 /// An extension trait for `Context`, providing query string deserialization.
 pub trait ContextExt<'de> {
@@ -11,11 +22,9 @@ impl<'de, State> ContextExt<'de> for Context<State> {
     #[inline]
     fn url_query<T: Deserialize<'de>>(&'de self) -> Result<T, Error> {
         let query = self.uri().query();
-
         if query.is_none() {
             return Err(Error::from(StatusCode::BAD_REQUEST));
         }
-
         Ok(serde_urlencoded::from_str(query.unwrap())
             .map_err(|_| Error::from(StatusCode::BAD_REQUEST))?)
     }
@@ -27,20 +36,20 @@ mod tests {
     use futures::executor::block_on;
     use http_service::Body;
     use http_service_mock::make_server;
-    use serde_derive::Deserialize;
+    use serde::Deserialize;
 
     #[derive(Deserialize)]
     struct Params {
         msg: String,
     }
 
-    async fn handler(cx: crate::Context<()>) -> Result<String, Error> {
+    async fn handler(cx: tide::Context<()>) -> Result<String, Error> {
         let p = cx.url_query::<Params>()?;
         Ok(p.msg)
     }
 
-    fn app() -> crate::App<()> {
-        let mut app = crate::App::new();
+    fn app() -> tide::App<()> {
+        let mut app = tide::App::new();
         app.at("/").get(handler);
         app
     }

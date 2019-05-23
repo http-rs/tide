@@ -16,7 +16,7 @@ impl std::fmt::Display for StringError {
 #[macro_export]
 macro_rules! err_fmt {
     {$($t:tt)*} => {
-        crate::error::StringError(format!($($t)*))
+        $crate::error::StringError(format!($($t)*))
     }
 }
 

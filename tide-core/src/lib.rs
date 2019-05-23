@@ -1,3 +1,5 @@
+//! Core types and traits from Tide
+
 #![feature(async_await, existential_type)]
 #![warn(
     nonstandard_style,
@@ -17,6 +19,9 @@ pub mod middleware;
 pub mod response;
 mod route;
 mod router;
+
+// Internal shared API for limited use across crates in our repo
+pub mod internal;
 
 pub use crate::{
     app::{App, Server},
