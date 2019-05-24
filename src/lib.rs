@@ -42,6 +42,8 @@ pub use tide_core::{
 };
 
 pub mod error {
+    //! Module to export tide_core errors
+
     pub use tide_core::error::{
         EndpointResult, Error, ResponseExt, ResultDynErrExt, ResultExt, StringError,
     };
@@ -51,6 +53,8 @@ pub use tide_forms as forms;
 pub use tide_querystring as querystring;
 
 pub mod middleware {
+    //! Module to export tide_core middleware
+
     // Core
     pub use tide_core::middleware::{Middleware, Next};
 
