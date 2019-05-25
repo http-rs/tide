@@ -1,16 +1,16 @@
 #![feature(async_await)]
 
-use tide::middleware::CorsMiddleware;
 use http::header::HeaderValue;
+use tide::middleware::CorsMiddleware;
 
 fn main() {
     let mut app = tide::App::new();
 
     app.middleware(
         CorsMiddleware::new()
-        .allow_origin(HeaderValue::from_static("*"))
-        .allow_methods(HeaderValue::from_static("GET, POST, OPTION"))
-        .echo_back_origin(true)
+            .allow_origin(HeaderValue::from_static("*"))
+            .allow_methods(HeaderValue::from_static("GET, POST, OPTION"))
+            .echo_back_origin(true),
     );
 
     app.at("/").get(async move |_| "Hello, world!");
