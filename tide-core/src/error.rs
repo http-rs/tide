@@ -50,6 +50,7 @@ mod types {
             Self(error)
         }
 
+        #[allow(clippy::borrowed_box)]
         pub fn inner_ref(&self) -> &Box<dyn std::error::Error + Send + Sync> {
             &self.0
         }
