@@ -20,23 +20,25 @@ mod types {
         resp: Response,
     }
 
-    impl Error {
-        pub fn new(response: Response) -> Self {
-            Self { resp: response }
-        }
-
-        pub fn response_ref(&self) -> &Response {
-            &self.resp
-        }
-
-        pub fn into_response(self) -> Response {
+    impl IntoResponse for Error {
+        fn into_response(self) -> Response {
             self.resp
         }
     }
 
-    impl IntoResponse for Error {
-        fn into_response(self) -> Response {
-            self.resp
+    impl From<Response> for Error {
+        fn from(resp: Response) -> Error {
+            Error { resp }
+        }
+    }
+
+    impl From<StatusCode> for Error {
+        fn from(status: StatusCode) -> Error {
+            let resp = http::Response::builder()
+                .status(status)
+                .body(Body::empty())
+                .unwrap();
+            Error { resp }
         }
     }
 
@@ -54,22 +56,6 @@ mod types {
 
         pub fn into_inner(self) -> Box<dyn std::error::Error + Send + Sync> {
             self.0
-        }
-    }
-
-    impl From<Response> for Error {
-        fn from(resp: Response) -> Error {
-            Error { resp }
-        }
-    }
-
-    impl From<StatusCode> for Error {
-        fn from(status: StatusCode) -> Error {
-            let resp = http::Response::builder()
-                .status(status)
-                .body(Body::empty())
-                .unwrap();
-            Error { resp }
         }
     }
 
@@ -160,7 +146,7 @@ mod ext {
             StatusCode: HttpTryFrom<S>,
         {
             self.map_err(|e| {
-                Error::new(
+                Error::from(
                     Response::builder()
                         .status(status)
                         .extension(Cause::new(e))
