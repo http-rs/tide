@@ -54,6 +54,7 @@ pub mod middleware {
     pub use tide_core::middleware::{Middleware, Next};
 
     // Exports from tide repo.
+    pub use tide_cors::CorsMiddleware;
     pub use tide_headers::DefaultHeaders;
     pub use tide_log::RequestLogger;
 

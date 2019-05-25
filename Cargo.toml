@@ -28,6 +28,7 @@ futures-preview = "0.3.0-alpha.16"
 http = "0.1"
 http-service = "0.2.0"
 tide-cookies = { path = "./tide-cookies", optional = true }
+tide-cors = { path = "./tide-cors" }
 tide-core = { path = "./tide-core" }
 tide-headers = { path = "./tide-headers" }
 tide-log = { path = "./tide-log" }
