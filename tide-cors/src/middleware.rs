@@ -149,3 +149,192 @@ impl Default for CorsMiddleware {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use http::header::HeaderValue;
+    use http_service::Body;
+    use http_service_mock::make_server;
+
+    const ALLOW_ORIGIN: &str = "example.com";
+    const ALLOW_METHODS: &str = "GET, POST, OPTIONS, DELETE";
+    const EXPOSE_HEADER: &str = "X-My-Custom-Header";
+
+    const ENDPOINT: &str = "/cors";
+
+    fn app() -> tide_core::App<()> {
+        let mut app = tide_core::App::new();
+        app.at(ENDPOINT).get(async move |_| "Hello World");
+
+        app
+    }
+
+    fn request() -> http::Request<http_service::Body> {
+        http::Request::get(ENDPOINT)
+            .header(http::header::ORIGIN, ALLOW_ORIGIN)
+            .method(http::method::Method::GET)
+            .body(Body::empty())
+            .unwrap()
+    }
+
+    #[test]
+    fn preflight_request() {
+        let mut app = app();
+        app.middleware(
+            CorsMiddleware::new()
+                .allow_origin(HeaderValue::from_static(ALLOW_ORIGIN))
+                .allow_methods(HeaderValue::from_static(ALLOW_METHODS))
+                .expose_headers(HeaderValue::from_static(EXPOSE_HEADER)),
+        );
+
+        let mut server = make_server(app.into_http_service()).unwrap();
+
+        let req = http::Request::get(ENDPOINT)
+            .header(http::header::ORIGIN, ALLOW_ORIGIN)
+            .method(http::method::Method::OPTIONS)
+            .body(Body::empty())
+            .unwrap();
+
+        let res = server.simulate(req).unwrap();
+
+        assert_eq!(res.status(), 200);
+
+        assert_eq!(
+            res.headers().get("access-control-allow-origin").unwrap(),
+            ALLOW_ORIGIN
+        );
+        assert_eq!(
+            res.headers().get("access-control-allow-methods").unwrap(),
+            ALLOW_METHODS
+        );
+        assert_eq!(
+            res.headers().get("access-control-allow-headers").unwrap(),
+            WILDCARD
+        );
+        assert_eq!(
+            res.headers().get("access-control-max-age").unwrap(),
+            DEFAULT_MAX_AGE
+        );
+    }
+    #[test]
+    fn default_cors_middleware() {
+        let mut app = app();
+        app.middleware(CorsMiddleware::new());
+
+        let mut server = make_server(app.into_http_service()).unwrap();
+        let res = server.simulate(request()).unwrap();
+
+        assert_eq!(res.status(), 200);
+        assert_eq!(
+            res.headers().get("access-control-allow-origin").unwrap(),
+            "*"
+        );
+        assert_eq!(
+            res.headers().get("access-control-allow-methods").unwrap(),
+            "GET, POST, OPTIONS"
+        );
+        assert_eq!(
+            res.headers().get("access-control-allow-headers").unwrap(),
+            "*"
+        );
+        assert_eq!(
+            res.headers().get("access-control-max-age").unwrap(),
+            "86400"
+        );
+
+        assert_eq!(
+            res.headers().get("access-control-expose-headers").unwrap(),
+            ""
+        );
+        assert_eq!(
+            res.headers()
+                .get("access-control-allow-credentials")
+                .unwrap(),
+            "false"
+        );
+    }
+
+    #[test]
+    fn custom_cors_middleware() {
+        let mut app = app();
+        app.middleware(
+            CorsMiddleware::new()
+                .allow_origin(HeaderValue::from_static(ALLOW_ORIGIN))
+                .allow_credentials(false)
+                .allow_methods(HeaderValue::from_static(ALLOW_METHODS))
+                .expose_headers(HeaderValue::from_static(EXPOSE_HEADER)),
+        );
+
+        let mut server = make_server(app.into_http_service()).unwrap();
+        let res = server.simulate(request()).unwrap();
+
+        assert_eq!(res.status(), 200);
+        assert_eq!(
+            res.headers().get("access-control-allow-origin").unwrap(),
+            ALLOW_ORIGIN
+        );
+        assert_eq!(
+            res.headers().get("access-control-allow-methods").unwrap(),
+            ALLOW_METHODS
+        );
+        assert_eq!(
+            res.headers().get("access-control-allow-headers").unwrap(),
+            WILDCARD
+        );
+        assert_eq!(
+            res.headers().get("access-control-max-age").unwrap(),
+            DEFAULT_MAX_AGE
+        );
+
+        assert_eq!(
+            res.headers().get("access-control-expose-headers").unwrap(),
+            EXPOSE_HEADER
+        );
+        assert_eq!(
+            res.headers()
+                .get("access-control-allow-credentials")
+                .unwrap(),
+            "false"
+        );
+    }
+
+    #[test]
+    fn credentials_true() {
+        let mut app = app();
+        app.middleware(CorsMiddleware::new().allow_credentials(true));
+
+        let mut server = make_server(app.into_http_service()).unwrap();
+        let res = server.simulate(request()).unwrap();
+
+        assert_eq!(res.status(), 200);
+        assert_eq!(
+            res.headers()
+                .get("access-control-allow-credentials")
+                .unwrap(),
+            "true"
+        );
+    }
+
+    #[test]
+    fn echo_back_option() {
+        let mut app = app();
+        app.middleware(CorsMiddleware::new().echo_back_origin(true));
+
+        let mut server = make_server(app.into_http_service()).unwrap();
+        let req = http::Request::get(ENDPOINT)
+            .header(http::header::ORIGIN, "foo")
+            .method(http::method::Method::GET)
+            .body(Body::empty())
+            .unwrap();
+
+        let res = server.simulate(req).unwrap();
+        println!("{:?}", res.headers());
+
+        assert_eq!(res.status(), 200);
+        assert_eq!(
+            res.headers().get("access-control-allow-origin").unwrap(),
+            "foo"
+        );
+    }
+}
