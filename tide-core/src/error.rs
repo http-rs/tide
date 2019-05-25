@@ -5,11 +5,11 @@ macro_rules! err_fmt {
     }
 }
 
-pub use types::{Error, Cause, StringError};
-pub use ext::{ResponseExt, ResultExt, ResultDynErrExt };
+pub use ext::{ResponseExt, ResultDynErrExt, ResultExt};
+pub use types::{Cause, Error, StringError};
 
 mod types {
-    use http::{StatusCode};
+    use http::StatusCode;
     use http_service::{Body, Response};
 
     use crate::response::IntoResponse;
@@ -22,9 +22,7 @@ mod types {
 
     impl Error {
         pub fn new(response: Response) -> Self {
-            Self { 
-                resp: response,
-            }
+            Self { resp: response }
         }
 
         pub fn response_ref(&self) -> &Response {
@@ -89,9 +87,9 @@ mod types {
 mod ext {
     use http::{HttpTryFrom, Response, StatusCode};
     use http_service::Body;
-    
+
+    use super::types::{Cause, Error};
     use crate::endpoint::EndpointResult;
-    use super::types::{Error, Cause};
 
     /// Extends the `Response` type with a method to extract error causes when applicable.
     pub trait ResponseExt {
@@ -161,13 +159,15 @@ mod ext {
         where
             StatusCode: HttpTryFrom<S>,
         {
-            self.map_err(|e| Error::new(
-                Response::builder()
-                    .status(status)
-                    .extension(Cause::new(e))
-                    .body(Body::empty())
-                    .unwrap()
-            ))
+            self.map_err(|e| {
+                Error::new(
+                    Response::builder()
+                        .status(status)
+                        .extension(Cause::new(e))
+                        .body(Body::empty())
+                        .unwrap(),
+                )
+            })
         }
     }
 }

@@ -297,7 +297,7 @@ impl<State: Sync + Send + 'static> HttpService for Server<State> {
             let fut = {
                 let Selection { endpoint, params } = router.route(&path, method);
                 let cx = Context::new(state, req, params);
-                let next = Next::new(endpoint,&middleware);
+                let next = Next::new(endpoint, &middleware);
                 next.run(cx)
             };
 
@@ -328,7 +328,7 @@ mod tests {
             .body(http_service::Body::empty())
             .unwrap();
         let cx = Context::new(state, req, params);
-        let next = Next::new(endpoint,&app.middleware);
+        let next = Next::new(endpoint, &app.middleware);
         next.run(cx)
     }
 

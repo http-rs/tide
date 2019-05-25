@@ -1,7 +1,7 @@
 use futures::future::{BoxFuture, Future};
 use futures::prelude::*;
 
-use crate::{response::IntoResponse, Context, Response, error::Error};
+use crate::{error::Error, response::IntoResponse, Context, Response};
 
 /// A Tide endpoint.
 ///

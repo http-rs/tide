@@ -33,9 +33,7 @@ pub use tide_cookies as cookies;
 pub use tide_core::{err_fmt, response, Body, Context, Endpoint, EndpointResult, Error, Response};
 
 pub mod error {
-    pub use tide_core::error::{
-        Error, ResponseExt, ResultDynErrExt, ResultExt, StringError,
-    };
+    pub use tide_core::error::{Error, ResponseExt, ResultDynErrExt, ResultExt, StringError};
 }
 
 pub use tide_forms as forms;
