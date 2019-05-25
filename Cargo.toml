@@ -55,6 +55,7 @@ members = [
     "tide-compression",
     "tide-cookies",
     "tide-core",
+    "tide-cors",
     "tide-forms",
     "tide-headers",
     "tide-log",
