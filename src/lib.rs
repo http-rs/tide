@@ -34,7 +34,7 @@ pub use tide_core::{err_fmt, response, Body, Context, Endpoint, EndpointResult, 
 
 pub mod error {
     pub use tide_core::error::{
-        EndpointResult, Error, ResponseExt, ResultDynErrExt, ResultExt, StringError,
+        Error, ResponseExt, ResultDynErrExt, ResultExt, StringError,
     };
 }
 

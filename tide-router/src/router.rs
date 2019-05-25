@@ -16,7 +16,7 @@ pub struct Router<State> {
     method_map: FnvHashMap<http::Method, MethodRouter<Box<DynEndpoint<State>>>>,
 }
 
-// TODO (PR258): We don't want this exposed outside of tide repo
+// TODO: We don't want this exposed outside of tide repo
 /// The result of routing a URL
 #[allow(missing_debug_implementations)]
 pub struct Selection<'a, State> {

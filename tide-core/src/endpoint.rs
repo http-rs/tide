@@ -1,7 +1,7 @@
 use futures::future::{BoxFuture, Future};
 use futures::prelude::*;
 
-use crate::{response::IntoResponse, Context, Response};
+use crate::{response::IntoResponse, Context, Response, error::Error};
 
 /// A Tide endpoint.
 ///
@@ -69,3 +69,6 @@ where
         FutureExt::boxed(async move { fut.await.into_response() })
     }
 }
+
+/// A convenient `Result` instantiation appropriate for most endpoints.
+pub type EndpointResult<T = Response> = Result<T, Error>;

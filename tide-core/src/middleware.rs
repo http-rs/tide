@@ -21,15 +21,22 @@ where
     }
 }
 
-// TODO (PR258): We don't want this exposed outside of tide repo
 /// The remainder of a middleware chain, including the endpoint.
 #[allow(missing_debug_implementations)]
 pub struct Next<'a, State> {
-    pub endpoint: &'a DynEndpoint<State>,
-    pub next_middleware: &'a [Arc<dyn Middleware<State>>],
+    endpoint: &'a DynEndpoint<State>,
+    next_middleware: &'a [Arc<dyn Middleware<State>>],
 }
 
 impl<'a, State: 'static> Next<'a, State> {
+    /// Create a new instance
+    pub fn new(endpoint: &'a DynEndpoint<State>, next: &'a [Arc<dyn Middleware<State>>]) -> Self {
+        Self {
+            endpoint,
+            next_middleware: next,
+        }
+    }
+
     /// Asynchronously execute the remaining middleware chain.
     pub fn run(mut self, cx: Context<State>) -> BoxFuture<'a, Response> {
         if let Some((current, next)) = self.next_middleware.split_first() {

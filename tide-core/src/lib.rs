@@ -23,7 +23,7 @@ pub mod internal;
 
 pub use crate::{
     context::Context,
-    endpoint::Endpoint,
-    error::{EndpointResult, Error},
+    endpoint::{Endpoint, EndpointResult},
+    error::Error,
     response::{Body, Response},
 };
