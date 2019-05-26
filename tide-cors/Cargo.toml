@@ -6,6 +6,7 @@ authors = [
 ]
 description = "Cors middleware and extensions for Tide"
 documentation = "https://docs.rs/tide-cors"
+readme = "README.md"
 repository = "https://github.com/rustasync/tide"
 license = "MIT OR Apache-2.0"
 edition = "2018"
