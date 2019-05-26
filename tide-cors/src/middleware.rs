@@ -13,11 +13,14 @@ use tide_core::{
 /// # Example
 ///
 /// ```rust
+///use http::header::HeaderValue;
+///use tide::middleware::CorsMiddleware;
+///
 ///CorsMiddleware::new()
 ///    .allow_origin(HeaderValue::from_static("*"))
 ///    .allow_methods(HeaderValue::from_static("GET, POST, OPTION"))
-///    .allow_credentials(false),
-///    .echo_back_origin(true),
+///    .allow_credentials(false)
+///    .echo_back_origin(true);
 /// ```
 #[derive(Clone, Debug, Hash)]
 pub struct CorsMiddleware {

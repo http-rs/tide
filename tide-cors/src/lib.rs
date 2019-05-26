@@ -9,7 +9,7 @@
 //!
 //! Examples are in the `/examples` folder of this crate.
 //!
-//! ```rust
+//! ```rust, no_run
 //! #![feature(async_await)]
 //!
 //! use http::header::HeaderValue;
