@@ -54,3 +54,8 @@ matrix:
   - name: cargo test
     script:
     - cargo test -Zmtime-on-use --all --verbose
+
+  - name: cargo test --all-features
+    script:
+    - cargo test -Zmtime-on-use --all-features
+    - cargo test -Zmtime-on-use --manifest-path tide-slog/Cargo.toml --all-features
