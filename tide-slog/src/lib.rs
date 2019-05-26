@@ -1,6 +1,7 @@
 //! Crate that provides helpers and/or middlewares for Tide
 //! related to structured logging with slog.
 
+#![cfg_attr(docrs, feature(doc_cfg))]
 #![feature(async_await)]
 #![warn(
     nonstandard_style,
@@ -9,65 +10,33 @@
     missing_debug_implementations
 )]
 
-use slog::{info, o, trace, Drain};
-use slog_async;
-use slog_term;
+mod per_request_logger;
+mod request_logger;
+#[cfg(feature = "scope")]
+mod set_slog_scope_logger;
 
-use futures::future::BoxFuture;
+pub use per_request_logger::PerRequestLogger;
+pub use request_logger::RequestLogger;
+#[cfg(feature = "scope")]
+pub use set_slog_scope_logger::SetSlogScopeLogger;
 
-use tide_core::{
-    middleware::{Middleware, Next},
-    Context, Response,
-};
+use tide_core::Context;
 
-/// RequestLogger based on slog.SimpleLogger
-#[derive(Debug)]
-pub struct RequestLogger {
-    // drain: dyn slog::Drain,
-    inner: slog::Logger,
+/// An extension to [`Context`] that provides access to a per-request [`slog::Logger`]
+pub trait ContextExt {
+    /// Returns a [`slog::Logger`] scoped to this request.
+    ///
+    /// # Panics
+    ///
+    /// Will panic if no [`PerRequestLogger`] middleware has been used to setup the request scoped
+    /// logger.
+    fn logger(&self) -> &slog::Logger;
 }
 
-impl RequestLogger {
-    pub fn new() -> Self {
-        Default::default()
-    }
-
-    pub fn with_logger(logger: slog::Logger) -> Self {
-        Self { inner: logger }
-    }
-}
-
-impl Default for RequestLogger {
-    fn default() -> Self {
-        let decorator = slog_term::TermDecorator::new().build();
-        let drain = slog_term::CompactFormat::new(decorator).build().fuse();
-        let drain = slog_async::Async::new(drain).build().fuse();
-
-        let log = slog::Logger::root(drain, o!());
-        Self { inner: log }
-    }
-}
-
-/// Stores information during request phase and logs information once the response
-/// is generated.
-impl<State: Send + Sync + 'static> Middleware<State> for RequestLogger {
-    fn handle<'a>(&'a self, cx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
-        Box::pin(async move {
-            let path = cx.uri().path().to_owned();
-            let method = cx.method().as_str().to_owned();
-            trace!(self.inner, "IN => {} {}", method, path);
-            let start = std::time::Instant::now();
-            let res = next.run(cx).await;
-            let status = res.status();
-            info!(
-                self.inner,
-                "{} {} {} {}ms",
-                method,
-                path,
-                status.as_str(),
-                start.elapsed().as_millis()
-            );
-            res
-        })
+impl<State> ContextExt for Context<State> {
+    fn logger(&self) -> &slog::Logger {
+        self.extensions()
+            .get::<slog::Logger>()
+            .expect("PerRequestLogger must be used to populate request logger")
     }
 }
