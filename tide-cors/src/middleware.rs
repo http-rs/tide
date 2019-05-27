@@ -305,7 +305,6 @@ mod test {
             .unwrap();
 
         let res = server.simulate(req).unwrap();
-        println!("{:?}", res.headers());
 
         assert_eq!(res.status(), 200);
         assert_eq!(
