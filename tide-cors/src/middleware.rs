@@ -93,6 +93,40 @@ impl CorsMiddleware {
         self.echo_back_origin = echo_back_origin;
         self
     }
+
+    fn build_preflight_response(&self) -> http::response::Response<Body> {
+        let mut response = http::Response::builder()
+            .status(StatusCode::OK)
+            .header(
+                header::ACCESS_CONTROL_ALLOW_ORIGIN,
+                self.allow_origin.clone(),
+            )
+            .header(
+                header::ACCESS_CONTROL_ALLOW_METHODS,
+                self.allow_methods.clone(),
+            )
+            .header(
+                header::ACCESS_CONTROL_ALLOW_HEADERS,
+                self.allow_headers.clone(),
+            )
+            .header(header::ACCESS_CONTROL_MAX_AGE, self.max_age.clone())
+            .body(Body::empty())
+            .unwrap();
+
+        if let Some(allow_credentials) = self.allow_credentials.clone() {
+            response
+                .headers_mut()
+                .append(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, allow_credentials);
+        }
+
+        if let Some(expose_headers) = self.expose_headers.clone() {
+            response
+                .headers_mut()
+                .append(header::ACCESS_CONTROL_EXPOSE_HEADERS, expose_headers);
+        }
+
+        response
+    }
 }
 
 use http::{header, Method, StatusCode};
@@ -102,37 +136,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
         FutureExt::boxed(async move {
             // Return results immediately upon preflight request
             if cx.method() == Method::OPTIONS {
-                let mut response = http::Response::builder()
-                    .status(StatusCode::OK)
-                    .header(
-                        header::ACCESS_CONTROL_ALLOW_ORIGIN,
-                        self.allow_origin.clone(),
-                    )
-                    .header(
-                        header::ACCESS_CONTROL_ALLOW_METHODS,
-                        self.allow_methods.clone(),
-                    )
-                    .header(
-                        header::ACCESS_CONTROL_ALLOW_HEADERS,
-                        self.allow_headers.clone(),
-                    )
-                    .header(header::ACCESS_CONTROL_MAX_AGE, self.max_age.clone())
-                    .body(Body::empty())
-                    .unwrap();
-
-                if let Some(allow_credentials) = self.allow_credentials.clone() {
-                    response
-                        .headers_mut()
-                        .append(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, allow_credentials);
-                }
-
-                if let Some(expose_headers) = self.expose_headers.clone() {
-                    response
-                        .headers_mut()
-                        .append(header::ACCESS_CONTROL_EXPOSE_HEADERS, expose_headers);
-                }
-
-                return response;
+                return self.build_preflight_response();
             }
 
             let origin = if self.echo_back_origin {
