@@ -1,9 +1,11 @@
+//! Error and Result module
+
+use crate::response::IntoResponse;
 use http::{HttpTryFrom, Response, StatusCode};
 use http_service::Body;
 
-use crate::response::IntoResponse;
-
 #[derive(Debug)]
+/// A string error, which can be display
 pub struct StringError(pub String);
 impl std::error::Error for StringError {}
 
@@ -14,6 +16,7 @@ impl std::fmt::Display for StringError {
 }
 
 #[macro_export]
+/// Macro that generates StringError immediately
 macro_rules! err_fmt {
     {$($t:tt)*} => {
         $crate::error::StringError(format!($($t)*))

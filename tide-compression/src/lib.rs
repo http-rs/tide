@@ -8,8 +8,11 @@
     nonstandard_style,
     rust_2018_idioms,
     future_incompatible,
-    missing_debug_implementations
+    missing_debug_implementations,
+    missing_docs
 )]
+
+//! Compression-related middleware for Tide
 
 pub use accept_encoding::Encoding;
 use async_compression::stream;

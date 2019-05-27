@@ -37,6 +37,7 @@ impl<'a, State: 'static> Route<'a, State> {
         }
     }
 
+    /// Add endpoint nested routes
     pub fn nest(&mut self, f: impl FnOnce(&mut Route<'a, State>)) -> &mut Self {
         f(self);
         self
