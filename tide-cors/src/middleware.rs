@@ -24,29 +24,28 @@ use tide_core::{
 /// ```
 #[derive(Clone, Debug, Hash)]
 pub struct CorsMiddleware {
-    allow_credentials: HeaderValue,
+    allow_credentials: Option<HeaderValue>,
     allow_headers: HeaderValue,
     allow_methods: HeaderValue,
     allow_origin: HeaderValue,
-    expose_headers: HeaderValue,
+    expose_headers: Option<HeaderValue>,
     echo_back_origin: bool,
     max_age: HeaderValue,
 }
 
 pub const DEFAULT_MAX_AGE: &str = "86400";
 pub const DEFAULT_METHODS: &str = "GET, POST, OPTIONS";
-pub const EMPTY_HEADER: &str = "";
 pub const WILDCARD: &str = "*";
 
 impl CorsMiddleware {
     /// Creates a new Cors middleware.
     pub fn new() -> Self {
         Self {
-            allow_credentials: HeaderValue::from_static("false"),
+            allow_credentials: None,
             allow_headers: HeaderValue::from_static(WILDCARD),
             allow_methods: HeaderValue::from_static(DEFAULT_METHODS),
             allow_origin: HeaderValue::from_static(WILDCARD),
-            expose_headers: HeaderValue::from_static(EMPTY_HEADER),
+            expose_headers: None,
             echo_back_origin: false,
             max_age: HeaderValue::from_static(DEFAULT_MAX_AGE),
         }
@@ -54,7 +53,7 @@ impl CorsMiddleware {
 
     /// Set allow_credentials and return new CorsMiddleware
     pub fn allow_credentials(mut self, allow_credentials: bool) -> Self {
-        self.allow_credentials = HeaderValue::from_str(&allow_credentials.to_string()).unwrap();
+        self.allow_credentials = Some(HeaderValue::from_str(&allow_credentials.to_string()).unwrap());
         self
     }
 
@@ -84,7 +83,7 @@ impl CorsMiddleware {
 
     /// Set expose_headers and return new CorsMiddleware
     pub fn expose_headers(mut self, headers: impl Into<HeaderValue>) -> Self {
-        self.expose_headers = headers.into();
+        self.expose_headers = Some(headers.into());
         self
     }
 
@@ -134,24 +133,14 @@ impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
             let headers = response.headers_mut();
 
             headers.append(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin);
-            headers.append(
-                header::ACCESS_CONTROL_ALLOW_HEADERS,
-                self.allow_headers.clone(),
-            );
-            headers.append(
-                header::ACCESS_CONTROL_ALLOW_METHODS,
-                self.allow_methods.clone(),
-            );
-            headers.append(header::ACCESS_CONTROL_MAX_AGE, self.max_age.clone());
-            headers.append(
-                header::ACCESS_CONTROL_EXPOSE_HEADERS,
-                self.expose_headers.clone(),
-            );
-            headers.append(
-                header::ACCESS_CONTROL_ALLOW_CREDENTIALS,
-                self.allow_credentials.clone(),
-            );
 
+            if let Some(expose_headers) = self.expose_headers.clone(){
+                headers.append(header::ACCESS_CONTROL_EXPOSE_HEADERS, expose_headers);
+            }
+
+            if let Some(allow_credentials) = self.allow_credentials.clone(){
+                headers.append(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, allow_credentials);
+            }
             response
         })
     }
@@ -239,32 +228,10 @@ mod test {
         let res = server.simulate(request()).unwrap();
 
         assert_eq!(res.status(), 200);
+
         assert_eq!(
             res.headers().get("access-control-allow-origin").unwrap(),
             "*"
-        );
-        assert_eq!(
-            res.headers().get("access-control-allow-methods").unwrap(),
-            "GET, POST, OPTIONS"
-        );
-        assert_eq!(
-            res.headers().get("access-control-allow-headers").unwrap(),
-            "*"
-        );
-        assert_eq!(
-            res.headers().get("access-control-max-age").unwrap(),
-            "86400"
-        );
-
-        assert_eq!(
-            res.headers().get("access-control-expose-headers").unwrap(),
-            ""
-        );
-        assert_eq!(
-            res.headers()
-                .get("access-control-allow-credentials")
-                .unwrap(),
-            "false"
         );
     }
 
@@ -287,19 +254,6 @@ mod test {
             res.headers().get("access-control-allow-origin").unwrap(),
             ALLOW_ORIGIN
         );
-        assert_eq!(
-            res.headers().get("access-control-allow-methods").unwrap(),
-            ALLOW_METHODS
-        );
-        assert_eq!(
-            res.headers().get("access-control-allow-headers").unwrap(),
-            WILDCARD
-        );
-        assert_eq!(
-            res.headers().get("access-control-max-age").unwrap(),
-            DEFAULT_MAX_AGE
-        );
-
         assert_eq!(
             res.headers().get("access-control-expose-headers").unwrap(),
             EXPOSE_HEADER
