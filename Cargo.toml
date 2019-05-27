@@ -54,6 +54,7 @@ log = "0.4.6"
 members = [
     "tide-compression",
     "tide-cookies",
+    "tide-sessions",
     "tide-core",
     "tide-forms",
     "tide-headers",
