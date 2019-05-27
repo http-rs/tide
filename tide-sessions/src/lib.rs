@@ -21,7 +21,7 @@ pub trait SessionStore {
     fn create_session(&self) -> SessionMap {
         SessionMap::new()
     }
-    fn commit(&self, session: Ref<Box<SessionMap>>) -> Result<HeaderValue, std::io::Error>;
+    fn commit(&self, key: Option<&str>, session: Ref<Box<SessionMap>>) -> Result<HeaderValue, std::io::Error>;
 }
 
 pub struct SessionMiddleware<Store: SessionStore + Send + Sync> {
@@ -68,17 +68,20 @@ impl<
 
         FutureExt::boxed(async move {
             let result_maybe_session = ctx.get_cookie(&self.session_key);
-            let mut has_session = false;
 
-            let session = match result_maybe_session {
+            let session_key = match result_maybe_session {
                 Ok(maybe_session) => match maybe_session {
-                    Some(cookie) => {
-                        has_session = true;
-                        self.store.load_session(cookie.value())
-                    },
-                    None => self.store.create_session()
+                    Some(cookie) => Some(String::from(cookie.value())),
+                    None => None
                 },
-                Err(_) => self.store.create_session()
+                Err(_) => None
+            };
+
+            let session = match session_key.as_ref() {
+                Some(value) => {
+                    self.store.load_session(&value)
+                },
+                None => self.store.create_session()
             };
 
             // Create a ref-counted cell (yay interior mutability.) Attach
@@ -98,9 +101,15 @@ impl<
                 return res
             }
 
-            if let Ok(key) = self.store.commit(session) {
-                if !has_session {
+            if let Ok(key) = self.store.commit(session_key.as_ref().map(String::as_str), session) {
+                if session_key.is_none() {
                     let hm = res.headers_mut();
+                    // TODO: set the cookie's domain, path, expiry, sameSite,
+                    // etc. properties via options set in the middleware.
+                    // TODO: is there a good way to play nicely with cookie
+                    // middleware? Can we rely on additions to context that
+                    // other middleware add during the response half of the
+                    // request lifecycle?
                     hm.insert("Set-Cookie", key);
                 }
             }
