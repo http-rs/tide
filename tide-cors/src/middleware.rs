@@ -123,6 +123,10 @@ impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
                     response.headers_mut().append(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, allow_credentials);
                 }
 
+                if let Some(expose_headers) = self.expose_headers.clone(){
+                    response.headers_mut().append(header::ACCESS_CONTROL_EXPOSE_HEADERS, expose_headers);
+                }
+
                 return response
             }
 
@@ -139,10 +143,6 @@ impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
             let headers = response.headers_mut();
 
             headers.append(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin);
-
-            if let Some(expose_headers) = self.expose_headers.clone(){
-                headers.append(header::ACCESS_CONTROL_EXPOSE_HEADERS, expose_headers);
-            }
 
             if let Some(allow_credentials) = self.allow_credentials.clone(){
                 headers.append(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, allow_credentials);
@@ -193,7 +193,8 @@ mod test {
             CorsMiddleware::new()
                 .allow_origin(HeaderValue::from_static(ALLOW_ORIGIN))
                 .allow_methods(HeaderValue::from_static(ALLOW_METHODS))
-                .expose_headers(HeaderValue::from_static(EXPOSE_HEADER)),
+                .expose_headers(HeaderValue::from_static(EXPOSE_HEADER))
+                .allow_credentials(true)
         );
 
         let mut server = make_server(app.into_http_service()).unwrap();
@@ -223,6 +224,11 @@ mod test {
         assert_eq!(
             res.headers().get("access-control-max-age").unwrap(),
             DEFAULT_MAX_AGE
+        );
+
+        assert_eq!(
+            res.headers().get("access-control-allow-credentials").unwrap(),
+            "true"
         );
     }
     #[test]
@@ -259,16 +265,6 @@ mod test {
         assert_eq!(
             res.headers().get("access-control-allow-origin").unwrap(),
             ALLOW_ORIGIN
-        );
-        assert_eq!(
-            res.headers().get("access-control-expose-headers").unwrap(),
-            EXPOSE_HEADER
-        );
-        assert_eq!(
-            res.headers()
-                .get("access-control-allow-credentials")
-                .unwrap(),
-            "false"
         );
     }
 
