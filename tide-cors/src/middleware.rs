@@ -101,7 +101,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
         FutureExt::boxed(async move {
             // Return results immediately upon preflight request
             if cx.method() == Method::OPTIONS {
-                return http::Response::builder()
+                let mut response = http::Response::builder()
                     .status(StatusCode::OK)
                     .header(
                         header::ACCESS_CONTROL_ALLOW_ORIGIN,
@@ -118,6 +118,12 @@ impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
                     .header(header::ACCESS_CONTROL_MAX_AGE, self.max_age.clone())
                     .body(Body::empty())
                     .unwrap();
+
+                if let Some(allow_credentials) = self.allow_credentials.clone(){
+                    response.headers_mut().append(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, allow_credentials);
+                }
+
+                return response
             }
 
             let origin = if self.echo_back_origin {
