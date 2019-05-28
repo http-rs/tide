@@ -3,6 +3,8 @@
 use futures::future::BoxFuture;
 use futures::prelude::*;
 use http::header::HeaderValue;
+use http::{header, Method, StatusCode};
+use http_service::Body;
 use tide_core::{
     middleware::{Middleware, Next},
     Context, Response,
@@ -56,31 +58,31 @@ impl CorsMiddleware {
     }
 
     /// Set allow_headers and return new CorsMiddleware
-    pub fn allow_headers(mut self, headers: impl Into<HeaderValue>) -> Self {
+    pub fn allow_headers<T: Into<HeaderValue>>(mut self, headers: T) -> Self {
         self.allow_headers = headers.into();
         self
     }
 
     /// Set max_age and return new CorsMiddleware
-    pub fn max_age(mut self, max_age: impl Into<HeaderValue>) -> Self {
+    pub fn max_age<T: Into<HeaderValue>>(mut self, max_age: T) -> Self {
         self.max_age = max_age.into();
         self
     }
 
     /// Set allow_methods and return new CorsMiddleware
-    pub fn allow_methods(mut self, methods: impl Into<HeaderValue>) -> Self {
+    pub fn allow_methods<T: Into<HeaderValue>>(mut self, methods: T) -> Self {
         self.allow_methods = methods.into();
         self
     }
 
     /// Set allow_origin and return new CorsMiddleware
-    pub fn allow_origin(mut self, origin: impl Into<HeaderValue>) -> Self {
+    pub fn allow_origin<T: Into<HeaderValue>>(mut self, origin: T) -> Self {
         self.allow_origin = origin.into();
         self
     }
 
     /// Set expose_headers and return new CorsMiddleware
-    pub fn expose_headers(mut self, headers: impl Into<HeaderValue>) -> Self {
+    pub fn expose_headers<T: Into<HeaderValue>>(mut self, headers: T) -> Self {
         self.expose_headers = Some(headers.into());
         self
     }
@@ -120,8 +122,6 @@ impl CorsMiddleware {
     }
 }
 
-use http::{header, Method, StatusCode};
-use http_service::Body;
 impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
     fn handle<'a>(&'a self, cx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
         FutureExt::boxed(async move {
