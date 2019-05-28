@@ -38,11 +38,8 @@ impl Deref for SessionMap {
 }
 
 impl DerefMut for SessionMap {
-    // XXX: A tweet linked to this line in master earlier. If you're
-    // coming in from that link, the original comment is preserved
-    // at this URL: https://github.com/chrisdickinson/blog-rs/blob/6dfbe91a4fa09714ce6a975e4663e3e1efdaf9fa/src/session.rs#L45
     fn deref_mut(&mut self) -> &mut Self::Target {
+        SessionMap::rotate(self);
         &mut self.data
     }
 }
-

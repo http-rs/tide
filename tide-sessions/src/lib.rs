@@ -118,3 +118,7 @@ impl<
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+}
