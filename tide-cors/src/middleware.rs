@@ -52,8 +52,10 @@ impl CorsMiddleware {
 
     /// Set allow_credentials and return new CorsMiddleware
     pub fn allow_credentials(mut self, allow_credentials: bool) -> Self {
-        self.allow_credentials =
-            Some(HeaderValue::from_str(&allow_credentials.to_string()).unwrap());
+        self.allow_credentials = match HeaderValue::from_str(&allow_credentials.to_string()) {
+            Ok(header) => Some(header),
+            Err(_) => None,
+        };
         self
     }
 
