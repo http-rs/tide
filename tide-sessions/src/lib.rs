@@ -1,8 +1,5 @@
 #![feature(async_await)]
-use std::{
-    cell::{ RefCell, Ref, RefMut },
-    sync::Arc
-};
+use std::cell::Ref;
 use tide::{
     Context,
     Response,
@@ -12,58 +9,37 @@ use tide::{
 use futures::future::BoxFuture;
 use futures::prelude::*;
 use http::header::HeaderValue;
+use cookie::{ Cookie, CookieBuilder };
 
+mod session_cell;
 mod session_map;
-use self::session_map::SessionMap;
+mod ext;
+
+pub use crate::session_map::SessionMap;
+pub use crate::ext::SessionExt;
+
+use self::session_cell::SessionCell;
 
 pub trait SessionStore {
     fn load_session(&self, key: &str) -> SessionMap;
     fn create_session(&self) -> SessionMap {
         SessionMap::new()
     }
-    fn commit(&self, key: Option<&str>, session: Ref<Box<SessionMap>>) -> Result<HeaderValue, std::io::Error>;
+    fn commit(&self, key: Option<&str>, session: Ref<Box<SessionMap>>) -> Result<String, std::io::Error>;
 }
 
-pub struct SessionMiddleware<Store: SessionStore + Send + Sync> {
+pub struct SessionMiddleware<Store: SessionStore + Send + Sync, Configure: Send + Sync + Fn(CookieBuilder) -> CookieBuilder + 'static> {
     pub session_key: String,
-    pub store: Store
-}
+    pub store: Store,
 
-#[derive(Clone)]
-pub struct SessionCell(RefCell<Box<SessionMap>>);
-
-// We're copying actix, here. I need to understand this better, because
-// this strikes me as dangerous.
-#[doc(hidden)]
-unsafe impl Send for SessionCell {}
-#[doc(hidden)]
-unsafe impl Sync for SessionCell {}
-
-// If a handler needs access to the session (mutably or immutably) it can
-// import this trait.
-pub trait SessionExt {
-    fn session(&self) -> Ref<Box<SessionMap>>;
-    fn session_mut(&self) -> RefMut<Box<SessionMap>>;
-}
-
-impl<
-    Data: Clone + Send + Sync + 'static
-> SessionExt for Context<Data> {
-    fn session(&self) -> Ref<Box<SessionMap>> {
-        let session_cell = self.extensions().get::<Arc<SessionCell>>().unwrap();
-        session_cell.0.borrow()
-    }
-
-    fn session_mut(&self) -> RefMut<Box<SessionMap>> {
-        let session_cell = self.extensions().get::<Arc<SessionCell>>().unwrap();
-        session_cell.0.borrow_mut()
-    }
+    pub configure_session_cookie: Configure
 }
 
 impl<
     Data: Clone + Send + Sync + 'static,
-    S: SessionStore + Send + Sync + 'static
-> Middleware<Data> for SessionMiddleware<S> {
+    S: SessionStore + Send + Sync + 'static,
+    C: Send + Sync + Fn(CookieBuilder) -> CookieBuilder + 'static
+> Middleware<Data> for SessionMiddleware<S, C> {
     fn handle<'a>(&'a self, mut ctx: Context<Data>, next: Next<'a, Data>) -> BoxFuture<'a, Response> {
 
         FutureExt::boxed(async move {
@@ -84,12 +60,11 @@ impl<
                 None => self.store.create_session()
             };
 
-            // Create a ref-counted cell (yay interior mutability.) Attach
-            // a clone of that arc'd cell to the context and send it
-            // through. At the same time, keep our local copy of the arc
-            // ready for inspection after we're done processing the
+            // Create a ref-counted cell. Attach a clone of that ARC'd cell to
+            // the context and send it through. Meanwhile, keep our local copy
+            // of the arc ready for inspection after we're done processing the
             // request. 
-            let cell = Arc::new(SessionCell(RefCell::new(Box::new(session))));
+            let cell = SessionCell::new(session);
             ctx.extensions_mut().insert(cell.clone());
             let mut res = next.run(ctx).await;
 
@@ -101,16 +76,22 @@ impl<
                 return res
             }
 
-            if let Ok(key) = self.store.commit(session_key.as_ref().map(String::as_str), session) {
+            if let Ok(sid) = self.store.commit(session_key.as_ref().map(String::as_str), session) {
                 if session_key.is_none() {
-                    let hm = res.headers_mut();
-                    // TODO: set the cookie's domain, path, expiry, sameSite,
-                    // etc. properties via options set in the middleware.
-                    // TODO: is there a good way to play nicely with cookie
-                    // middleware? Can we rely on additions to context that
-                    // other middleware add during the response half of the
-                    // request lifecycle?
-                    hm.insert("Set-Cookie", key);
+                    let builder = Cookie::build(self.session_key.clone(), sid);
+                    let c = (self.configure_session_cookie)(
+                        builder
+                    ).finish();
+
+                    if let Ok(value) = HeaderValue::from_str(&c.to_string()) {
+                        // TODO: is there a good way to play nicely with cookie
+                        // middleware? Can we rely on additions to context that
+                        // other middleware add during the response half of the
+                        // request lifecycle?
+
+                        let headers = res.headers_mut();
+                        headers.insert("Set-Cookie", value);
+                    }
                 }
             }
 
@@ -121,4 +102,62 @@ impl<
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use futures::{
+        executor::{block_on, block_on_stream},
+        stream::StreamExt,
+    };
+    use http_service::Body;
+    use http_service_mock::make_server;
+    use cookie::CookieBuilder;
+
+    // Generates the app.
+    fn app<S, C>(mw: SessionMiddleware<S, C>) -> tide::App<()> where
+        S: SessionStore + Send + Sync + 'static,
+        C: Fn(CookieBuilder) -> CookieBuilder + Send + Sync {
+        let mut app = tide::App::new();
+        app.at("/session/:key").get(async move |ctx: Context<()>| {
+            let session = ctx.session();
+            let key: String = ctx.param("key").expect("failed to parse url param");
+            session.get(&key).expect("expected to be able to read key").clone()
+        }).post(async move |mut ctx: Context<()>| {
+            let key: String = ctx.param("key").expect("failed to parse url param");
+            let body = ctx.body_string().await.expect("failed to read test request body");
+            let mut session = ctx.session_mut();
+            session.insert(key, body);
+            "ok"
+        });
+        app.middleware(mw);
+        app
+    }
+
+    fn configure_cookie (builder: CookieBuilder) -> CookieBuilder {
+        builder
+    }
+
+    struct InMemorySessionStore;
+    impl SessionStore for InMemorySessionStore {
+        fn load_session(&self, key: &str) -> SessionMap {
+            SessionMap::new()
+        }
+
+        fn commit(&self, key: Option<&str>, session: Ref<Box<SessionMap>>) -> Result<String, std::io::Error> {
+            Ok(String::from("hi"))
+        }
+    }
+
+
+    #[test]
+    fn set_cookie_creates_new_session_id() {
+        let app = app(SessionMiddleware {
+            session_key: String::from("sid"),
+            store: InMemorySessionStore { },
+            configure_session_cookie: configure_cookie
+        });
+        let mut server = make_server(app.into_http_service()).unwrap();
+        let req = http::Request::post("/session/testkey")
+            .body(Body::from("hello world"))
+            .unwrap();
+        server.simulate(req).unwrap();
+    }
 }
