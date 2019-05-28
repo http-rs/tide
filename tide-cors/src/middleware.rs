@@ -18,7 +18,7 @@ use tide_core::{
 ///
 ///CorsMiddleware::new()
 ///    .allow_origin(HeaderValue::from_static("*"))
-///    .allow_methods(HeaderValue::from_static("GET, POST, OPTION"))
+///    .allow_methods(HeaderValue::from_static("GET, POST, OPTIONS"))
 ///    .allow_credentials(false);
 /// ```
 #[derive(Clone, Debug, Hash)]
