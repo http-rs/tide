@@ -19,8 +19,7 @@ use tide_core::{
 ///CorsMiddleware::new()
 ///    .allow_origin(HeaderValue::from_static("*"))
 ///    .allow_methods(HeaderValue::from_static("GET, POST, OPTION"))
-///    .allow_credentials(false)
-///    .echo_back_origin(true);
+///    .allow_credentials(false);
 /// ```
 #[derive(Clone, Debug, Hash)]
 pub struct CorsMiddleware {
@@ -29,7 +28,6 @@ pub struct CorsMiddleware {
     allow_methods: HeaderValue,
     allow_origin: HeaderValue,
     expose_headers: Option<HeaderValue>,
-    echo_back_origin: bool,
     max_age: HeaderValue,
 }
 
@@ -46,7 +44,6 @@ impl CorsMiddleware {
             allow_methods: HeaderValue::from_static(DEFAULT_METHODS),
             allow_origin: HeaderValue::from_static(WILDCARD),
             expose_headers: None,
-            echo_back_origin: false,
             max_age: HeaderValue::from_static(DEFAULT_MAX_AGE),
         }
     }
@@ -88,11 +85,6 @@ impl CorsMiddleware {
         self
     }
 
-    /// Set echo_back_origin and return new CorsMiddleware
-    pub fn echo_back_origin(mut self, echo_back_origin: bool) -> Self {
-        self.echo_back_origin = echo_back_origin;
-        self
-    }
 
     fn build_preflight_response(&self) -> http::response::Response<Body> {
         let mut response = http::Response::builder()
@@ -139,19 +131,10 @@ impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
                 return self.build_preflight_response();
             }
 
-            let origin = if self.echo_back_origin {
-                cx.headers()
-                    .get("origin")
-                    .unwrap_or(&HeaderValue::from_static(WILDCARD))
-                    .clone()
-            } else {
-                self.allow_origin.clone()
-            };
-
             let mut response = next.run(cx).await;
             let headers = response.headers_mut();
 
-            headers.append(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin);
+            headers.append(header::ACCESS_CONTROL_ALLOW_ORIGIN, self.allow_origin.clone());
 
             if let Some(allow_credentials) = self.allow_credentials.clone() {
                 headers.append(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, allow_credentials);
@@ -293,27 +276,6 @@ mod test {
                 .get("access-control-allow-credentials")
                 .unwrap(),
             "true"
-        );
-    }
-
-    #[test]
-    fn echo_back_option() {
-        let mut app = app();
-        app.middleware(CorsMiddleware::new().echo_back_origin(true));
-
-        let mut server = make_server(app.into_http_service()).unwrap();
-        let req = http::Request::get(ENDPOINT)
-            .header(http::header::ORIGIN, "foo")
-            .method(http::method::Method::GET)
-            .body(Body::empty())
-            .unwrap();
-
-        let res = server.simulate(req).unwrap();
-
-        assert_eq!(res.status(), 200);
-        assert_eq!(
-            res.headers().get("access-control-allow-origin").unwrap(),
-            "foo"
         );
     }
 }

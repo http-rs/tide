@@ -10,7 +10,6 @@ fn main() {
         CorsMiddleware::new()
             .allow_origin(HeaderValue::from_static("*"))
             .allow_methods(HeaderValue::from_static("GET, POST, OPTION"))
-            .echo_back_origin(true),
     );
 
     app.at("/").get(async move |_| "Hello, world!");

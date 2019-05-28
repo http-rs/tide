@@ -21,8 +21,7 @@
 //!     app.middleware(
 //!         CorsMiddleware::new()
 //!             .allow_origin(HeaderValue::from_static("*"))
-//!             .allow_methods(HeaderValue::from_static("GET, POST, OPTION"))
-//!             .echo_back_origin(true),
+//!             .allow_methods(HeaderValue::from_static("GET, POST, OPTION")),
 //!     );
 //!
 //!     app.at("/").get(async move |_| "Hello, world!");
