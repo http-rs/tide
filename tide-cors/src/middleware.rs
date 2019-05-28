@@ -85,7 +85,6 @@ impl CorsMiddleware {
         self
     }
 
-
     fn build_preflight_response(&self) -> http::response::Response<Body> {
         let mut response = http::Response::builder()
             .status(StatusCode::OK)
@@ -134,7 +133,10 @@ impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
             let mut response = next.run(cx).await;
             let headers = response.headers_mut();
 
-            headers.append(header::ACCESS_CONTROL_ALLOW_ORIGIN, self.allow_origin.clone());
+            headers.append(
+                header::ACCESS_CONTROL_ALLOW_ORIGIN,
+                self.allow_origin.clone(),
+            );
 
             if let Some(allow_credentials) = self.allow_credentials.clone() {
                 headers.append(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, allow_credentials);

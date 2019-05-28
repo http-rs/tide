@@ -9,7 +9,7 @@ fn main() {
     app.middleware(
         CorsMiddleware::new()
             .allow_origin(HeaderValue::from_static("*"))
-            .allow_methods(HeaderValue::from_static("GET, POST, OPTIONS"))
+            .allow_methods(HeaderValue::from_static("GET, POST, OPTIONS")),
     );
 
     app.at("/").get(async move |_| "Hello, world!");
