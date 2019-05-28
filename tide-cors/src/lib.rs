@@ -1,6 +1,5 @@
 //! Cors middleware and extensions for Tide
 //!
-//!
 //! # tide-cors
 //!
 //! This crate provides cors-related middleware for Tide.
