@@ -59,6 +59,22 @@ Ecosystem WG, and **not ready for production use yet**.
 
 **Hello World**
 
+**For tide version 0.2.0**
+
+```rust,no_run
+#![feature(async_await)]
+
+use tide::{ App };
+
+fn main() -> Result<(), std::io::Error> {
+    let mut app = App::new(());
+    app.at("/").get(async move |_| "Hello, world!");
+    Ok(app.serve("127.0.0.1:8000")?)
+}
+
+```
+
+**For older version**
 ```rust,no_run
 #![feature(async_await)]
 
@@ -68,7 +84,6 @@ fn main() -> Result<(), std::io::Error> {
     Ok(app.run("127.0.0.1:8000")?)
 }
 ```
-
 **More Examples**
 
 - [Hello World](https://github.com/rustasync/tide/blob/master/examples/hello.rs)
