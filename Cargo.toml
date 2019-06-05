@@ -60,6 +60,7 @@ members = [
     "tide-log",
     "tide-querystring",
     "tide-slog",
+    "tide-panic",
 ]
 
 [patch.crates-io]
