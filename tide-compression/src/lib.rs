@@ -12,8 +12,6 @@
     missing_docs
 )]
 
-//! Compression-related middleware for Tide
-
 pub use accept_encoding::Encoding;
 use async_compression::stream;
 use futures::future::BoxFuture;
