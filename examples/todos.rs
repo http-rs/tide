@@ -41,7 +41,7 @@ mod routes {
 fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
     let app = tide::App::new();
     let app = routes::setup(app);
-    app.run("localhost:8080")?;
+    app.run("127.0.0.1:8080")?;
     Ok(())
 }
 
