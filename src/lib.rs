@@ -26,6 +26,10 @@ pub use http;
 #[doc(inline)]
 pub use tide_cookies as cookies;
 
+#[cfg(feature = "cors")]
+#[doc(inline)]
+pub use tide_cors as cors;
+
 #[doc(inline)]
 pub use tide_core::{
     err_fmt,
@@ -61,6 +65,9 @@ pub mod middleware {
     // Exports from tide repo.
     pub use tide_headers::DefaultHeaders;
     pub use tide_log::RequestLogger;
+
+    #[cfg(feature = "cors")]
+    pub use tide_cors::CorsMiddleware;
 
     #[cfg(feature = "cookies")]
     pub use tide_cookies::CookiesMiddleware;

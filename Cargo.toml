@@ -19,8 +19,9 @@ repository = "https://github.com/rustasync/tide"
 version = "0.2.0"
 
 [features]
-default = ["hyper", "cookies"]
+default = ["hyper", "cookies", "cors"]
 cookies = ["tide-cookies"]
+cors = ["tide-cors"]
 hyper = ["tide-core/http-service-hyper"]
 
 [dependencies]
@@ -28,6 +29,7 @@ futures-preview = "0.3.0-alpha.16"
 http = "0.1"
 http-service = "0.2.0"
 tide-cookies = { path = "./tide-cookies", optional = true }
+tide-cors = { path = "./tide-cors", optional = true }
 tide-core = { path = "./tide-core" }
 tide-headers = { path = "./tide-headers" }
 tide-log = { path = "./tide-log" }
@@ -55,6 +57,7 @@ members = [
     "tide-compression",
     "tide-cookies",
     "tide-core",
+    "tide-cors",
     "tide-forms",
     "tide-headers",
     "tide-log",
