@@ -1,3 +1,7 @@
+//! Welcome to Tide.
+//!
+//! The [`App`](struct.App.html) docs are a good place to get started.
+
 #![cfg_attr(any(feature = "nightly", test), feature(external_doc))]
 #![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
 #![feature(async_await, existential_type)]
@@ -8,13 +12,6 @@
     missing_debug_implementations,
     missing_docs
 )]
-
-//!
-//! Welcome to Tide.
-//!
-//! The [`App`](struct.App.html) docs are a good place to get started.
-//!
-//!
 
 #[cfg(test)]
 #[doc(include = "../README.md")]

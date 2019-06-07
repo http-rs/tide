@@ -62,9 +62,9 @@ members = [
     "tide-forms",
     "tide-headers",
     "tide-log",
+    "tide-panic",
     "tide-querystring",
     "tide-slog",
-    "tide-panic",
 ]
 
 [patch.crates-io]
