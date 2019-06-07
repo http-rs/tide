@@ -1,5 +1,4 @@
 #![cfg_attr(any(feature = "nightly", test), feature(external_doc))]
-#![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
 #![feature(async_await, existential_type)]
 #![warn(
     nonstandard_style,
@@ -29,6 +28,8 @@ pub use tide_cookies as cookies;
 #[cfg(feature = "cors")]
 #[doc(inline)]
 pub use tide_cors as cors;
+
+pub mod test;
 
 #[doc(inline)]
 pub use tide_core::{

@@ -35,6 +35,7 @@ tide-headers = { path = "./tide-headers" }
 tide-log = { path = "./tide-log" }
 tide-forms = { path = "./tide-forms" }
 tide-querystring = { path = "./tide-querystring" }
+http-service-mock = "0.2.0"
 
 [dev-dependencies]
 bytes = "0.4.12"
