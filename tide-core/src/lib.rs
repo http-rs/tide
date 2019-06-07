@@ -12,12 +12,6 @@
 // ISSUE: https://github.com/rust-lang/rust-clippy/issues/3988
 #![allow(clippy::needless_lifetimes)]
 
-//!
-//! Tide core api document
-//!
-//! The [`App`] docs are a good place to get started.
-//!
-
 mod app;
 mod context;
 mod endpoint;

@@ -10,8 +10,6 @@
     missing_docs
 )]
 
-//! Cookie management for Tide web framework
-
 mod data;
 mod middleware;
 
