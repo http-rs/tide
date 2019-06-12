@@ -130,13 +130,10 @@ impl CorsMiddleware {
         self
     }
 
-    fn build_preflight_response(&self) -> http::response::Response<Body> {
+    fn build_preflight_response(&self, origin: &HeaderValue) -> http::response::Response<Body> {
         let mut response = http::Response::builder()
             .status(StatusCode::OK)
-            .header(
-                header::ACCESS_CONTROL_ALLOW_ORIGIN,
-                self.allow_origin.clone(),
-            )
+            .header::<_, HeaderValue>(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin.clone())
             .header(
                 header::ACCESS_CONTROL_ALLOW_METHODS,
                 self.allow_methods.clone(),
