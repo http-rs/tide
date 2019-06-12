@@ -268,7 +268,7 @@ mod test {
         let mut app = app();
         app.middleware(
             CorsMiddleware::new()
-                .allow_origin(HeaderValue::from_static(ALLOW_ORIGIN))
+                .allow_origin(AllowOrigin::from(ALLOW_ORIGIN))
                 .allow_methods(HeaderValue::from_static(ALLOW_METHODS))
                 .expose_headers(HeaderValue::from_static(EXPOSE_HEADER))
                 .allow_credentials(true),
@@ -331,7 +331,7 @@ mod test {
         let mut app = app();
         app.middleware(
             CorsMiddleware::new()
-                .allow_origin(HeaderValue::from_static(ALLOW_ORIGIN))
+                .allow_origin(AllowOrigin::from(ALLOW_ORIGIN))
                 .allow_credentials(false)
                 .allow_methods(HeaderValue::from_static(ALLOW_METHODS))
                 .expose_headers(HeaderValue::from_static(EXPOSE_HEADER)),
@@ -362,5 +362,61 @@ mod test {
                 .unwrap(),
             "true"
         );
+    }
+    #[test]
+    fn set_allow_origin_list() {
+        let mut app = app();
+        let origins = vec![ALLOW_ORIGIN, "foo.com", "bar.com"];
+        app.middleware(CorsMiddleware::new().allow_origin(origins.clone()));
+        let mut server = make_server(app.into_http_service()).unwrap();
+
+        for origin in origins {
+            let request = http::Request::get(ENDPOINT)
+                .header(http::header::ORIGIN, origin)
+                .method(http::method::Method::GET)
+                .body(Body::empty())
+                .unwrap();
+
+            let res = server.simulate(request).unwrap();
+
+            assert_eq!(res.status(), 200);
+            assert_eq!(
+                res.headers().get("access-control-allow-origin").unwrap(),
+                origin
+            );
+        }
+    }
+
+    #[test]
+    fn not_set_origin_header() {
+        let mut app = app();
+        app.middleware(CorsMiddleware::new());
+
+        let request = http::Request::get(ENDPOINT)
+            .method(http::method::Method::GET)
+            .body(Body::empty())
+            .unwrap();
+
+        let mut server = make_server(app.into_http_service()).unwrap();
+        let res = server.simulate(request).unwrap();
+
+        assert_eq!(res.status(), 400);
+    }
+
+    #[test]
+    fn unauthorized_origin() {
+        let mut app = app();
+        app.middleware(CorsMiddleware::new().allow_origin(ALLOW_ORIGIN));
+
+        let request = http::Request::get(ENDPOINT)
+            .header(http::header::ORIGIN, "unauthorize-origin.net")
+            .method(http::method::Method::GET)
+            .body(Body::empty())
+            .unwrap();
+
+        let mut server = make_server(app.into_http_service()).unwrap();
+        let res = server.simulate(request).unwrap();
+
+        assert_eq!(res.status(), 401);
     }
 }
