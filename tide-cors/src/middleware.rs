@@ -160,6 +160,33 @@ impl CorsMiddleware {
 
         response
     }
+
+    /// Look at origin of request and determine allow_origin
+    fn response_origin<T: Into<HeaderValue>>(&self, origin: T) -> Option<HeaderValue> {
+        let origin = origin.into();
+        if !self.is_valid_origin(origin.clone()) {
+            return None;
+        }
+
+        match self.allow_origin {
+            AllowOrigin::Any => Some(HeaderValue::from_static(WILDCARD)),
+            _ => Some(origin.into()),
+        }
+    }
+
+    /// Determine if origin is appropriate
+    fn is_valid_origin<T: Into<HeaderValue>>(&self, origin: T) -> bool {
+        let origin = match origin.into().to_str() {
+            Ok(s) => s.to_string(),
+            Err(_) => return false,
+        };
+
+        match &self.allow_origin {
+            AllowOrigin::Any => true,
+            AllowOrigin::Exact(s) => s == &origin,
+            AllowOrigin::List(list) => list.contains(&origin),
+        }
+    }
 }
 
 impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
