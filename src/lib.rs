@@ -64,7 +64,7 @@ pub mod middleware {
     pub use tide_log::RequestLogger;
 
     #[cfg(feature = "cors")]
-    pub use tide_cors::CorsMiddleware;
+    pub use tide_cors::{AllowOrigin, CorsMiddleware};
 
     #[cfg(feature = "cookies")]
     pub use tide_cookies::CookiesMiddleware;

@@ -16,10 +16,10 @@ use tide_core::{
 ///
 /// ```rust
 ///use http::header::HeaderValue;
-///use tide::middleware::CorsMiddleware;
+///use tide::middleware::{AllowOrigin, CorsMiddleware};
 ///
 ///CorsMiddleware::new()
-///    .allow_origin(HeaderValue::from_static("*"))
+///    .allow_origin(AllowOrigin::from("*"))
 ///    .allow_methods(HeaderValue::from_static("GET, POST, OPTIONS"))
 ///    .allow_credentials(false);
 /// ```
@@ -28,9 +28,50 @@ pub struct CorsMiddleware {
     allow_credentials: Option<HeaderValue>,
     allow_headers: HeaderValue,
     allow_methods: HeaderValue,
-    allow_origin: HeaderValue,
+    allow_origin: AllowOrigin,
     expose_headers: Option<HeaderValue>,
     max_age: HeaderValue,
+}
+
+/// allow_origin enum
+#[derive(Clone, Debug, Hash, PartialEq)]
+pub enum AllowOrigin {
+    /// Wildcard. Accept all origin requests
+    Any,
+    /// Set one allow_origin
+    Exact(String),
+    /// Set some allow_origin
+    List(Vec<String>),
+}
+
+impl From<String> for AllowOrigin {
+    fn from(s: String) -> Self {
+        if s == "*" {
+            return AllowOrigin::Any;
+        }
+        AllowOrigin::Exact(s)
+    }
+}
+
+impl From<&str> for AllowOrigin {
+    fn from(s: &str) -> Self {
+        AllowOrigin::from(s.to_string())
+    }
+}
+
+impl From<Vec<String>> for AllowOrigin {
+    fn from(list: Vec<String>) -> Self {
+        if list.len() == 1 {
+            return Self::from(list[0].clone());
+        }
+        return AllowOrigin::List(list);
+    }
+}
+
+impl From<Vec<&str>> for AllowOrigin {
+    fn from(list: Vec<&str>) -> Self {
+        AllowOrigin::from(list.iter().map(|s| s.to_string()).collect::<Vec<String>>())
+    }
 }
 
 pub const DEFAULT_MAX_AGE: &str = "86400";
@@ -44,7 +85,7 @@ impl CorsMiddleware {
             allow_credentials: None,
             allow_headers: HeaderValue::from_static(WILDCARD),
             allow_methods: HeaderValue::from_static(DEFAULT_METHODS),
-            allow_origin: HeaderValue::from_static(WILDCARD),
+            allow_origin: AllowOrigin::Any,
             expose_headers: None,
             max_age: HeaderValue::from_static(DEFAULT_MAX_AGE),
         }
@@ -78,7 +119,7 @@ impl CorsMiddleware {
     }
 
     /// Set allow_origin and return new CorsMiddleware
-    pub fn allow_origin<T: Into<HeaderValue>>(mut self, origin: T) -> Self {
+    pub fn allow_origin<T: Into<AllowOrigin>>(mut self, origin: T) -> Self {
         self.allow_origin = origin.into();
         self
     }
