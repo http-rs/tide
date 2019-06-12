@@ -192,9 +192,25 @@ impl CorsMiddleware {
 impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
     fn handle<'a>(&'a self, cx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
         FutureExt::boxed(async move {
+            let origin = if let Some(origin) = cx.request().headers().get(header::ORIGIN) {
+                origin.clone()
+            } else {
+                return http::Response::builder()
+                    .status(StatusCode::BAD_REQUEST)
+                    .body(Body::empty())
+                    .unwrap();
+            };
+
+            if !self.is_valid_origin(&origin) {
+                return http::Response::builder()
+                    .status(StatusCode::UNAUTHORIZED)
+                    .body(Body::empty())
+                    .unwrap();
+            }
+
             // Return results immediately upon preflight request
             if cx.method() == Method::OPTIONS {
-                return self.build_preflight_response();
+                return self.build_preflight_response(&origin);
             }
 
             let mut response = next.run(cx).await;
@@ -202,7 +218,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
 
             headers.append(
                 header::ACCESS_CONTROL_ALLOW_ORIGIN,
-                self.allow_origin.clone(),
+                self.response_origin(origin).unwrap(),
             );
 
             if let Some(allow_credentials) = self.allow_credentials.clone() {
