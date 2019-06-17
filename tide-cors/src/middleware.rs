@@ -16,7 +16,7 @@ use tide_core::{
 ///
 /// ```rust
 ///use http::header::HeaderValue;
-///use tide::middleware::CorsMiddleware;
+///use tide_cors::CorsMiddleware;
 ///
 ///CorsMiddleware::new()
 ///    .allow_origin(HeaderValue::from_static("*"))
