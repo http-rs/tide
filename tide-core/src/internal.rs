@@ -10,5 +10,6 @@ use crate::{Context, Response};
 pub type BoxTryFuture<T> =
     Pin<Box<dyn Future<Output = crate::endpoint::EndpointResult<T>> + Send + 'static>>;
 
+/// Convenience alias that's used to take loose functions as an Endpoint
 pub type DynEndpoint<State> =
     dyn (Fn(Context<State>) -> BoxFuture<'static, Response>) + 'static + Send + Sync;

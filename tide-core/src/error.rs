@@ -1,3 +1,5 @@
+//! Error types
+
 pub use ext::{ResponseExt, ResultDynErrExt, ResultExt};
 pub use types::{Cause, Error, StringError};
 
@@ -35,24 +37,29 @@ mod types {
         }
     }
 
+    /// `Cause` type that is used for error nesting
     #[derive(Debug)]
     pub struct Cause(Box<dyn std::error::Error + Send + Sync>);
 
     impl Cause {
+        /// Create a new cause from boxed std Error
         pub fn new(error: Box<dyn std::error::Error + Send + Sync>) -> Self {
             Self(error)
         }
 
+        /// Access inner std error
         #[allow(clippy::borrowed_box)]
         pub fn inner_ref(&self) -> &Box<dyn std::error::Error + Send + Sync> {
             &self.0
         }
 
+        /// Get the original std error out
         pub fn into_inner(self) -> Box<dyn std::error::Error + Send + Sync> {
             self.0
         }
     }
 
+    /// A simple error type that wraps a String
     #[derive(Debug)]
     pub struct StringError(pub String);
     impl std::error::Error for StringError {}

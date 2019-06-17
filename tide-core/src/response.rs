@@ -1,3 +1,5 @@
+//! Response types
+
 pub use http_service::Body;
 
 /// An Http response

@@ -1,6 +1,6 @@
 use tide_core::Endpoint;
 
-use crate::router::Router;
+use super::core::Router;
 
 /// A handle to a route.
 ///

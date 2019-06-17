@@ -1,3 +1,5 @@
+//! Router core types
+
 use fnv::FnvHashMap;
 use futures::future::BoxFuture;
 use futures::prelude::*;

@@ -1,5 +1,5 @@
+mod core;
 mod route;
-mod router;
 
+pub use self::core::{Router, Selection};
 pub use route::Route;
-pub use router::{Router, Selection};

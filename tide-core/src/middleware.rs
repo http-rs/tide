@@ -1,3 +1,5 @@
+//! Middleware types
+
 use crate::{internal::DynEndpoint, Context, Response};
 use futures::future::BoxFuture;
 use std::sync::Arc;
