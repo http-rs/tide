@@ -19,7 +19,7 @@ repository = "https://github.com/rustasync/tide"
 version = "0.2.0"
 
 [features]
-default = ["hyper", "cookies"]
+default = ["hyper", "cookies", "cors"]
 cookies = ["tide-cookies"]
 cors = ["tide-cors"]
 hyper = ["http-service-hyper"]
@@ -57,7 +57,6 @@ percent-encoding = "1.0.1"
 serde = { version = "1.0.91", features = ["derive"] }
 tera = "0.11"
 # Tide components
-tide-cors = { path = "./tide-cors" }
 tide-log = { path = "./tide-log" }
 
 [workspace]
