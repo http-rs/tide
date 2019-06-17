@@ -20,6 +20,7 @@ const _README: () = ();
 pub use http;
 
 mod app;
+mod router;
 
 pub use app::{App, Server};
 
@@ -32,8 +33,9 @@ pub use tide_cookies as cookies;
 pub use tide_cors as cors;
 
 #[doc(inline)]
-pub use tide_core::{err_fmt, response, Body, Context, Endpoint, EndpointResult, Error, Response};
+pub use tide_core::{response, Body, Context, Endpoint, EndpointResult, Error, Response};
 
+#[allow(missing_docs)]
 pub mod error {
     pub use tide_core::error::{Error, ResponseExt, ResultDynErrExt, ResultExt, StringError};
 }

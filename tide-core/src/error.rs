@@ -1,11 +1,3 @@
-#[macro_export]
-/// Macro that generates StringError immediately
-macro_rules! err_fmt {
-    {$($t:tt)*} => {
-        $crate::error::StringError(format!($($t)*))
-    }
-}
-
 pub use ext::{ResponseExt, ResultDynErrExt, ResultExt};
 pub use types::{Cause, Error, StringError};
 

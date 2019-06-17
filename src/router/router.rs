@@ -16,8 +16,6 @@ pub struct Router<State> {
     method_map: FnvHashMap<http::Method, MethodRouter<Box<DynEndpoint<State>>>>,
 }
 
-// TODO: We don't want this exposed outside of tide repo
-/// The result of routing a URL
 #[allow(missing_debug_implementations)]
 pub struct Selection<'a, State> {
     pub endpoint: &'a DynEndpoint<State>,
@@ -25,7 +23,7 @@ pub struct Selection<'a, State> {
 }
 
 impl<State: 'static> Router<State> {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             method_map: FnvHashMap::default(),
         }

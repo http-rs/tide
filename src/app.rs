@@ -1,8 +1,8 @@
+use crate::router::{Route, Router, Selection};
 use futures::future::{self, BoxFuture};
 use futures::prelude::*;
 use http_service::HttpService;
 use std::sync::Arc;
-use tide_router::{Route, Router, Selection};
 
 use crate::{
     middleware::{Middleware, Next},
@@ -314,10 +314,9 @@ impl<State: Sync + Send + 'static> HttpService for Server<State> {
 mod tests {
     use futures::executor::block_on;
     use std::sync::Arc;
-    use tide_router::Selection;
 
     use super::*;
-    use crate::{middleware::Next, Context, Response};
+    use crate::{middleware::Next, router::Selection, Context, Response};
 
     fn simulate_request<'a, State: Default + Clone + Send + Sync + 'static>(
         app: &'a App<State>,
