@@ -35,8 +35,8 @@ pub use tide_cors as cors;
 #[doc(inline)]
 pub use tide_core::{response, Body, Context, Endpoint, EndpointResult, Error, Response};
 
-#[allow(missing_docs)]
 pub mod error {
+    //! Error types re-exported from `tide-core`
     pub use tide_core::error::{Error, ResponseExt, ResultDynErrExt, ResultExt, StringError};
 }
 

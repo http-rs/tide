@@ -20,8 +20,8 @@ pub struct Router<State> {
 
 #[allow(missing_debug_implementations)]
 pub struct Selection<'a, State> {
-    pub endpoint: &'a DynEndpoint<State>,
-    pub params: Params,
+    endpoint: &'a DynEndpoint<State>,
+    params: Params,
 }
 
 impl<State: 'static> Router<State> {
@@ -44,21 +44,27 @@ impl<State: 'static> Router<State> {
             .get(&method)
             .and_then(|r| r.recognize(path).ok())
         {
-            Selection {
-                endpoint: &**handler,
-                params,
-            }
+            Selection::new(&**handler, params)
         } else if method == http::Method::HEAD {
             // If it is a HTTP HEAD request then check if there is a callback in the endpoints map
             // if not then fallback to the behavior of HTTP GET else proceed as usual
 
             self.route(path, http::Method::GET)
         } else {
-            Selection {
-                endpoint: &not_found_endpoint,
-                params: Params::new(),
-            }
+            Selection::new(&not_found_endpoint, Params::new())
         }
+    }
+}
+
+impl<'a, State> Selection<'a, State> {
+    /// Create a new Selection
+    pub(crate) fn new(endpoint: &'a DynEndpoint<State>, params: Params) -> Self {
+        Self { endpoint, params }
+    }
+
+    /// Break Selection into it's components
+    pub fn into_components(self) -> (&'a DynEndpoint<State>, Params) {
+        (self.endpoint, self.params)
     }
 }
 

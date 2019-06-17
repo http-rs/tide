@@ -1,4 +1,3 @@
-use crate::router::{Route, Router, Selection};
 use futures::future::{self, BoxFuture};
 use futures::prelude::*;
 use http_service::HttpService;
@@ -6,6 +5,7 @@ use std::sync::Arc;
 
 use crate::{
     middleware::{Middleware, Next},
+    router::{Route, Router},
     Context,
 };
 
@@ -299,7 +299,7 @@ impl<State: Sync + Send + 'static> HttpService for Server<State> {
 
         FutureExt::boxed(async move {
             let fut = {
-                let Selection { endpoint, params } = router.route(&path, method);
+                let (endpoint, params) = router.route(&path, method).into_components();
                 let cx = Context::new(state, req, params);
                 let next = Next::new(endpoint, &middleware);
                 next.run(cx)
@@ -316,14 +316,14 @@ mod tests {
     use std::sync::Arc;
 
     use super::*;
-    use crate::{middleware::Next, router::Selection, Context, Response};
+    use crate::{middleware::Next, Context, Response};
 
     fn simulate_request<'a, State: Default + Clone + Send + Sync + 'static>(
         app: &'a App<State>,
         path: &'a str,
         method: http::Method,
     ) -> BoxFuture<'a, Response> {
-        let Selection { endpoint, params } = app.router.route(path, method.clone());
+        let (endpoint, params) = app.router.route(path, method.clone()).into_components();
 
         let state = Arc::new(State::default());
         let req = http::Request::builder()
