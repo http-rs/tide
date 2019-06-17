@@ -53,7 +53,7 @@ impl<State: Send + Sync + 'static> ContextExt for Context<State> {
         FutureExt::boxed(async move {
             let body = body.into_vec().await.client_err()?;
             let boundary = boundary
-                .ok_or_else(|| StringError(format!("no boundary found")))
+                .ok_or_else(|| StringError("no boundary found".to_string()))
                 .client_err()?;
             Ok(Multipart::with_body(Cursor::new(body), boundary))
         })
