@@ -1,7 +1,7 @@
 #![feature(async_await)]
 
 use http::header::HeaderValue;
-use tide::middleware::CorsMiddleware;
+use tide_cors::CorsMiddleware;
 
 fn main() {
     let mut app = tide::App::new();
