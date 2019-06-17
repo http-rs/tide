@@ -9,7 +9,7 @@ use crate::{error::Error, response::IntoResponse, Context, Response};
 /// directly by Tide users.
 ///
 /// In practice, endpoints are functions that take a `Context<State>` as an argument and
-/// return a type `T` that implements [`IntoResponse`].
+/// return a type `T` that implements [`IntoResponse`](crate::response::IntoResponse).
 ///
 /// # Examples
 ///

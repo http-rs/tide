@@ -21,6 +21,7 @@ version = "0.2.0"
 [features]
 default = ["hyper", "cookies"]
 cookies = ["tide-cookies"]
+cors = ["tide-cors"]
 hyper = ["http-service-hyper"]
 
 [dependencies]
@@ -29,6 +30,7 @@ http = "0.1"
 http-service = "0.2.0"
 http-service-hyper = { version = "0.2.0", optional = true }
 tide-cookies = { path = "./tide-cookies", optional = true }
+tide-cors = { path = "./tide-cors", optional = true }
 tide-core = { path = "./tide-core" }
 tide-headers = { path = "./tide-headers" }
 tide-log = { path = "./tide-log" }
@@ -47,6 +49,7 @@ mime = "0.3.13"
 mime_guess = "2.0.0-alpha.6"
 percent-encoding = "1.0.1"
 serde = { version = "1.0.91", features = ["derive"] }
+tera = "0.11"
 tide-log = { path = "./tide-log" }
 env_logger = "0.6.1"
 log4rs = "0.8.3"
@@ -57,9 +60,11 @@ members = [
     "tide-compression",
     "tide-cookies",
     "tide-core",
+    "tide-cors",
     "tide-forms",
     "tide-headers",
     "tide-log",
+    "tide-panic",
     "tide-querystring",
     "tide-router",
     "tide-slog",

@@ -219,6 +219,8 @@ impl<State: Send + Sync + 'static> App<State> {
     ///
     /// Middleware can only be added at the "top level" of an application,
     /// and is processed in the order in which it is applied.
+    ///
+    /// [`Middleware`]: crate::middleware::Middleware
     pub fn middleware(&mut self, m: impl Middleware<State>) -> &mut Self {
         self.middleware.push(Arc::new(m));
         self
@@ -269,6 +271,8 @@ impl<State: Send + Sync + 'static> App<State> {
 ///
 /// This type is useful only in conjunction with the [`HttpService`] trait,
 /// i.e. for hosting a Tide app within some custom HTTP server.
+///
+/// [`HttpService`]: http_service::HttpService
 #[derive(Clone)]
 #[allow(missing_debug_implementations)]
 pub struct Server<State> {

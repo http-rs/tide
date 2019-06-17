@@ -1,3 +1,7 @@
+//! Welcome to Tide.
+//!
+//! The [`App`](struct.App.html) docs are a good place to get started.
+
 #![cfg_attr(any(feature = "nightly", test), feature(external_doc))]
 #![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
 #![feature(async_await, existential_type)]
@@ -5,15 +9,9 @@
     nonstandard_style,
     rust_2018_idioms,
     future_incompatible,
-    missing_debug_implementations
+    missing_debug_implementations,
+    missing_docs
 )]
-
-//!
-//! Welcome to Tide.
-//!
-//! The [`App`](struct.App.html) docs are a good place to get started.
-//!
-//!
 
 #[cfg(test)]
 #[doc(include = "../README.md")]
@@ -29,6 +27,10 @@ pub use app::{App, Server};
 #[doc(inline)]
 pub use tide_cookies as cookies;
 
+#[cfg(feature = "cors")]
+#[doc(inline)]
+pub use tide_cors as cors;
+
 #[doc(inline)]
 pub use tide_core::{err_fmt, response, Body, Context, Endpoint, EndpointResult, Error, Response};
 
@@ -40,12 +42,17 @@ pub use tide_forms as forms;
 pub use tide_querystring as querystring;
 
 pub mod middleware {
+    //! Module to export tide_core middleware
+
     // Core
     pub use tide_core::middleware::{Middleware, Next};
 
     // Exports from tide repo.
     pub use tide_headers::DefaultHeaders;
     pub use tide_log::RequestLogger;
+
+    #[cfg(feature = "cors")]
+    pub use tide_cors::CorsMiddleware;
 
     #[cfg(feature = "cookies")]
     pub use tide_cookies::CookiesMiddleware;

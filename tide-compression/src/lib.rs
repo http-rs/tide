@@ -8,7 +8,8 @@
     nonstandard_style,
     rust_2018_idioms,
     future_incompatible,
-    missing_debug_implementations
+    missing_debug_implementations,
+    missing_docs
 )]
 
 pub use accept_encoding::Encoding;

@@ -1,5 +1,6 @@
 pub use http_service::Body;
 
+/// An Http response
 pub type Response = http_service::Response;
 
 /// Serialize `t` into a JSON-encoded response.

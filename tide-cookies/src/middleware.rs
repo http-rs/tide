@@ -10,17 +10,21 @@ use tide_core::{
 
 /// Middleware to work with cookies.
 ///
-/// [`CookiesMiddleware`] along with [`ContextExt`](crate::data::ContextExt) provide smooth
+/// [`CookiesMiddleware`] along with [`ContextExt`] provide smooth
 /// access to request cookies and setting/removing cookies from response. This leverages the
 /// [cookie](https://crates.io/crates/cookie) crate.
 /// This middleware parses cookies from request and caches them in the extension. Once the request
 /// is processed by endpoints and other middlewares, all the added and removed cookies are set on
 /// on the response. You will need to add this middle before any other middlewares that might need
 /// to access Cookies.
+///
+/// [`CookiesMiddleware`]: crate::middleware::CookiesMiddleware
+/// [`ContextExt`]: ../../tide/cookies/trait.ContextExt.html
 #[derive(Clone, Default, Debug)]
 pub struct CookiesMiddleware {}
 
 impl CookiesMiddleware {
+    /// CookieMiddleware constructor
     pub fn new() -> Self {
         Self {}
     }
