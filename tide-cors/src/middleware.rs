@@ -16,10 +16,10 @@ use tide_core::{
 ///
 /// ```rust
 ///use http::header::HeaderValue;
-///use tide::middleware::{AllowOrigin, CorsMiddleware};
+///use tide::middleware::{CorsOrigin, CorsMiddleware};
 ///
 ///CorsMiddleware::new()
-///    .allow_origin(AllowOrigin::from("*"))
+///    .allow_origin(CorsOrigin::from("*"))
 ///    .allow_methods(HeaderValue::from_static("GET, POST, OPTIONS"))
 ///    .allow_credentials(false);
 /// ```
@@ -28,14 +28,14 @@ pub struct CorsMiddleware {
     allow_credentials: Option<HeaderValue>,
     allow_headers: HeaderValue,
     allow_methods: HeaderValue,
-    allow_origin: AllowOrigin,
+    allow_origin: CorsOrigin,
     expose_headers: Option<HeaderValue>,
     max_age: HeaderValue,
 }
 
 /// allow_origin enum
 #[derive(Clone, Debug, Hash, PartialEq)]
-pub enum AllowOrigin {
+pub enum CorsOrigin {
     /// Wildcard. Accept all origin requests
     Any,
     /// Set one allow_origin
@@ -44,33 +44,33 @@ pub enum AllowOrigin {
     List(Vec<String>),
 }
 
-impl From<String> for AllowOrigin {
+impl From<String> for CorsOrigin {
     fn from(s: String) -> Self {
         if s == "*" {
-            return AllowOrigin::Any;
+            return CorsOrigin::Any;
         }
-        AllowOrigin::Exact(s)
+        CorsOrigin::Exact(s)
     }
 }
 
-impl From<&str> for AllowOrigin {
+impl From<&str> for CorsOrigin {
     fn from(s: &str) -> Self {
-        AllowOrigin::from(s.to_string())
+        CorsOrigin::from(s.to_string())
     }
 }
 
-impl From<Vec<String>> for AllowOrigin {
+impl From<Vec<String>> for CorsOrigin {
     fn from(list: Vec<String>) -> Self {
         if list.len() == 1 {
             return Self::from(list[0].clone());
         }
-        return AllowOrigin::List(list);
+        return CorsOrigin::List(list);
     }
 }
 
-impl From<Vec<&str>> for AllowOrigin {
+impl From<Vec<&str>> for CorsOrigin {
     fn from(list: Vec<&str>) -> Self {
-        AllowOrigin::from(list.iter().map(|s| s.to_string()).collect::<Vec<String>>())
+        CorsOrigin::from(list.iter().map(|s| s.to_string()).collect::<Vec<String>>())
     }
 }
 
@@ -85,7 +85,7 @@ impl CorsMiddleware {
             allow_credentials: None,
             allow_headers: HeaderValue::from_static(WILDCARD),
             allow_methods: HeaderValue::from_static(DEFAULT_METHODS),
-            allow_origin: AllowOrigin::Any,
+            allow_origin: CorsOrigin::Any,
             expose_headers: None,
             max_age: HeaderValue::from_static(DEFAULT_MAX_AGE),
         }
@@ -119,7 +119,7 @@ impl CorsMiddleware {
     }
 
     /// Set allow_origin and return new CorsMiddleware
-    pub fn allow_origin<T: Into<AllowOrigin>>(mut self, origin: T) -> Self {
+    pub fn allow_origin<T: Into<CorsOrigin>>(mut self, origin: T) -> Self {
         self.allow_origin = origin.into();
         self
     }
@@ -169,7 +169,7 @@ impl CorsMiddleware {
         }
 
         match self.allow_origin {
-            AllowOrigin::Any => Some(HeaderValue::from_static(WILDCARD)),
+            CorsOrigin::Any => Some(HeaderValue::from_static(WILDCARD)),
             _ => Some(origin.into()),
         }
     }
@@ -182,9 +182,9 @@ impl CorsMiddleware {
         };
 
         match &self.allow_origin {
-            AllowOrigin::Any => true,
-            AllowOrigin::Exact(s) => s == &origin,
-            AllowOrigin::List(list) => list.contains(&origin),
+            CorsOrigin::Any => true,
+            CorsOrigin::Exact(s) => s == &origin,
+            CorsOrigin::List(list) => list.contains(&origin),
         }
     }
 }
@@ -268,7 +268,7 @@ mod test {
         let mut app = app();
         app.middleware(
             CorsMiddleware::new()
-                .allow_origin(AllowOrigin::from(ALLOW_ORIGIN))
+                .allow_origin(CorsOrigin::from(ALLOW_ORIGIN))
                 .allow_methods(HeaderValue::from_static(ALLOW_METHODS))
                 .expose_headers(HeaderValue::from_static(EXPOSE_HEADER))
                 .allow_credentials(true),
@@ -331,7 +331,7 @@ mod test {
         let mut app = app();
         app.middleware(
             CorsMiddleware::new()
-                .allow_origin(AllowOrigin::from(ALLOW_ORIGIN))
+                .allow_origin(CorsOrigin::from(ALLOW_ORIGIN))
                 .allow_credentials(false)
                 .allow_methods(HeaderValue::from_static(ALLOW_METHODS))
                 .expose_headers(HeaderValue::from_static(EXPOSE_HEADER)),
