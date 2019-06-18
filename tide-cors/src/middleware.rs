@@ -64,7 +64,8 @@ impl From<Vec<String>> for CorsOrigin {
         if list.len() == 1 {
             return Self::from(list[0].clone());
         }
-        return CorsOrigin::List(list);
+
+        CorsOrigin::List(list)
     }
 }
 
@@ -170,7 +171,7 @@ impl CorsMiddleware {
 
         match self.allow_origin {
             CorsOrigin::Any => Some(HeaderValue::from_static(WILDCARD)),
-            _ => Some(origin.into()),
+            _ => Some(origin),
         }
     }
 
