@@ -44,7 +44,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
 
             let cookie_jar = cookie_data.content.clone();
 
-            cx.extensions_mut().insert(cookie_data);
+            let _ = cx.extensions_mut().insert(cookie_data);
             let mut res = next.run(cx).await;
             let headers = res.headers_mut();
             for cookie in cookie_jar.read().unwrap().delta() {
