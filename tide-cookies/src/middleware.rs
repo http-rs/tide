@@ -44,6 +44,9 @@ impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
 
             let cookie_jar = cookie_data.content.clone();
 
+
+            // The `let _ = ...` is a workaround for issue: https://github.com/rustasync/tide/issues/278
+            // Solution is according to suggestion in https://github.com/rust-lang/rust/issues/61579#issuecomment-500436524
             let _ = cx.extensions_mut().insert(cookie_data);
             let mut res = next.run(cx).await;
             let headers = res.headers_mut();
