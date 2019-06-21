@@ -1,5 +1,5 @@
 language: rust
-rust: nightly-2019-05-09
+rust: nightly-2019-06-02
 cache: cargo
 
 before_script:
