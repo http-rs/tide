@@ -15,8 +15,8 @@ cookie = { version = "0.12", features = ["percent-encode"] }
 futures-preview = "0.3.0-alpha.16"
 http = "0.1"
 http-service = "0.2.0"
-tide-core = { path = "../tide-core" }
+tide-core = { path = "../tide-core", default-features = false  }
 
 [dev-dependencies]
-tide = { path = "../" }
+tide = { path = "../", default-features = false }
 http-service-mock = "0.2.0"
