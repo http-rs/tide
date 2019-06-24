@@ -19,6 +19,11 @@ const _README: () = ();
 
 pub use http;
 
+mod app;
+mod router;
+
+pub use app::{App, Server};
+
 #[cfg(feature = "cookies")]
 #[doc(inline)]
 pub use tide_cookies as cookies;
@@ -28,26 +33,11 @@ pub use tide_cookies as cookies;
 pub use tide_cors as cors;
 
 #[doc(inline)]
-pub use tide_core::{
-    err_fmt,
-    response,
-    App,
-    Context,
-    Endpoint,
-    EndpointResult,
-    Error,
-    Response,
-    Route,
-    Server,
-    // TODO: export Body once it's in turn exported by tide_core
-};
+pub use tide_core::{response, Body, Context, Endpoint, EndpointResult, Error, Response};
 
 pub mod error {
-    //! Module to export tide_core errors
-
-    pub use tide_core::error::{
-        EndpointResult, Error, ResponseExt, ResultDynErrExt, ResultExt, StringError,
-    };
+    //! Error types re-exported from `tide-core`
+    pub use tide_core::error::{Error, ResponseExt, ResultDynErrExt, ResultExt, StringError};
 }
 
 pub use tide_forms as forms;

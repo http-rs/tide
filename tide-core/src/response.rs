@@ -1,6 +1,6 @@
-//! Multiple types of response modules
+//! Response types
 
-use http_service::Body;
+pub use http_service::Body;
 
 /// An Http response
 pub type Response = http_service::Response;

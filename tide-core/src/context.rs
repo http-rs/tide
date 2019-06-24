@@ -18,12 +18,9 @@ pub struct Context<State> {
 }
 
 impl<State> Context<State> {
-    pub(crate) fn new(
-        state: Arc<State>,
-        request: http::Request<Body>,
-        route_params: Params,
-    ) -> Context<State> {
-        Context {
+    /// Create a new Context
+    pub fn new(state: Arc<State>, request: http::Request<Body>, route_params: Params) -> Self {
+        Self {
             state,
             request,
             route_params,

@@ -16,7 +16,7 @@ use tide_core::{
 ///
 /// ```rust
 ///use http::header::HeaderValue;
-///use tide::middleware::CorsMiddleware;
+///use tide_cors::CorsMiddleware;
 ///
 ///CorsMiddleware::new()
 ///    .allow_origin(HeaderValue::from_static("*"))
@@ -167,8 +167,8 @@ mod test {
 
     const ENDPOINT: &str = "/cors";
 
-    fn app() -> tide_core::App<()> {
-        let mut app = tide_core::App::new();
+    fn app() -> tide::App<()> {
+        let mut app = tide::App::new();
         app.at(ENDPOINT).get(async move |_| "Hello World");
 
         app

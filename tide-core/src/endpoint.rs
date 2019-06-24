@@ -1,7 +1,7 @@
 use futures::future::{BoxFuture, Future};
 use futures::prelude::*;
 
-use crate::{response::IntoResponse, Context, Response};
+use crate::{error::Error, response::IntoResponse, Context, Response};
 
 /// A Tide endpoint.
 ///
@@ -57,9 +57,6 @@ pub trait Endpoint<State>: Send + Sync + 'static {
     fn call(&self, cx: Context<State>) -> Self::Fut;
 }
 
-pub(crate) type DynEndpoint<State> =
-    dyn (Fn(Context<State>) -> BoxFuture<'static, Response>) + 'static + Send + Sync;
-
 impl<State, F: Send + Sync + 'static, Fut> Endpoint<State> for F
 where
     F: Fn(Context<State>) -> Fut,
@@ -72,3 +69,6 @@ where
         FutureExt::boxed(async move { fut.await.into_response() })
     }
 }
+
+/// A convenient `Result` instantiation appropriate for most endpoints.
+pub type EndpointResult<T = Response> = Result<T, Error>;
