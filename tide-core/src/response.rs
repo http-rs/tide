@@ -38,7 +38,7 @@ pub trait IntoResponse: Send + Sized {
 impl IntoResponse for () {
     fn into_response(self) -> Response {
         http::Response::builder()
-            .status(http::status::StatusCode::OK)
+            .status(http::status::StatusCode::NO_CONTENT)
             .body(Body::empty())
             .unwrap()
     }
