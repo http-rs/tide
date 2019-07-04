@@ -10,7 +10,7 @@
 )]
 
 use futures::future::BoxFuture;
-use futures::prelude::*;
+
 use log::{info, trace};
 
 use tide_core::{
@@ -72,6 +72,6 @@ impl RequestLogger {
 
 impl<State: Send + Sync + 'static> Middleware<State> for RequestLogger {
     fn handle<'a>(&'a self, ctx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
-        FutureExt::boxed(async move { self.log_basic(ctx, next).await })
+        Box::pin(async move { self.log_basic(ctx, next).await })
     }
 }

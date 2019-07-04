@@ -69,7 +69,7 @@ impl<'a, State> Selection<'a, State> {
 }
 
 fn not_found_endpoint<State>(_cx: Context<State>) -> BoxFuture<'static, Response> {
-    FutureExt::boxed(async move {
+    Box::pin(async move {
         http::Response::builder()
             .status(http::StatusCode::NOT_FOUND)
             .body(Body::empty())

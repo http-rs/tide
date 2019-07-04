@@ -1,5 +1,4 @@
 use futures::future::{BoxFuture, Future};
-use futures::prelude::*;
 
 use crate::{error::Error, response::IntoResponse, Context, Response};
 
@@ -66,7 +65,7 @@ where
     type Fut = BoxFuture<'static, Response>;
     fn call(&self, cx: Context<State>) -> Self::Fut {
         let fut = (self)(cx);
-        FutureExt::boxed(async move { fut.await.into_response() })
+        Box::pin(async move { fut.await.into_response() })
     }
 }
 
