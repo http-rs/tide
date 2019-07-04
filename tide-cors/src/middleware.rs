@@ -1,7 +1,7 @@
 //! Cors middleware
 
 use futures::future::BoxFuture;
-use futures::prelude::*;
+
 use http::header::HeaderValue;
 use http::{header, Method, StatusCode};
 use http_service::Body;
@@ -126,7 +126,7 @@ impl CorsMiddleware {
 
 impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
     fn handle<'a>(&'a self, cx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
-        FutureExt::boxed(async move {
+        Box::pin(async move {
             // Return results immediately upon preflight request
             if cx.method() == Method::OPTIONS {
                 return self.build_preflight_response();

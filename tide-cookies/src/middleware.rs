@@ -1,6 +1,5 @@
 use crate::data::CookieData;
 use futures::future::BoxFuture;
-use futures::prelude::*;
 use http::header::HeaderValue;
 
 use tide_core::{
@@ -36,7 +35,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
         mut cx: Context<State>,
         next: Next<'a, State>,
     ) -> BoxFuture<'a, Response> {
-        FutureExt::boxed(async move {
+        Box::pin(async move {
             let cookie_data = cx
                 .extensions_mut()
                 .remove()

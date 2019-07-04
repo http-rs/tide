@@ -14,7 +14,6 @@ use slog_async;
 use slog_term;
 
 use futures::future::BoxFuture;
-use futures::prelude::*;
 
 use tide_core::{
     middleware::{Middleware, Next},
@@ -53,7 +52,7 @@ impl Default for RequestLogger {
 /// is generated.
 impl<State: Send + Sync + 'static> Middleware<State> for RequestLogger {
     fn handle<'a>(&'a self, cx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
-        FutureExt::boxed(async move {
+        Box::pin(async move {
             let path = cx.uri().path().to_owned();
             let method = cx.method().as_str().to_owned();
             trace!(self.inner, "IN => {} {}", method, path);

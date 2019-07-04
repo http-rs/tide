@@ -1,5 +1,4 @@
 use futures::future::{self, BoxFuture};
-use futures::prelude::*;
 use http_service::HttpService;
 use std::sync::Arc;
 
@@ -297,7 +296,7 @@ impl<State: Sync + Send + 'static> HttpService for Server<State> {
         let middleware = self.middleware.clone();
         let state = self.state.clone();
 
-        FutureExt::boxed(async move {
+        Box::pin(async move {
             let fut = {
                 let (endpoint, params) = router.route(&path, method).into_components();
                 let cx = Context::new(state, req, params);

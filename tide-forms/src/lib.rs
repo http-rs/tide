@@ -9,7 +9,6 @@
     missing_debug_implementations
 )]
 
-use futures::prelude::*;
 use http_service::Body;
 use multipart::server::Multipart;
 use std::io::Cursor;
@@ -32,7 +31,7 @@ pub trait ContextExt {
 impl<State: Send + Sync + 'static> ContextExt for Context<State> {
     fn body_form<T: serde::de::DeserializeOwned>(&mut self) -> BoxTryFuture<T> {
         let body = self.take_body();
-        FutureExt::boxed(async move {
+        Box::pin(async move {
             let body = body.into_vec().await.client_err()?;
             Ok(serde_urlencoded::from_bytes(&body)
                 .map_err(|e| StringError(format!("could not decode form: {}", e)))
@@ -50,7 +49,7 @@ impl<State: Send + Sync + 'static> ContextExt for Context<State> {
 
         let body = self.take_body();
 
-        FutureExt::boxed(async move {
+        Box::pin(async move {
             let body = body.into_vec().await.client_err()?;
             let boundary = boundary
                 .ok_or_else(|| StringError("no boundary found".to_string()))
