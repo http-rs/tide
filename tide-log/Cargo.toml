@@ -18,10 +18,10 @@ repository = "https://github.com/rustasync/tide"
 version = "0.1.0"
 
 [dependencies]
-tide-core = { path = "../tide-core" }
+tide-core = { path = "../tide-core", default-features = false  }
 futures-preview = "0.3.0-alpha.16"
 http = "0.1"
 log = "0.4.6"
 
 [dev-dependencies]
-tide = { path = "../" }
+tide = { path = "../", default-features = false }
