@@ -40,7 +40,7 @@ pub enum CorsOrigin {
     Any,
     /// Set one allow_origin
     Exact(String),
-    /// Set some allow_origin
+    /// Set multiple allow_origin targets
     List(Vec<String>),
 }
 
