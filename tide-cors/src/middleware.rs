@@ -38,7 +38,7 @@ pub struct CorsMiddleware {
 pub enum CorsOrigin {
     /// Wildcard. Accept all origin requests
     Any,
-    /// Set one allow_origin
+    /// Set a single allow_origin target
     Exact(String),
     /// Set multiple allow_origin targets
     List(Vec<String>),
