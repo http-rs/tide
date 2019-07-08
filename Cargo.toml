@@ -22,36 +22,43 @@ version = "0.2.0"
 default = ["hyper", "cookies", "cors"]
 cookies = ["tide-cookies"]
 cors = ["tide-cors"]
-hyper = ["tide-core/http-service-hyper"]
+hyper = ["http-service-hyper"]
 
 [dependencies]
-futures-preview = "0.3.0-alpha.16"
+futures-preview = "0.3.0-alpha.17"
 http = "0.1"
 http-service = "0.2.0"
-tide-cookies = { path = "./tide-cookies", optional = true }
-tide-cors = { path = "./tide-cors", optional = true }
-tide-core = { path = "./tide-core" }
-tide-headers = { path = "./tide-headers" }
-tide-log = { path = "./tide-log" }
-tide-forms = { path = "./tide-forms" }
-tide-querystring = { path = "./tide-querystring" }
+http-service-hyper = { version = "0.2.0", optional = true }
+# Routing
+fnv = "1.0.6"
+route-recognizer = "0.1.12"
+# Tide components
+tide-cookies = { path = "./tide-cookies", optional = true, default-features = false }
+tide-cors = { path = "./tide-cors", optional = true, default-features = false }
+tide-core = { path = "./tide-core", default-features = false }
+tide-headers = { path = "./tide-headers", default-features = false }
+tide-log = { path = "./tide-log", default-features = false }
+tide-forms = { path = "./tide-forms", default-features = false }
+tide-querystring = { path = "./tide-querystring", default-features = false }
 
 [dev-dependencies]
 bytes = "0.4.12"
 cookie = { version = "0.12", features = ["percent-encode"] }
+env_logger = "0.6.1"
 futures-fs = "0.0.5"
-futures-util-preview = { version = "0.3.0-alpha.16", features = ["compat"] }
+futures-util-preview = { version = "0.3.0-alpha.17", features = ["compat"] }
 http-service-mock = "0.2.0"
 juniper = "0.12.0"
+log = "0.4.6"
+log4rs = "0.8.3"
 mime = "0.3.13"
 mime_guess = "2.0.0-alpha.6"
 percent-encoding = "1.0.1"
 serde = { version = "1.0.91", features = ["derive"] }
 tera = "0.11"
-tide-log = { path = "./tide-log" }
-env_logger = "0.6.1"
-log4rs = "0.8.3"
-log = "0.4.6"
+runtime = "0.3.0-alpha.6"
+# Tide components
+tide-log = { path = "./tide-log", default-features = false }
 
 [workspace]
 members = [

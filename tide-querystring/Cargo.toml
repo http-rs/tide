@@ -16,16 +16,16 @@ readme = "README.md"
 repository = "https://github.com/rustasync/tide"
 version = "0.1.0"
 
- [dependencies]
-tide-core = { path = "../tide-core" }
-futures-preview = "0.3.0-alpha.16"
+[dependencies]
+tide-core = { path = "../tide-core", default-features = false  }
+futures-preview = "0.3.0-alpha.17"
 http = "0.1"
 log = "0.4.6"
 serde = { version = "1.0.91", features = ["derive"] }
 serde_urlencoded = "0.5.5"
 
 [dev-dependencies]
-tide = { path = "../" }
+tide = { path = "../", default-features = false }
 http-service = "0.2.0"
 http-service-mock = "0.2.0"
 

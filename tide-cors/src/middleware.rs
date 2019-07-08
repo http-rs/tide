@@ -1,7 +1,7 @@
 //! Cors middleware
 
 use futures::future::BoxFuture;
-use futures::prelude::*;
+
 use http::header::HeaderValue;
 use http::{header, Method, StatusCode};
 use http_service::Body;
@@ -192,7 +192,7 @@ impl CorsMiddleware {
 
 impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
     fn handle<'a>(&'a self, cx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
-        FutureExt::boxed(async move {
+        Box::pin(async move {
             let origin = if let Some(origin) = cx.request().headers().get(header::ORIGIN) {
                 origin.clone()
             } else {
@@ -249,8 +249,8 @@ mod test {
 
     const ENDPOINT: &str = "/cors";
 
-    fn app() -> tide_core::App<()> {
-        let mut app = tide_core::App::new();
+    fn app() -> tide::App<()> {
+        let mut app = tide::App::new();
         app.at(ENDPOINT).get(async move |_| "Hello World");
 
         app

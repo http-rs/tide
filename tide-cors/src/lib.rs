@@ -2,8 +2,6 @@
 //!
 //! ## Examples
 //!
-//! Examples are in the `/examples` folder of this crate.
-//!
 //! ```rust,no_run
 //! #![feature(async_await)]
 //!
@@ -24,10 +22,7 @@
 //!     app.run("127.0.0.1:8000").unwrap();
 //! }
 //! ```
-//!
-//! __Simple Example__
-//!
-//! You can test the simple example by running `cargo run --example cors` while in this crate's directory, and then running this script in the browser console:
+//! You can test this by running the following in your browser:
 //!
 //! ```console
 //! $ fetch("http://127.0.0.1:8000")

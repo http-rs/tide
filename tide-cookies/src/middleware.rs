@@ -1,6 +1,5 @@
 use crate::data::CookieData;
 use futures::future::BoxFuture;
-use futures::prelude::*;
 use http::header::HeaderValue;
 
 use tide_core::{
@@ -36,7 +35,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
         mut cx: Context<State>,
         next: Next<'a, State>,
     ) -> BoxFuture<'a, Response> {
-        FutureExt::boxed(async move {
+        Box::pin(async move {
             let cookie_data = cx
                 .extensions_mut()
                 .remove()
@@ -44,7 +43,9 @@ impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
 
             let cookie_jar = cookie_data.content.clone();
 
-            cx.extensions_mut().insert(cookie_data);
+            // The `let _ = ...` is a workaround for issue: https://github.com/rustasync/tide/issues/278
+            // Solution is according to suggestion in https://github.com/rust-lang/rust/issues/61579#issuecomment-500436524
+            let _ = cx.extensions_mut().insert(cookie_data);
             let mut res = next.run(cx).await;
             let headers = res.headers_mut();
             for cookie in cookie_jar.read().unwrap().delta() {
@@ -100,8 +101,8 @@ mod tests {
         cx.set_cookie(Cookie::new("C2", "V2")).unwrap();
     }
 
-    fn app() -> tide_core::App<()> {
-        let mut app = tide_core::App::new();
+    fn app() -> tide::App<()> {
+        let mut app = tide::App::new();
         app.middleware(CookiesMiddleware::new());
 
         app.at("/get").get(retrieve_cookie);

@@ -15,7 +15,6 @@
 pub use accept_encoding::Encoding;
 use async_compression::stream;
 use futures::future::BoxFuture;
-use futures::prelude::*;
 use http::{header::CONTENT_ENCODING, status::StatusCode, HeaderMap};
 use http_service::{Body, Request};
 use tide::{
@@ -134,7 +133,7 @@ impl Compression {
 
 impl<State: Send + Sync + 'static> Middleware<State> for Compression {
     fn handle<'a>(&'a self, cx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
-        FutureExt::boxed(async move {
+        Box::pin(async move {
             let encoding = match self.preferred_encoding(cx.headers()) {
                 Ok(encoding) => encoding,
                 Err(e) => return e.into_response(),
@@ -222,7 +221,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for Decompression {
         mut cx: Context<State>,
         next: Next<'a, State>,
     ) -> BoxFuture<'a, Response> {
-        FutureExt::boxed(async move {
+        Box::pin(async move {
             match self.decode(cx.request_mut()) {
                 Ok(_) => (),
                 Err(e) => return e.into_response(),
