@@ -1,4 +1,4 @@
-#![feature(async_await)]
+#![feature(async_await, async_closure)]
 
 /// An example of how to run a Tide service on top of `runtime`, this also shows the pieces
 /// necessary if you wish to run a service on some other executor/IO source.

@@ -51,7 +51,7 @@ async fn set_message(mut cx: Context<Database>) -> EndpointResult<()> {
     if cx.state().set(id, msg) {
         Ok(())
     } else {
-        Err(StatusCode::NOT_FOUND)?
+        Err(StatusCode::NOT_FOUND.into())
     }
 }
 
@@ -60,7 +60,7 @@ async fn get_message(cx: Context<Database>) -> EndpointResult {
     if let Some(msg) = cx.state().get(id) {
         Ok(response::json(msg))
     } else {
-        Err(StatusCode::NOT_FOUND)?
+        Err(StatusCode::NOT_FOUND.into())
     }
 }
 

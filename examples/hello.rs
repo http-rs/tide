@@ -1,4 +1,4 @@
-#![feature(async_await)]
+#![feature(async_await, async_closure)]
 fn main() {
     let mut app = tide::App::new();
     app.at("/").get(async move |_| "Hello, world!");
