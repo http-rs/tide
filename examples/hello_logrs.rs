@@ -1,4 +1,4 @@
-#![feature(async_await)]
+#![feature(async_await, async_closure)]
 fn main() {
     use log::LevelFilter;
     use log4rs::append::console::ConsoleAppender;

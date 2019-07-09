@@ -3,7 +3,7 @@
 //! ## Examples
 //!
 //! ```rust,no_run
-//! #![feature(async_await)]
+//! #![feature(async_await, async_closure)]
 //!
 //! use http::header::HeaderValue;
 //! use tide_cors::CorsMiddleware;
@@ -30,7 +30,7 @@
 //!
 //! You will probably get a browser alert when running without cors middleware.
 
-#![feature(async_await)]
+#![feature(async_await, async_closure)]
 #![warn(
     nonstandard_style,
     rust_2018_idioms,
