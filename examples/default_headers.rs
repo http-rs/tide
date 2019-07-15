@@ -1,4 +1,4 @@
-#![feature(async_await, async_closure)]
+#![feature(async_await)]
 
 use tide::middleware::DefaultHeaders;
 
@@ -11,7 +11,7 @@ fn main() {
             .header("X-Server", "Tide"),
     );
 
-    app.at("/").get(async move |_| "Hello, world!");
+    app.at("/").get(|_| async move { "Hello, world!" });
 
     app.run("127.0.0.1:8000").unwrap();
 }

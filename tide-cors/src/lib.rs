@@ -3,7 +3,7 @@
 //! ## Examples
 //!
 //! ```rust,no_run
-//! #![feature(async_await, async_closure)]
+//! #![feature(async_await)]
 //!
 //! use http::header::HeaderValue;
 //! use tide_cors::CorsMiddleware;
@@ -17,7 +17,7 @@
 //!             .allow_methods(HeaderValue::from_static("GET, POST, OPTIONS")),
 //!     );
 //!
-//!     app.at("/").get(async move |_| "Hello, world!");
+//!     app.at("/").get(|_| async move { "Hello, world!" });
 //!
 //!     app.run("127.0.0.1:8000").unwrap();
 //! }
@@ -30,7 +30,7 @@
 //!
 //! You will probably get a browser alert when running without cors middleware.
 
-#![feature(async_await, async_closure)]
+#![feature(async_await)]
 #![warn(
     nonstandard_style,
     rust_2018_idioms,

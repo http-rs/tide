@@ -1,4 +1,4 @@
-#![feature(async_await, async_closure)]
+#![feature(async_await)]
 
 use futures::executor::block_on;
 use http_service::Body;
@@ -169,7 +169,7 @@ fn invalid_wildcard() {
 #[test]
 fn nameless_wildcard() {
     let mut app = tide::App::new();
-    app.at("/echo/:").get(async move |_| "");
+    app.at("/echo/:").get(|_| async move { "" });
 
     let mut server = make_server(app.into_http_service()).unwrap();
 
