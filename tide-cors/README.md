@@ -21,7 +21,7 @@ fn main() {
             .allow_methods(HeaderValue::from_static("GET, POST, OPTIONS")),
     );
 
-    app.at("/").get(async move |_| "Hello, world!");
+    app.at("/").get(|_| async move { "Hello, world!" });
 
     app.run("127.0.0.1:8000").unwrap();
 }

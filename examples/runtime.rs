@@ -1,4 +1,4 @@
-#![feature(async_await, async_closure)]
+#![feature(async_await)]
 
 /// An example of how to run a Tide service on top of `runtime`, this also shows the pieces
 /// necessary if you wish to run a service on some other executor/IO source.
@@ -7,7 +7,7 @@
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // First, we create a simple hello world application
     let mut app = tide::App::new();
-    app.at("/").get(async move |_| "Hello, world!");
+    app.at("/").get(|_| async move { "Hello, world!" });
 
     // Instead of using `App::run` to start the application, which implicitly uses a default
     // http-service server, we need to configure a custom server with the executor and IO source we

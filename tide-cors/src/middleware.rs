@@ -169,7 +169,7 @@ mod test {
 
     fn app() -> tide::App<()> {
         let mut app = tide::App::new();
-        app.at(ENDPOINT).get(async move |_| "Hello World");
+        app.at(ENDPOINT).get(|_| async move { "Hello World" });
 
         app
     }
