@@ -14,6 +14,23 @@ use serde::Deserialize;
 use tide_core::{error::Error, Context};
 
 /// An extension trait for `Context`, providing query string deserialization.
+///
+/// # Example
+///
+/// Turning the query parameters into a `HashMap`:
+///
+/// ```
+/// #![feature(async_await)]
+///
+/// # use std::collections::HashMap;
+/// use tide::querystring::ContextExt;
+///
+/// let mut app = tide::App::new();
+/// app.at("/").get(|cx: tide::Context<()>| async move {
+///     let map: HashMap<String, String> = cx.url_query().unwrap();
+///     format!("{:?}", map)
+/// });
+/// ```
 pub trait ContextExt<'de> {
     /// Analyze url and extract query parameters
     fn url_query<T: Deserialize<'de>>(&'de self) -> Result<T, Error>;
