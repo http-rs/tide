@@ -15,6 +15,15 @@ pub fn json<T: serde::Serialize>(t: T) -> Response {
         .unwrap()
 }
 
+/// Produce a HTML response from a value `t`.
+pub fn html<T: Into<Vec<u8>>>(t: T) -> Response {
+    http::Response::builder()
+        .status(http::status::StatusCode::OK)
+        .header("Content-Type", "text/html")
+        .body(Body::from(t.into()))
+        .unwrap()
+}
+
 /// A value that is synchronously convertable into a `Response`.
 pub trait IntoResponse: Send + Sized {
     /// Convert the value into a `Response`.
