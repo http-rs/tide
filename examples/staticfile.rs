@@ -2,27 +2,15 @@
 
 use futures_fs::FsPool;
 use futures_util::compat::*;
-use http::{
-    Response as HTTPResponse,
-    response::Builder,
-    header,
-    StatusCode,
-};
+use http::{header, response::Builder, Response as HTTPResponse, StatusCode};
 use http_service::Body;
-use tide::{
-    App,
-    Context,
-    EndpointResult,
-    Response,
-};
+use tide::{App, Context, EndpointResult, Response};
 
-use std::{fs::{self, Metadata}, io};
-use std::path::{
-    Component,
-    Path,
-    PathBuf,
+use std::path::{Component, Path, PathBuf};
+use std::{
+    fs::{self, Metadata},
+    io,
 };
-
 
 const DEFAULT_4XX_BODY: &[u8] = b"Oops! I can't find what you're looking for...";
 const DEFAULT_5XX_BODY: &[u8] = b"I'm broken, apparently.";
@@ -46,19 +34,18 @@ impl StaticFile {
                 match p {
                     Component::Normal(x) => {
                         if let Some(s) = x.to_str() {
-                            if s.len() > 0 {
+                            if !s.is_empty() {
                                 result.push({
-                                    &*percent_encoding
-                                        ::percent_decode(s.as_bytes())
+                                    &*percent_encoding::percent_decode(s.as_bytes())
                                         .decode_utf8_lossy()
                                 });
                             }
                         }
-                    },
+                    }
                     Component::ParentDir => {
                         result.pop();
-                    },
-                    _ => ()
+                    }
+                    _ => (),
                 }
 
                 result
@@ -71,7 +58,10 @@ impl StaticFile {
 
         // TODO: Error handling: propagation, log or panic?
         if !root.exists() {
-            eprintln!("StaticFile path not found: {}", root.to_str().unwrap_or("Unknown"));
+            eprintln!(
+                "StaticFile path not found: {}",
+                root.to_str().unwrap_or("Unknown")
+            );
         }
 
         StaticFile {
@@ -81,7 +71,12 @@ impl StaticFile {
     }
 
     /// Guess mime type and finish the file stream response
-    fn file_stream_res(&self, meta: Metadata, path: PathBuf, mut response: Builder) -> StaticFileResult<Response> {
+    fn file_stream_res(
+        &self,
+        meta: Metadata,
+        path: PathBuf,
+        mut response: Builder,
+    ) -> StaticFileResult<Response> {
         // TODO: More mime types support needed
         let mime = mime_guess::guess_mime_type(&path);
         let mime_str = mime.as_ref();
@@ -101,7 +96,12 @@ impl StaticFile {
 
     /// Serve directory as html
     /// TODO: Other content types like JSON?
-    fn dir_res(&self, actual_path: &str, path: PathBuf, mut response: Builder) -> StaticFileResult<Response> {
+    fn dir_res(
+        &self,
+        actual_path: &str,
+        path: PathBuf,
+        mut response: Builder,
+    ) -> StaticFileResult<Response> {
         let mut files_html: Vec<String> = Vec::new();
 
         // create files html
@@ -118,12 +118,19 @@ impl StaticFile {
             };
 
             // file html string
-            files_html.push(format!(r#"
+            files_html.push(format!(
+                r#"
                 <tr>
                     <td><span class="icon">{}</span><a href="{}" title="{}">{}</a></td>
                     <td>{:.2} KB</td>
                 </tr>
-            "#, icon_str, link, link, name_str, metadata.len() as f64 / 1024 as f64 ));
+            "#,
+                icon_str,
+                link,
+                link,
+                name_str,
+                metadata.len() as f64 / 1024_f64
+            ));
         }
 
         // push a back-link if not inside of the top most directory
@@ -202,7 +209,7 @@ impl StaticFile {
         // Prevent access outside the root path
         if path.starts_with(&self.root) {
             // if file exists
-            if let Some(meta) = fs::metadata(&path).ok() {
+            if let Ok(meta) = fs::metadata(&path) {
                 // if file is a directory
                 if meta.is_dir() {
                     // if the path don't end with / redirect to path/
@@ -216,7 +223,7 @@ impl StaticFile {
 
                     // serve index.html if it is inside requested directory
                     let index_path = Path::new(&path).join("index.html");
-                    if let Some(meta) = fs::metadata(&index_path).ok() {
+                    if let Ok(meta) = fs::metadata(&index_path) {
                         return self.file_stream_res(meta, index_path, response);
                     } else {
                         // serve the entire directory if there is no index.html
@@ -236,15 +243,13 @@ impl StaticFile {
 
 async fn serve_static_file(ctx: Context<StaticFile>) -> EndpointResult {
     let actual_path = ctx.uri().path();
-    ctx.state()
-        .handle_path(actual_path)
-        .or_else(|_err| {
-            Ok(http::Response::builder()
-                .status(StatusCode::INTERNAL_SERVER_ERROR)
-                .header(header::CONTENT_TYPE, mime::TEXT_HTML.as_ref())
-                .body(DEFAULT_5XX_BODY.into())
-                .expect("failed to build static response?"))
-        })
+    ctx.state().handle_path(actual_path).or_else(|_err| {
+        Ok(http::Response::builder()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .header(header::CONTENT_TYPE, mime::TEXT_HTML.as_ref())
+            .body(DEFAULT_5XX_BODY.into())
+            .expect("failed to build static response?"))
+    })
 }
 
 fn main() {
