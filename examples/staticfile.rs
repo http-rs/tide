@@ -196,7 +196,7 @@ impl StaticFile {
             .expect("failed to build static response?"))
     }
 
-    /// Prepend root path and normalize to the path
+    /// Prepend root path and normalize the path
     fn get_path(&self, path: &str) -> PathBuf {
         self.root.join(StaticFile::normalize(path))
     }
