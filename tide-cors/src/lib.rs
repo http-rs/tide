@@ -6,14 +6,14 @@
 //! #![feature(async_await)]
 //!
 //! use http::header::HeaderValue;
-//! use tide_cors::CorsMiddleware;
+//! use tide::middleware::{CorsMiddleware, CorsOrigin};
 //!
 //! fn main() {
 //!     let mut app = tide::App::new();
 //!
 //!     app.middleware(
 //!         CorsMiddleware::new()
-//!             .allow_origin(HeaderValue::from_static("*"))
+//!             .allow_origin(CorsOrigin::from("*"))
 //!             .allow_methods(HeaderValue::from_static("GET, POST, OPTIONS")),
 //!     );
 //!
@@ -41,4 +41,4 @@
 
 mod middleware;
 
-pub use self::middleware::CorsMiddleware;
+pub use self::middleware::{CorsMiddleware, CorsOrigin};
