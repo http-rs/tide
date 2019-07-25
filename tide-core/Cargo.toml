@@ -13,7 +13,7 @@ repository = "https://github.com/rustasync/tide"
 [dependencies]
 futures-preview = "0.3.0-alpha.17"
 http = "0.1"
-http-service = "0.2.0"
+http-service = "0.3.0"
 serde = "1.0.91"
 serde_json = "1.0.39"
 route-recognizer = "0.1.12"
