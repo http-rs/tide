@@ -16,9 +16,9 @@ edition = "2018"
 [dependencies]
 futures-preview = "0.3.0-alpha.17"
 http = "0.1"
-http-service = "0.2.0"
+http-service = "0.3.0"
 tide-core = { path = "../tide-core" }
 
 [dev-dependencies]
 tide = { path = "../" }
-http-service-mock = "0.2.0"
+http-service-mock = "0.3.0"
