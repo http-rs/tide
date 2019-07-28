@@ -16,7 +16,7 @@ use tide_core::{
 /// ```
 /// use slog::o;
 ///
-/// let mut app = tide::Server::new();
+/// let mut app = tide::new();
 ///
 /// let root_logger = slog::Logger::root(slog::Discard, o!());
 /// app.middleware(tide_slog::PerRequestLogger::with_logger(root_logger));

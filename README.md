@@ -63,7 +63,7 @@ Ecosystem WG, and **not ready for production use yet**.
 #![feature(async_await)]
 
 fn main() -> Result<(), std::io::Error> {
-    let mut app = tide::Server::new();
+    let mut app = tide::new();
     app.at("/").get(|_| async move { "Hello, world!" });
     Ok(app.run("127.0.0.1:8000")?)
 }

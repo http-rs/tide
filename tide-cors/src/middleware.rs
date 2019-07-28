@@ -250,7 +250,7 @@ mod test {
     const ENDPOINT: &str = "/cors";
 
     fn app() -> tide::Server<()> {
-        let mut app = tide::Server::new();
+        let mut app = tide::new();
         app.at(ENDPOINT).get(|_| async move { "Hello World" });
 
         app

@@ -32,7 +32,7 @@ use crate::{
 /// ```rust, no_run
 /// #![feature(async_await)]
 ///
-/// let mut app = tide::Server::new();
+/// let mut app = tide::new();
 /// app.at("/hello").get(|_| async move { "Hello, world!" });
 /// app.run("127.0.0.1:8000");
 /// ```
@@ -59,7 +59,7 @@ use crate::{
 ///     Ok(format!("Goodbye, {}.", user))
 /// }
 ///
-/// let mut app = tide::Server::new();
+/// let mut app = tide::new();
 ///
 /// app.at("/hello/:user").get(hello);
 /// app.at("/goodbye/:user").get(goodbye);
@@ -167,7 +167,7 @@ impl<State: Send + Sync + 'static> Server<State> {
     ///
     /// ```rust,no_run
     /// # #![feature(async_await)]
-    /// # let mut app = tide::Server::new();
+    /// # let mut app = tide::new();
     /// app.at("/").get(|_| async move { "Hello, world!" });
     /// ```
     ///
@@ -192,7 +192,7 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// Here are some examples omitting the HTTP verb based endpoint selection:
     ///
     /// ```rust,no_run
-    /// # let mut app = tide::Server::new();
+    /// # let mut app = tide::new();
     /// app.at("/");
     /// app.at("/hello");
     /// app.at("add_two/:num");

@@ -6,7 +6,7 @@
 #[runtime::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // First, we create a simple hello world application
-    let mut app = tide::Server::new();
+    let mut app = tide::new();
     app.at("/").get(|_| async move { "Hello, world!" });
 
     // Instead of using `Server::run` to start the application, which implicitly uses a default

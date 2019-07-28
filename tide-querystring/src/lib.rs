@@ -25,7 +25,7 @@ use tide_core::{error::Error, Context};
 /// # use std::collections::HashMap;
 /// use tide::querystring::ContextExt;
 ///
-/// let mut app = tide::Server::new();
+/// let mut app = tide::new();
 /// app.at("/").get(|cx: tide::Context<()>| async move {
 ///     let map: HashMap<String, String> = cx.url_query().unwrap();
 ///     format!("{:?}", map)
@@ -66,7 +66,7 @@ mod tests {
     }
 
     fn app() -> tide::Server<()> {
-        let mut app = tide::Server::new();
+        let mut app = tide::new();
         app.at("/").get(handler);
         app
     }

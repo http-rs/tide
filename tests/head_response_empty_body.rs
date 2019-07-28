@@ -11,7 +11,7 @@ async fn ok(_cx: Context<()>) -> String {
 
 #[test]
 fn head_response_empty() {
-    let mut app = tide::Server::new();
+    let mut app = tide::new();
     app.at("/").get(ok);
     let mut server = make_server(app.into_http_service()).unwrap();
 

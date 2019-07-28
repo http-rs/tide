@@ -11,7 +11,7 @@ fn main() {
         .unwrap();
     let _handle = log4rs::init_config(config).unwrap();
 
-    let mut app = tide::Server::new();
+    let mut app = tide::new();
     app.middleware(tide::middleware::RequestLogger::new());
     app.at("/").get(|_| async move { "Hello, world!" });
     app.run("127.0.0.1:8000").unwrap();

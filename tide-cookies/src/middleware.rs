@@ -102,7 +102,7 @@ mod tests {
     }
 
     fn app() -> tide::Server<()> {
-        let mut app = tide::Server::new();
+        let mut app = tide::new();
         app.middleware(CookiesMiddleware::new());
 
         app.at("/get").get(retrieve_cookie);
