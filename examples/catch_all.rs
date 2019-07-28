@@ -9,5 +9,6 @@ async fn echo_path(cx: Context<()>) -> String {
 fn main() {
     let mut app = tide::new();
     app.at("/echo_path/*path").get(echo_path);
-    app.run("127.0.0.1:8000").unwrap();
+    app.bind("127.0.0.1:8000").await?;
+    Ok(())
 }

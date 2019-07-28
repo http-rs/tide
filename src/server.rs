@@ -34,7 +34,7 @@ use crate::{
 ///
 /// let mut app = tide::new();
 /// app.at("/hello").get(|_| async move { "Hello, world!" });
-/// app.run("127.0.0.1:8000");
+/// app.bind("127.0.0.1:8000");
 /// ```
 ///
 /// # Routing and parameters
@@ -67,7 +67,7 @@ use crate::{
 ///     "Use /hello/{your name} or /goodbye/{your name}"
 /// });
 ///
-/// app.run("127.0.0.1:8000");
+/// app.bind("127.0.0.1:8000");
 /// ```
 ///
 /// You can learn more about routing in the [`Server::at`] documentation.
@@ -123,7 +123,7 @@ use crate::{
 ///     let mut app = Server::with_state(Database::default());
 ///     app.at("/message").post(new_message);
 ///     app.at("/message/:id").get(get_message);
-///     app.run("127.0.0.1:8000").unwrap();
+///     app.bind("127.0.0.1:8000").unwrap();
 /// }
 /// ```
 

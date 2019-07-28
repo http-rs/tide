@@ -48,6 +48,6 @@ fn main() -> Result<(), std::io::Error> {
 
     let mut app = Server::with_state(state);
     app.at("/").get(index);
-    app.run("127.0.0.1:8000")?;
+    app.bind("127.0.0.1:8000")?;
     Ok(())
 }

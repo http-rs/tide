@@ -18,5 +18,5 @@ fn main() {
     app.at("/echo").post(echo_bytes);
     app.middleware(Compression::with_default(Encoding::Brotli));
     app.middleware(Decompression::new());
-    app.run("127.0.0.1:8000").unwrap();
+    app.bind("127.0.0.1:8000").unwrap();
 }

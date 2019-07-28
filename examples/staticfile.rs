@@ -124,5 +124,5 @@ async fn handle_path(ctx: Context<StaticFile>) -> EndpointResult {
 fn main() {
     let mut app = Server::with_state(StaticFile::new("./"));
     app.at("/*").get(handle_path);
-    app.run("127.0.0.1:8000").unwrap();
+    app.bind("127.0.0.1:8000").unwrap();
 }
