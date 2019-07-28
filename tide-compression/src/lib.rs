@@ -280,7 +280,7 @@ mod tests {
     // Generates a response given a string that represents the Accept-Encoding header value.
     fn get_encoded_response(hval: &str) -> Response {
         let app = app();
-        let mut server = make_server(app.into_http_service()).unwrap();
+        let mut server = make_server(app.into_service()).unwrap();
         let req = http::Request::get("/")
             .header(ACCEPT_ENCODING, hval)
             .body(Body::empty())
@@ -291,7 +291,7 @@ mod tests {
     // Generates a decoded response given a request body and the header value representing its encoding.
     fn get_decoded_response(body: Body, hval: &str) -> Response {
         let app = app();
-        let mut server = make_server(app.into_http_service()).unwrap();
+        let mut server = make_server(app.into_service()).unwrap();
         let req = http::Request::post("/echo")
             .header(CONTENT_ENCODING, hval)
             .body(body)

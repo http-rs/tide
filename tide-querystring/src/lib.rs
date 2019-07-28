@@ -74,7 +74,7 @@ mod tests {
     #[test]
     fn successfully_deserialize_query() {
         let app = app();
-        let mut server = make_server(app.into_http_service()).unwrap();
+        let mut server = make_server(app.into_service()).unwrap();
         let req = http::Request::get("/?msg=Hello")
             .body(Body::empty())
             .unwrap();
@@ -87,7 +87,7 @@ mod tests {
     #[test]
     fn unsuccessfully_deserialize_query() {
         let app = app();
-        let mut server = make_server(app.into_http_service()).unwrap();
+        let mut server = make_server(app.into_service()).unwrap();
         let req = http::Request::get("/").body(Body::empty()).unwrap();
         let res = server.simulate(req).unwrap();
         assert_eq!(res.status(), 400);
@@ -96,7 +96,7 @@ mod tests {
     #[test]
     fn malformatted_query() {
         let app = app();
-        let mut server = make_server(app.into_http_service()).unwrap();
+        let mut server = make_server(app.into_service()).unwrap();
         let req = http::Request::get("/?error=should_fail")
             .body(Body::empty())
             .unwrap();

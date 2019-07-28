@@ -275,7 +275,7 @@ mod test {
                 .allow_credentials(true),
         );
 
-        let mut server = make_server(app.into_http_service()).unwrap();
+        let mut server = make_server(app.into_service()).unwrap();
 
         let req = http::Request::get(ENDPOINT)
             .header(http::header::ORIGIN, ALLOW_ORIGIN)
@@ -316,7 +316,7 @@ mod test {
         let mut app = app();
         app.middleware(CorsMiddleware::new());
 
-        let mut server = make_server(app.into_http_service()).unwrap();
+        let mut server = make_server(app.into_service()).unwrap();
         let res = server.simulate(request()).unwrap();
 
         assert_eq!(res.status(), 200);
@@ -338,7 +338,7 @@ mod test {
                 .expose_headers(HeaderValue::from_static(EXPOSE_HEADER)),
         );
 
-        let mut server = make_server(app.into_http_service()).unwrap();
+        let mut server = make_server(app.into_service()).unwrap();
         let res = server.simulate(request()).unwrap();
 
         assert_eq!(res.status(), 200);
@@ -353,7 +353,7 @@ mod test {
         let mut app = app();
         app.middleware(CorsMiddleware::new().allow_credentials(true));
 
-        let mut server = make_server(app.into_http_service()).unwrap();
+        let mut server = make_server(app.into_service()).unwrap();
         let res = server.simulate(request()).unwrap();
 
         assert_eq!(res.status(), 200);
@@ -369,7 +369,7 @@ mod test {
         let mut app = app();
         let origins = vec![ALLOW_ORIGIN, "foo.com", "bar.com"];
         app.middleware(CorsMiddleware::new().allow_origin(origins.clone()));
-        let mut server = make_server(app.into_http_service()).unwrap();
+        let mut server = make_server(app.into_service()).unwrap();
 
         for origin in origins {
             let request = http::Request::get(ENDPOINT)
@@ -398,7 +398,7 @@ mod test {
             .body(Body::empty())
             .unwrap();
 
-        let mut server = make_server(app.into_http_service()).unwrap();
+        let mut server = make_server(app.into_service()).unwrap();
         let res = server.simulate(request).unwrap();
 
         assert_eq!(res.status(), 400);
@@ -415,7 +415,7 @@ mod test {
             .body(Body::empty())
             .unwrap();
 
-        let mut server = make_server(app.into_http_service()).unwrap();
+        let mut server = make_server(app.into_service()).unwrap();
         let res = server.simulate(request).unwrap();
 
         assert_eq!(res.status(), 401);

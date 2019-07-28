@@ -30,7 +30,7 @@ async fn echo_empty(cx: Context<()>) -> Result<String, tide::Error> {
 fn wildcard() {
     let mut app = tide::new();
     app.at("/add_one/:num").get(add_one);
-    let mut server = make_server(app.into_http_service()).unwrap();
+    let mut server = make_server(app.into_service()).unwrap();
 
     let req = http::Request::get("/add_one/3")
         .body(Body::empty())
@@ -53,7 +53,7 @@ fn wildcard() {
 fn invalid_segment_error() {
     let mut app = tide::new();
     app.at("/add_one/:num").get(add_one);
-    let mut server = make_server(app.into_http_service()).unwrap();
+    let mut server = make_server(app.into_service()).unwrap();
 
     let req = http::Request::get("/add_one/a")
         .body(Body::empty())
@@ -66,7 +66,7 @@ fn invalid_segment_error() {
 fn not_found_error() {
     let mut app = tide::new();
     app.at("/add_one/:num").get(add_one);
-    let mut server = make_server(app.into_http_service()).unwrap();
+    let mut server = make_server(app.into_service()).unwrap();
 
     let req = http::Request::get("/add_one/").body(Body::empty()).unwrap();
     let res = server.simulate(req).unwrap();
@@ -77,7 +77,7 @@ fn not_found_error() {
 fn wildpath() {
     let mut app = tide::new();
     app.at("/echo/*path").get(echo_path);
-    let mut server = make_server(app.into_http_service()).unwrap();
+    let mut server = make_server(app.into_service()).unwrap();
 
     let req = http::Request::get("/echo/some_path")
         .body(Body::empty())
@@ -106,7 +106,7 @@ fn wildpath() {
 fn multi_wildcard() {
     let mut app = tide::new();
     app.at("/add_two/:one/:two/").get(add_two);
-    let mut server = make_server(app.into_http_service()).unwrap();
+    let mut server = make_server(app.into_service()).unwrap();
 
     let req = http::Request::get("/add_two/1/2/")
         .body(Body::empty())
@@ -134,7 +134,7 @@ fn multi_wildcard() {
 fn wild_last_segment() {
     let mut app = tide::new();
     app.at("/echo/:path/*").get(echo_path);
-    let mut server = make_server(app.into_http_service()).unwrap();
+    let mut server = make_server(app.into_service()).unwrap();
 
     let req = http::Request::get("/echo/one/two")
         .body(Body::empty())
@@ -157,7 +157,7 @@ fn wild_last_segment() {
 fn invalid_wildcard() {
     let mut app = tide::new();
     app.at("/echo/*path/:one/").get(echo_path);
-    let mut server = make_server(app.into_http_service()).unwrap();
+    let mut server = make_server(app.into_service()).unwrap();
 
     let req = http::Request::get("/echo/one/two")
         .body(Body::empty())
@@ -171,7 +171,7 @@ fn nameless_wildcard() {
     let mut app = tide::new();
     app.at("/echo/:").get(|_| async move { "" });
 
-    let mut server = make_server(app.into_http_service()).unwrap();
+    let mut server = make_server(app.into_service()).unwrap();
 
     let req = http::Request::get("/echo/one/two")
         .body(Body::empty())
@@ -188,7 +188,7 @@ fn nameless_wildcard() {
 fn nameless_internal_wildcard() {
     let mut app = tide::new();
     app.at("/echo/:/:path").get(echo_path);
-    let mut server = make_server(app.into_http_service()).unwrap();
+    let mut server = make_server(app.into_service()).unwrap();
 
     let req = http::Request::get("/echo/one").body(Body::empty()).unwrap();
     let res = server.simulate(req).unwrap();
@@ -215,7 +215,7 @@ fn nameless_internal_wildcard() {
 fn nameless_internal_wildcard2() {
     let mut app = tide::new();
     app.at("/echo/:/:path").get(echo_empty);
-    let mut server = make_server(app.into_http_service()).unwrap();
+    let mut server = make_server(app.into_service()).unwrap();
 
     let req = http::Request::get("/echo/one/two")
         .body(Body::empty())

@@ -114,7 +114,7 @@ mod tests {
 
     fn make_request(endpoint: &str) -> Response {
         let app = app();
-        let mut server = make_server(app.into_http_service()).unwrap();
+        let mut server = make_server(app.into_service()).unwrap();
         let req = http::Request::get(endpoint)
             .header(http::header::COOKIE, "testCookie=RequestCookieValue")
             .body(Body::empty())
