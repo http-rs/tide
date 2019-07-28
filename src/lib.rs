@@ -22,7 +22,7 @@ pub use http;
 mod app;
 mod router;
 
-pub use app::{Server, Server};
+pub use app::{Server, Service};
 
 #[cfg(feature = "cookies")]
 #[doc(inline)]
@@ -58,4 +58,9 @@ pub mod middleware {
 
     #[cfg(feature = "cookies")]
     pub use tide_cookies::CookiesMiddleware;
+}
+
+/// Create a new Tide server.
+pub fn new() -> Server<()> {
+    Server::new()
 }

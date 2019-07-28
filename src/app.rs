@@ -150,7 +150,7 @@ impl Default for Server<()> {
 impl<State: Send + Sync + 'static> Server<State> {
     /// Create an `Server`, with initial middleware or configuration.
     pub fn with_state(state: State) -> Server<State> {
-        Server {
+        Self {
             router: Router::new(),
             middleware: Vec::new(),
             state,
@@ -229,8 +229,8 @@ impl<State: Send + Sync + 'static> Server<State> {
     ///
     /// This lower-level method lets you host a Tide application within an HTTP
     /// server of your choice, via the `http_service` interface crate.
-    pub fn into_http_service(self) -> Server<State> {
-        Server {
+    pub fn into_http_service(self) -> Service<State> {
+        Service {
             router: Arc::new(self.router),
             state: Arc::new(self.state),
             middleware: Arc::new(self.middleware),
@@ -274,13 +274,13 @@ impl<State: Send + Sync + 'static> Server<State> {
 /// [`HttpService`]: http_service::HttpService
 #[derive(Clone)]
 #[allow(missing_debug_implementations)]
-pub struct Server<State> {
+pub struct Service<State> {
     router: Arc<Router<State>>,
     state: Arc<State>,
     middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
 }
 
-impl<State: Sync + Send + 'static> HttpService for Server<State> {
+impl<State: Sync + Send + 'static> HttpService for Service<State> {
     type Connection = ();
     type ConnectionFuture = future::Ready<Result<(), std::io::Error>>;
     type ResponseFuture = BoxFuture<'static, Result<http_service::Response, std::io::Error>>;
