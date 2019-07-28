@@ -62,10 +62,11 @@ Ecosystem WG, and **not ready for production use yet**.
 ```rust,no_run
 #![feature(async_await)]
 
-fn main() -> Result<(), std::io::Error> {
+#[runtime::main]
+async fn main() -> Result<(), tide::Exception> {
     let mut app = tide::new();
     app.at("/").get(|_| async move { "Hello, world!" });
-    Ok(app.bind("127.0.0.1:8000")?)
+    app.bind("127.0.0.1:8000").await
 }
 ```
 

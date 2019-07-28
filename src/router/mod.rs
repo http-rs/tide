@@ -1,3 +1,4 @@
+//! A handle to a Route.
 mod core;
 mod route;
 

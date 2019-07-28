@@ -1,6 +1,17 @@
 //! Welcome to Tide.
 //!
 //! The [`Server`](struct.Server.html) docs are a good place to get started.
+//!
+//! # Examples
+//! ```
+//! # #![feature(async_await)]
+//! #[runtime::main]
+//! async fn main() -> Result<(), tide::Exception> {
+//!     let mut app = tide::new();
+//!     app.at("/").get(|_| async move { "Hello, world!" });
+//!     app.bind("127.0.0.1:8000").await
+//! }
+//! ```
 
 #![cfg_attr(any(feature = "nightly", test), feature(external_doc))]
 #![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
@@ -17,48 +28,22 @@
 #[doc(include = "../README.md")]
 const _README: () = ();
 
-pub use http;
+pub mod server;
+pub mod middleware;
+#[doc(hidden)]
+pub mod error;
 
-mod server;
 mod router;
 
-pub use server::{Server, Service};
-
-#[cfg(feature = "cookies")]
+pub use http;
+pub use tide_core;
 #[doc(inline)]
-pub use tide_cookies as cookies;
+pub use server::Server;
+#[doc(hidden)]
+pub use tide_core::{response, Body, Context, Endpoint};
 
-#[cfg(feature = "cors")]
-#[doc(inline)]
-pub use tide_cors as cors;
-
-#[doc(inline)]
-pub use tide_core::{response, Body, Context, Endpoint, EndpointResult, Error, Response};
-
-pub mod error {
-    //! Error types re-exported from `tide-core`
-    pub use tide_core::error::{Error, ResponseExt, ResultDynErrExt, ResultExt, StringError};
-}
-
-pub use tide_forms as forms;
-pub use tide_querystring as querystring;
-
-pub mod middleware {
-    //! Module to export tide_core middleware
-
-    // Core
-    pub use tide_core::middleware::{Middleware, Next};
-
-    // Exports from tide repo.
-    pub use tide_headers::DefaultHeaders;
-    pub use tide_log::RequestLogger;
-
-    #[cfg(feature = "cors")]
-    pub use tide_cors::{CorsMiddleware, CorsOrigin};
-
-    #[cfg(feature = "cookies")]
-    pub use tide_cookies::CookiesMiddleware;
-}
+/// Catch-all error type.
+pub type Exception = Box<dyn std::error::Error + Send + Sync + 'static>;
 
 /// Create a new Tide server.
 pub fn new() -> Server<()> {

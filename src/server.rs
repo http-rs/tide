@@ -1,3 +1,5 @@
+//! The entry point for building a Tide application.
+
 use futures::future::{self, BoxFuture};
 use http_service::HttpService;
 use std::sync::Arc;
