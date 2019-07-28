@@ -1,6 +1,6 @@
 //! Welcome to Tide.
 //!
-//! The [`App`](struct.App.html) docs are a good place to get started.
+//! The [`Server`](struct.Server.html) docs are a good place to get started.
 
 #![cfg_attr(any(feature = "nightly", test), feature(external_doc))]
 #![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
@@ -22,7 +22,7 @@ pub use http;
 mod app;
 mod router;
 
-pub use app::{App, Server};
+pub use app::{Server, Server};
 
 #[cfg(feature = "cookies")]
 #[doc(inline)]

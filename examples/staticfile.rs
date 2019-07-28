@@ -8,7 +8,7 @@ use http::{
     StatusCode,
 };
 use http_service::Body;
-use tide::{App, Context, EndpointResult, Response};
+use tide::{Server, Context, EndpointResult, Response};
 
 use std::path::{Component, Path, PathBuf};
 use std::{fs, io};
@@ -122,7 +122,7 @@ async fn handle_path(ctx: Context<StaticFile>) -> EndpointResult {
 }
 
 fn main() {
-    let mut app = App::with_state(StaticFile::new("./"));
+    let mut app = Server::with_state(StaticFile::new("./"));
     app.at("/*").get(handle_path);
     app.run("127.0.0.1:8000").unwrap();
 }

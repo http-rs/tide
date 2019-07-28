@@ -268,8 +268,8 @@ mod tests {
     }
 
     // Generates the app.
-    fn app() -> tide::App<()> {
-        let mut app = tide::App::new();
+    fn app() -> tide::Server<()> {
+        let mut app = tide::Server::new();
         app.at("/").get(lorem_ipsum);
         app.at("/echo").post(echo_bytes);
         app.middleware(Compression::new());

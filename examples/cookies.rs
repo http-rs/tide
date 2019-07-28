@@ -16,7 +16,7 @@ async fn remove_cookie(mut cx: Context<()>) {
 }
 
 fn main() {
-    let mut app = tide::App::new();
+    let mut app = tide::Server::new();
     app.middleware(CookiesMiddleware::new());
 
     app.at("/").get(retrieve_cookie);

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use tide::{
     error::ResultExt,
     forms::{self, ContextExt},
-    response, App, Context, EndpointResult,
+    response, Server, Context, EndpointResult,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -37,7 +37,7 @@ async fn echo_form(mut cx: Context<()>) -> EndpointResult {
 }
 
 fn main() {
-    let mut app = App::new();
+    let mut app = Server::new();
 
     app.at("/echo/string").post(echo_string);
     app.at("/echo/bytes").post(echo_bytes);

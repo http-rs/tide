@@ -9,7 +9,7 @@
 //! use tide::middleware::{CorsMiddleware, CorsOrigin};
 //!
 //! fn main() {
-//!     let mut app = tide::App::new();
+//!     let mut app = tide::Server::new();
 //!
 //!     app.middleware(
 //!         CorsMiddleware::new()

@@ -5,20 +5,20 @@
 # Summary
 [summary]: #summary
 
-We propose to rename the `AppData` generic argument to `State`, and expose two constructors on `App`
+We propose to rename the `ServerData` generic argument to `State`, and expose two constructors on `Server`
 to create new Tide applications.
 
 # Motivation
 [motivation]: #motivation
 
-With most introductory examples, passing the `AppData` parameter around isn't necessary. That's why
-most examples we author use `App::new(())`.
+With most introductory examples, passing the `ServerData` parameter around isn't necessary. That's why
+most examples we author use `Server::new(())`.
 
 However this can be confusing for people new to Tide ("why is the use of that parameter?"), and even
 stranger for people new to Rust ("what does `(())` mean?"). So it would be useful to have a way of
-constructing new Tide applications without needing to start off by explaining what `AppData` does.
+constructing new Tide applications without needing to start off by explaining what `ServerData` does.
 
-Another thing worth thinking about here is that the `AppData` argument is rather verbose. It's also
+Another thing worth thinking about here is that the `ServerData` argument is rather verbose. It's also
 not necessarily accurate: I'd argue that a database connection pool, or other stateful structs
 aren't quite _data_. Calling them _state_ feels more accurate, which also happens to be the
 terminology [Actix uses](https://actix.rs/docs/databases/).
@@ -33,10 +33,10 @@ but people interested in doing web-like things in Rust in general.
 # Detailed Explanation
 [detailed-explanation]: #detailed-explanation
 
-I propose we introduce two constructors for `App`:
+I propose we introduce two constructors for `Server`:
 
-- `App::new()` creates a new application.
-- `App::with_state(state)` creates a new application with state.
+- `Server::new()` creates a new application.
+- `Server::with_state(state)` creates a new application with state.
 
 If people "just want a Tide app", the `new` method should feel intuitive. But if they want to
 introduce some state, the `with_state` method will be there. This should also create a clearer
@@ -51,7 +51,7 @@ __no state__
 #![feature(async_await)]
 
 fn main() -> Result<(), failure::Error> {
-    let mut app = tide::App::new();
+    let mut app = tide::Server::new();
     app.at("/").get(|_| async move { "Hello, world!" });
     app.serve("127.0.0.1:8000")?;
 }
@@ -67,7 +67,7 @@ struct State {
 }
 
 fn main() -> Result<(), failure::Error> {
-    let mut app = tide::App::with_state(State::default());
+    let mut app = tide::Server::with_state(State::default());
     app.at("/").get(|_| async move { "Hello, world!" });
     app.serve("127.0.0.1:8000")?;
 }
@@ -82,9 +82,9 @@ right time to propose changes like these.
 # Rationale and Alternatives
 [alternatives]: #rationale-and-alternatives
 
-In https://github.com/rustasync/tide/pull/189 I initially proposed implementing `Default` for `App`,
+In https://github.com/rustasync/tide/pull/189 I initially proposed implementing `Default` for `Server`,
 but it quickly became clear that making more fundamental changes to Tide's constructors would
-provide a better experience. In particular clearing up the terminology around `AppData` by calling
+provide a better experience. In particular clearing up the terminology around `ServerData` by calling
 it `State` made all other parts fall in place naturally.
 
 # Unresolved Questions

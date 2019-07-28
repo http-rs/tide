@@ -26,7 +26,7 @@ use tide_core::{
 /// let _guard = slog_scope::set_global_logger(root_logger.clone());
 /// slog_stdlog::init()?;
 ///
-/// let mut app = tide::App::new();
+/// let mut app = tide::Server::new();
 ///
 /// app.middleware(tide_slog::PerRequestLogger::with_logger(root_logger));
 /// app.middleware(tide_slog::SetSlogScopeLogger);

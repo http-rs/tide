@@ -6,14 +6,14 @@
 #[runtime::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // First, we create a simple hello world application
-    let mut app = tide::App::new();
+    let mut app = tide::Server::new();
     app.at("/").get(|_| async move { "Hello, world!" });
 
-    // Instead of using `App::run` to start the application, which implicitly uses a default
+    // Instead of using `Server::run` to start the application, which implicitly uses a default
     // http-service server, we need to configure a custom server with the executor and IO source we
     // want it to use and then run the Tide service on it.
 
-    // Turn the `tide::App` into a generic `http_service::HttpService`
+    // Turn the `tide::Server` into a generic `http_service::HttpService`
     let http_service = app.into_http_service();
 
     // Build an `http_service_hyper::Server` using runtime's `TcpListener` and `Spawn` instances

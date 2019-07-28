@@ -3,7 +3,7 @@
 use http::status::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
-use tide::{error::ResultExt, response, App, Context, EndpointResult};
+use tide::{error::ResultExt, response, Server, Context, EndpointResult};
 
 #[derive(Default)]
 struct Database {
@@ -65,7 +65,7 @@ async fn get_message(cx: Context<Database>) -> EndpointResult {
 }
 
 fn main() {
-    let mut app = App::with_state(Database::default());
+    let mut app = Server::with_state(Database::default());
     app.at("/message").post(new_message);
     app.at("/message/:id").get(get_message).post(set_message);
     app.run("127.0.0.1:8000").unwrap();

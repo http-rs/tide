@@ -6,7 +6,7 @@
 use http::status::StatusCode;
 use juniper::graphql_object;
 use std::sync::{atomic, Arc};
-use tide::{error::ResultExt, response, App, Context, EndpointResult};
+use tide::{error::ResultExt, response, Server, Context, EndpointResult};
 
 // First, we define `State` that holds accumulator state. This is accessible as state in
 // Tide, and as executor context in Juniper.
@@ -58,7 +58,7 @@ async fn handle_graphql(mut cx: Context<State>) -> EndpointResult {
 }
 
 fn main() {
-    let mut app = App::with_state(State::default());
+    let mut app = Server::with_state(State::default());
     app.at("/graphql").post(handle_graphql);
     app.run("127.0.0.1:8000").unwrap();
 }

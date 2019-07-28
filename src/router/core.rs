@@ -8,7 +8,7 @@ use route_recognizer::{Match, Params, Router as MethodRouter};
 
 use tide_core::{internal::DynEndpoint, Context, Endpoint, Response};
 
-/// The routing table used by `App`
+/// The routing table used by `Server`
 ///
 /// Internally, we have a separate state machine per http method; indexing
 /// by the method first allows the table itself to be more efficient.

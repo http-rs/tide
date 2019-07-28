@@ -19,7 +19,7 @@ impl<State> PerRequestLogger<State> {
     /// ```
     /// use slog::o;
     ///
-    /// let mut app = tide::App::new();
+    /// let mut app = tide::Server::new();
     ///
     /// let request_id = || uuid::Uuid::new_v4().to_simple().to_string();
     ///
@@ -34,7 +34,7 @@ impl<State> PerRequestLogger<State> {
     /// ```
     /// use slog::o;
     ///
-    /// let mut app = tide::App::new();
+    /// let mut app = tide::Server::new();
     ///
     /// let root_logger = slog::Logger::root(slog::Discard, o!());
     /// app.middleware(tide_slog::PerRequestLogger::with_setup(move |cx| root_logger.new(o! {
@@ -56,7 +56,7 @@ impl<State> PerRequestLogger<State> {
     /// ```
     /// use slog::o;
     ///
-    /// let mut app = tide::App::new();
+    /// let mut app = tide::Server::new();
     ///
     /// let root_logger = slog::Logger::root(slog::Discard, o!());
     /// app.middleware(tide_slog::PerRequestLogger::with_logger(root_logger));

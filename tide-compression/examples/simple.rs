@@ -1,5 +1,5 @@
 #![feature(async_await)]
-use tide::{App, Context};
+use tide::{Server, Context};
 use tide_compression::{Compression, Decompression, Encoding};
 
 // Returns a portion of the lorem ipsum text.
@@ -13,7 +13,7 @@ async fn echo_bytes(mut cx: Context<()>) -> Vec<u8> {
 }
 
 fn main() {
-    let mut app = App::new();
+    let mut app = Server::new();
     app.at("/").get(lorem_ipsum);
     app.at("/echo").post(echo_bytes);
     app.middleware(Compression::with_default(Encoding::Brotli));

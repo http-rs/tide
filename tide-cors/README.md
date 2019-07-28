@@ -13,7 +13,7 @@ use http::header::HeaderValue;
 use tide::middleware::CorsMiddleware;
 
 fn main() {
-    let mut app = tide::App::new();
+    let mut app = tide::Server::new();
 
     app.middleware(
         CorsMiddleware::new()

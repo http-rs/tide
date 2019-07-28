@@ -1,7 +1,7 @@
 #![feature(async_await)]
 use serde::{Deserialize, Serialize};
 use std::io::Read;
-use tide::{forms::ContextExt, response, App, Context, EndpointResult};
+use tide::{forms::ContextExt, response, Server, Context, EndpointResult};
 
 #[derive(Serialize, Deserialize, Clone)]
 struct Message {
@@ -56,7 +56,7 @@ async fn upload_file(mut cx: Context<()>) -> EndpointResult {
 }
 
 pub fn run() {
-    let mut app = App::new();
+    let mut app = Server::new();
     app.at("/upload_file").post(upload_file);
     app.run("127.0.0.1:8000").unwrap();
 }

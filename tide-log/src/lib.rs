@@ -24,7 +24,7 @@ use tide_core::{
 ///
 /// ```rust
 ///
-/// let mut app = tide::App::new();
+/// let mut app = tide::Server::new();
 /// app.middleware(tide_log::RequestLogger::new());
 /// ```
 #[derive(Debug, Clone, Default)]

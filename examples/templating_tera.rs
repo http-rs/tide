@@ -1,16 +1,16 @@
 #![feature(async_await)]
 
 use tera::{self, compile_templates};
-use tide::{self, App, Context, EndpointResult, Error};
+use tide::{self, Server, Context, EndpointResult, Error};
 
-// AppState to pass with context and will hold
+// ServerState to pass with context and will hold
 // the interface to the tera rendering engine
-struct AppState {
+struct ServerState {
     template: tera::Tera,
 }
 
 // Render some data into the 'tera-hello-world.html template in examples/templates directory
-async fn index(ctx: Context<AppState>) -> EndpointResult {
+async fn index(ctx: Context<ServerState>) -> EndpointResult {
     // Create the context for the template
     let mut context = tera::Context::new();
     context.insert("page_title", "Hello from Tera templating!");
@@ -42,11 +42,11 @@ async fn index(ctx: Context<AppState>) -> EndpointResult {
 fn main() -> Result<(), std::io::Error> {
     let template_dir = format!("{}/examples/templates/*", env!("CARGO_MANIFEST_DIR"));
 
-    let state = AppState {
+    let state = ServerState {
         template: compile_templates!(&template_dir),
     };
 
-    let mut app = App::with_state(state);
+    let mut app = Server::with_state(state);
     app.at("/").get(index);
     app.run("127.0.0.1:8000")?;
     Ok(())
