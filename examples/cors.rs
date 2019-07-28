@@ -3,7 +3,8 @@
 use http::header::HeaderValue;
 use tide::middleware::{CorsMiddleware, CorsOrigin};
 
-fn main() {
+#[runtime::main]
+async fn main() -> Result<(), tide::Exception> {
     let mut app = tide::new();
 
     app.middleware(
@@ -13,8 +14,7 @@ fn main() {
     );
 
     app.at("/").get(|_| async move { "Hello, world!" });
-
-    app.run("127.0.0.1:8000").unwrap();
+    app.bind("127.0.0.1:8000").await?;
 }
 
 // You can test this by running the following in your browser:
