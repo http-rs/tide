@@ -229,7 +229,7 @@ impl<State: Send + Sync + 'static> Server<State> {
     ///
     /// This lower-level method lets you host a Tide application within an HTTP
     /// server of your choice, via the `http_service` interface crate.
-    pub fn into_http_service(self) -> Service<State> {
+    pub fn into_service(self) -> Service<State> {
         Service {
             router: Arc::new(self.router),
             state: Arc::new(self.state),
@@ -237,32 +237,14 @@ impl<State: Send + Sync + 'static> Server<State> {
         }
     }
 
-    /// Run the app at the given address.
-    ///
-    /// Blocks the calling thread indefinitely.
-    #[cfg(feature = "hyper")]
-    pub fn run(self, addr: impl std::net::ToSocketAddrs) -> std::io::Result<()> {
-        let addr = addr
-            .to_socket_addrs()?
-            .next()
-            .ok_or(std::io::ErrorKind::InvalidInput)?;
-
-        println!("Server is listening on: http://{}", addr);
-        http_service_hyper::run(self.into_http_service(), addr);
-        Ok(())
-    }
-
     /// Asynchronously serve the app at the given address.
     #[cfg(feature = "hyper")]
-    pub async fn serve(self, addr: impl std::net::ToSocketAddrs) -> std::io::Result<()> {
-        let addr = addr
-            .to_socket_addrs()?
-            .next()
-            .ok_or(std::io::ErrorKind::InvalidInput)?;
-
-        http_service_hyper::serve(self.into_http_service(), addr)
-            .await
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
+    pub async fn bind(self, addr: impl std::net::ToSocketAddrs) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+        let mut listener = runtime::net::TcpListener::bind(addr)?;
+        let server = http_service_hyper::Server::builder(listener.incoming())
+            .with_spawner(runtime::task::Spawner::new());
+        server.serve(self.into_service()).await?;
+        Ok(())
     }
 }
 

@@ -40,6 +40,7 @@ tide-headers = { path = "./tide-headers", default-features = false }
 tide-log = { path = "./tide-log", default-features = false }
 tide-forms = { path = "./tide-forms", default-features = false }
 tide-querystring = { path = "./tide-querystring", default-features = false }
+runtime = "0.3.0-alpha.6"
 
 [dev-dependencies]
 bytes = "0.4.12"
