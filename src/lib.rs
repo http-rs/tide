@@ -19,10 +19,10 @@ const _README: () = ();
 
 pub use http;
 
-mod app;
+mod server;
 mod router;
 
-pub use app::{Server, Service};
+pub use server::{Server, Service};
 
 #[cfg(feature = "cookies")]
 #[doc(inline)]
