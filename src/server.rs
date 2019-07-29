@@ -1,4 +1,4 @@
-//! The entry point for building a Tide application.
+//! An HTTP Server.
 
 use futures::future::{self, BoxFuture};
 use http_service::HttpService;
@@ -10,7 +10,7 @@ use crate::{
     Context,
 };
 
-/// The entry point for building a Tide application.
+/// An HTTP Server.
 ///
 /// Servers are built up as a combination of *state*, *endpoints* and *middleware*:
 ///

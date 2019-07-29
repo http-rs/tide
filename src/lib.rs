@@ -28,19 +28,28 @@
 #[doc(include = "../README.md")]
 const _README: () = ();
 
-pub mod server;
-pub mod middleware;
 #[doc(hidden)]
 pub mod error;
+pub mod middleware;
+pub mod server;
+pub mod router;
 
-mod router;
+mod request;
+mod response;
 
 pub use http;
 pub use tide_core;
+pub use mime;
+pub use url;
+
+pub use request::Request;
+pub use response::Response;
+
 #[doc(inline)]
 pub use server::Server;
+
 #[doc(hidden)]
-pub use tide_core::{response, Body, Context, Endpoint};
+pub use tide_core::{Body, Context, Endpoint};
 
 /// Catch-all error type.
 pub type Exception = Box<dyn std::error::Error + Send + Sync + 'static>;
