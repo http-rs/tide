@@ -33,6 +33,7 @@ pub mod error;
 pub mod middleware;
 pub mod router;
 pub mod server;
+pub mod http_service;
 
 mod request;
 mod response;
@@ -49,7 +50,7 @@ pub use response::Response;
 pub use server::Server;
 
 #[doc(hidden)]
-pub use tide_core::{Body, Context, Endpoint};
+pub use tide_core::{Body, Endpoint};
 
 /// Catch-all error type.
 pub type Exception = Box<dyn std::error::Error + Send + Sync + 'static>;

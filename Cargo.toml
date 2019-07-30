@@ -19,9 +19,7 @@ repository = "https://github.com/rustasync/tide"
 version = "0.2.0"
 
 [features]
-default = ["hyper", "cookies", "cors"]
-cookies = ["tide-cookies"]
-cors = ["tide-cors"]
+default = ["hyper"]
 hyper = ["http-service-hyper"]
 
 [dependencies]
@@ -29,17 +27,13 @@ futures-preview = "0.3.0-alpha.17"
 http = "0.1"
 http-service = "0.3.0"
 http-service-hyper = { version = "0.4.0", optional = true }
+
 # Routing
 fnv = "1.0.6"
 route-recognizer = "0.1.12"
+
 # Tide components
-tide-cookies = { path = "./tide-cookies", optional = true, default-features = false }
-tide-cors = { path = "./tide-cors", optional = true, default-features = false }
 tide-core = { path = "./tide-core", default-features = false }
-tide-headers = { path = "./tide-headers", default-features = false }
-tide-log = { path = "./tide-log", default-features = false }
-tide-forms = { path = "./tide-forms", default-features = false }
-tide-querystring = { path = "./tide-querystring", default-features = false }
 runtime = "0.3.0-alpha.6"
 mime = "0.3.13"
 url = "2.0.0"
@@ -60,19 +54,3 @@ percent-encoding = "2.0.0"
 serde = { version = "1.0.91", features = ["derive"] }
 tera = "0.11"
 runtime = "0.3.0-alpha.6"
-# Tide components
-tide-log = { path = "./tide-log", default-features = false }
-
-[workspace]
-members = [
-    "tide-compression",
-    "tide-cookies",
-    "tide-core",
-    "tide-cors",
-    "tide-forms",
-    "tide-headers",
-    "tide-log",
-    "tide-panic",
-    "tide-querystring",
-    "tide-slog",
-]

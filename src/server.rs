@@ -5,9 +5,8 @@ use http_service::HttpService;
 use std::sync::Arc;
 
 use crate::{
-    middleware::{Middleware, Next},
+    middleware::{Middleware, Next, Context},
     router::{Route, Router},
-    Context,
 };
 
 /// An HTTP Server.
@@ -283,9 +282,9 @@ impl<State: Sync + Send + 'static> HttpService for Service<State> {
         Box::pin(async move {
             let fut = {
                 let (endpoint, params) = router.route(&path, method).into_components();
-                let cx = Context::new(state, req, params);
+                let cx = Context::new(state, params);
                 let next = Next::new(endpoint, &middleware);
-                next.run(cx)
+                next.run(req, cx)
             };
 
             Ok(fut.await)
