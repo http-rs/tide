@@ -31,15 +31,15 @@ const _README: () = ();
 #[doc(hidden)]
 pub mod error;
 pub mod middleware;
-pub mod server;
 pub mod router;
+pub mod server;
 
 mod request;
 mod response;
 
 pub use http;
-pub use tide_core;
 pub use mime;
+pub use tide_core;
 pub use url;
 
 pub use request::Request;
@@ -57,4 +57,9 @@ pub type Exception = Box<dyn std::error::Error + Send + Sync + 'static>;
 /// Create a new Tide server.
 pub fn new() -> Server<()> {
     Server::new()
+}
+
+/// Create a new Tide server with shared global state.
+pub fn with_state<State: Send + Sync + 'static>(state: State) -> Server<State> {
+    Server::with_state(state)
 }
