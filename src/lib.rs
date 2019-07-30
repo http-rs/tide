@@ -30,17 +30,16 @@ const _README: () = ();
 
 #[doc(hidden)]
 pub mod error;
+pub mod http_service;
 pub mod middleware;
 pub mod router;
 pub mod server;
-pub mod http_service;
 
 mod request;
 mod response;
 
 pub use http;
 pub use mime;
-pub use tide_core;
 pub use url;
 
 pub use request::Request;
@@ -48,9 +47,6 @@ pub use response::Response;
 
 #[doc(inline)]
 pub use server::Server;
-
-#[doc(hidden)]
-pub use tide_core::{Body, Endpoint};
 
 /// Catch-all error type.
 pub type Exception = Box<dyn std::error::Error + Send + Sync + 'static>;
