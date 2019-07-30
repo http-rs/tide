@@ -28,8 +28,6 @@
 #[doc(include = "../README.md")]
 const _README: () = ();
 
-#[doc(hidden)]
-pub mod error;
 pub mod http_service;
 pub mod middleware;
 pub mod router;

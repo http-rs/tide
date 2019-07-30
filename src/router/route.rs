@@ -1,6 +1,4 @@
-use tide_core::Endpoint;
-
-use super::core::Router;
+use super::{Endpoint, Router};
 
 /// A handle to a route.
 ///

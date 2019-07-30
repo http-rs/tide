@@ -1,12 +1,16 @@
-//! Router core types
-
-use fnv::FnvHashMap;
 use futures::future::BoxFuture;
 use futures::prelude::*;
-use http_service::Body;
 use route_recognizer::{Match, Params, Router as MethodRouter};
 
-use tide_core::{internal::DynEndpoint, Context, Endpoint, Response};
+use crate::http_service::Body;
+use crate::Request;
+use crate::middleware::{Response, Context};
+use super::Endpoint;
+
+use std::collections::HashMap;
+
+type DynEndpoint<State> =
+    dyn (Fn(Request<State>) -> BoxFuture<'static, Response>) + 'static + Send + Sync;
 
 /// The routing table used by `Server`
 ///
@@ -15,7 +19,7 @@ use tide_core::{internal::DynEndpoint, Context, Endpoint, Response};
 #[allow(missing_debug_implementations)]
 #[derive(Default)]
 pub struct Router<State> {
-    method_map: FnvHashMap<http::Method, MethodRouter<Box<DynEndpoint<State>>>>,
+    method_map: HashMap<http::Method, MethodRouter<Box<DynEndpoint<State>>>>,
 }
 
 #[allow(missing_debug_implementations)]
@@ -27,7 +31,7 @@ pub struct Selection<'a, State> {
 impl<State: 'static> Router<State> {
     pub(crate) fn new() -> Self {
         Self {
-            method_map: FnvHashMap::default(),
+            method_map: HashMap::default(),
         }
     }
 
@@ -76,3 +80,4 @@ fn not_found_endpoint<State>(_cx: Context<State>) -> BoxFuture<'static, Response
             .unwrap()
     })
 }
+
