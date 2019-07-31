@@ -24,7 +24,7 @@ http = "0.1"
 log = "0.4.6"
 multipart = { version = "0.16.1", features = ["server"], default-features = false }
 serde = { version = "1.0.91", features = ["derive"] }
-serde_urlencoded = "0.5.5"
+serde_urlencoded = "0.6.0"
 
 [dev-dependencies]
 tide = { path = "../", default-features = false }
