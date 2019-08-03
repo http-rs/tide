@@ -3,14 +3,13 @@ use futures::prelude::*;
 use route_recognizer::{Match, Params, Router as MethodRouter};
 
 use crate::http_service::Body;
-use crate::Request;
-use crate::middleware::{Response, Context};
+use crate::middleware::{Request, Response, Context};
 use super::Endpoint;
 
 use std::collections::HashMap;
 
 type DynEndpoint<State> =
-    dyn (Fn(Request<State>) -> BoxFuture<'static, Response>) + 'static + Send + Sync;
+    dyn (Fn(Request, State) -> BoxFuture<'static, Result<Response, std::io::Error>>) + 'static + Send + Sync;
 
 /// The routing table used by `Server`
 ///
@@ -43,11 +42,12 @@ impl<State: 'static> Router<State> {
     }
 
     pub fn route(&self, path: &str, method: http::Method) -> Selection<'_, State> {
-        if let Some(Match { handler, params }) = self
+        let statement = self
             .method_map
             .get(&method)
-            .and_then(|r| r.recognize(path).ok())
-        {
+            .and_then(|r| r.recognize(path).ok());
+
+        if let Some(Match { handler, params }) = statement {
             Selection::new(&**handler, params)
         } else if method == http::Method::HEAD {
             // If it is a HTTP HEAD request then check if there is a callback in the endpoints map

@@ -281,9 +281,9 @@ impl<State: Sync + Send + 'static> HttpService for Service<State> {
 
         Box::pin(async move {
             let fut = {
-                let (endpoint, params) = router.route(&path, method).into_components();
+                let (endpoint, params) = router.route(&path, method.clone()).into_components();
                 let cx = Context::new(state, params);
-                let next = Next::new(endpoint, &middleware);
+                let next = Next::new(&middleware, endpoint);
                 next.run(req, cx)
             };
 
