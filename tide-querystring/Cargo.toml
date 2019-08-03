@@ -22,7 +22,7 @@ futures-preview = "0.3.0-alpha.17"
 http = "0.1"
 log = "0.4.6"
 serde = { version = "1.0.91", features = ["derive"] }
-serde_urlencoded = "0.6.0"
+serde_qs = "0.5.0"
 
 [dev-dependencies]
 tide = { path = "../", default-features = false }
