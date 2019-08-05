@@ -42,8 +42,7 @@ impl<'de, State> ContextExt<'de> for Context<State> {
         if query.is_none() {
             return Err(Error::from(StatusCode::BAD_REQUEST));
         }
-        Ok(serde_urlencoded::from_str(query.unwrap())
-            .map_err(|_| Error::from(StatusCode::BAD_REQUEST))?)
+        Ok(serde_qs::from_str(query.unwrap()).map_err(|_| Error::from(StatusCode::BAD_REQUEST))?)
     }
 }
 
