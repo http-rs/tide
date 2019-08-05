@@ -16,16 +16,29 @@ Note this is a continuation of [#271](https://github.com/rustasync/tide/issues/2
 Discussions around PRs [#254](https://github.com/rustasync/tide/pull/254) (largely
 on discord) and [#258](https://github.com/rustasync/tide/pull/258) addressed the question
 of being able to replace or change the implementation of routing within Tide to
-address different needs for different applications. The existing routing within
-Tide has issues that need addressing ([#12](https://github.com/rustasync/tide/issues/12)) and how these issues are resolved tie
-into the question of extensible routing.
+address different needs for different applications. Primarily these discussions
+were about providing a simpler implementation for routing, for example purely
+static routes for microservices, where the complexity that can be provided with
+the existing implementation can be more than what is needed. Additionally, the
+discussion raised the issue routing precedence that exists in the current
+routing implementation used by tide. For example, if you have a URL
+that contains ``/*path/:end`` it will match the ``*path`` first and therefore
+the ``:end`` is not resolved independently and therefore parameters will be
+consumed as part of the ``*path`` match and not provided to a ``:end``
+parameter. This has been raised before as part of Issue
+[#12](https://github.com/rustasync/tide/issues/12). If this issue is not resolved
+directly with the default routing implementation then being able to have a
+custom routing implementation allows for differing preferences in the routing
+rules to be implemented.
 
 # Stakeholders
 [stakeholders]: #stakeholders
 
 This affects everyone using Tide, but concerns two particular groups:
 1. Users with specialized routing requirements - this is the group most likely to
-   take advantage of customizing routing.
+   take advantage of customizing routing. The diverse nature of webservice
+   use cases means that there is an advantage to future proofing the routing to
+   allow for use cases outside of the existing frameworks we are used to.
 2. New users of Tide - this is the group that the introduced complexity will
    affect most.
 
@@ -69,12 +82,130 @@ addressing ([Route (metadata) ordering is incorrect.](https://github.com/conduit
 to provide a more robust routing implementation.  This is integrated into the core
 of Tide, although WIP in PR #258 did extract this out into a separate module.
 
-Other open issues that relate to routing include:
-- Internal redirects [#82](https://github.com/rustasync/tide/issues/82)
-- URL generation [#24](https://github.com/rustasync/tide/issues/24)
-- Permit routing without invoking actions [#155](https://github.com/rustasync/tide/issues/155)
-- Implement OPTIONS http method [#51](https://github.com/rustasync/tide/issues/51)
-- Allow the routing methods to open a static file [#63](https://github.com/rustasync/tide/issues/63)
+Discussion around this RFC has lead to a consensus that extensible routing for
+Tide is a desirable outcome. This matches the original motivations of Tide _to
+build a serious framework on top of these crates, ideally as a very minimal
+layer_. Given it is hard to determine the exact use cases of everyone, but
+desiring to provide a powerful framework this falls in line with providing means
+to replace the routing implementation.
+
+Therefore it makes sense to actually provide two means of extension:
+1. Extract the existing implementation as traits to allow the replacing of the
+core routing implementation as required.
+1. Support routing as middleware through the exposing of the middleware traits
+to allow extension and to be able to change the end point.
+
+
+## Routing Traits
+[routingtraits]: #routingtraits
+
+For a custom routing implementation the main trait needed is the Router. This
+provides the implementation for executing the routing taking in the possible
+routes and then performing the routing based upon the request.
+
+As a rough sketch this would look like:
+
+```Rust
+pub struct Selection<'a, State> {
+  pub endpoint: &'a DynEndpoint<State>,
+  pub params: Params,
+}
+
+pub trait Router<State> {
+  fn add(&mut self, path: &str, method: http::Method, ep: impl Endpoint<State>);
+  fn route(&self, path: &str, method: http::Method) -> Selection<'_, State>;
+}
+
+```
+
+Note here I've continued the use of Params from the route-recognizer
+implementation, but this should be extracted and made generically accessible.
+This is essentially a ``BTreeMap<String, String>`` with some scaffolding to make
+it more accessible.
+
+
+## Middleware Support
+[middlewaresupport]: #middlewaresupport
+
+Routing in middleware is currently possible. The following is a simple example:
+
+```Rust
+#![feature(async_await)]
+use tide::{cookies::ContextExt, middleware::{Middleware, Next}, Context, Response};
+use futures::future::BoxFuture;
+use http::StatusCode;
+
+struct RoutingMiddleware
+{
+}
+
+impl RoutingMiddleware {
+    fn new() -> Self {
+        RoutingMiddleware {
+        }
+    }
+}
+
+impl<State: Send + Sync + 'static> Middleware<State> for RoutingMiddleware {
+    fn handle<'a>(&'a self, cx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
+        Box::pin(async move {
+            let res = next.run(cx).await;
+            let res = alt_handle().await;
+            res
+        })
+    }
+}
+
+async fn alt_handle() -> Response {
+    http::Response::builder()
+        .status(StatusCode::OK)
+        .body(String::from("Hello, alternative").into()).expect("Failed to create response")
+}
+
+fn main() {
+    let mut app = tide::App::new();
+    app.middleware(RoutingMiddleware::new());
+
+    app.run("127.0.0.1:8000").unwrap();
+}
+```
+
+The key here is that middleware has control over the response regardless of the
+end point. Additionally, the routing rules do not require that any end point has
+been defined before calling into the middleware. This means that you can change
+the routing behavior in the middleware.
+
+The limitation that exists is that the endpoint cannot be resolved by the
+middleware and therefore be passed to subsequent middleware to perform their
+operations. In the above example, if an existing routing was defined it would
+therefore execute the existing end point before overwriting the result with the
+alternative implementation.
+
+Therefore, to make middleware routing meaningful the key is to provide the means
+of changing the end point as part of the middleware implementation so that
+routing can be inserting into other middleware structures without the potential
+for having redundant calls the key is to provide configuring of the endpoint to
+the middleware. This will also fulfil the requirements of the Internal redirects
+issues ([#82](https://github.com/rustasync/tide/issues/82)).
+
+The key is to allow the changing of the endpoint in the ``Next`` struct that is
+provided to the middleware. Therefore an alternative function to forward the
+request to another endpoint would make sense here:
+
+```Rust
+impl<'a, State: 'static> Next<'a, State> {
+    /// Asynchronously execute the remaining middleware chain.
+    pub fn run(mut self, cx: Context<State>) -> BoxFuture<'a, Response> {
+      // ...
+    }
+
+    /// Asynchronously forward the request to the specified endpoint and execute
+    /// the remaining middleware chain.
+    pub fn forward(mut self, cx: Context<State>, &'a DynEndpoint<State>) -> BoxFuture<'a, Response> {
+      // ...
+    }
+}
+```
 
 # Drawbacks
 [drawbacks]: #drawbacks
@@ -111,7 +242,7 @@ There are number of alternative designs to address routing:
 1. Predefined configuration for routing
 
     This is sticking with the existing implementation. While this seems like the
-simplest option it is not without working that needs to be done. There needs to
+simplest option it is not without work that needs to be done. There needs to
 be further discussion about what constitutes the best implementation for
 routing (e.g. a new RFC process). The existing routing has identifiable issues
 with the predefined precedence of rules. [Route (metadata) ordering is incorrect.](https://github.com/conduit-rust/route-recognizer.rs/issues/20)
@@ -168,16 +299,6 @@ routing implementation with more or less complexity as required.
 # Unresolved Questions
 [unresolved]: #unresolved-questions
 
-The aim of this RFC is to determine the 'if' and the broad 'how' of extensible
-routing in Tide. To that end the unresolved questions are:
-
-- Assuming a good default routing implementation, does Tide need extensible
-  routing?
-- If routing can be configured (e.g. precedence rules), does Tide need
-  extensible routing?
-- If Tide needs extensible routing what should that look like at the high level?
-  E.g. Traits, Middleware, Configuration only
-
 What won't be resolved through this RFC. While these may come up in passing
 because of determining the above questions it shouldn't be the focus of the
 discussion:
@@ -185,3 +306,13 @@ discussion:
   discussion of the final precedence rules, or what the 'default' should look
   like.
 - What routing implementation should be used.
+
+# Notes
+[notes]: #notes
+
+Other open issues that relate to routing include:
+- Internal redirects [#82](https://github.com/rustasync/tide/issues/82)
+- URL generation [#24](https://github.com/rustasync/tide/issues/24)
+- Permit routing without invoking actions [#155](https://github.com/rustasync/tide/issues/155)
+- Implement OPTIONS http method [#51](https://github.com/rustasync/tide/issues/51)
+- Allow the routing methods to open a static file [#63](https://github.com/rustasync/tide/issues/63)
