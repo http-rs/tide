@@ -22,6 +22,7 @@ mod app;
 mod router;
 
 pub use app::{App, Server};
+pub use router::Route;
 
 #[cfg(feature = "cookies")]
 #[doc(inline)]

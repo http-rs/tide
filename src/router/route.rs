@@ -17,7 +17,7 @@ pub struct Route<'a, State> {
 }
 
 impl<'a, State: 'static> Route<'a, State> {
-    pub fn new(router: &'a mut Router<State>, path: String) -> Self {
+    pub(crate) fn new(router: &'a mut Router<State>, path: String) -> Self {
         Self { router, path }
     }
 
@@ -40,6 +40,25 @@ impl<'a, State: 'static> Route<'a, State> {
     }
 
     /// Add endpoint nested routes
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tide::Route;
+    ///
+    /// # fn main() -> std::io::Result<()> {
+    /// #   let mut app = tide::App::new();
+    ///     app.at("/a").nest(route_a);
+    /// #   Ok(())
+    /// #   // app.run("127.0.0.1:8000")
+    /// # }
+    ///
+    /// pub fn route_a<AppData>(root: &mut Route<AppData>)
+    ///     where AppData: 'static + Send + Sync
+    /// {
+    ///     root.at("/b").get(|_| async move { "Hello, world!" });
+    /// }
+    /// ```
     pub fn nest(&mut self, f: impl FnOnce(&mut Route<'a, State>)) -> &mut Self {
         f(self);
         self
