@@ -1,12 +1,12 @@
 use bytes::Bytes;
-use futures_fs::FsPool;
-use futures_util::compat::*;
+use futures::prelude::*;
 use http::{
     header::{self, HeaderMap},
     StatusCode,
 };
 use http_service::Body;
 use tide::{App, Context, EndpointResult, Response};
+use tokio::codec::Decoder;
 
 use std::path::{Component, Path, PathBuf};
 use std::{fs, io};
@@ -17,7 +17,6 @@ const DEFAULT_5XX_BODY: &[u8] = b"I'm broken, apparently." as &[_];
 /// Simple static file handler for Tide inspired from https://github.com/iron/staticfile.
 #[derive(Clone)]
 struct StaticFile {
-    fs_pool: FsPool,
     root: PathBuf,
 }
 
@@ -29,10 +28,7 @@ impl StaticFile {
             // warn maybe?
         }
 
-        StaticFile {
-            root,
-            fs_pool: FsPool::default(),
-        }
+        StaticFile { root }
     }
 
     fn stream_bytes(&self, actual_path: &str, headers: &HeaderMap) -> Result<Response, io::Error> {
@@ -76,9 +72,12 @@ impl StaticFile {
             .header(header::CONTENT_TYPE, mime_str)
             .header(header::CONTENT_LENGTH, size);
 
-        let stream = self.fs_pool.read(PathBuf::from(path), Default::default());
+        let stream = tokio::fs::File::open(PathBuf::from(path))
+            .map_ok(|file| tokio::codec::BytesCodec::new().framed(file))
+            .try_flatten_stream()
+            .map_ok(From::from);
         Ok(response
-            .body(Body::from_stream(stream.compat()))
+            .body(Body::from_stream(stream))
             .expect("invalid request?"))
     }
 
@@ -119,8 +118,9 @@ async fn handle_path(ctx: Context<StaticFile>) -> EndpointResult {
         })
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let mut app = App::with_state(StaticFile::new("./"));
     app.at("/*").get(handle_path);
-    app.run("127.0.0.1:8000").unwrap();
+    app.serve("127.0.0.1:8000").await.unwrap();
 }

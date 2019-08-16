@@ -1,6 +1,7 @@
 use tide::middleware::DefaultHeaders;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let mut app = tide::App::new();
 
     app.middleware(
@@ -11,5 +12,5 @@ fn main() {
 
     app.at("/").get(|_| async move { "Hello, world!" });
 
-    app.run("127.0.0.1:8000").unwrap();
+    app.serve("127.0.0.1:8000").await.unwrap();
 }

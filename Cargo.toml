@@ -25,10 +25,10 @@ cors = ["tide-cors"]
 hyper = ["http-service-hyper"]
 
 [dependencies]
-futures-preview = "0.3.0-alpha.17"
+futures-preview = "0.3.0-alpha.18"
 http = "0.1"
-http-service = "0.3.1"
-http-service-hyper = { version = "0.3.1", optional = true }
+http-service = { git = "https://github.com/rustasync/http-service", branch = "tokio-0.2" }
+http-service-hyper = { git = "https://github.com/rustasync/http-service", branch = "tokio-0.2", optional = true }
 # Routing
 fnv = "1.0.6"
 route-recognizer = "0.1.13"
@@ -46,8 +46,8 @@ bytes = "0.4.12"
 cookie = { version = "0.12", features = ["percent-encode"] }
 env_logger = "0.7.0"
 futures-fs = "0.0.5"
-futures-util-preview = { version = "0.3.0-alpha.17", features = ["compat"] }
-http-service-mock = "0.3.1"
+futures-util-preview = { version = "0.3.0-alpha.18", features = ["compat"] }
+http-service-mock = { git = "https://github.com/rustasync/http-service", branch = "tokio-0.2" }
 juniper = "0.14.0"
 log = "0.4.6"
 log4rs = "0.8.3"
@@ -59,6 +59,7 @@ tera = "0.11"
 runtime = "0.3.0-alpha.7"
 # Tide components
 tide-log = { path = "./tide-log", default-features = false }
+tokio = "0.2.0-alpha.4"
 
 [workspace]
 members = [

@@ -56,8 +56,9 @@ async fn handle_graphql(mut cx: Context<State>) -> EndpointResult {
     Ok(resp)
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let mut app = App::with_state(State::default());
     app.at("/graphql").post(handle_graphql);
-    app.run("127.0.0.1:8000").unwrap();
+    app.serve("127.0.0.1:8000").await.unwrap();
 }

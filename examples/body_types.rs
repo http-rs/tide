@@ -35,7 +35,8 @@ async fn echo_form(mut cx: Context<()>) -> EndpointResult {
     Ok(forms::form(msg))
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let mut app = App::new();
 
     app.at("/echo/string").post(echo_string);
@@ -43,5 +44,5 @@ fn main() {
     app.at("/echo/json").post(echo_json);
     app.at("/echo/form").post(echo_form);
 
-    app.run("127.0.0.1:8000").unwrap();
+    app.serve("127.0.0.1:8000").await.unwrap();
 }

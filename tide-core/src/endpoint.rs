@@ -22,10 +22,11 @@ use crate::{error::Error, response::IntoResponse, Context, Response};
 ///     String::from("hello")
 /// }
 ///
-/// fn main() {
+/// #[tokio::main]
+/// async fn main() {
 ///     let mut app = tide::App::new();
 ///     app.at("/hello").get(hello);
-///     app.run("127.0.0.1:8000").unwrap()
+///     app.serve("127.0.0.1:8000").await.unwrap()
 /// }
 /// ```
 ///
@@ -37,10 +38,11 @@ use crate::{error::Error, response::IntoResponse, Context, Response};
 ///     futures::future::ready(String::from("hello"))
 /// }
 ///
-/// fn main() {
+/// #[tokio::main]
+/// async fn main() {
 ///     let mut app = tide::App::new();
 ///     app.at("/hello").get(hello);
-///     app.run("127.0.0.1:8000").unwrap()
+///     app.serve("127.0.0.1:8000").await.unwrap()
 /// }
 /// ```
 ///

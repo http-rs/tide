@@ -17,15 +17,16 @@ version = "0.1.0"
 tide = { path = "../", default-features = false }
 accept-encoding = "0.2.0-alpha.2"
 bytes = "0.4.12"
-futures-preview = "0.3.0-alpha.17"
+futures-preview = "0.3.0-alpha.18"
 http = "0.1"
-http-service = "0.3.1"
+http-service = { git = "https://github.com/rustasync/http-service", branch = "tokio-0.2" }
 
 [dependencies.async-compression]
 default-features = false
 features = ["stream", "gzip", "zlib", "brotli", "zstd"]
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.3"
 
 [dev-dependencies]
 tide = { path = "../", default-features = false }
-http-service-mock = "0.3.1"
+tokio = "0.2.0-alpha.2"
+http-service-mock = { git = "https://github.com/rustasync/http-service", branch = "tokio-0.2" }

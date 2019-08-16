@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/rustasync/tide"
 
 [dependencies]
-futures-preview = "0.3.0-alpha.17"
+futures-preview = "0.3.0-alpha.18"
 http = "0.1"
-http-service = "0.3.1"
+http-service = { git = "https://github.com/rustasync/http-service", branch = "tokio-0.2" }
 tide-core = { path = "../tide-core" }

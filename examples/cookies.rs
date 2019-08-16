@@ -14,12 +14,13 @@ async fn remove_cookie(mut cx: Context<()>) {
     cx.remove_cookie(Cookie::named("hello")).unwrap();
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let mut app = tide::App::new();
     app.middleware(CookiesMiddleware::new());
 
     app.at("/").get(retrieve_cookie);
     app.at("/set").get(set_cookie);
     app.at("/remove").get(remove_cookie);
-    app.run("127.0.0.1:8000").unwrap();
+    app.serve("127.0.0.1:8000").await.unwrap();
 }

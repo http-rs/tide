@@ -37,7 +37,8 @@ async fn index(ctx: Context<AppState>) -> EndpointResult {
     Ok(resp)
 }
 
-fn main() -> Result<(), std::io::Error> {
+#[tokio::main]
+async fn main() -> Result<(), std::io::Error> {
     let template_dir = format!("{}/examples/templates/*", env!("CARGO_MANIFEST_DIR"));
 
     let state = AppState {
@@ -46,6 +47,7 @@ fn main() -> Result<(), std::io::Error> {
 
     let mut app = App::with_state(state);
     app.at("/").get(index);
-    app.run("127.0.0.1:8000")?;
+    app.serve("127.0.0.1:8000").await?;
+
     Ok(())
 }

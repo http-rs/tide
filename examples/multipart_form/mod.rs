@@ -54,10 +54,11 @@ async fn upload_file(mut cx: Context<()>) -> EndpointResult {
     Ok(response::json(message))
 }
 
-pub fn run() {
+#[tokio::main]
+pub async fn main() {
     let mut app = App::new();
     app.at("/upload_file").post(upload_file);
-    app.run("127.0.0.1:8000").unwrap();
+    app.serve("127.0.0.1:8000").await.unwrap();
 }
 
 // Test with:

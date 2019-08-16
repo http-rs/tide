@@ -24,7 +24,7 @@ scope = ["slog-scope", "slog-scope-futures"]
 
 [dependencies]
 tide-core = { path = "../tide-core", default-features = false  }
-futures-preview = "0.3.0-alpha.17"
+futures-preview = "0.3.0-alpha.18"
 http = "0.1"
 slog = "2.4.1"
 slog-scope = { version = "4.1.1", optional = true }

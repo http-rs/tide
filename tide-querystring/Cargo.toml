@@ -18,7 +18,7 @@ version = "0.1.0"
 
 [dependencies]
 tide-core = { path = "../tide-core", default-features = false  }
-futures-preview = "0.3.0-alpha.17"
+futures-preview = "0.3.0-alpha.18"
 http = "0.1"
 log = "0.4.6"
 serde = { version = "1.0.91", features = ["derive"] }
@@ -26,5 +26,5 @@ serde_qs = "0.5.0"
 
 [dev-dependencies]
 tide = { path = "../", default-features = false }
-http-service = "0.3.1"
-http-service-mock = "0.3.1"
+http-service = { git = "https://github.com/rustasync/http-service", branch = "tokio-0.2" }
+http-service-mock = { git = "https://github.com/rustasync/http-service", branch = "tokio-0.2" }

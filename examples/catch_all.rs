@@ -5,8 +5,9 @@ async fn echo_path(cx: Context<()>) -> String {
     format!("Your path is: {}", path)
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let mut app = tide::App::new();
     app.at("/echo_path/*path").get(echo_path);
-    app.run("127.0.0.1:8000").unwrap();
+    app.serve("127.0.0.1:8000").await.unwrap();
 }

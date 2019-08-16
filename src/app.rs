@@ -30,9 +30,12 @@ use crate::{
 /// on `127.0.0.1:8000` with:
 ///
 /// ```rust, no_run
-/// let mut app = tide::App::new();
-/// app.at("/hello").get(|_| async move { "Hello, world!" });
-/// app.run("127.0.0.1:8000");
+/// #[tokio::main]
+///     async fn main() {
+///     let mut app = tide::App::new();
+///     app.at("/hello").get(|_| async move { "Hello, world!" });
+///     app.serve("127.0.0.1:8000").await.unwrap();
+/// }
 /// ```
 ///
 /// # Routing and parameters
@@ -55,15 +58,18 @@ use crate::{
 ///     Ok(format!("Goodbye, {}.", user))
 /// }
 ///
-/// let mut app = tide::App::new();
+/// #[tokio::main]
+/// async fn main() {
+///     let mut app = tide::App::new();
 ///
-/// app.at("/hello/:user").get(hello);
-/// app.at("/goodbye/:user").get(goodbye);
-/// app.at("/").get(|_| async move {
-///     "Use /hello/{your name} or /goodbye/{your name}"
-/// });
+///     app.at("/hello/:user").get(hello);
+///     app.at("/goodbye/:user").get(goodbye);
+///     app.at("/").get(|_| async move {
+///         "Use /hello/{your name} or /goodbye/{your name}"
+///     });
 ///
-/// app.run("127.0.0.1:8000");
+///     app.serve("127.0.0.1:8000").await.unwrap();
+/// }
 /// ```
 ///
 /// You can learn more about routing in the [`App::at`] documentation.
@@ -113,11 +119,12 @@ use crate::{
 ///     }
 /// }
 ///
-/// fn main() {
+/// #[tokio::main]
+/// async fn main() {
 ///     let mut app = App::with_state(Database::default());
 ///     app.at("/message").post(new_message);
 ///     app.at("/message/:id").get(get_message);
-///     app.run("127.0.0.1:8000").unwrap();
+///     app.serve("127.0.0.1:8000").await.unwrap();
 /// }
 /// ```
 
@@ -228,21 +235,6 @@ impl<State: Send + Sync + 'static> App<State> {
             state: Arc::new(self.state),
             middleware: Arc::new(self.middleware),
         }
-    }
-
-    /// Run the app at the given address.
-    ///
-    /// Blocks the calling thread indefinitely.
-    #[cfg(feature = "hyper")]
-    pub fn run(self, addr: impl std::net::ToSocketAddrs) -> std::io::Result<()> {
-        let addr = addr
-            .to_socket_addrs()?
-            .next()
-            .ok_or(std::io::ErrorKind::InvalidInput)?;
-
-        println!("Server is listening on: http://{}", addr);
-        http_service_hyper::run(self.into_http_service(), addr);
-        Ok(())
     }
 
     /// Asynchronously serve the app at the given address.
