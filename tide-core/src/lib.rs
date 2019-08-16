@@ -1,6 +1,6 @@
 //! Core types and traits from Tide
 
-#![feature(async_await, existential_type)]
+#![feature(async_await)]
 #![warn(
     nonstandard_style,
     rust_2018_idioms,

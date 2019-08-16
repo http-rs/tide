@@ -1,5 +1,5 @@
 language: rust
-rust: nightly-2019-07-08
+rust: nightly-2019-07-31
 
 before_script:
 - >
