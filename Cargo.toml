@@ -73,3 +73,7 @@ members = [
     "tide-querystring",
     "tide-slog",
 ]
+
+[patch.crates-io.runtime]
+git = "https://github.com/rustasync/runtime"
+rev = "f5ac4fb"
