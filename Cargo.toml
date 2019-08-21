@@ -52,7 +52,7 @@ juniper = "0.13.0"
 log = "0.4.6"
 log4rs = "0.8.3"
 mime = "0.3.13"
-mime_guess = "2.0.0-alpha.6"
+mime_guess = "2.0.1"
 percent-encoding = "2.0.0"
 serde = { version = "1.0.91", features = ["derive"] }
 tera = "0.11"
