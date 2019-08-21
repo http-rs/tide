@@ -1,4 +1,3 @@
-#![feature(async_await)]
 use serde::{Deserialize, Serialize};
 use std::io::Read;
 use tide::{forms::ContextExt, response, App, Context, EndpointResult};

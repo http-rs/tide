@@ -48,8 +48,6 @@ renamed to `Context::state`.
 
 __no state__
 ```rust
-#![feature(async_await)]
-
 fn main() -> Result<(), failure::Error> {
     let mut app = tide::App::new();
     app.at("/").get(|_| async move { "Hello, world!" });
@@ -59,8 +57,6 @@ fn main() -> Result<(), failure::Error> {
 
 __with state__
 ```rust
-#![feature(async_await)]
-
 #[derive(Default)]
 struct State {
   /* db connection goes here */

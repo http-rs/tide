@@ -1,7 +1,6 @@
 //! Crate that provides helpers and extensions for Tide
 //! related to query strings.
 
-#![feature(async_await)]
 #![warn(
     nonstandard_style,
     rust_2018_idioms,
@@ -20,8 +19,6 @@ use tide_core::{error::Error, Context};
 /// Turning the query parameters into a `HashMap`:
 ///
 /// ```
-/// #![feature(async_await)]
-///
 /// # use std::collections::HashMap;
 /// use tide::querystring::ContextExt;
 ///

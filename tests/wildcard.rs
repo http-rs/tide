@@ -1,5 +1,3 @@
-#![feature(async_await)]
-
 use futures::executor::block_on;
 use http_service::Body;
 use http_service_mock::make_server;

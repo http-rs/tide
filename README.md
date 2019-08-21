@@ -60,8 +60,6 @@ Ecosystem WG, and **not ready for production use yet**.
 **Hello World**
 
 ```rust,no_run
-#![feature(async_await)]
-
 fn main() -> Result<(), std::io::Error> {
     let mut app = tide::App::new();
     app.at("/").get(|_| async move { "Hello, world!" });
