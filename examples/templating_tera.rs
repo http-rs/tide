@@ -1,5 +1,3 @@
-#![feature(async_await)]
-
 use tera::{self, compile_templates};
 use tide::{self, App, Context, EndpointResult, Error};
 

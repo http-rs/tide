@@ -1,4 +1,3 @@
-#![feature(async_await)]
 use tide::{App, Context};
 use tide_compression::{Compression, Decompression, Encoding};
 

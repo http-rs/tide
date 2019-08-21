@@ -2,7 +2,6 @@
 //! related to structured logging with slog.
 
 #![cfg_attr(docrs, feature(doc_cfg))]
-#![feature(async_await)]
 #![warn(
     nonstandard_style,
     rust_2018_idioms,

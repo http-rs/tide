@@ -18,7 +18,7 @@ version = "0.1.0"
 
 [dependencies]
 tide-core = { path = "../tide-core", default-features = false  }
-http-service = "0.3.0"
+http-service = "0.3.1"
 futures-preview = "0.3.0-alpha.17"
 http = "0.1"
 log = "0.4.6"

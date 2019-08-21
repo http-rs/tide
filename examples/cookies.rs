@@ -1,4 +1,3 @@
-#![feature(async_await)]
 use cookie::Cookie;
 use tide::{cookies::ContextExt, middleware::CookiesMiddleware, Context};
 

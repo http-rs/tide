@@ -26,5 +26,5 @@ serde_qs = "0.5.0"
 
 [dev-dependencies]
 tide = { path = "../", default-features = false }
-http-service = "0.3.0"
-http-service-mock = "0.3.0"
+http-service = "0.3.1"
+http-service-mock = "0.3.1"

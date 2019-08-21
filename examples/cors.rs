@@ -1,5 +1,3 @@
-#![feature(async_await)]
-
 use http::header::HeaderValue;
 use tide::middleware::{CorsMiddleware, CorsOrigin};
 

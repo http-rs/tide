@@ -1,7 +1,6 @@
 //! Crate that provides helpers and/or middlewares for Tide
 //! related to http headers.
 
-#![feature(async_await)]
 #![warn(
     nonstandard_style,
     rust_2018_idioms,

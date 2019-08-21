@@ -1,5 +1,3 @@
-#![feature(async_await)]
-
 use http::status::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;

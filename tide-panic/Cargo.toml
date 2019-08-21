@@ -11,5 +11,5 @@ repository = "https://github.com/rustasync/tide"
 [dependencies]
 futures-preview = "0.3.0-alpha.17"
 http = "0.1"
-http-service = "0.2.0"
+http-service = "0.3.1"
 tide-core = { path = "../tide-core" }

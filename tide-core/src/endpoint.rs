@@ -13,14 +13,11 @@ use crate::{error::Error, response::IntoResponse, Context, Response};
 /// # Examples
 ///
 /// Endpoints are implemented as asynchronous functions that make use of language features
-/// currently only available in Rust Nightly. For this reason, we have to explicitly enable
-/// those features with `#![feature(async_await)]`. To keep examples concise,
-/// the attribute will be omitted in most of the documentation.
+/// currently only available in Rust Nightly.
 ///
 /// A simple endpoint that is invoked on a `GET` request and returns a `String`:
 ///
 /// ```rust, no_run
-/// # #![feature(async_await)]
 /// async fn hello(_cx: tide::Context<()>) -> String {
 ///     String::from("hello")
 /// }

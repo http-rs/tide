@@ -1,4 +1,3 @@
-#![feature(async_await)]
 use tide::Context;
 
 async fn echo_path(cx: Context<()>) -> String {

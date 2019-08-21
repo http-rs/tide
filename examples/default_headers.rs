@@ -1,5 +1,3 @@
-#![feature(async_await)]
-
 use tide::middleware::DefaultHeaders;
 
 fn main() {

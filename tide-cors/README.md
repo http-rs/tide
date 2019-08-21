@@ -7,8 +7,6 @@ This crate provides cors-related middleware for Tide.
 Examples are in the `/examples` folder of this crate.
 
 ```rust,no_run
-#![feature(async_await)]
-
 use http::header::HeaderValue;
 use tide::middleware::CorsMiddleware;
 

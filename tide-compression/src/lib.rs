@@ -3,7 +3,6 @@
 
 #![cfg_attr(feature = "nightly", feature(external_doc))]
 #![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
-#![feature(async_await)]
 #![warn(
     nonstandard_style,
     rust_2018_idioms,
