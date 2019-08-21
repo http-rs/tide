@@ -17,7 +17,7 @@ version = "0.1.0"
 
 [package.metadata.docs.rs]
 all-features = true
-rustdoc-args = ["--cfg docrs"]
+rustdoc-args = ["--cfg", "docrs"]
 
 [features]
 scope = ["slog-scope", "slog-scope-futures"]
