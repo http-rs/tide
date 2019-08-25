@@ -399,7 +399,7 @@ mod test {
         let mut server = make_server(app.into_http_service()).unwrap();
         let res = server.simulate(request).unwrap();
 
-        assert_eq!(res.status(), 400);
+        assert_eq!(res.status(), 200);
     }
 
     #[test]
