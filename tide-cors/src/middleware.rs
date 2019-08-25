@@ -198,7 +198,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
                 .headers()
                 .get(header::ORIGIN)
                 .cloned()
-                .unwrap_or(HeaderValue::from_static(""));
+                .unwrap_or_else(|| HeaderValue::from_static(""));
 
             if !self.is_valid_origin(&origin) {
                 return http::Response::builder()
