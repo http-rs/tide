@@ -193,14 +193,12 @@ impl CorsMiddleware {
 impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
     fn handle<'a>(&'a self, cx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
         Box::pin(async move {
-            let origin = if let Some(origin) = cx.request().headers().get(header::ORIGIN) {
-                origin.clone()
-            } else {
-                return http::Response::builder()
-                    .status(StatusCode::BAD_REQUEST)
-                    .body(Body::empty())
-                    .unwrap();
-            };
+            let origin = cx
+                .request()
+                .headers()
+                .get(header::ORIGIN)
+                .cloned()
+                .unwrap_or_else(|| HeaderValue::from_static(""));
 
             if !self.is_valid_origin(&origin) {
                 return http::Response::builder()
@@ -401,7 +399,7 @@ mod test {
         let mut server = make_server(app.into_http_service()).unwrap();
         let res = server.simulate(request).unwrap();
 
-        assert_eq!(res.status(), 400);
+        assert_eq!(res.status(), 200);
     }
 
     #[test]
