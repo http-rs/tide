@@ -56,7 +56,7 @@ mime_guess = "2.0.1"
 percent-encoding = "2.0.0"
 serde = { version = "1.0.91", features = ["derive"] }
 tera = "0.11"
-runtime = "0.3.0-alpha.6"
+runtime = "0.3.0-alpha.7"
 # Tide components
 tide-log = { path = "./tide-log", default-features = false }
 
@@ -73,7 +73,3 @@ members = [
     "tide-querystring",
     "tide-slog",
 ]
-
-[patch.crates-io.runtime]
-git = "https://github.com/rustasync/runtime"
-rev = "f5ac4fb"
