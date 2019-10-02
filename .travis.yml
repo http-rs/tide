@@ -1,5 +1,5 @@
 language: rust
-rust: nightly-2019-08-21
+rust: beta
 
 before_script:
 - >
@@ -16,7 +16,6 @@ matrix:
     env: [CACHE_NAME=docs]
     script:
     - RUSTDOCFLAGS=-Dwarnings cargo doc
-        -Zmtime-on-use
         --all --all-features
         --exclude tide
         --no-deps
@@ -35,7 +34,6 @@ matrix:
     - rustup component add clippy
     script:
     - cargo clippy
-        -Zmtime-on-use
         --all --all-targets
         -- -Dwarnings
 
@@ -43,18 +41,16 @@ matrix:
     env: [CACHE_NAME=no-default-features]
     script:
     - cargo build
-        -Zmtime-on-use
         --manifest-path tide-core/Cargo.toml
         --no-default-features
     - cargo build
-        -Zmtime-on-use
         --no-default-features
 
   - name: cargo test
     script:
-    - cargo test -Zmtime-on-use --all --verbose
+    - cargo test --all --verbose
 
   - name: cargo test --all-features
     script:
-    - cargo test -Zmtime-on-use --all-features
-    - cargo test -Zmtime-on-use --manifest-path tide-slog/Cargo.toml --all-features
+    - cargo test --all-features
+    - cargo test --manifest-path tide-slog/Cargo.toml --all-features

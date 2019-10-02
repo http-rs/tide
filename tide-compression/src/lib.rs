@@ -1,8 +1,6 @@
 //! Crate that provides helpers and/or middlewares for Tide
 //! related to compression.
 
-#![cfg_attr(feature = "nightly", feature(external_doc))]
-#![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
 #![warn(
     nonstandard_style,
     rust_2018_idioms,
