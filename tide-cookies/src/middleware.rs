@@ -78,8 +78,8 @@ mod tests {
 
     static COOKIE_NAME: &str = "testCookie";
 
-    /// Tide will use the the `Cookies`'s `Extract` implementation to build this parameter.
-    async fn retrieve_cookie(mut cx: Context<()>) -> String {
+    /// Tide will use the the  `Cookies`'s `Extract` implementation to build this parameter.
+    async fn retrieve_cookie(cx: Context<()>) -> String {
         cx.get_cookie(COOKIE_NAME)
             .unwrap()
             .unwrap()
