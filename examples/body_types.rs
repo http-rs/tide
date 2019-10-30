@@ -1,5 +1,3 @@
-#![feature(async_await)]
-
 use serde::{Deserialize, Serialize};
 use tide::{
     error::ResultExt,
