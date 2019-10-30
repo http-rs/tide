@@ -1,5 +1,3 @@
-#![feature(async_await)]
-
 use bytes::Bytes;
 use futures_fs::FsPool;
 use futures_util::compat::*;

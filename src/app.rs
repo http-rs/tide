@@ -30,7 +30,6 @@ use crate::{
 /// on `127.0.0.1:8000` with:
 ///
 /// ```rust, no_run
-/// #![feature(async_await)]
 ///
 /// let mut app = tide::App::new();
 /// app.at("/hello").get(async move |_| "Hello, world!");
@@ -45,7 +44,6 @@ use crate::{
 /// segments as parameters to endpoints:
 ///
 /// ```rust, no_run
-/// #![feature(async_await)]
 ///
 /// use tide::error::ResultExt;
 ///
@@ -75,7 +73,6 @@ use crate::{
 /// # Application state
 ///
 /// ```rust, no_run
-/// #![feature(async_await)]
 ///
 /// use http::status::StatusCode;
 /// use serde::{Deserialize, Serialize};
@@ -166,7 +163,6 @@ impl<State: Send + Sync + 'static> App<State> {
     /// respective endpoint of the selected resource. Example:
     ///
     /// ```rust,no_run
-    /// # #![feature(async_await)]
     /// # let mut app = tide::App::new();
     /// app.at("/").get(async move |_| "Hello, world!");
     /// ```
