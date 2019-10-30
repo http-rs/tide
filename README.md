@@ -59,26 +59,27 @@ Ecosystem WG, and **not ready for production use yet**.
 
 **Hello World**
 
-```rust
+```rust,no_run
 #![feature(async_await)]
 
 fn main() -> Result<(), std::io::Error> {
     let mut app = tide::App::new();
-    app.at("/").get(async move |_| "Hello, world!");
-    Ok(app.serve("127.0.0.1:8000")?)
+    app.at("/").get(|_| async move { "Hello, world!" });
+    Ok(app.run("127.0.0.1:8000")?)
 }
 ```
 
 **More Examples**
 
-- [Hello World](https://github.com/rustasync/tide/tree/master/examples/hello.rs)
+- [Hello World](https://github.com/rustasync/tide/blob/master/examples/hello.rs)
 - [Messages](https://github.com/rustasync/tide/blob/master/examples/messages.rs)
 - [Body Types](https://github.com/rustasync/tide/blob/master/examples/body_types.rs)
-- [Multipart Form](https://github.com/rustasync/tide/tree/master/examples/multipart-form/main.rs)
-- [Catch All](https://github.com/rustasync/tide/tree/master/examples/catch_all.rs)
-- [Cookies](https://github.com/rustasync/tide/tree/master/examples/cookies.rs)
-- [Default Headers](https://github.com/rustasync/tide/tree/master/examples/default_headers.rs)
-- [GraphQL](https://github.com/rustasync/tide/tree/master/examples/graphql.rs)
+- [Multipart Form](https://github.com/rustasync/tide/blob/master/examples/multipart_form/mod.rs)
+- [Catch All](https://github.com/rustasync/tide/blob/master/examples/catch_all.rs)
+- [Cookies](https://github.com/rustasync/tide/blob/master/examples/cookies.rs)
+- [Default Headers](https://github.com/rustasync/tide/blob/master/examples/default_headers.rs)
+- [GraphQL](https://github.com/rustasync/tide/blob/master/examples/graphql.rs)
+- [Staticfile](https://github.com/rustasync/tide/blob/master/examples/staticfile.rs)
 
 ## Resources
 

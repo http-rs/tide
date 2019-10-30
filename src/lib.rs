@@ -1,54 +1,61 @@
-#![cfg_attr(feature = "nightly", deny(missing_docs))]
-#![cfg_attr(feature = "nightly", feature(external_doc))]
-#![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
-#![cfg_attr(test, deny(warnings))]
-#![feature(async_await, existential_type)]
-#![allow(unused_variables)]
-#![deny(
-    nonstandard_style,
-    rust_2018_idioms,
-    future_incompatible,
-    missing_debug_implementations
-)]
-// TODO: Remove this after clippy bug due to async await is resolved.
-// ISSUE: https://github.com/rust-lang/rust-clippy/issues/3988
-#![allow(clippy::needless_lifetimes)]
-
-//!
 //! Welcome to Tide.
 //!
 //! The [`App`](struct.App.html) docs are a good place to get started.
-//!
-//!
 
-macro_rules! box_async {
-    {$($t:tt)*} => {
-        ::futures::future::FutureExt::boxed(async move { $($t)* })
-    };
-}
+#![cfg_attr(any(feature = "nightly", test), feature(external_doc))]
+#![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
+#![feature(async_await, existential_type)]
+#![warn(
+    nonstandard_style,
+    rust_2018_idioms,
+    future_incompatible,
+    missing_debug_implementations,
+    missing_docs
+)]
 
-#[macro_use]
-pub mod error;
-
-mod app;
-mod context;
-pub mod cookies;
-mod endpoint;
-pub mod forms;
-pub mod middleware;
-pub mod querystring;
-pub mod response;
-mod route;
-mod router;
-
-#[doc(inline)]
-pub use crate::{
-    app::{App, Server},
-    context::Context,
-    endpoint::Endpoint,
-    error::{EndpointResult, Error},
-    response::Response,
-    route::Route,
-};
+#[cfg(test)]
+#[doc(include = "../README.md")]
+const _README: () = ();
 
 pub use http;
+
+mod app;
+mod router;
+
+pub use app::{App, Server};
+
+#[cfg(feature = "cookies")]
+#[doc(inline)]
+pub use tide_cookies as cookies;
+
+#[cfg(feature = "cors")]
+#[doc(inline)]
+pub use tide_cors as cors;
+
+#[doc(inline)]
+pub use tide_core::{response, Body, Context, Endpoint, EndpointResult, Error, Response};
+
+pub mod error {
+    //! Error types re-exported from `tide-core`
+    pub use tide_core::error::{Error, ResponseExt, ResultDynErrExt, ResultExt, StringError};
+}
+
+pub use tide_forms as forms;
+pub use tide_querystring as querystring;
+
+pub mod middleware {
+    //! Module to export tide_core middleware
+
+    // Core
+    pub use tide_core::middleware::{Middleware, Next};
+
+    // Exports from tide repo.
+    pub use tide_headers::DefaultHeaders;
+    pub use tide_log::RequestLogger;
+
+    #[cfg(feature = "cors")]
+    pub use tide_cors::CorsMiddleware;
+
+    #[cfg(feature = "cookies")]
+    pub use tide_cookies::CookiesMiddleware;
+}
