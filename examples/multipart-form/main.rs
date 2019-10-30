@@ -1,5 +1,3 @@
-#![feature(async_await)]
-
 use serde::{Deserialize, Serialize};
 use std::io::Read;
 use tide::{forms::ExtractForms, response, App, Context, EndpointResult};

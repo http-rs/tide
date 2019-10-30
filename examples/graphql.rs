@@ -3,8 +3,6 @@
 //
 // [the Juniper book]: https://graphql-rust.github.io/
 
-#![feature(async_await)]
-
 use http::status::StatusCode;
 use juniper::graphql_object;
 use std::sync::{atomic, Arc};
