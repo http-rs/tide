@@ -32,7 +32,7 @@ use crate::{
 /// ```rust, no_run
 ///
 /// let mut app = tide::App::new();
-/// app.at("/hello").get(async move "Hello, world!");
+/// app.at("/hello").get(|_| async move {"Hello, world!"});
 /// app.serve("127.0.0.1:8000");
 /// ```
 ///
@@ -61,7 +61,7 @@ use crate::{
 ///
 /// app.at("/hello/:user").get(hello);
 /// app.at("/goodbye/:user").get(goodbye);
-/// app.at("/").get(async move |_| {
+/// app.at("/").get(|_| async move {
 ///     "Use /hello/{your name} or /goodbye/{your name}"
 /// });
 ///
@@ -164,7 +164,7 @@ impl<State: Send + Sync + 'static> App<State> {
     ///
     /// ```rust,no_run
     /// # let mut app = tide::App::new();
-    /// app.at("/").get(async move |_| "Hello, world!");
+    /// app.at("/").get(|_| async move {"Hello, world!"});
     /// ```
     ///
     /// A path is comprised of zero or many segments, i.e. non-empty strings
@@ -322,9 +322,9 @@ mod tests {
     #[test]
     fn simple_static() {
         let mut router = App::new();
-        router.at("/").get(async move {"/"});
-        router.at("/foo").get(async move {"/foo"});
-        router.at("/foo/bar").get(async move {"/foo/bar"});
+        router.at("/").get(|_| async move {"/"});
+        router.at("/foo").get(|_| async move {"/foo"});
+        router.at("/foo/bar").get(|_| async move {"/foo/bar"});
 
         for path in &["/", "/foo", "/foo/bar"] {
             let res = block_on(simulate_request(&router, path, http::Method::GET));
@@ -336,23 +336,23 @@ mod tests {
     #[test]
     fn nested_static() {
         let mut router = App::new();
-        router.at("/a").get(async move {"/a"});
+        router.at("/a").get(|_| async move {"/a"});
         router.at("/b").nest(|router| {
-            router.at("/").get(async move {"/b"});
-            router.at("/a").get(async move {"/b/a"});
-            router.at("/b").get(async move {"/b/b"});
+            router.at("/").get(|_| async move {"/b"});
+            router.at("/a").get(|_| async move {"/b/a"});
+            router.at("/b").get(|_| async move {"/b/b"});
             router.at("/c").nest(|router| {
-                router.at("/a").get(async move {"/b/c/a"});
-                router.at("/b").get(async move {"/b/c/b"});
+                router.at("/a").get(|_| async move {"/b/c/a"});
+                router.at("/b").get(|_| async move {"/b/c/b"});
             });
-            router.at("/d").get(async move {"/b/d"});
+            router.at("/d").get(|_| async move {"/b/d"});
         });
         router.at("/a/a").nest(|router| {
-            router.at("/a").get(async move {"/a/a/a"});
-            router.at("/b").get(async move {"/a/a/b"});
+            router.at("/a").get(|_| async move {"/a/a/a"});
+            router.at("/b").get(|_| async move {"/a/a/b"});
         });
         router.at("/a/b").nest(|router| {
-            router.at("/").get(async move {"/a/b"});
+            router.at("/").get(|_| async move {"/a/b"});
         });
 
         for failing_path in &["/", "/a/a", "/a/b/a"] {
@@ -378,9 +378,9 @@ mod tests {
     fn multiple_methods() {
         let mut router = App::new();
         router.at("/a").nest(|router| {
-            router.at("/b").get(async move {"/a/b GET"});
+            router.at("/b").get(|_| async move {"/a/b GET"});
         });
-        router.at("/a/b").post(async move {"/a/b POST"});
+        router.at("/a/b").post(|_| async move {"/a/b POST"});
 
         for (path, method) in &[("/a/b", http::Method::GET), ("/a/b", http::Method::POST)] {
             let res = block_on(simulate_request(&router, path, method.clone()));

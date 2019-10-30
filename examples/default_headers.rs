@@ -9,7 +9,7 @@ fn main() {
             .header("X-Server", "Tide"),
     );
 
-    app.at("/").get(async move |_| "Hello, world!");
+    app.at("/").get(|_| async move {"Hello, world!"});
 
     app.serve("127.0.0.1:8000").unwrap();
 }
