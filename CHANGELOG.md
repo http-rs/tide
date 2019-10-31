@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://book.async.rs/overview
 ### Removed
 
 - Removed `logger::RootLogger` (replaced by `logger:RequestLogger`)
+- Removed internal use of the `box_async` macro
 
 ## [0.3.0] - 2019-10-31
 
