@@ -31,7 +31,7 @@
       API Docs
     </a>
     <span> | </span>
-    <a href="https://github.com/rustasync/tide/blob/master/.github/CONTRIBUTING.md">
+    <a href="https://github.com/http-rs/tide/blob/master/.github/CONTRIBUTING.md">
       Contributing
     </a>
     <span> | </span>
@@ -60,23 +60,23 @@ fn main() -> Result<(), std::io::Error> {
 
 **More Examples**
 
-- [Hello World](https://github.com/rustasync/tide/tree/master/examples/hello.rs)
-- [Messages](https://github.com/rustasync/tide/blob/master/examples/messages.rs)
-- [Body Types](https://github.com/rustasync/tide/blob/master/examples/body_types.rs)
-- [Multipart Form](https://github.com/rustasync/tide/tree/master/examples/multipart-form/main.rs)
-- [Catch All](https://github.com/rustasync/tide/tree/master/examples/catch_all.rs)
-- [Cookies](https://github.com/rustasync/tide/tree/master/examples/cookies.rs)
-- [Default Headers](https://github.com/rustasync/tide/tree/master/examples/default_headers.rs)
-- [GraphQL](https://github.com/rustasync/tide/tree/master/examples/graphql.rs)
+- [Hello World](https://github.com/http-rs/tide/tree/master/examples/hello.rs)
+- [Messages](https://github.com/http-rs/tide/blob/master/examples/messages.rs)
+- [Body Types](https://github.com/http-rs/tide/blob/master/examples/body_types.rs)
+- [Multipart Form](https://github.com/http-rs/tide/tree/master/examples/multipart-form/main.rs)
+- [Catch All](https://github.com/http-rs/tide/tree/master/examples/catch_all.rs)
+- [Cookies](https://github.com/http-rs/tide/tree/master/examples/cookies.rs)
+- [Default Headers](https://github.com/http-rs/tide/tree/master/examples/default_headers.rs)
+- [GraphQL](https://github.com/http-rs/tide/tree/master/examples/graphql.rs)
 
 ## Resources
 
 Read about the design here:
 
-- [Rising Tide: building a modular web framework in the open](https://rustasync.github.io/team/2018/09/11/tide.html)
-- [Routing and extraction in Tide: a first sketch](https://rustasync.github.io/team/2018/10/16/tide-routing.html)
-- [Middleware in Tide](https://rustasync.github.io/team/2018/11/07/tide-middleware.html)
-- [Tide's evolving middleware approach](https://rustasync.github.io/team/2018/11/27/tide-middleware-evolution.html)
+- [Rising Tide: building a modular web framework in the open](https://http-rs.github.io/team/2018/09/11/tide.html)
+- [Routing and extraction in Tide: a first sketch](https://http-rs.github.io/team/2018/10/16/tide-routing.html)
+- [Middleware in Tide](https://http-rs.github.io/team/2018/11/07/tide-middleware.html)
+- [Tide's evolving middleware approach](https://http-rs.github.io/team/2018/11/27/tide-middleware-evolution.html)
 
 ## Contributing
 
@@ -89,7 +89,7 @@ guide][contributing] and take a look at some of these issues:
 #### Conduct
 
 The Tide project adheres to the [Contributor Covenant Code of
-Conduct](https://github.com/rustasync/tide/blob/master/.github/CODE_OF_CONDUCT.md). This
+Conduct](https://github.com/http-rs/tide/blob/master/.github/CODE_OF_CONDUCT.md). This
 describes the minimum behavior expected from all contributors.
 
 ## License
@@ -107,7 +107,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 dual licensed as above, without any additional terms or conditions.
 
-[releases]: https://github.com/rustasync/tide/releases
-[contributing]: https://github.com/rustasync/tide/blob/master/.github/CONTRIBUTING.md
-[good-first-issue]: https://github.com/rustasync/tide/labels/good%20first%20issue
-[help-wanted]: https://github.com/rustasync/tide/labels/help%20wanted
+[releases]: https://github.com/http-rs/tide/releases
+[contributing]: https://github.com/http-rs/tide/blob/master/.github/CONTRIBUTING.md
+[good-first-issue]: https://github.com/http-rs/tide/labels/good%20first%20issue
+[help-wanted]: https://github.com/http-rs/tide/labels/help%20wanted
