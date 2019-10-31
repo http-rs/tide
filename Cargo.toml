@@ -1,9 +1,11 @@
 [package]
+name = "tide"
+version = "0.4.0"
+description = "Serve the web – HTTP server framework"
 authors = [
     "Aaron Turon <aturon@mozilla.com>",
     "Yoshua Wuyts <yoshuawuyts@gmail.com>",
 ]
-description = "WIP modular web framework"
 documentation = "https://docs.rs/tide"
 keywords = ["tide", "http", "web", "framework", "async"]
 categories = [
@@ -13,10 +15,8 @@ categories = [
 ]
 edition = "2018"
 license = "MIT OR Apache-2.0"
-name = "tide"
 readme = "README.md"
-repository = "https://github.com/rustasync/tide"
-version = "0.2.0"
+repository = "https://github.com/http-rs/tide"
 
 [dependencies]
 cookie = { version = "0.12.0", features = ["percent-encode"] }
