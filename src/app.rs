@@ -272,7 +272,7 @@ impl<State: Sync + Send + 'static> HttpService for Server<State> {
         let middleware = self.middleware.clone();
         let data = self.data.clone();
 
-        box_async! {
+        Box::pin(async move {
             let fut = {
                 let Selection { endpoint, params } = router.route(&path, method);
                 let cx = Context::new(data, req, params);
@@ -286,7 +286,7 @@ impl<State: Sync + Send + 'static> HttpService for Server<State> {
             };
 
             Ok(fut.await)
-        }
+        })
     }
 }
 

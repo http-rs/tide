@@ -19,10 +19,10 @@ pub trait ContextExt {
 impl<State: Send + Sync + 'static> ContextExt for Context<State> {
     fn body_form<T: serde::de::DeserializeOwned>(&mut self) -> BoxTryFuture<T> {
         let body = self.take_body();
-        box_async! {
+        Box::pin(async move {
             let body = body.into_vec().await.client_err()?;
             Ok(serde_urlencoded::from_bytes(&body).map_err(|e| err_fmt!("could not decode form: {}", e)).client_err()?)
-        }
+        })
     }
 
     fn body_multipart(&mut self) -> BoxTryFuture<Multipart<Cursor<Vec<u8>>>> {
@@ -35,11 +35,11 @@ impl<State: Send + Sync + 'static> ContextExt for Context<State> {
 
         let body = self.take_body();
 
-        box_async! {
+        Box::pin(async move {
             let body = body.into_vec().await.client_err()?;
             let boundary = boundary.ok_or_else(|| err_fmt!("no boundary found")).client_err()?;
             Ok(Multipart::with_body(Cursor::new(body), boundary))
-        }
+        })
     }
 }
 

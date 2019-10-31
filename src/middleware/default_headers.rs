@@ -41,7 +41,7 @@ impl DefaultHeaders {
 
 impl<Data: Send + Sync + 'static> Middleware<Data> for DefaultHeaders {
     fn handle<'a>(&'a self, cx: Context<Data>, next: Next<'a, Data>) -> BoxFuture<'a, Response> {
-        box_async! {
+        Box::pin(async move {
             let mut res = next.run(cx).await;
 
             let headers = res.headers_mut();
@@ -49,6 +49,6 @@ impl<Data: Send + Sync + 'static> Middleware<Data> for DefaultHeaders {
                 headers.entry(key).unwrap().or_insert_with(|| value.clone());
             }
             res
-        }
+        })
     }
 }

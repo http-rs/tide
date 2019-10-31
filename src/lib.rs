@@ -10,12 +10,6 @@
 //!
 //!
 
-macro_rules! box_async {
-    {$($t:tt)*} => {
-        ::futures::future::FutureExt::boxed(async move { $($t)* })
-    };
-}
-
 #[macro_use]
 pub mod error;
 
