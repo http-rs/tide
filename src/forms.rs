@@ -8,7 +8,7 @@ use crate::{
 };
 
 /// An extension trait for `Context`, providing form extraction.
-pub trait ExtractForms {
+pub trait ContextExt {
     /// Asynchronously extract the entire body as a single form.
     fn body_form<T: serde::de::DeserializeOwned>(&mut self) -> BoxTryFuture<T>;
 
@@ -16,7 +16,7 @@ pub trait ExtractForms {
     fn body_multipart(&mut self) -> BoxTryFuture<Multipart<Cursor<Vec<u8>>>>;
 }
 
-impl<State: Send + Sync + 'static> ExtractForms for Context<State> {
+impl<State: Send + Sync + 'static> ContextExt for Context<State> {
     fn body_form<T: serde::de::DeserializeOwned>(&mut self) -> BoxTryFuture<T> {
         let body = self.take_body();
         box_async! {
