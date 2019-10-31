@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](https://book.async.rs/overview
 
 ### Added
 
-- Added `logger::RequestLogger` (replaces `logger:RootLogger`)
+- Added `logger::RequestLogger` based on `log` (replaces `logger:RootLogger`)
 
 ### Changed
 
 - Resolved an `#[allow(unused_mut)]` workaround.
+- Renamed `ExtractForms` to `ContextExt`.
 
 ### Removed
 
