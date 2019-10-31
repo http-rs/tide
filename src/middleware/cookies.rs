@@ -31,7 +31,7 @@ impl<Data: Send + Sync + 'static> Middleware<Data> for CookiesMiddleware {
         mut cx: Context<Data>,
         next: Next<'a, Data>,
     ) -> BoxFuture<'a, Response> {
-        box_async! {
+        Box::pin(async move {
             let cookie_data = cx
                 .extensions_mut()
                 .remove()
@@ -56,7 +56,7 @@ impl<Data: Send + Sync + 'static> Middleware<Data> for CookiesMiddleware {
                 }
             }
             res
-        }
+        })
     }
 }
 
