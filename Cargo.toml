@@ -47,6 +47,7 @@ version = "0.16.1"
 [features]
 default = ["hyper"]
 hyper = ["http-service-hyper"]
+unstable = []
 
 [dev-dependencies]
 basic-cookies = "0.1.3"
