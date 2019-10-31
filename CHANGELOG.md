@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://book.async.rs/overview
 
 - Added `logger::RequestLogger` (replaces `logger:RootLogger`)
 
+### Changed
+
+- Resolved an `#[allow(unused_mut)]` workaround.
+
 ### Removed
 
 - Removed `logger::RootLogger` (replaced by `logger:RequestLogger`)

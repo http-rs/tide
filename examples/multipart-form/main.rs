@@ -9,7 +9,6 @@ struct Message {
     file: Option<String>,
 }
 
-#[allow(unused_mut)] // Workaround clippy bug
 async fn upload_file(mut cx: Context<()>) -> EndpointResult {
     // https://stackoverflow.com/questions/43424982/how-to-parse-multipart-forms-using-abonander-multipart-with-rocket
     let mut message = Message {
