@@ -1,8 +1,8 @@
-use futures::future::BoxFuture;
 use crate::{
     middleware::{Middleware, Next},
     Context, Response,
 };
+use futures::future::BoxFuture;
 
 /// A simple requests logger
 ///

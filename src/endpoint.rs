@@ -66,8 +66,6 @@ where
     type Fut = BoxFuture<'static, Response>;
     fn call(&self, cx: Context<State>) -> Self::Fut {
         let fut = (self)(cx);
-        Box::pin(async move {
-            fut.await.into_response()
-        })
+        Box::pin(async move { fut.await.into_response() })
     }
 }
