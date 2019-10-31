@@ -7,7 +7,9 @@ mod cookies;
 mod default_headers;
 mod logger;
 
-pub use self::{cookies::CookiesMiddleware, default_headers::DefaultHeaders, logger::RootLogger};
+pub use self::{
+    cookies::CookiesMiddleware, default_headers::DefaultHeaders, logger::RequestLogger,
+};
 
 /// Middleware that wraps around remaining middleware chain.
 pub trait Middleware<State>: 'static + Send + Sync {

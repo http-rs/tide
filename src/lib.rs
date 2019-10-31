@@ -1,30 +1,14 @@
-#![cfg_attr(feature = "nightly", deny(missing_docs))]
-#![cfg_attr(feature = "nightly", feature(external_doc))]
-#![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
-#![cfg_attr(test, deny(warnings))]
-#![allow(unused_variables)]
-#![deny(
-    nonstandard_style,
-    rust_2018_idioms,
-    future_incompatible,
-    missing_debug_implementations
-)]
-// TODO: Remove this after clippy bug due to async await is resolved.
-// ISSUE: https://github.com/rust-lang/rust-clippy/issues/3988
-#![allow(clippy::needless_lifetimes)]
+// #![warn(missing_docs)]
+#![warn(missing_debug_implementations, rust_2018_idioms)]
+#![allow(clippy::mutex_atomic, clippy::module_inception)]
+#![doc(test(attr(deny(rust_2018_idioms, warnings))))]
+#![doc(test(attr(allow(unused_extern_crates, unused_variables))))]
 
-//!
 //! Welcome to Tide.
 //!
 //! The [`App`](struct.App.html) docs are a good place to get started.
 //!
 //!
-
-macro_rules! box_async {
-    {$($t:tt)*} => {
-        ::futures::future::FutureExt::boxed(async move { $($t)* })
-    };
-}
 
 #[macro_use]
 pub mod error;
