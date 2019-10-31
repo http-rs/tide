@@ -1,50 +1,50 @@
-use slog::{info, o, Drain};
-use slog_async;
-use slog_term;
-
 use futures::future::BoxFuture;
-
 use crate::{
     middleware::{Middleware, Next},
     Context, Response,
 };
 
-/// Root logger for Tide. Wraps over logger provided by slog.SimpleLogger
-#[derive(Debug)]
-pub struct RootLogger {
-    // drain: dyn slog::Drain,
-    inner_logger: slog::Logger,
-}
+/// A simple requests logger
+///
+/// # Examples
+///
+/// ```rust
+///
+/// let mut app = tide::App::new();
+/// app.middleware(tide::middleware::RequestLogger::new());
+/// ```
+#[derive(Debug, Clone, Default)]
+pub struct RequestLogger;
 
-impl RootLogger {
-    pub fn new() -> RootLogger {
-        let decorator = slog_term::TermDecorator::new().build();
-        let drain = slog_term::CompactFormat::new(decorator).build().fuse();
-        let drain = slog_async::Async::new(drain).build().fuse();
+impl RequestLogger {
+    pub fn new() -> Self {
+        Self::default()
+    }
 
-        let log = slog::Logger::root(drain, o!());
-        RootLogger { inner_logger: log }
+    async fn log_basic<'a, Data: Send + Sync + 'static>(
+        &'a self,
+        ctx: Context<Data>,
+        next: Next<'a, Data>,
+    ) -> Response {
+        let path = ctx.uri().path().to_owned();
+        let method = ctx.method().as_str().to_owned();
+        log::trace!("IN => {} {}", method, path);
+        let start = std::time::Instant::now();
+        let res = next.run(ctx).await;
+        let status = res.status();
+        log::info!(
+            "{} {} {} {}ms",
+            method,
+            path,
+            status.as_str(),
+            start.elapsed().as_millis()
+        );
+        res
     }
 }
 
-impl Default for RootLogger {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-/// Stores information during request phase and logs information once the response
-/// is generated.
-impl<Data: Send + Sync + 'static> Middleware<Data> for RootLogger {
-    fn handle<'a>(&'a self, cx: Context<Data>, next: Next<'a, Data>) -> BoxFuture<'a, Response> {
-        box_async! {
-            let path = cx.uri().path().to_owned();
-            let method = cx.method().as_str().to_owned();
-
-            let res = next.run(cx).await;
-            let status = res.status();
-            info!(self.inner_logger, "{} {} {}", method, path, status.as_str());
-            res
-        }
+impl<Data: Send + Sync + 'static> Middleware<Data> for RequestLogger {
+    fn handle<'a>(&'a self, ctx: Context<Data>, next: Next<'a, Data>) -> BoxFuture<'a, Response> {
+        Box::pin(async move { self.log_basic(ctx, next).await })
     }
 }

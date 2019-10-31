@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://book.async.rs/overview
 
 ## [Unreleased]
 
+### Added
+
+- Added `logger::RequestLogger` (replaces `logger:RootLogger`)
+
+### Removed
+
+- Removed `logger::RootLogger` (replaced by `logger:RequestLogger`)
+
 ## [0.3.0] - 2019-10-31
 
 This is the first release in almost 6 months; introducing a snapshot of where we
