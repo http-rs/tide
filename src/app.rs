@@ -322,9 +322,9 @@ mod tests {
     #[test]
     fn simple_static() {
         let mut router = App::new();
-        router.at("/").get(|_| async move {"/"});
-        router.at("/foo").get(|_| async move {"/foo"});
-        router.at("/foo/bar").get(|_| async move {"/foo/bar"});
+        router.at("/").get(|_| async move { "/" });
+        router.at("/foo").get(|_| async move { "/foo" });
+        router.at("/foo/bar").get(|_| async move { "/foo/bar" });
 
         for path in &["/", "/foo", "/foo/bar"] {
             let res = block_on(simulate_request(&router, path, http::Method::GET));
@@ -336,23 +336,23 @@ mod tests {
     #[test]
     fn nested_static() {
         let mut router = App::new();
-        router.at("/a").get(|_| async move {"/a"});
+        router.at("/a").get(|_| async move { "/a" });
         router.at("/b").nest(|router| {
-            router.at("/").get(|_| async move {"/b"});
-            router.at("/a").get(|_| async move {"/b/a"});
-            router.at("/b").get(|_| async move {"/b/b"});
+            router.at("/").get(|_| async move { "/b" });
+            router.at("/a").get(|_| async move { "/b/a" });
+            router.at("/b").get(|_| async move { "/b/b" });
             router.at("/c").nest(|router| {
-                router.at("/a").get(|_| async move {"/b/c/a"});
-                router.at("/b").get(|_| async move {"/b/c/b"});
+                router.at("/a").get(|_| async move { "/b/c/a" });
+                router.at("/b").get(|_| async move { "/b/c/b" });
             });
-            router.at("/d").get(|_| async move {"/b/d"});
+            router.at("/d").get(|_| async move { "/b/d" });
         });
         router.at("/a/a").nest(|router| {
-            router.at("/a").get(|_| async move {"/a/a/a"});
-            router.at("/b").get(|_| async move {"/a/a/b"});
+            router.at("/a").get(|_| async move { "/a/a/a" });
+            router.at("/b").get(|_| async move { "/a/a/b" });
         });
         router.at("/a/b").nest(|router| {
-            router.at("/").get(|_| async move {"/a/b"});
+            router.at("/").get(|_| async move { "/a/b" });
         });
 
         for failing_path in &["/", "/a/a", "/a/b/a"] {
@@ -378,9 +378,9 @@ mod tests {
     fn multiple_methods() {
         let mut router = App::new();
         router.at("/a").nest(|router| {
-            router.at("/b").get(|_| async move {"/a/b GET"});
+            router.at("/b").get(|_| async move { "/a/b GET" });
         });
-        router.at("/a/b").post(|_| async move {"/a/b POST"});
+        router.at("/a/b").post(|_| async move { "/a/b POST" });
 
         for (path, method) in &[("/a/b", http::Method::GET), ("/a/b", http::Method::POST)] {
             let res = block_on(simulate_request(&router, path, method.clone()));

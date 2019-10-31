@@ -1,7 +1,7 @@
 <h1 align="center">Tide</h1>
 <div align="center">
  <strong>
-   Empowering everyone to build HTTP Services.
+   Serve the web
  </strong>
 </div>
 
@@ -12,11 +12,6 @@
   <a href="https://crates.io/crates/tide">
     <img src="https://img.shields.io/crates/v/tide.svg?style=flat-square"
     alt="Crates.io version" />
-  </a>
-  <!-- Build Status -->
-  <a href="https://travis-ci.org/rustasync/tide">
-    <img src="https://img.shields.io/travis/rustasync/tide.svg?style=flat-square"
-      alt="Build Status" />
   </a>
   <!-- Downloads -->
   <a href="https://crates.io/crates/tide">
@@ -46,14 +41,8 @@
   </h3>
 </div>
 
-<div align="center">
-  <sub>Built with 🌊 by <a href="https://github.com/rustasync">The Rust Async Ecosystem WG</a>
-</div>
-
-## About
-
-A modular web framework built around async/await. It's actively being developed by the Rust Async
-Ecosystem WG, and **not ready for production use yet**.
+A modular web framework built around async/await. It's actively being developed
+and **not ready for production use yet**.
 
 ## Examples
 
@@ -64,7 +53,7 @@ Ecosystem WG, and **not ready for production use yet**.
 
 fn main() -> Result<(), std::io::Error> {
     let mut app = tide::App::new();
-    app.at("/").get(async move |_| "Hello, world!");
+    app.at("/").get(|_| async move { "Hello, world!" });
     Ok(app.serve("127.0.0.1:8000")?)
 }
 ```
@@ -88,18 +77,6 @@ Read about the design here:
 - [Routing and extraction in Tide: a first sketch](https://rustasync.github.io/team/2018/10/16/tide-routing.html)
 - [Middleware in Tide](https://rustasync.github.io/team/2018/11/07/tide-middleware.html)
 - [Tide's evolving middleware approach](https://rustasync.github.io/team/2018/11/27/tide-middleware-evolution.html)
-
-### Supported Rust Versions
-
-Tide is built against the latest Rust nightly releases and as such, due to it's use of `std` futures,
-it has the following specific breakpoints that align with std future API changes:
-
-| Tide        | Rust                    |
-| ----------- | ----------------------- |
-| &le; v0.1.0 | &le; nightly-2019-04-07 |
-| &ge; v0.1.1 | &ge; nightly-2019-04-08 |
-
-_**Note:** Since these are due to changes in `std`, projects with dependencies that use conflicting versions of `std::futures` will not build successfully._
 
 ## Contributing
 
