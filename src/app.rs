@@ -33,7 +33,7 @@ use crate::{
 ///
 /// let mut app = tide::App::new();
 /// app.at("/hello").get(|_| async move {"Hello, world!"});
-/// app.serve("127.0.0.1:8000");
+/// app.serve("127.0.0.1:8000").unwrap();
 /// ```
 ///
 /// # Routing and parameters
@@ -44,7 +44,6 @@ use crate::{
 /// segments as parameters to endpoints:
 ///
 /// ```rust, no_run
-///
 /// use tide::error::ResultExt;
 ///
 /// async fn hello(cx: tide::Context<()>) -> tide::EndpointResult<String> {
@@ -65,7 +64,7 @@ use crate::{
 ///     "Use /hello/{your name} or /goodbye/{your name}"
 /// });
 ///
-/// app.serve("127.0.0.1:8000");
+/// app.serve("127.0.0.1:8000").unwrap();
 /// ```
 ///
 /// You can learn more about routing in the [`App::at`] documentation.
@@ -272,7 +271,7 @@ impl<State: Sync + Send + 'static> HttpService for Server<State> {
         let middleware = self.middleware.clone();
         let data = self.data.clone();
 
-        box_async! {
+        Box::pin(async move {
             let fut = {
                 let Selection { endpoint, params } = router.route(&path, method);
                 let cx = Context::new(data, req, params);
@@ -286,7 +285,7 @@ impl<State: Sync + Send + 'static> HttpService for Server<State> {
             };
 
             Ok(fut.await)
-        }
+        })
     }
 }
 

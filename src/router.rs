@@ -62,7 +62,10 @@ impl<State: 'static> Router<State> {
 }
 
 fn not_found_endpoint<Data>(_cx: Context<Data>) -> BoxFuture<'static, Response> {
-    box_async! {
-        http::Response::builder().status(http::StatusCode::NOT_FOUND).body(Body::empty()).unwrap()
-    }
+    Box::pin(async move {
+        http::Response::builder()
+            .status(http::StatusCode::NOT_FOUND)
+            .body(Body::empty())
+            .unwrap()
+    })
 }

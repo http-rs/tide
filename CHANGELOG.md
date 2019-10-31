@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://book.async.rs/overview
 
 ## [Unreleased]
 
+### Added
+
+- Added `logger::RequestLogger` based on `log` (replaces `logger:RootLogger`)
+
+### Changed
+
+- Resolved an `#[allow(unused_mut)]` workaround.
+- Renamed `ExtractForms` to `ContextExt`.
+
+### Removed
+
+- Removed `logger::RootLogger` (replaced by `logger:RequestLogger`)
+- Removed internal use of the `box_async` macro
+
 ## [0.3.0] - 2019-10-31
 
 This is the first release in almost 6 months; introducing a snapshot of where we
