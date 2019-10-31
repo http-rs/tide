@@ -60,8 +60,3 @@ mime_guess = "2.0.1"
 percent-encoding = "2.1.0"
 serde = { version = "1.0.102", features = ["derive"] }
 structopt = "0.3.3"
-
-[patch.crates-io]
-http-service = { git = "https://github.com/rustasync/http-service", branch = "master" }
-http-service-hyper = { git = "https://github.com/rustasync/http-service", branch = "master" }
-http-service-mock = { git = "https://github.com/rustasync/http-service", branch = "master" }
