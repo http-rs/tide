@@ -18,57 +18,50 @@ readme = "README.md"
 repository = "https://github.com/rustasync/tide"
 version = "0.2.0"
 
+[dependencies]
+cookie = { version = "0.12", features = ["percent-encode"] }
+futures-preview = "0.3.0-alpha.16"
+fnv = "1.0.6"
+http = "0.1"
+http-service = "0.2.0"
+pin-utils = "0.1.0-alpha.4"
+route-recognizer = "0.1.12"
+serde = "1.0.91"
+serde_derive = "1.0.91"
+serde_json = "1.0.39"
+slog = "2.4.1"
+slog-async = "2.3.0"
+slog-term = "2.4.0"
+typemap = "0.3.3"
+serde_urlencoded = "0.5.5"
+
+[dependencies.http-service-hyper]
+optional = true
+version = "0.2.0"
+
+[dependencies.multipart]
+default-features = false
+features = ["server"]
+version = "0.16.1"
+
 [features]
-default = ["hyper", "cookies", "cors"]
-cookies = ["tide-cookies"]
-cors = ["tide-cors"]
+default = ["hyper"]
 hyper = ["http-service-hyper"]
 
-[dependencies]
-futures-preview = "0.3.0-alpha.17"
-http = "0.1"
-http-service = "0.3.1"
-http-service-hyper = { version = "0.3.1", optional = true }
-# Routing
-fnv = "1.0.6"
-route-recognizer = "0.1.13"
-# Tide components
-tide-cookies = { path = "./tide-cookies", optional = true, default-features = false }
-tide-cors = { path = "./tide-cors", optional = true, default-features = false }
-tide-core = { path = "./tide-core", default-features = false }
-tide-headers = { path = "./tide-headers", default-features = false }
-tide-log = { path = "./tide-log", default-features = false }
-tide-forms = { path = "./tide-forms", default-features = false }
-tide-querystring = { path = "./tide-querystring", default-features = false }
-
 [dev-dependencies]
+basic-cookies = "0.1.3"
 bytes = "0.4.12"
-cookie = { version = "0.12", features = ["percent-encode"] }
-env_logger = "0.7.0"
 futures-fs = "0.0.5"
-futures-util-preview = { version = "0.3.0-alpha.17", features = ["compat"] }
-http-service-mock = "0.3.1"
-juniper = "0.14.0"
-log = "0.4.6"
-log4rs = "0.8.3"
+futures-util-preview = { version = "0.3.0-alpha.16", features = ["compat"] }
+http-service-mock = "0.2.0"
+juniper = "0.11.1"
 mime = "0.3.13"
-mime_guess = "2.0.1"
-percent-encoding = "2.0.0"
-serde = { version = "1.0.91", features = ["derive"] }
-tera = "0.11"
-# Tide components
-tide-log = { path = "./tide-log", default-features = false }
+mime_guess = "2.0.0-alpha.6"
+percent-encoding = "1.0.1"
+serde = { version = "1.0.90", features = ["derive"] }
+structopt = "0.2.15"
 
-[workspace]
-members = [
-    "tide-compression",
-    "tide-cookies",
-    "tide-core",
-    "tide-cors",
-    "tide-forms",
-    "tide-headers",
-    "tide-log",
-    "tide-panic",
-    "tide-querystring",
-    "tide-slog",
-]
+[patch.crates-io]
+http-service = { git = "https://github.com/rustasync/http-service", branch = "master" }
+http-service-hyper = { git = "https://github.com/rustasync/http-service", branch = "master" }
+http-service-mock = { git = "https://github.com/rustasync/http-service", branch = "master" }

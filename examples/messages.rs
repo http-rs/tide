@@ -1,3 +1,5 @@
+#![feature(async_await)]
+
 use http::status::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
@@ -37,11 +39,13 @@ impl Database {
     }
 }
 
+#[allow(unused_mut)] // Workaround clippy bug
 async fn new_message(mut cx: Context<Database>) -> EndpointResult<String> {
     let msg = cx.body_json().await.client_err()?;
     Ok(cx.state().insert(msg).to_string())
 }
 
+#[allow(unused_mut)] // Workaround clippy bug
 async fn set_message(mut cx: Context<Database>) -> EndpointResult<()> {
     let msg = cx.body_json().await.client_err()?;
     let id = cx.param("id").client_err()?;
@@ -49,7 +53,7 @@ async fn set_message(mut cx: Context<Database>) -> EndpointResult<()> {
     if cx.state().set(id, msg) {
         Ok(())
     } else {
-        Err(StatusCode::NOT_FOUND.into())
+        Err(StatusCode::NOT_FOUND)?
     }
 }
 
@@ -58,7 +62,7 @@ async fn get_message(cx: Context<Database>) -> EndpointResult {
     if let Some(msg) = cx.state().get(id) {
         Ok(response::json(msg))
     } else {
-        Err(StatusCode::NOT_FOUND.into())
+        Err(StatusCode::NOT_FOUND)?
     }
 }
 
@@ -66,5 +70,5 @@ fn main() {
     let mut app = App::with_state(Database::default());
     app.at("/message").post(new_message);
     app.at("/message/:id").get(get_message).post(set_message);
-    app.run("127.0.0.1:8000").unwrap();
+    app.serve("127.0.0.1:8000").unwrap();
 }

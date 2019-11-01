@@ -1,60 +1,13 @@
 language: rust
-rust: nightly-2019-08-21
+rust:
+  - nightly-2019-05-09
 
-before_script:
-- >
-  [[ "$(cargo-sweep --version)" == "cargo-sweep 0.4.1" ]]
-  || cargo install cargo-sweep
-- cargo sweep --stamp
-
-before_cache:
-- cargo sweep --file
-
-matrix:
-  include:
-  - name: cargo doc
-    env: [CACHE_NAME=docs]
-    script:
-    - RUSTDOCFLAGS=-Dwarnings cargo doc
-        -Zmtime-on-use
-        --all --all-features
-        --exclude tide
-        --no-deps
-
-  - name: cargo fmt
-    cache: false
-    before_script: []
-    install:
-    - rustup component add rustfmt
-    script:
-    - cargo fmt --all -- --check
-
-  - name: cargo clippy
-    env: [CACHE_NAME=clippy]
-    install:
-    - rustup component add clippy
-    script:
-    - cargo clippy
-        -Zmtime-on-use
-        --all --all-targets
-        -- -Dwarnings
-
-  - name: cargo build --no-default-features
-    env: [CACHE_NAME=no-default-features]
-    script:
-    - cargo build
-        -Zmtime-on-use
-        --manifest-path tide-core/Cargo.toml
-        --no-default-features
-    - cargo build
-        -Zmtime-on-use
-        --no-default-features
-
-  - name: cargo test
-    script:
-    - cargo test -Zmtime-on-use --all --verbose
-
-  - name: cargo test --all-features
-    script:
-    - cargo test -Zmtime-on-use --all-features
-    - cargo test -Zmtime-on-use --manifest-path tide-slog/Cargo.toml --all-features
+before_script: |
+  rustup component add rustfmt clippy
+script: |
+  cargo fmt --all -- --check &&
+  cargo clippy --all -- -D clippy::all &&
+  cargo build --no-default-features --verbose &&
+  cargo build --all --verbose &&
+  cargo test  --all --verbose
+cache: cargo

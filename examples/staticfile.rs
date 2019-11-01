@@ -1,3 +1,5 @@
+#![feature(async_await)]
+
 use bytes::Bytes;
 use futures_fs::FsPool;
 use futures_util::compat::*;
@@ -42,7 +44,7 @@ impl StaticFile {
         // Check if the path exists and handle if it's a directory containing `index.html`
         if meta.is_some() && meta.as_ref().map(|m| !m.is_file()).unwrap_or(false) {
             // Redirect if path is a dir and URL doesn't end with "/"
-            if !actual_path.ends_with('/') {
+            if !actual_path.ends_with("/") {
                 return Ok(response
                     .status(StatusCode::MOVED_PERMANENTLY)
                     .header(header::LOCATION, String::from(actual_path) + "/")
@@ -66,7 +68,7 @@ impl StaticFile {
             }
         };
 
-        let mime = mime_guess::from_path(path).first_or_octet_stream();
+        let mime = mime_guess::guess_mime_type(path);
         let mime_str = mime.as_ref();
         let size = meta.len();
 
@@ -122,5 +124,5 @@ async fn handle_path(ctx: Context<StaticFile>) -> EndpointResult {
 fn main() {
     let mut app = App::with_state(StaticFile::new("./"));
     app.at("/*").get(handle_path);
-    app.run("127.0.0.1:8000").unwrap();
+    app.serve("127.0.0.1:8000").unwrap();
 }

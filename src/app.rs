@@ -4,8 +4,8 @@ use std::sync::Arc;
 
 use crate::{
     middleware::{Middleware, Next},
-    router::{Route, Router},
-    Context,
+    router::{Router, Selection},
+    Context, Route,
 };
 
 /// The entry point for building a Tide application.
@@ -30,19 +30,23 @@ use crate::{
 /// on `127.0.0.1:8000` with:
 ///
 /// ```rust, no_run
+/// #![feature(async_await)]
+///
 /// let mut app = tide::App::new();
-/// app.at("/hello").get(|_| async move { "Hello, world!" });
-/// app.run("127.0.0.1:8000");
+/// app.at("/hello").get(async move |_| "Hello, world!");
+/// app.serve("127.0.0.1:8000");
 /// ```
 ///
 /// # Routing and parameters
 ///
 /// Tide's routing system is simple and similar to many other frameworks. It
-/// uses `:foo` for "wildcard" URL segments, and `*foo` to match the rest of a
+/// uses `:foo` for "wildcard" URL segments, and `:foo*` to match the rest of a
 /// URL (which may include multiple segments). Here's an example using wildcard
 /// segments as parameters to endpoints:
 ///
 /// ```rust, no_run
+/// #![feature(async_await)]
+///
 /// use tide::error::ResultExt;
 ///
 /// async fn hello(cx: tide::Context<()>) -> tide::EndpointResult<String> {
@@ -59,11 +63,11 @@ use crate::{
 ///
 /// app.at("/hello/:user").get(hello);
 /// app.at("/goodbye/:user").get(goodbye);
-/// app.at("/").get(|_| async move {
+/// app.at("/").get(async move |_| {
 ///     "Use /hello/{your name} or /goodbye/{your name}"
 /// });
 ///
-/// app.run("127.0.0.1:8000");
+/// app.serve("127.0.0.1:8000");
 /// ```
 ///
 /// You can learn more about routing in the [`App::at`] documentation.
@@ -71,6 +75,8 @@ use crate::{
 /// # Application state
 ///
 /// ```rust, no_run
+/// #![feature(async_await)]
+///
 /// use http::status::StatusCode;
 /// use serde::{Deserialize, Serialize};
 /// use std::sync::Mutex;
@@ -117,7 +123,7 @@ use crate::{
 ///     let mut app = App::with_state(Database::default());
 ///     app.at("/message").post(new_message);
 ///     app.at("/message/:id").get(get_message);
-///     app.run("127.0.0.1:8000").unwrap();
+///     app.serve("127.0.0.1:8000").unwrap();
 /// }
 /// ```
 
@@ -125,7 +131,7 @@ use crate::{
 pub struct App<State> {
     router: Router<State>,
     middleware: Vec<Arc<dyn Middleware<State>>>,
-    state: State,
+    data: State,
 }
 
 impl App<()> {
@@ -147,7 +153,7 @@ impl<State: Send + Sync + 'static> App<State> {
         App {
             router: Router::new(),
             middleware: Vec::new(),
-            state,
+            data: state,
         }
     }
 
@@ -160,8 +166,9 @@ impl<State: Send + Sync + 'static> App<State> {
     /// respective endpoint of the selected resource. Example:
     ///
     /// ```rust,no_run
+    /// # #![feature(async_await)]
     /// # let mut app = tide::App::new();
-    /// app.at("/").get(|_| async move { "Hello, world!" });
+    /// app.at("/").get(async move |_| "Hello, world!");
     /// ```
     ///
     /// A path is comprised of zero or many segments, i.e. non-empty strings
@@ -174,13 +181,12 @@ impl<State: Send + Sync + 'static> App<State> {
     /// parameter called `name`. It is not possible to define wildcard segments
     /// with different names for otherwise identical paths.
     ///
-    /// Alternatively a wildcard definitions can start with a `*`, for example
-    /// `*path`, which means that the wildcard will match to the end of given
-    /// path, no matter how many segments are left, even nothing.
-    ///
-    /// The name of the parameter can be omitted to define a path that matches
-    /// the required structure, but where the parameters are not required.
-    /// `:` will match a segment, and `*` will match an entire path.
+    /// Wildcard definitions can be followed by an optional *wildcard
+    /// modifier*. Currently, there is only one modifier: `*`, which means that
+    /// the wildcard will match to the end of given path, no matter how many
+    /// segments are left, even nothing. It is an error to define two wildcard
+    /// segments with different wildcard modifiers, or to write other path
+    /// segment after a segment with wildcard modifier.
     ///
     /// Here are some examples omitting the HTTP verb based endpoint selection:
     ///
@@ -189,9 +195,7 @@ impl<State: Send + Sync + 'static> App<State> {
     /// app.at("/");
     /// app.at("/hello");
     /// app.at("add_two/:num");
-    /// app.at("files/:user/*");
-    /// app.at("static/*path");
-    /// app.at("static/:context/:");
+    /// app.at("static/:path*");
     /// ```
     ///
     /// There is no fallback route matching, i.e. either a resource is a full
@@ -211,8 +215,6 @@ impl<State: Send + Sync + 'static> App<State> {
     ///
     /// Middleware can only be added at the "top level" of an application,
     /// and is processed in the order in which it is applied.
-    ///
-    /// [`Middleware`]: crate::middleware::Middleware
     pub fn middleware(&mut self, m: impl Middleware<State>) -> &mut Self {
         self.middleware.push(Arc::new(m));
         self
@@ -225,16 +227,16 @@ impl<State: Send + Sync + 'static> App<State> {
     pub fn into_http_service(self) -> Server<State> {
         Server {
             router: Arc::new(self.router),
-            state: Arc::new(self.state),
+            data: Arc::new(self.data),
             middleware: Arc::new(self.middleware),
         }
     }
 
-    /// Run the app at the given address.
+    /// Start serving the app at the given address.
     ///
     /// Blocks the calling thread indefinitely.
     #[cfg(feature = "hyper")]
-    pub fn run(self, addr: impl std::net::ToSocketAddrs) -> std::io::Result<()> {
+    pub fn serve(self, addr: impl std::net::ToSocketAddrs) -> std::io::Result<()> {
         let addr = addr
             .to_socket_addrs()?
             .next()
@@ -244,32 +246,17 @@ impl<State: Send + Sync + 'static> App<State> {
         http_service_hyper::run(self.into_http_service(), addr);
         Ok(())
     }
-
-    /// Asynchronously serve the app at the given address.
-    #[cfg(feature = "hyper")]
-    pub async fn serve(self, addr: impl std::net::ToSocketAddrs) -> std::io::Result<()> {
-        let addr = addr
-            .to_socket_addrs()?
-            .next()
-            .ok_or(std::io::ErrorKind::InvalidInput)?;
-
-        http_service_hyper::serve(self.into_http_service(), addr)
-            .await
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
-    }
 }
 
 /// An instantiated Tide server.
 ///
 /// This type is useful only in conjunction with the [`HttpService`] trait,
 /// i.e. for hosting a Tide app within some custom HTTP server.
-///
-/// [`HttpService`]: http_service::HttpService
 #[derive(Clone)]
 #[allow(missing_debug_implementations)]
 pub struct Server<State> {
     router: Arc<Router<State>>,
-    state: Arc<State>,
+    data: Arc<State>,
     middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
 }
 
@@ -287,18 +274,23 @@ impl<State: Sync + Send + 'static> HttpService for Server<State> {
         let method = req.method().to_owned();
         let router = self.router.clone();
         let middleware = self.middleware.clone();
-        let state = self.state.clone();
+        let data = self.data.clone();
 
-        Box::pin(async move {
+        box_async! {
             let fut = {
-                let (endpoint, params) = router.route(&path, method).into_components();
-                let cx = Context::new(state, req, params);
-                let next = Next::new(endpoint, &middleware);
+                let Selection { endpoint, params } = router.route(&path, method);
+                let cx = Context::new(data, req, params);
+
+                let next = Next {
+                    endpoint,
+                    next_middleware: &middleware,
+                };
+
                 next.run(cx)
             };
 
             Ok(fut.await)
-        })
+        }
     }
 }
 
@@ -308,31 +300,35 @@ mod tests {
     use std::sync::Arc;
 
     use super::*;
-    use crate::{middleware::Next, Context, Response};
+    use crate::{middleware::Next, router::Selection, Context, Response};
 
-    fn simulate_request<'a, State: Default + Clone + Send + Sync + 'static>(
-        app: &'a App<State>,
+    fn simulate_request<'a, Data: Default + Clone + Send + Sync + 'static>(
+        app: &'a App<Data>,
         path: &'a str,
         method: http::Method,
     ) -> BoxFuture<'a, Response> {
-        let (endpoint, params) = app.router.route(path, method.clone()).into_components();
+        let Selection { endpoint, params } = app.router.route(path, method.clone());
 
-        let state = Arc::new(State::default());
+        let data = Arc::new(Data::default());
         let req = http::Request::builder()
             .method(method)
             .body(http_service::Body::empty())
             .unwrap();
-        let cx = Context::new(state, req, params);
-        let next = Next::new(endpoint, &app.middleware);
+        let cx = Context::new(data, req, params);
+        let next = Next {
+            endpoint,
+            next_middleware: &app.middleware,
+        };
+
         next.run(cx)
     }
 
     #[test]
     fn simple_static() {
         let mut router = App::new();
-        router.at("/").get(|_| async move { "/" });
-        router.at("/foo").get(|_| async move { "/foo" });
-        router.at("/foo/bar").get(|_| async move { "/foo/bar" });
+        router.at("/").get(async move |_| "/");
+        router.at("/foo").get(async move |_| "/foo");
+        router.at("/foo/bar").get(async move |_| "/foo/bar");
 
         for path in &["/", "/foo", "/foo/bar"] {
             let res = block_on(simulate_request(&router, path, http::Method::GET));
@@ -344,23 +340,23 @@ mod tests {
     #[test]
     fn nested_static() {
         let mut router = App::new();
-        router.at("/a").get(|_| async move { "/a" });
+        router.at("/a").get(async move |_| "/a");
         router.at("/b").nest(|router| {
-            router.at("/").get(|_| async move { "/b" });
-            router.at("/a").get(|_| async move { "/b/a" });
-            router.at("/b").get(|_| async move { "/b/b" });
+            router.at("/").get(async move |_| "/b");
+            router.at("/a").get(async move |_| "/b/a");
+            router.at("/b").get(async move |_| "/b/b");
             router.at("/c").nest(|router| {
-                router.at("/a").get(|_| async move { "/b/c/a" });
-                router.at("/b").get(|_| async move { "/b/c/b" });
+                router.at("/a").get(async move |_| "/b/c/a");
+                router.at("/b").get(async move |_| "/b/c/b");
             });
-            router.at("/d").get(|_| async move { "/b/d" });
+            router.at("/d").get(async move |_| "/b/d");
         });
         router.at("/a/a").nest(|router| {
-            router.at("/a").get(|_| async move { "/a/a/a" });
-            router.at("/b").get(|_| async move { "/a/a/b" });
+            router.at("/a").get(async move |_| "/a/a/a");
+            router.at("/b").get(async move |_| "/a/a/b");
         });
         router.at("/a/b").nest(|router| {
-            router.at("/").get(|_| async move { "/a/b" });
+            router.at("/").get(async move |_| "/a/b");
         });
 
         for failing_path in &["/", "/a/a", "/a/b/a"] {
@@ -386,9 +382,9 @@ mod tests {
     fn multiple_methods() {
         let mut router = App::new();
         router.at("/a").nest(|router| {
-            router.at("/b").get(|_| async move { "/a/b GET" });
+            router.at("/b").get(async move |_| "/a/b GET");
         });
-        router.at("/a/b").post(|_| async move { "/a/b POST" });
+        router.at("/a/b").post(async move |_| "/a/b POST");
 
         for (path, method) in &[("/a/b", http::Method::GET), ("/a/b", http::Method::POST)] {
             let res = block_on(simulate_request(&router, path, method.clone()));
