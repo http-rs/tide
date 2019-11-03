@@ -14,11 +14,12 @@ use crate::{Context, Response};
 ///
 /// ```no_run
 /// use http::header::HeaderValue;
-/// use tide::middleware::Cors;
+/// use tide::middleware::{Cors, Origin};
 ///
 /// Cors::new()
 ///     .allow_origin(HeaderValue::from_static("*"))
 ///     .allow_methods(HeaderValue::from_static("GET, POST, OPTIONS"))
+///     .allow_origin(Origin::from("*"))
 ///     .allow_credentials(false);
 /// ```
 #[derive(Clone, Debug, Hash)]
@@ -26,7 +27,7 @@ pub struct Cors {
     allow_credentials: Option<HeaderValue>,
     allow_headers: HeaderValue,
     allow_methods: HeaderValue,
-    allow_origin: HeaderValue,
+    allow_origin: Origin,
     expose_headers: Option<HeaderValue>,
     max_age: HeaderValue,
 }
@@ -42,7 +43,7 @@ impl Cors {
             allow_credentials: None,
             allow_headers: HeaderValue::from_static(WILDCARD),
             allow_methods: HeaderValue::from_static(DEFAULT_METHODS),
-            allow_origin: HeaderValue::from_static(WILDCARD),
+            allow_origin: Origin::Any,
             expose_headers: None,
             max_age: HeaderValue::from_static(DEFAULT_MAX_AGE),
         }
@@ -76,7 +77,7 @@ impl Cors {
     }
 
     /// Set allow_origin and return new Cors
-    pub fn allow_origin<T: Into<HeaderValue>>(mut self, origin: T) -> Self {
+    pub fn allow_origin<T: Into<Origin>>(mut self, origin: T) -> Self {
         self.allow_origin = origin.into();
         self
     }
@@ -87,13 +88,10 @@ impl Cors {
         self
     }
 
-    fn build_preflight_response(&self) -> http::response::Response<Body> {
+    fn build_preflight_response(&self, origin: &HeaderValue) -> http::response::Response<Body> {
         let mut response = http::Response::builder()
             .status(StatusCode::OK)
-            .header(
-                header::ACCESS_CONTROL_ALLOW_ORIGIN,
-                self.allow_origin.clone(),
-            )
+            .header::<_, HeaderValue>(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin.clone())
             .header(
                 header::ACCESS_CONTROL_ALLOW_METHODS,
                 self.allow_methods.clone(),
@@ -120,14 +118,57 @@ impl Cors {
 
         response
     }
+
+    /// Look at origin of request and determine allow_origin
+    fn response_origin<T: Into<HeaderValue>>(&self, origin: T) -> Option<HeaderValue> {
+        let origin = origin.into();
+        if !self.is_valid_origin(origin.clone()) {
+            return None;
+        }
+
+        match self.allow_origin {
+            Origin::Any => Some(HeaderValue::from_static(WILDCARD)),
+            _ => Some(origin),
+        }
+    }
+
+    /// Determine if origin is appropriate
+    fn is_valid_origin<T: Into<HeaderValue>>(&self, origin: T) -> bool {
+        let origin = match origin.into().to_str() {
+            Ok(s) => s.to_string(),
+            Err(_) => return false,
+        };
+
+        match &self.allow_origin {
+            Origin::Any => true,
+            Origin::Exact(s) => s == &origin,
+            Origin::List(list) => list.contains(&origin),
+        }
+    }
 }
 
 impl<State: Send + Sync + 'static> Middleware<State> for Cors {
     fn handle<'a>(&'a self, cx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
         Box::pin(async move {
+           let origin = if let Some(origin) = cx.request().headers().get(header::ORIGIN) {
+                origin.clone()
+            } else {
+                return http::Response::builder()
+                    .status(StatusCode::BAD_REQUEST)
+                    .body(Body::empty())
+                    .unwrap();
+            };
+
+            if !self.is_valid_origin(&origin) {
+                return http::Response::builder()
+                    .status(StatusCode::UNAUTHORIZED)
+                    .body(Body::empty())
+                    .unwrap();
+            }
+
             // Return results immediately upon preflight request
             if cx.method() == Method::OPTIONS {
-                return self.build_preflight_response();
+                return self.build_preflight_response(&origin);
             }
 
             let mut response = next.run(cx).await;
@@ -135,7 +176,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for Cors {
 
             headers.append(
                 header::ACCESS_CONTROL_ALLOW_ORIGIN,
-                self.allow_origin.clone(),
+                self.response_origin(origin).unwrap(),
             );
 
             if let Some(allow_credentials) = self.allow_credentials.clone() {
@@ -151,6 +192,49 @@ impl Default for Cors {
         Self::new()
     }
 }
+
+/// allow_origin enum
+#[derive(Clone, Debug, Hash, PartialEq)]
+pub enum Origin {
+    /// Wildcard. Accept all origin requests
+    Any,
+    /// Set a single allow_origin target
+    Exact(String),
+    /// Set multiple allow_origin targets
+    List(Vec<String>),
+}
+
+impl From<String> for Origin {
+    fn from(s: String) -> Self {
+        if s == "*" {
+            return Origin::Any;
+        }
+        Origin::Exact(s)
+    }
+}
+
+impl From<&str> for Origin {
+    fn from(s: &str) -> Self {
+        Origin::from(s.to_string())
+    }
+}
+
+impl From<Vec<String>> for Origin {
+    fn from(list: Vec<String>) -> Self {
+        if list.len() == 1 {
+            return Self::from(list[0].clone());
+        }
+
+        Origin::List(list)
+    }
+}
+
+impl From<Vec<&str>> for Origin {
+    fn from(list: Vec<&str>) -> Self {
+        Origin::from(list.iter().map(|s| s.to_string()).collect::<Vec<String>>())
+    }
+}
+
 
 #[cfg(test)]
 mod test {
@@ -185,7 +269,7 @@ mod test {
         let mut app = app();
         app.middleware(
             Cors::new()
-                .allow_origin(HeaderValue::from_static(ALLOW_ORIGIN))
+                .allow_origin(CorsOrigin::from(ALLOW_ORIGIN))
                 .allow_methods(HeaderValue::from_static(ALLOW_METHODS))
                 .expose_headers(HeaderValue::from_static(EXPOSE_HEADER))
                 .allow_credentials(true),
@@ -248,7 +332,7 @@ mod test {
         let mut app = app();
         app.middleware(
             Cors::new()
-                .allow_origin(HeaderValue::from_static(ALLOW_ORIGIN))
+                .allow_origin(CorsOrigin::from(ALLOW_ORIGIN))
                 .allow_credentials(false)
                 .allow_methods(HeaderValue::from_static(ALLOW_METHODS))
                 .expose_headers(HeaderValue::from_static(EXPOSE_HEADER)),
@@ -279,5 +363,62 @@ mod test {
                 .unwrap(),
             "true"
         );
+    }
+
+    #[test]
+    fn set_allow_origin_list() {
+        let mut app = app();
+        let origins = vec![ALLOW_ORIGIN, "foo.com", "bar.com"];
+        app.middleware(CorsMiddleware::new().allow_origin(origins.clone()));
+        let mut server = make_server(app.into_http_service()).unwrap();
+
+        for origin in origins {
+            let request = http::Request::get(ENDPOINT)
+                .header(http::header::ORIGIN, origin)
+                .method(http::method::Method::GET)
+                .body(Body::empty())
+                .unwrap();
+
+            let res = server.simulate(request).unwrap();
+
+            assert_eq!(res.status(), 200);
+            assert_eq!(
+                res.headers().get("access-control-allow-origin").unwrap(),
+                origin
+            );
+        }
+    }
+
+    #[test]
+    fn not_set_origin_header() {
+        let mut app = app();
+        app.middleware(CorsMiddleware::new());
+
+        let request = http::Request::get(ENDPOINT)
+            .method(http::method::Method::GET)
+            .body(Body::empty())
+            .unwrap();
+
+        let mut server = make_server(app.into_http_service()).unwrap();
+        let res = server.simulate(request).unwrap();
+
+        assert_eq!(res.status(), 400);
+    }
+
+    #[test]
+    fn unauthorized_origin() {
+        let mut app = app();
+        app.middleware(CorsMiddleware::new().allow_origin(ALLOW_ORIGIN));
+
+        let request = http::Request::get(ENDPOINT)
+            .header(http::header::ORIGIN, "unauthorize-origin.net")
+            .method(http::method::Method::GET)
+            .body(Body::empty())
+            .unwrap();
+
+        let mut server = make_server(app.into_http_service()).unwrap();
+        let res = server.simulate(request).unwrap();
+
+        assert_eq!(res.status(), 401);
     }
 }
