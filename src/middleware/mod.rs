@@ -13,7 +13,7 @@ pub use compression::{Compression, Decompression};
 pub use cookies::CookiesMiddleware;
 pub use default_headers::DefaultHeaders;
 pub use logger::RequestLogger;
-pub use cors::Cors;
+pub use cors::{Cors, Origin};
 
 /// Middleware that wraps around remaining middleware chain.
 pub trait Middleware<State>: 'static + Send + Sync {

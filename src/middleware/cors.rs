@@ -17,7 +17,6 @@ use crate::{Context, Response};
 /// use tide::middleware::{Cors, Origin};
 ///
 /// Cors::new()
-///     .allow_origin(HeaderValue::from_static("*"))
 ///     .allow_methods(HeaderValue::from_static("GET, POST, OPTIONS"))
 ///     .allow_origin(Origin::from("*"))
 ///     .allow_credentials(false);
@@ -249,8 +248,8 @@ mod test {
 
     const ENDPOINT: &str = "/cors";
 
-    fn app() -> tide_core::App<()> {
-        let mut app = tide_core::App::new();
+    fn app() -> crate::App<()> {
+        let mut app = crate::App::new();
         app.at(ENDPOINT).get(|_| async move { "Hello World" });
 
         app
@@ -269,7 +268,7 @@ mod test {
         let mut app = app();
         app.middleware(
             Cors::new()
-                .allow_origin(CorsOrigin::from(ALLOW_ORIGIN))
+                .allow_origin(Origin::from(ALLOW_ORIGIN))
                 .allow_methods(HeaderValue::from_static(ALLOW_METHODS))
                 .expose_headers(HeaderValue::from_static(EXPOSE_HEADER))
                 .allow_credentials(true),
@@ -332,7 +331,7 @@ mod test {
         let mut app = app();
         app.middleware(
             Cors::new()
-                .allow_origin(CorsOrigin::from(ALLOW_ORIGIN))
+                .allow_origin(Origin::from(ALLOW_ORIGIN))
                 .allow_credentials(false)
                 .allow_methods(HeaderValue::from_static(ALLOW_METHODS))
                 .expose_headers(HeaderValue::from_static(EXPOSE_HEADER)),
@@ -369,7 +368,7 @@ mod test {
     fn set_allow_origin_list() {
         let mut app = app();
         let origins = vec![ALLOW_ORIGIN, "foo.com", "bar.com"];
-        app.middleware(CorsMiddleware::new().allow_origin(origins.clone()));
+        app.middleware(Cors::new().allow_origin(origins.clone()));
         let mut server = make_server(app.into_http_service()).unwrap();
 
         for origin in origins {
@@ -392,7 +391,7 @@ mod test {
     #[test]
     fn not_set_origin_header() {
         let mut app = app();
-        app.middleware(CorsMiddleware::new());
+        app.middleware(Cors::new());
 
         let request = http::Request::get(ENDPOINT)
             .method(http::method::Method::GET)
@@ -408,7 +407,7 @@ mod test {
     #[test]
     fn unauthorized_origin() {
         let mut app = app();
-        app.middleware(CorsMiddleware::new().allow_origin(ALLOW_ORIGIN));
+        app.middleware(Cors::new().allow_origin(ALLOW_ORIGIN));
 
         let request = http::Request::get(ENDPOINT)
             .header(http::header::ORIGIN, "unauthorize-origin.net")
