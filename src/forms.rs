@@ -53,8 +53,6 @@ pub fn form<T: serde::Serialize>(t: T) -> Response {
     http::Response::builder()
         .status(http::status::StatusCode::OK)
         .header("Content-Type", "application/x-www-form-urlencoded")
-        .body(Body::from(
-            serde_qs::to_string(&t).unwrap().into_bytes(),
-        ))
+        .body(Body::from(serde_qs::to_string(&t).unwrap().into_bytes()))
         .unwrap()
 }

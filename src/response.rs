@@ -9,8 +9,7 @@ pub fn json<T: serde::Serialize>(t: T) -> Response {
         Ok(v) => res
             .header("Content-Type", "application/json")
             .body(Body::from(v))
-            .unwrap()
-            ,
+            .unwrap(),
         Err(e) => {
             log::error!("{}", e);
             res.status(http::status::StatusCode::INTERNAL_SERVER_ERROR)
