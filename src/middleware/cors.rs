@@ -12,14 +12,14 @@ use crate::{Context, Response};
 ///
 /// # Example
 ///
-/// ```rust
-///use http::header::HeaderValue;
-///use tide::middleware::Cors;
+/// ```no_run
+/// use http::header::HeaderValue;
+/// use tide::middleware::Cors;
 ///
-///Cors::new()
-///    .allow_origin(HeaderValue::from_static("*"))
-///    .allow_methods(HeaderValue::from_static("GET, POST, OPTIONS"))
-///    .allow_credentials(false);
+/// Cors::new()
+///     .allow_origin(HeaderValue::from_static("*"))
+///     .allow_methods(HeaderValue::from_static("GET, POST, OPTIONS"))
+///     .allow_credentials(false);
 /// ```
 #[derive(Clone, Debug, Hash)]
 pub struct Cors {
