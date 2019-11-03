@@ -3,11 +3,26 @@ use http::StatusCode;
 use serde::Deserialize;
 
 /// An extension trait for `Context`, providing query string deserialization.
+///
+/// # Example
+///
+/// Turning the query parameters into a `HashMap`:
+///
+/// ```
+/// # use std::collections::HashMap;
+/// use tide::querystring::ContextExt;
+///
+/// let mut app = tide::App::new();
+/// app.at("/").get(|cx: tide::Context<()>| async move {
+///     let map: HashMap<String, String> = cx.url_query().unwrap();
+///     format!("{:?}", map)
+/// });
+/// ```
 pub trait ContextExt<'de> {
     fn url_query<T: Deserialize<'de>>(&'de self) -> Result<T, Error>;
 }
 
-impl<'de, Data> ContextExt<'de> for Context<Data> {
+impl<'de, State> ContextExt<'de> for Context<State> {
     #[inline]
     fn url_query<T: Deserialize<'de>>(&'de self) -> Result<T, Error> {
         let query = self.uri().query();

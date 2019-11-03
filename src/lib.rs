@@ -7,8 +7,6 @@
 //! Welcome to Tide.
 //!
 //! The [`App`](struct.App.html) docs are a good place to get started.
-//!
-//!
 
 #[macro_use]
 pub mod error;

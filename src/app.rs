@@ -33,13 +33,13 @@ use crate::{
 ///
 /// let mut app = tide::App::new();
 /// app.at("/hello").get(|_| async move {"Hello, world!"});
-/// app.serve("127.0.0.1:8000").unwrap();
+/// app.run("127.0.0.1:8000").unwrap();
 /// ```
 ///
 /// # Routing and parameters
 ///
 /// Tide's routing system is simple and similar to many other frameworks. It
-/// uses `:foo` for "wildcard" URL segments, and `:foo*` to match the rest of a
+/// uses `:foo` for "wildcard" URL segments, and `*foo` to match the rest of a
 /// URL (which may include multiple segments). Here's an example using wildcard
 /// segments as parameters to endpoints:
 ///
@@ -64,7 +64,7 @@ use crate::{
 ///     "Use /hello/{your name} or /goodbye/{your name}"
 /// });
 ///
-/// app.serve("127.0.0.1:8000").unwrap();
+/// app.run("127.0.0.1:8000").unwrap();
 /// ```
 ///
 /// You can learn more about routing in the [`App::at`] documentation.
@@ -119,7 +119,7 @@ use crate::{
 ///     let mut app = App::with_state(Database::default());
 ///     app.at("/message").post(new_message);
 ///     app.at("/message/:id").get(get_message);
-///     app.serve("127.0.0.1:8000").unwrap();
+///     app.run("127.0.0.1:8000").unwrap();
 /// }
 /// ```
 
@@ -127,7 +127,7 @@ use crate::{
 pub struct App<State> {
     router: Router<State>,
     middleware: Vec<Arc<dyn Middleware<State>>>,
-    data: State,
+    state: State,
 }
 
 impl App<()> {
@@ -149,7 +149,7 @@ impl<State: Send + Sync + 'static> App<State> {
         App {
             router: Router::new(),
             middleware: Vec::new(),
-            data: state,
+            state,
         }
     }
 
@@ -176,12 +176,13 @@ impl<State: Send + Sync + 'static> App<State> {
     /// parameter called `name`. It is not possible to define wildcard segments
     /// with different names for otherwise identical paths.
     ///
-    /// Wildcard definitions can be followed by an optional *wildcard
-    /// modifier*. Currently, there is only one modifier: `*`, which means that
-    /// the wildcard will match to the end of given path, no matter how many
-    /// segments are left, even nothing. It is an error to define two wildcard
-    /// segments with different wildcard modifiers, or to write other path
-    /// segment after a segment with wildcard modifier.
+    /// Alternatively a wildcard definitions can start with a `*`, for example
+    /// `*path`, which means that the wildcard will match to the end of given
+    /// path, no matter how many segments are left, even nothing.
+    ///
+    /// The name of the parameter can be omitted to define a path that matches
+    /// the required structure, but where the parameters are not required.
+    /// `:` will match a segment, and `*` will match an entire path.
     ///
     /// Here are some examples omitting the HTTP verb based endpoint selection:
     ///
@@ -190,7 +191,9 @@ impl<State: Send + Sync + 'static> App<State> {
     /// app.at("/");
     /// app.at("/hello");
     /// app.at("add_two/:num");
-    /// app.at("static/:path*");
+    /// app.at("files/:user/*");
+    /// app.at("static/*path");
+    /// app.at("static/:context/:");
     /// ```
     ///
     /// There is no fallback route matching, i.e. either a resource is a full
@@ -222,16 +225,16 @@ impl<State: Send + Sync + 'static> App<State> {
     pub fn into_http_service(self) -> Server<State> {
         Server {
             router: Arc::new(self.router),
-            data: Arc::new(self.data),
+            state: Arc::new(self.state),
             middleware: Arc::new(self.middleware),
         }
     }
 
-    /// Start serving the app at the given address.
+    /// Start Running the app at the given address.
     ///
     /// Blocks the calling thread indefinitely.
     #[cfg(feature = "hyper")]
-    pub fn serve(self, addr: impl std::net::ToSocketAddrs) -> std::io::Result<()> {
+    pub fn run(self, addr: impl std::net::ToSocketAddrs) -> std::io::Result<()> {
         let addr = addr
             .to_socket_addrs()?
             .next()
@@ -240,6 +243,19 @@ impl<State: Send + Sync + 'static> App<State> {
         println!("Server is listening on: http://{}", addr);
         http_service_hyper::run(self.into_http_service(), addr);
         Ok(())
+    }
+
+    /// Asynchronously serve the app at the given address.
+    #[cfg(feature = "hyper")]
+    pub async fn serve(self, addr: impl std::net::ToSocketAddrs) -> std::io::Result<()> {
+        // TODO: try handling all addresses
+        let addr = addr
+            .to_socket_addrs()?
+            .next()
+            .ok_or(std::io::ErrorKind::InvalidInput)?;
+
+        let res = http_service_hyper::serve(self.into_http_service(), addr).await;
+        res.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
     }
 }
 
@@ -251,7 +267,7 @@ impl<State: Send + Sync + 'static> App<State> {
 #[allow(missing_debug_implementations)]
 pub struct Server<State> {
     router: Arc<Router<State>>,
-    data: Arc<State>,
+    state: Arc<State>,
     middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
 }
 
@@ -269,12 +285,12 @@ impl<State: Sync + Send + 'static> HttpService for Server<State> {
         let method = req.method().to_owned();
         let router = self.router.clone();
         let middleware = self.middleware.clone();
-        let data = self.data.clone();
+        let state = self.state.clone();
 
         Box::pin(async move {
             let fut = {
                 let Selection { endpoint, params } = router.route(&path, method);
-                let cx = Context::new(data, req, params);
+                let cx = Context::new(state, req, params);
 
                 let next = Next {
                     endpoint,
@@ -297,19 +313,19 @@ mod tests {
     use super::*;
     use crate::{middleware::Next, router::Selection, Context, Response};
 
-    fn simulate_request<'a, Data: Default + Clone + Send + Sync + 'static>(
-        app: &'a App<Data>,
+    fn simulate_request<'a, State: Default + Clone + Send + Sync + 'static>(
+        app: &'a App<State>,
         path: &'a str,
         method: http::Method,
     ) -> BoxFuture<'a, Response> {
         let Selection { endpoint, params } = app.router.route(path, method.clone());
 
-        let data = Arc::new(Data::default());
+        let state = Arc::new(State::default());
         let req = http::Request::builder()
             .method(method)
             .body(http_service::Body::empty())
             .unwrap();
-        let cx = Context::new(data, req, params);
+        let cx = Context::new(state, req, params);
         let next = Next {
             endpoint,
             next_middleware: &app.middleware,

@@ -25,11 +25,11 @@ impl CookiesMiddleware {
     }
 }
 
-impl<Data: Send + Sync + 'static> Middleware<Data> for CookiesMiddleware {
+impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
     fn handle<'a>(
         &'a self,
-        mut cx: Context<Data>,
-        next: Next<'a, Data>,
+        mut cx: Context<State>,
+        next: Next<'a, State>,
     ) -> BoxFuture<'a, Response> {
         Box::pin(async move {
             let cookie_data = cx
@@ -123,7 +123,7 @@ mod tests {
     #[test]
     fn successfully_set_cookie() {
         let res = make_request("/set");
-        assert_eq!(res.status(), 200);
+        assert_eq!(res.status(), 204);
         let test_cookie_header = res.headers().get(http::header::SET_COOKIE).unwrap();
         assert_eq!(
             test_cookie_header.to_str().unwrap(),
@@ -134,7 +134,7 @@ mod tests {
     #[test]
     fn successfully_remove_cookie() {
         let res = make_request("/remove");
-        assert_eq!(res.status(), 200);
+        assert_eq!(res.status(), 204);
         let test_cookie_header = res.headers().get(http::header::SET_COOKIE).unwrap();
         assert!(test_cookie_header
             .to_str()
@@ -150,7 +150,7 @@ mod tests {
     #[test]
     fn successfully_set_multiple_cookies() {
         let res = make_request("/multi");
-        assert_eq!(res.status(), 200);
+        assert_eq!(res.status(), 204);
         let cookie_header = res.headers().get_all(http::header::SET_COOKIE);
         let mut iter = cookie_header.iter();
 
