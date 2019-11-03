@@ -32,6 +32,8 @@ serde_json = "1.0.41"
 typemap = "0.3.3"
 serde_urlencoded = "0.6.1"
 log = "0.4.8"
+accept-encoding = "0.2.0-alpha.2"
+async-compression = "0.1.0-alpha.7"
 
 [dependencies.http-service-hyper]
 optional = true

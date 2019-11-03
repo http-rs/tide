@@ -3,13 +3,15 @@ use std::sync::Arc;
 
 use crate::{endpoint::DynEndpoint, Context, Response};
 
+mod compression;
 mod cookies;
 mod default_headers;
 mod logger;
 
-pub use self::{
-    cookies::CookiesMiddleware, default_headers::DefaultHeaders, logger::RequestLogger,
-};
+pub use compression::{Compression, Decompression};
+pub use cookies::CookiesMiddleware;
+pub use default_headers::DefaultHeaders;
+pub use logger::RequestLogger;
 
 /// Middleware that wraps around remaining middleware chain.
 pub trait Middleware<State>: 'static + Send + Sync {
