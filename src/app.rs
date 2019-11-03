@@ -39,7 +39,7 @@ use crate::{
 /// # Routing and parameters
 ///
 /// Tide's routing system is simple and similar to many other frameworks. It
-/// uses `:foo` for "wildcard" URL segments, and `:foo*` to match the rest of a
+/// uses `:foo` for "wildcard" URL segments, and `*foo` to match the rest of a
 /// URL (which may include multiple segments). Here's an example using wildcard
 /// segments as parameters to endpoints:
 ///
@@ -176,12 +176,13 @@ impl<State: Send + Sync + 'static> App<State> {
     /// parameter called `name`. It is not possible to define wildcard segments
     /// with different names for otherwise identical paths.
     ///
-    /// Wildcard definitions can be followed by an optional *wildcard
-    /// modifier*. Currently, there is only one modifier: `*`, which means that
-    /// the wildcard will match to the end of given path, no matter how many
-    /// segments are left, even nothing. It is an error to define two wildcard
-    /// segments with different wildcard modifiers, or to write other path
-    /// segment after a segment with wildcard modifier.
+    /// Alternatively a wildcard definitions can start with a `*`, for example
+    /// `*path`, which means that the wildcard will match to the end of given
+    /// path, no matter how many segments are left, even nothing.
+    ///
+    /// The name of the parameter can be omitted to define a path that matches
+    /// the required structure, but where the parameters are not required.
+    /// `:` will match a segment, and `*` will match an entire path.
     ///
     /// Here are some examples omitting the HTTP verb based endpoint selection:
     ///
@@ -190,7 +191,9 @@ impl<State: Send + Sync + 'static> App<State> {
     /// app.at("/");
     /// app.at("/hello");
     /// app.at("add_two/:num");
-    /// app.at("static/:path*");
+    /// app.at("files/:user/*");
+    /// app.at("static/*path");
+    /// app.at("static/:context/:");
     /// ```
     ///
     /// There is no fallback route matching, i.e. either a resource is a full
