@@ -66,5 +66,5 @@ fn main() {
     let mut app = App::with_state(Database::default());
     app.at("/message").post(new_message);
     app.at("/message/:id").get(get_message).post(set_message);
-    app.serve("127.0.0.1:8000").unwrap();
+    app.run("127.0.0.1:8000").unwrap();
 }
