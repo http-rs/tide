@@ -25,11 +25,11 @@ impl CookiesMiddleware {
     }
 }
 
-impl<Data: Send + Sync + 'static> Middleware<Data> for CookiesMiddleware {
+impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
     fn handle<'a>(
         &'a self,
-        mut cx: Context<Data>,
-        next: Next<'a, Data>,
+        mut cx: Context<State>,
+        next: Next<'a, State>,
     ) -> BoxFuture<'a, Response> {
         Box::pin(async move {
             let cookie_data = cx

@@ -7,7 +7,7 @@ pub trait ContextExt<'de> {
     fn url_query<T: Deserialize<'de>>(&'de self) -> Result<T, Error>;
 }
 
-impl<'de, Data> ContextExt<'de> for Context<Data> {
+impl<'de, State> ContextExt<'de> for Context<State> {
     #[inline]
     fn url_query<T: Deserialize<'de>>(&'de self) -> Result<T, Error> {
         let query = self.uri().query();

@@ -17,11 +17,14 @@ pub trait Middleware<State>: 'static + Send + Sync {
     fn handle<'a>(&'a self, cx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response>;
 }
 
-impl<Data, F> Middleware<Data> for F
+impl<State, F> Middleware<State> for F
 where
-    F: Send + Sync + 'static + for<'a> Fn(Context<Data>, Next<'a, Data>) -> BoxFuture<'a, Response>,
+    F: Send
+        + Sync
+        + 'static
+        + for<'a> Fn(Context<State>, Next<'a, State>) -> BoxFuture<'a, Response>,
 {
-    fn handle<'a>(&'a self, cx: Context<Data>, next: Next<'a, Data>) -> BoxFuture<'a, Response> {
+    fn handle<'a>(&'a self, cx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
         (self)(cx, next)
     }
 }
