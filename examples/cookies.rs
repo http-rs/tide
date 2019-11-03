@@ -3,7 +3,7 @@ use tide::{cookies::ContextExt, middleware::CookiesMiddleware, Context};
 
 /// Tide will use the the `Cookies`'s `Extract` implementation to build this parameter.
 ///
-async fn retrieve_cookie(mut cx: Context<()>) -> String {
+async fn retrieve_cookie(cx: Context<()>) -> String {
     format!("hello cookies: {:?}", cx.get_cookie("hello").unwrap())
 }
 
