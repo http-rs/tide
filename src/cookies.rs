@@ -30,7 +30,7 @@ impl CookieData {
 /// An extension to `Context` that provides cached access to cookies
 pub trait ContextExt {
     /// returns a `Cookie` by name of the cookie
-    fn get_cookie(&mut self, name: &str) -> Result<Option<Cookie<'static>>, StringError>;
+    fn get_cookie(self, name: &str) -> Result<Option<Cookie<'static>>, StringError>;
 
     /// Add cookie to the cookie jar
     fn set_cookie(&mut self, cookie: Cookie<'static>) -> Result<(), StringError>;
@@ -41,7 +41,7 @@ pub trait ContextExt {
 }
 
 impl<State> ContextExt for Context<State> {
-    fn get_cookie(&mut self, name: &str) -> Result<Option<Cookie<'static>>, StringError> {
+    fn get_cookie(self, name: &str) -> Result<Option<Cookie<'static>>, StringError> {
         let cookie_data = self
             .extensions()
             .get::<CookieData>()

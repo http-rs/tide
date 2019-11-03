@@ -21,7 +21,7 @@ impl<State: Send + Sync + 'static> ContextExt for Context<State> {
         let body = self.take_body();
         Box::pin(async move {
             let body = body.into_vec().await.client_err()?;
-            Ok(serde_urlencoded::from_bytes(&body)
+            Ok(serde_qs::from_bytes(&body)
                 .map_err(|e| err_fmt!("could not decode form: {}", e))
                 .client_err()?)
         })
@@ -54,7 +54,7 @@ pub fn form<T: serde::Serialize>(t: T) -> Response {
         .status(http::status::StatusCode::OK)
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(Body::from(
-            serde_urlencoded::to_string(&t).unwrap().into_bytes(),
+            serde_qs::to_string(&t).unwrap().into_bytes(),
         ))
         .unwrap()
 }
