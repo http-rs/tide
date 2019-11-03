@@ -19,21 +19,21 @@ readme = "README.md"
 repository = "https://github.com/http-rs/tide"
 
 [dependencies]
+accept-encoding = "0.2.0-alpha.2"
+async-compression = "0.1.0-alpha.7"
 cookie = { version = "0.12.0", features = ["percent-encode"] }
-futures-preview = "0.3.0-alpha.19"
 fnv = "1.0.6"
+futures-preview = "0.3.0-alpha.19"
 http = "0.1.19"
 http-service = "0.3.1"
+log = "0.4.8"
 pin-utils = "0.1.0-alpha.4"
 route-recognizer = "0.1.13"
 serde = "1.0.102"
 serde_derive = "1.0.102"
 serde_json = "1.0.41"
+serde_qs = "0.5.0"
 typemap = "0.3.3"
-serde_urlencoded = "0.6.1"
-log = "0.4.8"
-accept-encoding = "0.2.0-alpha.2"
-async-compression = "0.1.0-alpha.7"
 
 [dependencies.http-service-hyper]
 optional = true
