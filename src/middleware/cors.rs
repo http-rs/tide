@@ -149,7 +149,7 @@ impl Cors {
 impl<State: Send + Sync + 'static> Middleware<State> for Cors {
     fn handle<'a>(&'a self, cx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
         Box::pin(async move {
-           let origin = if let Some(origin) = cx.request().headers().get(header::ORIGIN) {
+            let origin = if let Some(origin) = cx.request().headers().get(header::ORIGIN) {
                 origin.clone()
             } else {
                 return http::Response::builder()
@@ -233,7 +233,6 @@ impl From<Vec<&str>> for Origin {
         Origin::from(list.iter().map(|s| s.to_string()).collect::<Vec<String>>())
     }
 }
-
 
 #[cfg(test)]
 mod test {

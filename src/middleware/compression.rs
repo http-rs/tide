@@ -121,14 +121,14 @@ impl Compression {
 
 impl<Data: Send + Sync + 'static> Middleware<Data> for Compression {
     fn handle<'a>(&'a self, cx: Context<Data>, next: Next<'a, Data>) -> BoxFuture<'a, Response> {
-       Box::pin(async move {
+        Box::pin(async move {
             let encoding = match self.preferred_encoding(cx.headers()) {
                 Ok(encoding) => encoding,
                 Err(e) => return e.into_response(),
             };
             let res = next.run(cx).await;
             self.encode(res, encoding)
-       })
+        })
     }
 }
 
@@ -233,12 +233,14 @@ mod tests {
     use http_service_mock::make_server;
 
     async fn lorem_ipsum(_cx: Context<()>) -> String {
-        String::from(r#"
+        String::from(
+            r#"
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam rutrum et risus sed egestas. Maecenas dapibus enim a posuere
             semper. Cras venenatis et turpis quis aliquam. Suspendisse eget risus in libero tristique consectetur. Ut ut risus cursus, scelerisque
             enim ac, tempus tellus. Vestibulum ac porta felis. Aenean fringilla posuere felis, in blandit enim tristique ut. Sed elementum iaculis
             enim eu commodo.
-        "#)
+        "#,
+        )
     }
 
     fn lorem_ipsum_bytes() -> Vec<u8> {
