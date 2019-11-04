@@ -1,11 +1,9 @@
-use futures::future::{BoxFuture, FutureExt};
 use route_recognizer::{Match, Params, Router as MethodRouter};
 use std::collections::HashMap;
 
-use crate::{
-    endpoint::{DynEndpoint, Endpoint},
-    Request, Response,
-};
+use crate::utils::BoxFuture;
+use crate::endpoint::{DynEndpoint, Endpoint};
+use crate::{Request, Response};
 
 /// The routing table used by `Server`
 ///
@@ -33,7 +31,7 @@ impl<State: 'static> Router<State> {
         self.method_map
             .entry(method)
             .or_insert_with(MethodRouter::new)
-            .add(path, Box::new(move |cx| ep.call(cx).boxed()))
+            .add(path, Box::new(move |cx| Box::pin(ep.call(cx))))
     }
 
     pub(crate) fn route(&self, path: &str, method: http::Method) -> Selection<'_, State> {
