@@ -1,6 +1,6 @@
-use futures::future::BoxFuture;
 use std::sync::Arc;
 
+use crate::utils::BoxFuture;
 use crate::{endpoint::DynEndpoint, Request, Response};
 
 mod body;

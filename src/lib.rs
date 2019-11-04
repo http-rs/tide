@@ -24,6 +24,7 @@
 mod endpoint;
 mod request;
 mod router;
+mod utils;
 
 pub mod server;
 
