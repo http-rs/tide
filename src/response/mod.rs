@@ -41,9 +41,8 @@ impl Response {
     /// Encode a struct as a form and set as the response body.
     pub async fn body_form<T: serde::Serialize>(mut self, form: T) -> Result<Response, serde_qs::Error> {
         // TODO: think about how to handle errors
-        self.set_status(StatusCode::OK);
         *self.res.body_mut() = Body::from(serde_qs::to_string(&form)?.into_bytes());
-        Ok(self.insert_header("Content-Type", "application/x-www-form-urlencoded"))
+        Ok(self.set_status(StatusCode::OK).insert_header("Content-Type", "application/x-www-form-urlencoded"))
     }
 
     // fn body_multipart(&mut self) -> BoxTryFuture<Multipart<Cursor<Vec<u8>>>> {
