@@ -3,7 +3,7 @@ use http_service::Body;
 
 mod into_response;
 
-/// An HTTP Response
+/// An HTTP response
 #[derive(Debug)]
 pub struct Response {
     res: http_service::Response,
