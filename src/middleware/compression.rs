@@ -3,7 +3,7 @@ pub use accept_encoding::Encoding;
 use async_compression::stream;
 use futures::future::BoxFuture;
 use http::{header::CONTENT_ENCODING, status::StatusCode, HeaderMap};
-use http_service::{Body, Request};
+use http_service::Body;
 
 use crate::{
     middleware::{Middleware, Next},
@@ -155,7 +155,7 @@ impl Decompression {
         }
     }
 
-    fn decode(&self, req: &mut Request) -> Result<(), Error> {
+    fn decode(&self, req: &mut http_service::Request) -> Result<(), Error> {
         let encodings = if let Some(hval) = req.headers().get(CONTENT_ENCODING) {
             let hval = match hval.to_str() {
                 Ok(hval) => hval,

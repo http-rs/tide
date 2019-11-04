@@ -25,7 +25,6 @@ pub mod error;
 
 mod context;
 mod endpoint;
-mod route;
 mod router;
 
 pub mod server;
@@ -47,7 +46,6 @@ pub use crate::{
     endpoint::Endpoint,
     error::{EndpointResult, Error},
     response::Response,
-    route::Route,
     server::Server,
 };
 
