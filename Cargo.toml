@@ -31,7 +31,6 @@ serde = "1.0.102"
 serde_derive = "1.0.102"
 serde_json = "1.0.41"
 serde_qs = "0.5.0"
-typemap = "0.3.3"
 
 [dependencies.async-compression]
 version = "0.1.0"
