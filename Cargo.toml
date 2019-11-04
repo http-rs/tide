@@ -18,6 +18,11 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/http-rs/tide"
 
+[features]
+default = ["hyper"]
+hyper = ["http-service-hyper"]
+unstable = []
+
 [dependencies]
 accept-encoding = "0.2.0-alpha.2"
 async-compression = "0.1.0-alpha.7"
@@ -25,25 +30,13 @@ cookie = { version = "0.12.0", features = ["percent-encode"] }
 futures-preview = "0.3.0-alpha.19"
 http = "0.1.19"
 http-service = "0.3.1"
+http-service-hyper = { version = "0.3.1", optional = true }
 log = "0.4.8"
+multipart = { version = "0.16.1", features = ["server"] }
 route-recognizer = "0.1.13"
 serde = { version = "1.0.102", features = ["derive"] }
 serde_json = "1.0.41"
 serde_qs = "0.5.0"
-
-[dependencies.http-service-hyper]
-optional = true
-version = "0.3.1"
-
-[dependencies.multipart]
-default-features = false
-features = ["server"]
-version = "0.16.1"
-
-[features]
-default = ["hyper"]
-hyper = ["http-service-hyper"]
-unstable = []
 
 [dev-dependencies]
 basic-cookies = "0.1.3"
