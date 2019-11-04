@@ -1,3 +1,5 @@
+//! An HTTP server
+
 use futures::future::{self, BoxFuture};
 use http_service::HttpService;
 use std::sync::Arc;
