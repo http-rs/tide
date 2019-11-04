@@ -20,12 +20,6 @@ impl std::fmt::Display for StringError {
     }
 }
 
-macro_rules! err_fmt {
-    {$($t:tt)*} => {
-        crate::error::StringError(format!($($t)*))
-    }
-}
-
 /// A generic error.
 #[derive(Debug)]
 pub struct Error {
