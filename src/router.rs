@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use futures::future::{BoxFuture, FutureExt};
-use http_service::Body;
 use route_recognizer::{Match, Params, Router as MethodRouter};
 
 use crate::{
@@ -63,9 +62,6 @@ impl<State: 'static> Router<State> {
 
 fn not_found_endpoint<State>(_cx: Request<State>) -> BoxFuture<'static, Response> {
     Box::pin(async move {
-        http::Response::builder()
-            .status(http::StatusCode::NOT_FOUND)
-            .body(Body::empty())
-            .unwrap()
+        Response::new(http::StatusCode::NOT_FOUND)
     })
 }

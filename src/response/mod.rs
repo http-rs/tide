@@ -23,9 +23,19 @@ impl Response {
         self.res.status()
     }
 
-    /// Returns a mutable reference to the associated header field map.
-    pub fn headers_mut(&mut self) -> &mut http::header::HeaderMap<http::header::HeaderValue> {
-        self.res.headers_mut()
+    /// Insert an HTTP header.
+    pub fn insert_header(mut self, key: &'static str, value: impl AsRef<str>) -> Self {
+        let value = value.as_ref().to_owned();
+        let res = self.res.as_mut().unwrap();
+        res.headers_mut().insert(key, value.parse().unwrap());
+        self
+    }
+}
+
+#[doc(hidden)]
+impl Into<http_service::Response> for Response {
+    fn into(self) -> http_service::Response {
+        self.res
     }
 }
 

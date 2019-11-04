@@ -295,19 +295,16 @@ impl<State: Sync + Send + 'static> HttpService for Service<State> {
         let state = self.state.clone();
 
         Box::pin(async move {
-            let fut = {
-                let Selection { endpoint, params } = router.route(&path, method);
-                let cx = Request::new(state, req, params);
+            let Selection { endpoint, params } = router.route(&path, method);
+            let cx = Request::new(state, req, params);
 
-                let next = Next {
-                    endpoint,
-                    next_middleware: &middleware,
-                };
-
-                next.run(cx)
+            let next = Next {
+                endpoint,
+                next_middleware: &middleware,
             };
 
-            Ok(fut.await)
+            let res: http_service::Response = next.run(cx).await.into();
+            Ok(res)
         })
     }
 }
