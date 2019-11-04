@@ -90,8 +90,8 @@ mod tests {
         cx.set_cookie(Cookie::new("C2", "V2")).unwrap();
     }
 
-    fn app() -> crate::App<()> {
-        let mut app = crate::App::new();
+    fn app() -> crate::Server<()> {
+        let mut app = crate::Server::new();
         app.middleware(CookiesMiddleware::new());
 
         app.at("/get").get(retrieve_cookie);

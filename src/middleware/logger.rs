@@ -10,7 +10,7 @@ use futures::future::BoxFuture;
 ///
 /// ```rust
 ///
-/// let mut app = tide::App::new();
+/// let mut app = tide::Server::new();
 /// app.middleware(tide::middleware::RequestLogger::new());
 /// ```
 #[derive(Debug, Clone, Default)]

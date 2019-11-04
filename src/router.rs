@@ -8,7 +8,7 @@ use crate::{
     Context, Response,
 };
 
-/// The routing table used by `App`
+/// The routing table used by `Server`
 ///
 /// Internally, we have a separate state machine per http method; indexing
 /// by the method first allows the table itself to be more efficient.
