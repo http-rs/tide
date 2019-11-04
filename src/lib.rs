@@ -21,6 +21,7 @@
 //! # Ok(()) }) }
 //! ````
 
+mod body;
 mod context;
 mod endpoint;
 mod router;
@@ -41,9 +42,8 @@ pub mod querystring;
 #[doc(hidden)]
 pub mod response;
 
-#[doc(inline)]
+pub use body::Body;
 pub use context::Request;
-#[doc(inline)]
 pub use endpoint::Endpoint;
 #[doc(inline)]
 pub use error::Result;
