@@ -8,12 +8,12 @@ use crate::{
     Context, Route,
 };
 
-/// The entry point for building a Tide application.
+/// An HTTP server.
 ///
 /// Servers are built up as a combination of *state*, *endpoints* and *middleware*:
 ///
-/// - Serverlication state is user-defined, and is provided via the [`Server::new`]
-/// function. The state is available as a shared reference to all app endpoints.
+/// - Server state is user-defined, and is provided via the [`Server::with_state`] function. The
+/// state is available as a shared reference to all app endpoints.
 ///
 /// - Endpoints provide the actual application-level code corresponding to
 /// particular URLs. The [`Server::at`] method creates a new *route* (using
@@ -122,7 +122,6 @@ use crate::{
 ///     app.run("127.0.0.1:8000").unwrap();
 /// }
 /// ```
-
 #[allow(missing_debug_implementations)]
 pub struct Server<State> {
     router: Router<State>,
