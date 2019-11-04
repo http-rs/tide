@@ -19,7 +19,7 @@ pub fn json<T: serde::Serialize>(t: T) -> Response {
     }
 }
 
-/// A value that is synchronously convertable into a `Response`.
+/// Conversion into a `Response`.
 pub trait IntoResponse: Send + Sized {
     /// Convert the value into a `Response`.
     fn into_response(self) -> Response;

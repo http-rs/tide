@@ -2,7 +2,7 @@ use futures::future::{BoxFuture, Future};
 
 use crate::{response::IntoResponse, Request, Response};
 
-/// A Tide endpoint.
+/// An HTTP request handler.
 ///
 /// This trait is automatically implemented for `Fn` types, and so is rarely implemented
 /// directly by Tide users.
