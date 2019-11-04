@@ -1,6 +1,6 @@
-pub use into_response::IntoResponse;
-use http_service::Body;
 use http::StatusCode;
+use http_service::Body;
+pub use into_response::IntoResponse;
 
 mod into_response;
 
@@ -39,10 +39,15 @@ impl Response {
     }
 
     /// Encode a struct as a form and set as the response body.
-    pub async fn body_form<T: serde::Serialize>(mut self, form: T) -> Result<Response, serde_qs::Error> {
+    pub async fn body_form<T: serde::Serialize>(
+        mut self,
+        form: T,
+    ) -> Result<Response, serde_qs::Error> {
         // TODO: think about how to handle errors
         *self.res.body_mut() = Body::from(serde_qs::to_string(&form)?.into_bytes());
-        Ok(self.set_status(StatusCode::OK).insert_header("Content-Type", "application/x-www-form-urlencoded"))
+        Ok(self
+            .set_status(StatusCode::OK)
+            .insert_header("Content-Type", "application/x-www-form-urlencoded"))
     }
 
     // fn body_multipart(&mut self) -> BoxTryFuture<Multipart<Cursor<Vec<u8>>>> {

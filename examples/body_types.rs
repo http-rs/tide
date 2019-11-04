@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use tide::{
     error::ResultExt,
     forms::{self, RequestExt},
-    response, Server, Request, Result,
+    response, Request, Result, Server,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

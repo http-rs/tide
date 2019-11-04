@@ -6,7 +6,7 @@
 use http::status::StatusCode;
 use juniper::graphql_object;
 use std::sync::{atomic, Arc};
-use tide::{error::ResultExt, response, Server, Request, Result};
+use tide::{error::ResultExt, response, Request, Result, Server};
 
 // First, we define `State` that holds accumulator state. This is accessible as Server data in
 // Tide, and as executor context in Juniper.

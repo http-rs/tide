@@ -6,7 +6,7 @@ use http::{
     StatusCode,
 };
 use http_service::Body;
-use tide::{Server, Request, Result, Response};
+use tide::{Request, Response, Result, Server};
 
 use std::path::{Component, Path, PathBuf};
 use std::{fs, io};

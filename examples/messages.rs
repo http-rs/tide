@@ -1,7 +1,7 @@
 use http::status::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
-use tide::{error::ResultExt, response, Server, Request, Result};
+use tide::{error::ResultExt, response, Request, Result, Server};
 
 #[derive(Default)]
 struct Database {
