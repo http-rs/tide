@@ -7,7 +7,7 @@ use crate::response::IntoResponse;
 
 pub(crate) type BoxTryFuture<T> = Pin<Box<dyn Future<Output = Result<T>> + Send + 'static>>;
 
-/// A convenient `Result` instantiation appropriate for most endpoints.
+/// A specialized Result type for Tide operations.
 pub type Result<T = Response<Body>> = std::result::Result<T, Error>;
 
 #[derive(Debug)]

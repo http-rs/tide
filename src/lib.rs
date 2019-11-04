@@ -48,9 +48,10 @@ pub use endpoint::Endpoint;
 #[doc(inline)]
 pub use error::Result;
 #[doc(inline)]
-pub use response::Response;
+pub use response::{IntoResponse, Response};
 #[doc(inline)]
 pub use server::Server;
+
 #[doc(hidden)]
 pub use error::Error;
 
