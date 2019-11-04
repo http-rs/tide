@@ -5,7 +5,7 @@ use std::sync::Arc;
 use crate::{
     middleware::{Middleware, Next},
     router::{Router, Selection},
-    Context, Route,
+    Request, Route,
 };
 
 /// An HTTP server.
@@ -46,12 +46,12 @@ use crate::{
 /// ```rust, no_run
 /// use tide::error::ResultExt;
 ///
-/// async fn hello(cx: tide::Context<()>) -> tide::EndpointResult<String> {
+/// async fn hello(cx: tide::Request<()>) -> tide::EndpointResult<String> {
 ///     let user: String = cx.param("user").client_err()?;
 ///     Ok(format!("Hello, {}!", user))
 /// }
 ///
-/// async fn goodbye(cx: tide::Context<()>) -> tide::EndpointResult<String> {
+/// async fn goodbye(cx: tide::Request<()>) -> tide::EndpointResult<String> {
 ///     let user: String = cx.param("user").client_err()?;
 ///     Ok(format!("Goodbye, {}.", user))
 /// }
@@ -76,7 +76,7 @@ use crate::{
 /// use http::status::StatusCode;
 /// use serde::{Deserialize, Serialize};
 /// use std::sync::Mutex;
-/// use tide::{error::ResultExt, response, Server, Context, EndpointResult};
+/// use tide::{error::ResultExt, response, Server, Request, EndpointResult};
 ///
 /// #[derive(Default)]
 /// struct Database {
@@ -101,12 +101,12 @@ use crate::{
 ///     }
 /// }
 ///
-/// async fn new_message(mut cx: Context<Database>) -> EndpointResult<String> {
+/// async fn new_message(mut cx: Request<Database>) -> EndpointResult<String> {
 ///     let msg = cx.body_json().await.client_err()?;
 ///     Ok(cx.state().insert(msg).to_string())
 /// }
 ///
-/// async fn get_message(cx: Context<Database>) -> EndpointResult {
+/// async fn get_message(cx: Request<Database>) -> EndpointResult {
 ///     let id = cx.param("id").client_err()?;
 ///     if let Some(msg) = cx.state().get(id) {
 ///         Ok(response::json(msg))
@@ -291,7 +291,7 @@ impl<State: Sync + Send + 'static> HttpService for Service<State> {
         Box::pin(async move {
             let fut = {
                 let Selection { endpoint, params } = router.route(&path, method);
-                let cx = Context::new(state, req, params);
+                let cx = Request::new(state, req, params);
 
                 let next = Next {
                     endpoint,
@@ -312,7 +312,7 @@ mod tests {
     use std::sync::Arc;
 
     use super::*;
-    use crate::{middleware::Next, router::Selection, Context, Response};
+    use crate::{middleware::Next, router::Selection, Request, Response};
 
     fn simulate_request<'a, State: Default + Clone + Send + Sync + 'static>(
         app: &'a Server<State>,
@@ -326,7 +326,7 @@ mod tests {
             .method(method)
             .body(http_service::Body::empty())
             .unwrap();
-        let cx = Context::new(state, req, params);
+        let cx = Request::new(state, req, params);
         let next = Next {
             endpoint,
             next_middleware: &app.middleware,

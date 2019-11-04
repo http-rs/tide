@@ -5,7 +5,7 @@ use route_recognizer::{Match, Params, Router as MethodRouter};
 
 use crate::{
     endpoint::{DynEndpoint, Endpoint},
-    Context, Response,
+    Request, Response,
 };
 
 /// The routing table used by `Server`
@@ -61,7 +61,7 @@ impl<State: 'static> Router<State> {
     }
 }
 
-fn not_found_endpoint<State>(_cx: Context<State>) -> BoxFuture<'static, Response> {
+fn not_found_endpoint<State>(_cx: Request<State>) -> BoxFuture<'static, Response> {
     Box::pin(async move {
         http::Response::builder()
             .status(http::StatusCode::NOT_FOUND)

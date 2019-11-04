@@ -1,13 +1,13 @@
 use futures::future::{BoxFuture, Future};
 
-use crate::{response::IntoResponse, Context, Response};
+use crate::{response::IntoResponse, Request, Response};
 
 /// A Tide endpoint.
 ///
 /// This trait is automatically implemented for `Fn` types, and so is rarely implemented
 /// directly by Tide users.
 ///
-/// In practice, endpoints are functions that take a `Context<State>` as an argument and
+/// In practice, endpoints are functions that take a `Request<State>` as an argument and
 /// return a type `T` that implements [`IntoResponse`].
 ///
 /// # Examples
@@ -19,7 +19,7 @@ use crate::{response::IntoResponse, Context, Response};
 /// A simple endpoint that is invoked on a `GET` request and returns a `String`:
 ///
 /// ```rust, no_run
-/// async fn hello(_cx: tide::Context<()>) -> String {
+/// async fn hello(_cx: tide::Request<()>) -> String {
 ///     String::from("hello")
 /// }
 ///
@@ -34,7 +34,7 @@ use crate::{response::IntoResponse, Context, Response};
 ///
 /// ```rust, no_run
 /// # use core::future::Future;
-/// fn hello(_cx: tide::Context<()>) -> impl Future<Output = String> {
+/// fn hello(_cx: tide::Request<()>) -> impl Future<Output = String> {
 ///     futures::future::ready(String::from("hello"))
 /// }
 ///
@@ -51,20 +51,20 @@ pub trait Endpoint<State>: Send + Sync + 'static {
     type Fut: Future<Output = Response> + Send + 'static;
 
     /// Invoke the endpoint within the given context
-    fn call(&self, cx: Context<State>) -> Self::Fut;
+    fn call(&self, cx: Request<State>) -> Self::Fut;
 }
 
 pub(crate) type DynEndpoint<State> =
-    dyn (Fn(Context<State>) -> BoxFuture<'static, Response>) + 'static + Send + Sync;
+    dyn (Fn(Request<State>) -> BoxFuture<'static, Response>) + 'static + Send + Sync;
 
 impl<State, F: Send + Sync + 'static, Fut> Endpoint<State> for F
 where
-    F: Fn(Context<State>) -> Fut,
+    F: Fn(Request<State>) -> Fut,
     Fut: Future + Send + 'static,
     Fut::Output: IntoResponse,
 {
     type Fut = BoxFuture<'static, Response>;
-    fn call(&self, cx: Context<State>) -> Self::Fut {
+    fn call(&self, cx: Request<State>) -> Self::Fut {
         let fut = (self)(cx);
         Box::pin(async move { fut.await.into_response() })
     }

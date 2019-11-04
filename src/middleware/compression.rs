@@ -8,7 +8,7 @@ use http_service::{Body, Request};
 use crate::{
     middleware::{Middleware, Next},
     response::IntoResponse,
-    Context, Error, Response,
+    Request, Error, Response,
 };
 
 /// Encode settings for the compression middleware.
@@ -120,7 +120,7 @@ impl Compression {
 }
 
 impl<Data: Send + Sync + 'static> Middleware<Data> for Compression {
-    fn handle<'a>(&'a self, cx: Context<Data>, next: Next<'a, Data>) -> BoxFuture<'a, Response> {
+    fn handle<'a>(&'a self, cx: Request<Data>, next: Next<'a, Data>) -> BoxFuture<'a, Response> {
         Box::pin(async move {
             let encoding = match self.preferred_encoding(cx.headers()) {
                 Ok(encoding) => encoding,
@@ -206,7 +206,7 @@ impl Decompression {
 impl<Data: Send + Sync + 'static> Middleware<Data> for Decompression {
     fn handle<'a>(
         &'a self,
-        mut cx: Context<Data>,
+        mut cx: Request<Data>,
         next: Next<'a, Data>,
     ) -> BoxFuture<'a, Response> {
         Box::pin(async move {
@@ -232,7 +232,7 @@ mod tests {
     use http_service::Body;
     use http_service_mock::make_server;
 
-    async fn lorem_ipsum(_cx: Context<()>) -> String {
+    async fn lorem_ipsum(_cx: Request<()>) -> String {
         String::from(
             r#"
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam rutrum et risus sed egestas. Maecenas dapibus enim a posuere
@@ -253,7 +253,7 @@ mod tests {
     }
 
     // Echoes the request body in bytes.
-    async fn echo_bytes(mut cx: Context<()>) -> Vec<u8> {
+    async fn echo_bytes(mut cx: Request<()>) -> Vec<u8> {
         cx.body_bytes().await.unwrap()
     }
 

@@ -1,6 +1,6 @@
 use crate::{
     middleware::{Middleware, Next},
-    Context, Response,
+    Request, Response,
 };
 use futures::future::BoxFuture;
 
@@ -23,7 +23,7 @@ impl RequestLogger {
 
     async fn log_basic<'a, State: Send + Sync + 'static>(
         &'a self,
-        ctx: Context<State>,
+        ctx: Request<State>,
         next: Next<'a, State>,
     ) -> Response {
         let path = ctx.uri().path().to_owned();
@@ -44,7 +44,7 @@ impl RequestLogger {
 }
 
 impl<State: Send + Sync + 'static> Middleware<State> for RequestLogger {
-    fn handle<'a>(&'a self, ctx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
+    fn handle<'a>(&'a self, ctx: Request<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
         Box::pin(async move { self.log_basic(ctx, next).await })
     }
 }
