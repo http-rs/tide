@@ -3,6 +3,10 @@ use std::sync::Arc;
 
 use crate::{endpoint::DynEndpoint, Request, Response};
 
+mod body;
+
+pub use body::Body;
+
 // mod compression;
 // mod cookies;
 // mod cors;
