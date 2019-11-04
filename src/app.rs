@@ -239,8 +239,6 @@ impl<State: Send + Sync + 'static> App<State> {
             .to_socket_addrs()?
             .next()
             .ok_or(std::io::ErrorKind::InvalidInput)?;
-
-        println!("Server is listening on: http://{}", addr);
         http_service_hyper::run(self.into_http_service(), addr);
         Ok(())
     }
