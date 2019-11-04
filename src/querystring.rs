@@ -41,7 +41,7 @@ mod tests {
     use futures::executor::block_on;
     use http_service::Body;
     use http_service_mock::make_server;
-    use serde_derive::Deserialize;
+    use serde::de::Deserialize;
 
     #[derive(Deserialize)]
     struct Params {

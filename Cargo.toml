@@ -26,8 +26,7 @@ http = "0.1.19"
 http-service = "0.3.1"
 log = "0.4.8"
 route-recognizer = "0.1.13"
-serde = "1.0.102"
-serde_derive = "1.0.102"
+serde = { version = "1.0.102", features = ["derive"] }
 serde_json = "1.0.41"
 serde_qs = "0.5.0"
 
@@ -59,7 +58,6 @@ juniper = "0.14.1"
 mime = "0.3.14"
 mime_guess = "2.0.1"
 percent-encoding = "2.1.0"
-serde = { version = "1.0.102", features = ["derive"] }
 structopt = "0.3.3"
 
 [patch.crates-io]
