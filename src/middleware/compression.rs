@@ -258,8 +258,8 @@ mod tests {
     }
 
     // Generates the app.
-    fn app() -> crate::App<()> {
-        let mut app = crate::App::new();
+    fn app() -> crate::Server<()> {
+        let mut app = crate::Server::new();
         app.at("/").get(lorem_ipsum);
         app.at("/echo").post(echo_bytes);
         app.middleware(Compression::new());

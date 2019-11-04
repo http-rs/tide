@@ -245,8 +245,8 @@ mod test {
 
     const ENDPOINT: &str = "/cors";
 
-    fn app() -> crate::App<()> {
-        let mut app = crate::App::new();
+    fn app() -> crate::Server<()> {
+        let mut app = crate::Server::new();
         app.at(ENDPOINT).get(|_| async move { "Hello World" });
 
         app

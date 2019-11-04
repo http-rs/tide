@@ -12,7 +12,7 @@ use serde::Deserialize;
 /// # use std::collections::HashMap;
 /// use tide::querystring::ContextExt;
 ///
-/// let mut app = tide::App::new();
+/// let mut app = tide::Server::new();
 /// app.at("/").get(|cx: tide::Context<()>| async move {
 ///     let map: HashMap<String, String> = cx.url_query().unwrap();
 ///     format!("{:?}", map)
@@ -53,8 +53,8 @@ mod tests {
         Ok(p.msg)
     }
 
-    fn app() -> crate::App<()> {
-        let mut app = crate::App::new();
+    fn app() -> crate::Server<()> {
+        let mut app = crate::Server::new();
         app.at("/").get(handler);
         app
     }

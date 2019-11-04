@@ -13,7 +13,7 @@
 //!
 //! fn main() -> Result<(), std::io::Error> {
 //!     block_on(async {
-//!         let mut app = tide::App::new();
+//!         let mut app = tide::Server::new();
 //!         app.at("/").get(|_| async move { "Hello, world!" });
 //!         app.listen("127.0.0.1:8000").await?;
 //!         Ok(())
@@ -24,11 +24,11 @@
 #[macro_use]
 pub mod error;
 
-mod app;
 mod context;
 mod endpoint;
 mod route;
 mod router;
+mod server;
 
 pub mod cookies;
 pub mod forms;
@@ -38,12 +38,12 @@ pub mod response;
 
 #[doc(inline)]
 pub use crate::{
-    app::{App, Service},
     context::Context,
     endpoint::Endpoint,
     error::{EndpointResult, Error},
     response::Response,
     route::Route,
+    server::{Server, Service},
 };
 
 #[doc(inline)]

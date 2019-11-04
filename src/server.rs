@@ -10,19 +10,19 @@ use crate::{
 
 /// The entry point for building a Tide application.
 ///
-/// Apps are built up as a combination of *state*, *endpoints* and *middleware*:
+/// Servers are built up as a combination of *state*, *endpoints* and *middleware*:
 ///
-/// - Application state is user-defined, and is provided via the [`App::new`]
+/// - Serverlication state is user-defined, and is provided via the [`Server::new`]
 /// function. The state is available as a shared reference to all app endpoints.
 ///
 /// - Endpoints provide the actual application-level code corresponding to
-/// particular URLs. The [`App::at`] method creates a new *route* (using
+/// particular URLs. The [`Server::at`] method creates a new *route* (using
 /// standard router syntax), which can then be used to register endpoints
 /// for particular HTTP request types.
 ///
 /// - Middleware extends the base Tide framework with additional request or
 /// response processing, such as compression, default headers, or logging. To
-/// add middleware to an app, use the [`App::middleware`] method.
+/// add middleware to an app, use the [`Server::middleware`] method.
 ///
 /// # Hello, world!
 ///
@@ -31,7 +31,7 @@ use crate::{
 ///
 /// ```rust, no_run
 ///
-/// let mut app = tide::App::new();
+/// let mut app = tide::Server::new();
 /// app.at("/hello").get(|_| async move {"Hello, world!"});
 /// app.run("127.0.0.1:8000").unwrap();
 /// ```
@@ -56,7 +56,7 @@ use crate::{
 ///     Ok(format!("Goodbye, {}.", user))
 /// }
 ///
-/// let mut app = tide::App::new();
+/// let mut app = tide::Server::new();
 ///
 /// app.at("/hello/:user").get(hello);
 /// app.at("/goodbye/:user").get(goodbye);
@@ -67,16 +67,16 @@ use crate::{
 /// app.run("127.0.0.1:8000").unwrap();
 /// ```
 ///
-/// You can learn more about routing in the [`App::at`] documentation.
+/// You can learn more about routing in the [`Server::at`] documentation.
 ///
-/// # Application state
+/// # Serverlication state
 ///
 /// ```rust, no_run
 ///
 /// use http::status::StatusCode;
 /// use serde::{Deserialize, Serialize};
 /// use std::sync::Mutex;
-/// use tide::{error::ResultExt, response, App, Context, EndpointResult};
+/// use tide::{error::ResultExt, response, Server, Context, EndpointResult};
 ///
 /// #[derive(Default)]
 /// struct Database {
@@ -116,7 +116,7 @@ use crate::{
 /// }
 ///
 /// fn main() {
-///     let mut app = App::with_state(Database::default());
+///     let mut app = Server::with_state(Database::default());
 ///     app.at("/message").post(new_message);
 ///     app.at("/message/:id").get(get_message);
 ///     app.run("127.0.0.1:8000").unwrap();
@@ -124,29 +124,29 @@ use crate::{
 /// ```
 
 #[allow(missing_debug_implementations)]
-pub struct App<State> {
+pub struct Server<State> {
     router: Router<State>,
     middleware: Vec<Arc<dyn Middleware<State>>>,
     state: State,
 }
 
-impl App<()> {
-    /// Create an empty `App`, with no initial middleware or configuration.
-    pub fn new() -> App<()> {
+impl Server<()> {
+    /// Create an empty `Server`, with no initial middleware or configuration.
+    pub fn new() -> Server<()> {
         Self::with_state(())
     }
 }
 
-impl Default for App<()> {
-    fn default() -> App<()> {
+impl Default for Server<()> {
+    fn default() -> Server<()> {
         Self::new()
     }
 }
 
-impl<State: Send + Sync + 'static> App<State> {
-    /// Create an `App`, with initial middleware or configuration.
-    pub fn with_state(state: State) -> App<State> {
-        App {
+impl<State: Send + Sync + 'static> Server<State> {
+    /// Create an `Server`, with initial middleware or configuration.
+    pub fn with_state(state: State) -> Server<State> {
+        Server {
             router: Router::new(),
             middleware: Vec::new(),
             state,
@@ -162,7 +162,7 @@ impl<State: Send + Sync + 'static> App<State> {
     /// respective endpoint of the selected resource. Example:
     ///
     /// ```rust,no_run
-    /// # let mut app = tide::App::new();
+    /// # let mut app = tide::Server::new();
     /// app.at("/").get(|_| async move {"Hello, world!"});
     /// ```
     ///
@@ -187,7 +187,7 @@ impl<State: Send + Sync + 'static> App<State> {
     /// Here are some examples omitting the HTTP verb based endpoint selection:
     ///
     /// ```rust,no_run
-    /// # let mut app = tide::App::new();
+    /// # let mut app = tide::Server::new();
     /// app.at("/");
     /// app.at("/hello");
     /// app.at("add_two/:num");
@@ -316,7 +316,7 @@ mod tests {
     use crate::{middleware::Next, router::Selection, Context, Response};
 
     fn simulate_request<'a, State: Default + Clone + Send + Sync + 'static>(
-        app: &'a App<State>,
+        app: &'a Server<State>,
         path: &'a str,
         method: http::Method,
     ) -> BoxFuture<'a, Response> {
@@ -338,7 +338,7 @@ mod tests {
 
     #[test]
     fn simple_static() {
-        let mut router = App::new();
+        let mut router = Server::new();
         router.at("/").get(|_| async move { "/" });
         router.at("/foo").get(|_| async move { "/foo" });
         router.at("/foo/bar").get(|_| async move { "/foo/bar" });
@@ -352,7 +352,7 @@ mod tests {
 
     #[test]
     fn nested_static() {
-        let mut router = App::new();
+        let mut router = Server::new();
         router.at("/a").get(|_| async move { "/a" });
         router.at("/b").nest(|router| {
             router.at("/").get(|_| async move { "/b" });
@@ -393,7 +393,7 @@ mod tests {
 
     #[test]
     fn multiple_methods() {
-        let mut router = App::new();
+        let mut router = Server::new();
         router.at("/a").nest(|router| {
             router.at("/b").get(|_| async move { "/a/b GET" });
         });
