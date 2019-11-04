@@ -21,7 +21,6 @@ repository = "https://github.com/http-rs/tide"
 [dependencies]
 accept-encoding = "0.2.0-alpha.2"
 cookie = { version = "0.12.0", features = ["percent-encode"] }
-fnv = "1.0.6"
 futures = "0.3.1"
 http = "0.1.19"
 http-service = "0.3.1"

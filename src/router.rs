@@ -1,4 +1,4 @@
-use fnv::FnvHashMap;
+use std::collections::HashMap;
 use futures::future::{BoxFuture, FutureExt};
 use http_service::Body;
 use route_recognizer::{Match, Params, Router as MethodRouter};
@@ -14,7 +14,7 @@ use crate::{
 /// by the method first allows the table itself to be more efficient.
 #[allow(missing_debug_implementations)]
 pub(crate) struct Router<State> {
-    method_map: FnvHashMap<http::Method, MethodRouter<Box<DynEndpoint<State>>>>,
+    method_map: HashMap<http::Method, MethodRouter<Box<DynEndpoint<State>>>>,
 }
 
 /// The result of routing a URL
@@ -26,7 +26,7 @@ pub(crate) struct Selection<'a, State> {
 impl<State: 'static> Router<State> {
     pub(crate) fn new() -> Router<State> {
         Router {
-            method_map: FnvHashMap::default(),
+            method_map: HashMap::default(),
         }
     }
 
