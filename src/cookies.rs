@@ -1,7 +1,7 @@
 use cookie::{Cookie, CookieJar, ParseError};
 
 use crate::error::StringError;
-use crate::Context;
+use crate::Request;
 use http::HeaderMap;
 use std::sync::{Arc, RwLock};
 
@@ -27,8 +27,8 @@ impl CookieData {
     }
 }
 
-/// An extension to `Context` that provides cached access to cookies
-pub trait ContextExt {
+/// An extension to `Request` that provides cached access to cookies
+pub trait RequestExt {
     /// returns a `Cookie` by name of the cookie
     fn get_cookie(&self, name: &str) -> Result<Option<Cookie<'static>>, StringError>;
 
@@ -40,7 +40,7 @@ pub trait ContextExt {
     fn remove_cookie(&mut self, cookie: Cookie<'static>) -> Result<(), StringError>;
 }
 
-impl<State> ContextExt for Context<State> {
+impl<State> RequestExt for Request<State> {
     fn get_cookie(&self, name: &str) -> Result<Option<Cookie<'static>>, StringError> {
         let cookie_data = self
             .extensions()

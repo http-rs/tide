@@ -43,7 +43,7 @@ pub mod response;
 
 #[doc(inline)]
 pub use crate::{
-    context::Context,
+    context::Request,
     endpoint::Endpoint,
     error::{EndpointResult, Error},
     response::Response,

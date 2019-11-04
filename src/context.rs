@@ -5,25 +5,25 @@ use std::{str::FromStr, sync::Arc};
 
 /// State associated with a request-response lifecycle.
 ///
-/// The `Context` gives endpoints access to basic information about the incoming
+/// The `Request` gives endpoints access to basic information about the incoming
 /// request, route parameters, and various ways of accessing the request's body.
 ///
-/// Contexts also provide *extensions*, a type map primarily used for low-level
+/// Requests also provide *extensions*, a type map primarily used for low-level
 /// communication between middleware and endpoints.
 #[derive(Debug)]
-pub struct Context<State> {
+pub struct Request<State> {
     state: Arc<State>,
     request: http_service::Request,
     route_params: Params,
 }
 
-impl<State> Context<State> {
+impl<State> Request<State> {
     pub(crate) fn new(
         state: Arc<State>,
         request: http::Request<Body>,
         route_params: Params,
-    ) -> Context<State> {
-        Context {
+    ) -> Request<State> {
+        Request {
             state,
             request,
             route_params,

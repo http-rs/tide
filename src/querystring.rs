@@ -1,8 +1,8 @@
-use crate::{error::Error, Context};
+use crate::{error::Error, Request};
 use http::StatusCode;
 use serde::Deserialize;
 
-/// An extension trait for `Context`, providing query string deserialization.
+/// An extension trait for `Request`, providing query string deserialization.
 ///
 /// # Example
 ///
@@ -10,19 +10,19 @@ use serde::Deserialize;
 ///
 /// ```
 /// # use std::collections::HashMap;
-/// use tide::querystring::ContextExt;
+/// use tide::querystring::RequestExt;
 ///
 /// let mut app = tide::Server::new();
-/// app.at("/").get(|cx: tide::Context<()>| async move {
+/// app.at("/").get(|cx: tide::Request<()>| async move {
 ///     let map: HashMap<String, String> = cx.url_query().unwrap();
 ///     format!("{:?}", map)
 /// });
 /// ```
-pub trait ContextExt<'de> {
+pub trait RequestExt<'de> {
     fn url_query<T: Deserialize<'de>>(&'de self) -> Result<T, Error>;
 }
 
-impl<'de, State> ContextExt<'de> for Context<State> {
+impl<'de, State> RequestExt<'de> for Request<State> {
     #[inline]
     fn url_query<T: Deserialize<'de>>(&'de self) -> Result<T, Error> {
         let query = self.uri().query();
@@ -48,7 +48,7 @@ mod tests {
         msg: String,
     }
 
-    async fn handler(cx: crate::Context<()>) -> Result<String, Error> {
+    async fn handler(cx: crate::Request<()>) -> Result<String, Error> {
         let p = cx.url_query::<Params>()?;
         Ok(p.msg)
     }
