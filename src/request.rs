@@ -4,6 +4,8 @@ use route_recognizer::Params;
 use std::{str::FromStr, sync::Arc};
 use serde::Deserialize;
 
+use crate::error::ResultExt;
+
 /// An HTTP request.
 ///
 /// The `Request` gives endpoints access to basic information about the incoming
@@ -156,4 +158,14 @@ impl<State> Request<State> {
 
         Ok(serde_qs::from_str(query.unwrap()).map_err(|_| crate::Error::from(http::StatusCode::BAD_REQUEST))?)
     }
+
+    /// Parse the request body as a form.
+    pub async fn body_form<T: serde::de::DeserializeOwned>(&mut self) -> crate::Result<T> {
+        let body = self.take_body();
+        let body = body.into_vec().await.client_err()?;
+        Ok(serde_qs::from_bytes(&body)
+            .map_err(|e| crate::error::StringError(format!("could not decode form: {}", e)))
+            .client_err()?)
+    }
+
 }

@@ -1,5 +1,6 @@
 pub use into_response::IntoResponse;
 use http_service::Body;
+use http::StatusCode;
 
 mod into_response;
 
@@ -36,6 +37,33 @@ impl Response {
         self.res.headers_mut().insert(key, value.parse().unwrap());
         self
     }
+
+    /// Encode a struct as a form and set as the response body.
+    pub async fn body_form<T: serde::Serialize>(mut self, form: T) -> Result<Response, serde_qs::Error> {
+        // TODO: think about how to handle errors
+        self.set_status(StatusCode::OK);
+        *self.res.body_mut() = Body::from(serde_qs::to_string(&form)?.into_bytes());
+        Ok(self.insert_header("Content-Type", "application/x-www-form-urlencoded"))
+    }
+
+    // fn body_multipart(&mut self) -> BoxTryFuture<Multipart<Cursor<Vec<u8>>>> {
+    //     const BOUNDARY: &str = "boundary=";
+    //     let boundary = self.headers().get("content-type").and_then(|ct| {
+    //         let ct = ct.to_str().ok()?;
+    //         let idx = ct.find(BOUNDARY)?;
+    //         Some(ct[idx + BOUNDARY.len()..].to_string())
+    //     });
+
+    //     let body = self.take_body();
+
+    //     Box::pin(async move {
+    //         let body = body.into_vec().await.client_err()?;
+    //         let boundary = boundary
+    //             .ok_or_else(|| StringError(format!("no boundary found")))
+    //             .client_err()?;
+    //         Ok(Multipart::with_body(Cursor::new(body), boundary))
+    //     })
+    // }
 }
 
 #[doc(hidden)]

@@ -33,8 +33,6 @@ pub mod error;
 #[doc(hidden)]
 pub mod cookies;
 #[doc(hidden)]
-pub mod forms;
-#[doc(hidden)]
 pub mod middleware;
 #[doc(hidden)]
 pub mod response;
