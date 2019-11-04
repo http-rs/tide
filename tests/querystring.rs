@@ -1,7 +1,7 @@
-use tide::*;
 use futures::executor::block_on;
 use http_service::Body;
 use http_service_mock::make_server;
+use tide::*;
 
 #[derive(Deserialize)]
 struct Params {

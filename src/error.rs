@@ -3,7 +3,7 @@ use http_service::Body;
 
 use crate::response::{IntoResponse, Response};
 
-/// A specialized Result type for Tide operations.
+/// A specialized Result type for Tide.
 pub type Result<T = Response> = std::result::Result<T, Error>;
 
 #[derive(Debug)]

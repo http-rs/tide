@@ -7,7 +7,7 @@ use std::sync::Arc;
 use crate::{
     middleware::{Middleware, Next},
     router::{Router, Selection},
-    Request
+    Request,
 };
 
 mod route;

@@ -21,8 +21,8 @@
 //! # Ok(()) }) }
 //! ````
 
-mod request;
 mod endpoint;
+mod request;
 mod router;
 
 pub mod server;
@@ -37,10 +37,10 @@ pub mod middleware;
 #[doc(hidden)]
 pub mod response;
 
-pub use request::Request;
 pub use endpoint::Endpoint;
 #[doc(inline)]
 pub use error::Result;
+pub use request::Request;
 #[doc(inline)]
 pub use response::{IntoResponse, Response};
 #[doc(inline)]
@@ -56,7 +56,7 @@ pub fn new() -> server::Server<()> {
     Server::new()
 }
 
-/// Create a new Tide server with state
+/// Create a new Tide server with shared global state.
 pub fn with_state<State>(state: State) -> server::Server<State>
 where
     State: Send + Sync + 'static,

@@ -1,8 +1,8 @@
 use http::{HeaderMap, Method, Uri, Version};
 use http_service::Body;
 use route_recognizer::Params;
-use std::{str::FromStr, sync::Arc};
 use serde::Deserialize;
+use std::{str::FromStr, sync::Arc};
 
 use crate::error::ResultExt;
 
@@ -156,7 +156,8 @@ impl<State> Request<State> {
             return Err(crate::Error::from(http::StatusCode::BAD_REQUEST));
         }
 
-        Ok(serde_qs::from_str(query.unwrap()).map_err(|_| crate::Error::from(http::StatusCode::BAD_REQUEST))?)
+        Ok(serde_qs::from_str(query.unwrap())
+            .map_err(|_| crate::Error::from(http::StatusCode::BAD_REQUEST))?)
     }
 
     /// Parse the request body as a form.
@@ -167,5 +168,4 @@ impl<State> Request<State> {
             .map_err(|e| crate::error::StringError(format!("could not decode form: {}", e)))
             .client_err()?)
     }
-
 }
