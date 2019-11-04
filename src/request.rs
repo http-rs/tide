@@ -53,16 +53,6 @@ impl<State> Request<State> {
         self.request.headers()
     }
 
-    /// Access the entire request.
-    pub fn request(&self) -> &http_service::Request {
-        &self.request
-    }
-
-    /// Access a mutable handle to the entire request.
-    pub fn request_mut(&mut self) -> &mut http_service::Request {
-        &mut self.request
-    }
-
     ///  Access app-global state.
     pub fn state(&self) -> &State {
         &self.state
