@@ -32,7 +32,7 @@ http = "0.1.19"
 http-service = "0.3.1"
 http-service-hyper = { version = "0.3.1", optional = true }
 log = "0.4.8"
-multipart = { version = "0.16.1", features = ["server"] }
+# multipart = { version = "0.16.1", features = ["server"] }
 route-recognizer = "0.1.13"
 serde = { version = "1.0.102", features = ["derive"] }
 serde_json = "1.0.41"
