@@ -52,12 +52,12 @@ pub use route::Route;
 /// ```rust, no_run
 /// use tide::error::ResultExt;
 ///
-/// async fn hello(cx: tide::Request<()>) -> tide::EndpointResult<String> {
+/// async fn hello(cx: tide::Request<()>) -> tide::Result<String> {
 ///     let user: String = cx.param("user").client_err()?;
 ///     Ok(format!("Hello, {}!", user))
 /// }
 ///
-/// async fn goodbye(cx: tide::Request<()>) -> tide::EndpointResult<String> {
+/// async fn goodbye(cx: tide::Request<()>) -> tide::Result<String> {
 ///     let user: String = cx.param("user").client_err()?;
 ///     Ok(format!("Goodbye, {}.", user))
 /// }
@@ -82,7 +82,7 @@ pub use route::Route;
 /// use http::status::StatusCode;
 /// use serde::{Deserialize, Serialize};
 /// use std::sync::Mutex;
-/// use tide::{error::ResultExt, response, Server, Request, EndpointResult};
+/// use tide::{error::ResultExt, response, Server, Request, Result};
 ///
 /// #[derive(Default)]
 /// struct Database {
@@ -107,12 +107,12 @@ pub use route::Route;
 ///     }
 /// }
 ///
-/// async fn new_message(mut cx: Request<Database>) -> EndpointResult<String> {
+/// async fn new_message(mut cx: Request<Database>) -> Result<String> {
 ///     let msg = cx.body_json().await.client_err()?;
 ///     Ok(cx.state().insert(msg).to_string())
 /// }
 ///
-/// async fn get_message(cx: Request<Database>) -> EndpointResult {
+/// async fn get_message(cx: Request<Database>) -> Result {
 ///     let id = cx.param("id").client_err()?;
 ///     if let Some(msg) = cx.state().get(id) {
 ///         Ok(response::json(msg))

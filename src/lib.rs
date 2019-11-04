@@ -44,7 +44,7 @@ pub mod response;
 pub use crate::{
     context::Request,
     endpoint::Endpoint,
-    error::{EndpointResult, Error},
+    error::{Result, Error},
     response::Response,
     server::Server,
 };
