@@ -4,7 +4,11 @@
 #![doc(test(attr(deny(rust_2018_idioms, warnings))))]
 #![doc(test(attr(allow(unused_extern_crates, unused_variables))))]
 
-//! Tide is a friendly HTTP server framework.
+//! # Serve the web
+//!
+//! Tide is a friendly HTTP server built for casual Rustaceans and veterans alike. It's completely
+//! modular, and built directly for `async/await`. Whether it's a light webhook, or an L7 load
+//! balancer, Tide will make it work.
 //!
 //! # Examples
 //!
