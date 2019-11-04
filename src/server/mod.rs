@@ -240,22 +240,6 @@ impl<State: Send + Sync + 'static> Server<State> {
         }
     }
 
-    /// Start Running the app at the given address.
-    ///
-    /// Blocks the calling thread indefinitely.
-    #[cfg(feature = "hyper")]
-    #[doc(hidden)]
-    // TODO: remove this API
-    pub fn run(self, addr: impl std::net::ToSocketAddrs) -> std::io::Result<()> {
-        let addr = addr
-            .to_socket_addrs()?
-            .next()
-            .ok_or(std::io::ErrorKind::InvalidInput)?;
-
-        http_service_hyper::run(self.into_http_service(), addr);
-        Ok(())
-    }
-
     /// Asynchronously serve the app at the given address.
     #[cfg(feature = "hyper")]
     pub async fn listen(self, addr: impl std::net::ToSocketAddrs) -> std::io::Result<()> {
