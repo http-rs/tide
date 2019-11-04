@@ -2,6 +2,7 @@ use http::{HeaderMap, Method, Uri, Version};
 use http_service::Body;
 use route_recognizer::Params;
 use std::{str::FromStr, sync::Arc};
+use serde::Deserialize;
 
 /// An HTTP request.
 ///
@@ -143,5 +144,16 @@ impl<State> Request<State> {
     /// Mutably access the extensions to the context.
     pub fn extensions_mut(&mut self) -> &mut http::Extensions {
         self.request.extensions_mut()
+    }
+
+    /// Deserialize a querystring.
+    pub fn url_query<'de, T: Deserialize<'de>>(&'de self) -> Result<T, crate::Error> {
+        let query = self.uri().query();
+
+        if query.is_none() {
+            return Err(crate::Error::from(http::StatusCode::BAD_REQUEST));
+        }
+
+        Ok(serde_qs::from_str(query.unwrap()).map_err(|_| crate::Error::from(http::StatusCode::BAD_REQUEST))?)
     }
 }
