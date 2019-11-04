@@ -42,13 +42,17 @@ pub mod querystring;
 pub mod response;
 
 #[doc(inline)]
-pub use crate::{
-    context::Request,
-    endpoint::Endpoint,
-    error::{Error, Result},
-    response::Response,
-    server::Server,
-};
+pub use context::Request;
+#[doc(inline)]
+pub use endpoint::Endpoint;
+#[doc(inline)]
+pub use error::Result;
+#[doc(inline)]
+pub use response::Response;
+#[doc(inline)]
+pub use server::Server;
+#[doc(hidden)]
+pub use error::Error;
 
 pub use http;
 
