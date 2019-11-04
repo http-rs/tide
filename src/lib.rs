@@ -9,19 +9,13 @@
 //! # Examples
 //!
 //! ```no_run
-//! use futures::executor::block_on;
-//!
-//! fn main() -> Result<(), std::io::Error> {
-//!     block_on(async {
-//!         let mut app = tide::new();
-//!         app.at("/").get(|_| async move { "Hello, world!" });
-//!         app.listen("127.0.0.1:8000").await
-//!     })
-//! }
+//! # use futures::executor::block_on;
+//! # fn main() -> Result<(), std::io::Error> { block_on(async {
+//! let mut app = tide::new();
+//! app.at("/").get(|_| async move { "Hello, world!" });
+//! app.listen("127.0.0.1:8000").await?;
+//! # }) }
 //! ````
-
-#[macro_use]
-pub mod error;
 
 mod context;
 mod endpoint;
@@ -29,6 +23,9 @@ mod router;
 
 pub mod server;
 
+#[macro_use]
+#[doc(hidden)]
+pub mod error;
 #[doc(hidden)]
 pub mod cookies;
 #[doc(hidden)]
@@ -44,7 +41,7 @@ pub mod response;
 pub use crate::{
     context::Request,
     endpoint::Endpoint,
-    error::{Result, Error},
+    error::{Error, Result},
     response::Response,
     server::Server,
 };
