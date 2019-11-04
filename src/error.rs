@@ -1,11 +1,7 @@
-use core::pin::Pin;
-use futures::future::Future;
 use http::{HttpTryFrom, StatusCode};
 use http_service::Body;
 
 use crate::response::{IntoResponse, Response};
-
-pub(crate) type BoxTryFuture<T> = Pin<Box<dyn Future<Output = Result<T>> + Send + 'static>>;
 
 /// A specialized Result type for Tide operations.
 pub type Result<T = Response> = std::result::Result<T, Error>;
@@ -42,7 +38,9 @@ impl From<Response> for Error {
 
 impl From<StatusCode> for Error {
     fn from(status: StatusCode) -> Error {
-        Error { resp: Response::new(status) }
+        Error {
+            resp: Response::new(status),
+        }
     }
 }
 
