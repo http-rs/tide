@@ -97,8 +97,6 @@ pub struct WithStatus<R> {
 
 impl<R: IntoResponse> IntoResponse for WithStatus<R> {
     fn into_response(self) -> Response {
-        let mut resp = self.inner.into_response();
-        *resp.status_mut() = self.status;
-        resp
+        self.inner.into_response().set_status(self.status)
     }
 }
