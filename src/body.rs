@@ -1,6 +1,7 @@
-/// A raw HTTP body.
+/// An HTTP body.
 ///
 /// This part can be part of either a `Request` or `Response`.
+#[derive(Debug)]
 pub struct Body {
     body: http_service::Body,
 }

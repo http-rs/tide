@@ -12,10 +12,11 @@ pub struct Response {
 impl Response {
     /// Create a new instance.
     pub fn new(status: http::StatusCode) -> Self {
-        http::Response::builder()
+        let res = http::Response::builder()
             .status(status)
             .body(Body::empty())
-            .unwrap()
+            .unwrap();
+        Self { res }
     }
 
     /// Returns the statuscode.
@@ -23,11 +24,16 @@ impl Response {
         self.res.status()
     }
 
+    /// Set the statuscode.
+    pub fn set_status(mut self, status: http::StatusCode) -> Self {
+        *self.res.status_mut() = status;
+        self
+    }
+
     /// Insert an HTTP header.
     pub fn insert_header(mut self, key: &'static str, value: impl AsRef<str>) -> Self {
         let value = value.as_ref().to_owned();
-        let res = self.res.as_mut().unwrap();
-        res.headers_mut().insert(key, value.parse().unwrap());
+        self.res.headers_mut().insert(key, value.parse().unwrap());
         self
     }
 }
@@ -36,6 +42,13 @@ impl Response {
 impl Into<http_service::Response> for Response {
     fn into(self) -> http_service::Response {
         self.res
+    }
+}
+
+#[doc(hidden)]
+impl From<http_service::Response> for Response {
+    fn from(res: http_service::Response) -> Self {
+        Self { res }
     }
 }
 
