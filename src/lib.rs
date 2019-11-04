@@ -21,7 +21,7 @@
 //! # Ok(()) }) }
 //! ````
 
-mod context;
+mod request;
 mod endpoint;
 mod router;
 
@@ -37,11 +37,9 @@ pub mod forms;
 #[doc(hidden)]
 pub mod middleware;
 #[doc(hidden)]
-pub mod querystring;
-#[doc(hidden)]
 pub mod response;
 
-pub use context::Request;
+pub use request::Request;
 pub use endpoint::Endpoint;
 #[doc(inline)]
 pub use error::Result;
