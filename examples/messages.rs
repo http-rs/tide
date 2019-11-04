@@ -1,7 +1,7 @@
 use http::status::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
-use tide::{error::ResultExt, response, App, Context, EndpointResult};
+use tide::{error::ResultExt, response, Server, Request, Result};
 
 #[derive(Default)]
 struct Database {
@@ -37,12 +37,12 @@ impl Database {
     }
 }
 
-async fn new_message(mut cx: Context<Database>) -> EndpointResult<String> {
+async fn new_message(mut cx: Request<Database>) -> Result<String> {
     let msg = cx.body_json().await.client_err()?;
     Ok(cx.state().insert(msg).to_string())
 }
 
-async fn set_message(mut cx: Context<Database>) -> EndpointResult<()> {
+async fn set_message(mut cx: Request<Database>) -> Result<()> {
     let msg = cx.body_json().await.client_err()?;
     let id = cx.param("id").client_err()?;
 
@@ -53,7 +53,7 @@ async fn set_message(mut cx: Context<Database>) -> EndpointResult<()> {
     }
 }
 
-async fn get_message(cx: Context<Database>) -> EndpointResult {
+async fn get_message(cx: Request<Database>) -> Result {
     let id = cx.param("id").client_err()?;
     if let Some(msg) = cx.state().get(id) {
         Ok(response::json(msg))
@@ -63,7 +63,7 @@ async fn get_message(cx: Context<Database>) -> EndpointResult {
 }
 
 fn main() {
-    let mut app = App::with_state(Database::default());
+    let mut app = Server::with_state(Database::default());
     app.at("/message").post(new_message);
     app.at("/message/:id").get(get_message).post(set_message);
     app.run("127.0.0.1:8000").unwrap();

@@ -6,7 +6,7 @@ use http::{
     StatusCode,
 };
 use http_service::Body;
-use tide::{App, Context, EndpointResult, Response};
+use tide::{Server, Request, Result, Response};
 
 use std::path::{Component, Path, PathBuf};
 use std::{fs, io};
@@ -35,7 +35,7 @@ impl StaticFile {
         }
     }
 
-    fn stream_bytes(&self, actual_path: &str, headers: &HeaderMap) -> Result<Response, io::Error> {
+    fn stream_bytes(&self, actual_path: &str, headers: &HeaderMap) -> io::Result<Response> {
         let path = &self.get_path(actual_path);
         let mut response = http::Response::builder();
         let meta = fs::metadata(path).ok();
@@ -106,7 +106,7 @@ impl StaticFile {
     }
 }
 
-async fn handle_path(ctx: Context<StaticFile>) -> EndpointResult {
+async fn handle_path(ctx: Request<StaticFile>) -> Result {
     let path = ctx.uri().path();
     ctx.state()
         .stream_bytes(path, ctx.headers())
@@ -120,7 +120,7 @@ async fn handle_path(ctx: Context<StaticFile>) -> EndpointResult {
 }
 
 fn main() {
-    let mut app = App::with_state(StaticFile::new("./"));
+    let mut app = Server::with_state(StaticFile::new("./"));
     app.at("/*").get(handle_path);
     app.run("127.0.0.1:8000").unwrap();
 }

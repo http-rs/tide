@@ -1,32 +1,32 @@
 use futures::executor::block_on;
 use http_service::Body;
 use http_service_mock::make_server;
-use tide::{error::ResultExt, Context};
+use tide::{error::ResultExt, Request};
 
-async fn add_one(cx: Context<()>) -> Result<String, tide::Error> {
+async fn add_one(cx: Request<()>) -> Result<String, tide::Error> {
     let num: i64 = cx.param("num").client_err()?;
     Ok((num + 1).to_string())
 }
 
-async fn add_two(cx: Context<()>) -> Result<String, tide::Error> {
+async fn add_two(cx: Request<()>) -> Result<String, tide::Error> {
     let one: i64 = cx.param("one").client_err()?;
     let two: i64 = cx.param("two").client_err()?;
     Ok((one + two).to_string())
 }
 
-async fn echo_path(cx: Context<()>) -> Result<String, tide::Error> {
+async fn echo_path(cx: Request<()>) -> Result<String, tide::Error> {
     let path: String = cx.param("path").client_err()?;
     Ok(path)
 }
 
-async fn echo_empty(cx: Context<()>) -> Result<String, tide::Error> {
+async fn echo_empty(cx: Request<()>) -> Result<String, tide::Error> {
     let path: String = cx.param("").client_err()?;
     Ok(path)
 }
 
 #[test]
 fn wildcard() {
-    let mut app = tide::App::new();
+    let mut app = tide::Server::new();
     app.at("/add_one/:num").get(add_one);
     let mut server = make_server(app.into_http_service()).unwrap();
 
@@ -49,7 +49,7 @@ fn wildcard() {
 
 #[test]
 fn invalid_segment_error() {
-    let mut app = tide::App::new();
+    let mut app = tide::Server::new();
     app.at("/add_one/:num").get(add_one);
     let mut server = make_server(app.into_http_service()).unwrap();
 
@@ -62,7 +62,7 @@ fn invalid_segment_error() {
 
 #[test]
 fn not_found_error() {
-    let mut app = tide::App::new();
+    let mut app = tide::Server::new();
     app.at("/add_one/:num").get(add_one);
     let mut server = make_server(app.into_http_service()).unwrap();
 
@@ -73,7 +73,7 @@ fn not_found_error() {
 
 #[test]
 fn wildpath() {
-    let mut app = tide::App::new();
+    let mut app = tide::Server::new();
     app.at("/echo/*path").get(echo_path);
     let mut server = make_server(app.into_http_service()).unwrap();
 
@@ -102,7 +102,7 @@ fn wildpath() {
 
 #[test]
 fn multi_wildcard() {
-    let mut app = tide::App::new();
+    let mut app = tide::Server::new();
     app.at("/add_two/:one/:two/").get(add_two);
     let mut server = make_server(app.into_http_service()).unwrap();
 
@@ -130,7 +130,7 @@ fn multi_wildcard() {
 
 #[test]
 fn wild_last_segment() {
-    let mut app = tide::App::new();
+    let mut app = tide::Server::new();
     app.at("/echo/:path/*").get(echo_path);
     let mut server = make_server(app.into_http_service()).unwrap();
 
@@ -153,7 +153,7 @@ fn wild_last_segment() {
 
 #[test]
 fn invalid_wildcard() {
-    let mut app = tide::App::new();
+    let mut app = tide::Server::new();
     app.at("/echo/*path/:one/").get(echo_path);
     let mut server = make_server(app.into_http_service()).unwrap();
 
@@ -166,7 +166,7 @@ fn invalid_wildcard() {
 
 #[test]
 fn nameless_wildcard() {
-    let mut app = tide::App::new();
+    let mut app = tide::Server::new();
     app.at("/echo/:").get(|_| async move { "" });
 
     let mut server = make_server(app.into_http_service()).unwrap();
@@ -184,7 +184,7 @@ fn nameless_wildcard() {
 
 #[test]
 fn nameless_internal_wildcard() {
-    let mut app = tide::App::new();
+    let mut app = tide::Server::new();
     app.at("/echo/:/:path").get(echo_path);
     let mut server = make_server(app.into_http_service()).unwrap();
 
@@ -211,7 +211,7 @@ fn nameless_internal_wildcard() {
 
 #[test]
 fn nameless_internal_wildcard2() {
-    let mut app = tide::App::new();
+    let mut app = tide::Server::new();
     app.at("/echo/:/:path").get(echo_empty);
     let mut server = make_server(app.into_http_service()).unwrap();
 

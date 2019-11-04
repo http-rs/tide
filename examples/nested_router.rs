@@ -1,7 +1,7 @@
-use tide::App;
+use tide::Server;
 
 fn main() {
-    let mut app = App::new();
+    let mut app = Server::new();
     app.at("/gates").nest(|router| {
         router
             .at("/")
