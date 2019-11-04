@@ -222,8 +222,8 @@ impl<State: Send + Sync + 'static> App<State> {
     ///
     /// This lower-level method lets you host a Tide application within an HTTP
     /// server of your choice, via the `http_service` interface crate.
-    pub fn into_http_service(self) -> Server<State> {
-        Server {
+    pub fn into_http_service(self) -> Service<State> {
+        Service {
             router: Arc::new(self.router),
             state: Arc::new(self.state),
             middleware: Arc::new(self.middleware),
@@ -234,26 +234,28 @@ impl<State: Send + Sync + 'static> App<State> {
     ///
     /// Blocks the calling thread indefinitely.
     #[cfg(feature = "hyper")]
+    #[doc(hidden)]
+    // TODO: remove this API
     pub fn run(self, addr: impl std::net::ToSocketAddrs) -> std::io::Result<()> {
         let addr = addr
             .to_socket_addrs()?
             .next()
             .ok_or(std::io::ErrorKind::InvalidInput)?;
 
-        println!("Server is listening on: http://{}", addr);
         http_service_hyper::run(self.into_http_service(), addr);
         Ok(())
     }
 
     /// Asynchronously serve the app at the given address.
     #[cfg(feature = "hyper")]
-    pub async fn serve(self, addr: impl std::net::ToSocketAddrs) -> std::io::Result<()> {
+    pub async fn listen(self, addr: impl std::net::ToSocketAddrs) -> std::io::Result<()> {
         // TODO: try handling all addresses
         let addr = addr
             .to_socket_addrs()?
             .next()
             .ok_or(std::io::ErrorKind::InvalidInput)?;
 
+        println!("Service is listening on: http://{}", addr);
         let res = http_service_hyper::serve(self.into_http_service(), addr).await;
         res.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
     }
@@ -265,13 +267,13 @@ impl<State: Send + Sync + 'static> App<State> {
 /// i.e. for hosting a Tide app within some custom HTTP server.
 #[derive(Clone)]
 #[allow(missing_debug_implementations)]
-pub struct Server<State> {
+pub struct Service<State> {
     router: Arc<Router<State>>,
     state: Arc<State>,
     middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
 }
 
-impl<State: Sync + Send + 'static> HttpService for Server<State> {
+impl<State: Sync + Send + 'static> HttpService for Service<State> {
     type Connection = ();
     type ConnectionFuture = future::Ready<Result<(), std::io::Error>>;
     type ResponseFuture = BoxFuture<'static, Result<http_service::Response, std::io::Error>>;
