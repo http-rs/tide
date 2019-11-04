@@ -5,8 +5,12 @@ use std::sync::Arc;
 use crate::{
     middleware::{Middleware, Next},
     router::{Router, Selection},
-    Request, Route,
+    Request
 };
+
+mod route;
+
+pub use route::Route;
 
 /// An HTTP server.
 ///
