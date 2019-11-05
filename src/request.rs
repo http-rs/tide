@@ -121,31 +121,12 @@ impl<State> Request<State> {
         Ok(serde_json::from_slice(&body_bytes).map_err(|_| std::io::ErrorKind::InvalidData)?)
     }
 
-    /// Remove ownership of the request body, replacing it with an empty body.
-    ///
-    /// Used primarily for working directly with the body stream.
-    pub fn take_body(&mut self) -> Body {
-        std::mem::replace(self.request.body_mut(), Body::empty())
-    }
-
-    /// Access the extensions to the context.
-    pub fn extensions(&self) -> &http::Extensions {
-        self.request.extensions()
-    }
-
-    /// Mutably access the extensions to the context.
-    pub fn extensions_mut(&mut self) -> &mut http::Extensions {
-        self.request.extensions_mut()
-    }
-
-    /// Deserialize a querystring.
-    pub fn url_query<'de, T: Deserialize<'de>>(&'de self) -> Result<T, crate::Error> {
+    /// Get the URL querystring.
+    pub fn query<'de, T: Deserialize<'de>>(&'de self) -> Result<T, crate::Error> {
         let query = self.uri().query();
-
         if query.is_none() {
             return Err(crate::Error::from(http::StatusCode::BAD_REQUEST));
         }
-
         Ok(serde_qs::from_str(query.unwrap())
             .map_err(|_| crate::Error::from(http::StatusCode::BAD_REQUEST))?)
     }
