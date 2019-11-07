@@ -3,10 +3,6 @@ use std::sync::Arc;
 use crate::utils::BoxFuture;
 use crate::{endpoint::DynEndpoint, Request, Response};
 
-mod body;
-
-pub use body::Body;
-
 // mod compression;
 // mod cookies;
 // mod cors;
@@ -32,8 +28,8 @@ where
         + 'static
         + for<'a> Fn(Request<State>, Next<'a, State>) -> BoxFuture<'a, Response>,
 {
-    fn handle<'a>(&'a self, cx: Request<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
-        (self)(cx, next)
+    fn handle<'a>(&'a self, req: Request<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
+        (self)(req, next)
     }
 }
 
@@ -46,12 +42,12 @@ pub struct Next<'a, State> {
 
 impl<'a, State: 'static> Next<'a, State> {
     /// Asynchronously execute the remaining middleware chain.
-    pub fn run(mut self, cx: Request<State>) -> BoxFuture<'a, Response> {
+    pub fn run(mut self, req: Request<State>) -> BoxFuture<'a, Response> {
         if let Some((current, next)) = self.next_middleware.split_first() {
             self.next_middleware = next;
-            current.handle(cx, self)
+            current.handle(req, self)
         } else {
-            (self.endpoint)(cx)
+            (self.endpoint)(req)
         }
     }
 }

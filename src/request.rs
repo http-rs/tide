@@ -2,22 +2,29 @@ use http::{HeaderMap, Method, Uri, Version};
 use http_service::Body;
 use route_recognizer::Params;
 use serde::Deserialize;
+
+use async_std::prelude::*;
+use async_std::task::{Context, Poll};
+use async_std::io::{self, prelude::*};
+
 use std::{str::FromStr, sync::Arc};
+use std::pin::Pin;
 
-use crate::error::ResultExt;
-
-/// An HTTP request.
-///
-/// The `Request` gives endpoints access to basic information about the incoming
-/// request, route parameters, and various ways of accessing the request's body.
-///
-/// Requests also provide *extensions*, a type map primarily used for low-level
-/// communication between middleware and endpoints.
-#[derive(Debug)]
-pub struct Request<State> {
-    state: Arc<State>,
-    request: http_service::Request,
-    route_params: Params,
+pin_project_lite::pin_project! {
+    /// An HTTP request.
+    ///
+    /// The `Request` gives endpoints access to basic information about the incoming
+    /// request, route parameters, and various ways of accessing the request's body.
+    ///
+    /// Requests also provide *extensions*, a type map primarily used for low-level
+    /// communication between middleware and endpoints.
+    #[derive(Debug)]
+    pub struct Request<State> {
+        state: Arc<State>,
+        #[pin]
+        request: http_service::Request,
+        route_params: Params,
+    }
 }
 
 impl<State> Request<State> {
@@ -88,7 +95,9 @@ impl<State> Request<State> {
     /// Any I/O error encountered while reading the body is immediately returned
     /// as an `Err`.
     pub async fn body_bytes(&mut self) -> std::io::Result<Vec<u8>> {
-        self.take_body().into_vec().await
+        let mut buf = Vec::with_capacity(1024);
+        self.request.body_mut().read_to_end(&mut buf).await?;
+        Ok(buf)
     }
 
     /// Reads the entire request body into a string.
@@ -132,11 +141,23 @@ impl<State> Request<State> {
     }
 
     /// Parse the request body as a form.
-    pub async fn body_form<T: serde::de::DeserializeOwned>(&mut self) -> crate::Result<T> {
-        let body = self.take_body();
-        let body = body.into_vec().await.client_err()?;
-        Ok(serde_qs::from_bytes(&body)
-            .map_err(|e| crate::error::StringError(format!("could not decode form: {}", e)))
-            .client_err()?)
+    pub async fn body_form<T: serde::de::DeserializeOwned>(&mut self) -> io::Result<T> {
+        let body = self.body_bytes()
+            .await
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+        let res = serde_qs::from_bytes(&body)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, format!("could not decode form: {}", e)))?;
+        Ok(res)
+    }
+}
+
+impl<State> Read for Request<State> {
+    fn poll_read(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &mut [u8]
+    ) -> Poll<io::Result<usize>> {
+        let mut this = self.project();
+        Pin::new(this.request.body_mut()).poll_read(cx, buf)
     }
 }
