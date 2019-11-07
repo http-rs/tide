@@ -7,7 +7,7 @@
 //! # Serve the web
 //!
 //! Tide is a friendly HTTP server built for casual Rustaceans and veterans alike. It's completely
-//! modular, and built directly for `async/await`. Whether it's a light webhook, or an L7 load
+//! modular, and built directly for `async/await`. Whether it's a quick webhook, or an L7 load
 //! balancer, Tide will make it work.
 //!
 //! # Examples
@@ -31,8 +31,8 @@ pub mod server;
 #[macro_use]
 #[doc(hidden)]
 pub mod error;
-#[doc(hidden)]
-pub mod cookies;
+// #[doc(hidden)]
+// pub mod cookies;
 #[doc(hidden)]
 pub mod middleware;
 #[doc(hidden)]

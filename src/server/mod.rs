@@ -241,7 +241,7 @@ impl<State: Send + Sync + 'static> Server<State> {
     }
 
     /// Asynchronously serve the app at the given address.
-    #[cfg(feature = "hyper")]
+    #[cfg(feature = "hyper-server")]
     pub async fn listen(self, addr: impl std::net::ToSocketAddrs) -> std::io::Result<()> {
         // TODO: try handling all addresses
         let addr = addr
@@ -296,14 +296,13 @@ impl<State: Sync + Send + 'static> HttpService for Service<State> {
 
         Box::pin(async move {
             let Selection { endpoint, params } = router.route(&path, method);
-            let cx = Request::new(state, req, params);
-
             let next = Next {
                 endpoint,
                 next_middleware: &middleware,
             };
 
-            let res: http_service::Response = next.run(cx).await.into();
+            let req = Request::new(state, req, params);
+            let res: http_service::Response = next.run(req).await.into();
             Ok(res)
         })
     }
