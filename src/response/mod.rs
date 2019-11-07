@@ -1,5 +1,7 @@
 use http::StatusCode;
 use http_service::Body;
+use mime::Mime;
+
 pub use into_response::IntoResponse;
 
 mod into_response;
@@ -32,10 +34,27 @@ impl Response {
     }
 
     /// Insert an HTTP header.
-    pub fn insert_header(mut self, key: &'static str, value: impl AsRef<str>) -> Self {
+    pub fn set_header(mut self, key: &'static str, value: impl AsRef<str>) -> Self {
         let value = value.as_ref().to_owned();
         self.res.headers_mut().insert(key, value.parse().unwrap());
         self
+    }
+
+    /// Set the request MIME.
+    ///
+    /// [Read more on MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types)
+    pub fn set_mime(self, mime: Mime) -> Self {
+        self.set_header("Content-Type", format!("{}", mime))
+    }
+
+    /// Pass a string as the request body.
+    ///
+    /// # Mime
+    ///
+    /// The encoding is set to `text/plain; charset=utf-8`.
+    pub fn body_string(mut self, string: String) -> Self {
+        *self.res.body_mut() = string.into_bytes().into();
+        self.set_mime(mime::TEXT_PLAIN_UTF_8)
     }
 
     /// Encode a struct as a form and set as the response body.
@@ -47,7 +66,7 @@ impl Response {
         *self.res.body_mut() = Body::from(serde_qs::to_string(&form)?.into_bytes());
         Ok(self
             .set_status(StatusCode::OK)
-            .insert_header("Content-Type", "application/x-www-form-urlencoded"))
+            .set_header("Content-Type", "application/x-www-form-urlencoded"))
     }
 
     // fn body_multipart(&mut self) -> BoxTryFuture<Multipart<Cursor<Vec<u8>>>> {
