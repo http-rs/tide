@@ -42,6 +42,7 @@ bytes = "0.4.12"
 futures-preview = "0.3.0-alpha.19"
 anyhow = "1.0.19"
 pin-project-lite = "0.1.0"
+mime = "0.3.14"
 
 [dev-dependencies]
 basic-cookies = "0.1.3"

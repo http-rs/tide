@@ -39,21 +39,19 @@ pub trait IntoResponse: Send + Sized {
 //     }
 // }
 
-// impl IntoResponse for String {
-//     fn into_response(self) -> Response {
-//         http::Response::builder()
-//             .status(http::status::StatusCode::OK)
-//             .header("Content-Type", "text/plain; charset=utf-8")
-//             .body(Body::from(self.into_bytes()))
-//             .unwrap()
-//     }
-// }
+impl IntoResponse for String {
+    fn into_response(self) -> Response {
+        Response::new(http::status::StatusCode::OK)
+            .set_header("Content-Type", "text/plain; charset=utf-8")
+            .body_string(self)
+    }
+}
 
-// impl IntoResponse for &'_ str {
-//     fn into_response(self) -> Response {
-//         self.to_string().into_response()
-//     }
-// }
+impl IntoResponse for &'_ str {
+    fn into_response(self) -> Response {
+        self.to_string().into_response()
+    }
+}
 
 // impl IntoResponse for http::status::StatusCode {
 //     fn into_response(self) -> Response {
