@@ -4,6 +4,9 @@ use async_std::future::Future;
 use async_std::io;
 use async_std::sync::Arc;
 use async_std::task::{Context, Poll};
+use async_std::net::{ToSocketAddrs, TcpListener};
+use async_std::task;
+
 use http_service::HttpService;
 
 use std::pin::Pin;
@@ -242,16 +245,28 @@ impl<State: Send + Sync + 'static> Server<State> {
 
     /// Asynchronously serve the app at the given address.
     #[cfg(feature = "hyper-server")]
-    pub async fn listen(self, addr: impl std::net::ToSocketAddrs) -> std::io::Result<()> {
-        // TODO: try handling all addresses
-        let addr = addr
-            .to_socket_addrs()?
-            .next()
-            .ok_or(std::io::ErrorKind::InvalidInput)?;
+    pub async fn listen(self, addr: impl ToSocketAddrs) -> std::io::Result<()> {
+        #[derive(Copy, Clone)]
+        struct Spawner;
 
-        println!("Service is listening on: http://{}", addr);
-        let res = http_service_hyper::serve(self.into_http_service(), addr).await;
-        res.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
+        impl futures::task::Spawn for &Spawner {
+            fn spawn_obj(&mut self, future: futures::future::FutureObj<'static, ()>) -> Result<(), futures::task::SpawnError> {
+                task::spawn(Box::pin(future));
+                Ok(())
+            }
+        }
+
+        let listener = TcpListener::bind(addr).await?;
+        println!("Server is listening on: http://{}", listener.local_addr()?);
+        let http_service = self.into_http_service();
+
+        let res = http_service_hyper::Server::builder(listener.incoming())
+            .with_spawner(Spawner {})
+            .serve(http_service)
+            .await;
+
+        res.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+        Ok(())
     }
 }
 
