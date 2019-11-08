@@ -1,4 +1,6 @@
 use async_std::io::prelude::*;
+
+use serde::Serialize;
 use http::StatusCode;
 use http_service::Body;
 use mime::Mime;
@@ -81,6 +83,12 @@ impl Response {
         Ok(self
             .set_status(StatusCode::OK)
             .set_header("Content-Type", "application/x-www-form-urlencoded"))
+    }
+
+    /// Encode a struct as a form and set as the response body.
+    pub fn body_json(mut self, json: &impl Serialize) -> serde_json::Result<Self> {
+        *self.res.body_mut() = serde_json::to_vec(json)?.into();
+        Ok(self.set_mime(mime::APPLICATION_JSON))
     }
 
     // fn body_multipart(&mut self) -> BoxTryFuture<Multipart<Cursor<Vec<u8>>>> {
