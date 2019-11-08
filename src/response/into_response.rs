@@ -1,4 +1,4 @@
-use crate::Response;
+use crate::{Request, Response};
 
 /// Conversion into a `Response`.
 pub trait IntoResponse: Send + Sized {
@@ -47,6 +47,12 @@ impl IntoResponse for String {
     }
 }
 
+impl<State: Send + Sync + 'static> IntoResponse for Request<State> {
+    fn into_response(self) -> Response {
+        Response::new(http::status::StatusCode::OK).body(self)
+    }
+}
+
 impl IntoResponse for &'_ str {
     fn into_response(self) -> Response {
         self.to_string().into_response()
@@ -80,11 +86,11 @@ impl IntoResponse for &'_ str {
 //     }
 // }
 
-// impl<T: Send + Into<Body>> IntoResponse for http::Response<T> {
-//     fn into_response(self) -> Response {
-//         self.map(Into::into)
-//     }
-// }
+impl IntoResponse for Response {
+    fn into_response(self) -> Response {
+        self
+    }
+}
 
 /// A response type that modifies the status code.
 #[derive(Debug)]

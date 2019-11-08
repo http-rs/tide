@@ -1,3 +1,4 @@
+use async_std::io::prelude::*;
 use http::StatusCode;
 use http_service::Body;
 use mime::Mime;
@@ -55,6 +56,19 @@ impl Response {
     pub fn body_string(mut self, string: String) -> Self {
         *self.res.body_mut() = string.into_bytes().into();
         self.set_mime(mime::TEXT_PLAIN_UTF_8)
+    }
+
+    /// Pass a string as the request body.
+    ///
+    /// # Mime
+    ///
+    /// The encoding is set to `text/plain; charset=utf-8`.
+    pub fn body<R>(mut self, reader: R) -> Self
+    where
+        R: Read + Unpin + Send + 'static,
+    {
+        *self.res.body_mut() = Box::new(reader).into();
+        self.set_mime(mime::APPLICATION_OCTET_STREAM)
     }
 
     /// Encode a struct as a form and set as the response body.
