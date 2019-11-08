@@ -40,7 +40,7 @@
 //! _note: this example doesn't compile yet because we still need to work on
 //! our error handling. Replace `?` with `.unwrap()` if you want to make this
 //! compile_
-//! ```skip
+//! ```ignore
 //! # use futures::executor::block_on;
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
 //! #
@@ -60,6 +60,7 @@
 //! ```
 //!
 //! # Stability
+//!
 //! It's still early in Tide's development cycle. While the general shape of Tide might have
 //! roughly established, the exact traits and function paramaters may change between versions. In
 //! practice this means that building your core business on Tide is probably not a wise idea...
