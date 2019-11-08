@@ -37,7 +37,10 @@
 //! ````
 //!
 //! __send and receive json__
-//! ```no_run
+//! _note: this example doesn't compile yet because we still need to work on
+//! our error handling. Replace `?` with `.unwrap()` if you want to make this
+//! compile_
+//! ```skip
 //! # use futures::executor::block_on;
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
 //! #

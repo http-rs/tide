@@ -26,9 +26,17 @@ impl Response {
         Self { res }
     }
 
-    /// Create a new instance with an `200 OK` status code.
-    pub fn ok() -> Self {
-        Self::new(200)
+    /// Create a new instance from a reader.
+    pub fn with_reader<R>(status: u16, reader: R) -> Self
+    where
+        R: Read + Unpin + Send + 'static,
+    {
+        let status = http::StatusCode::from_u16(status).expect("invalid status code");
+        let res = http::Response::builder()
+            .status(status)
+            .body(Box::new(reader).into())
+            .unwrap();
+        Self { res }
     }
 
     /// Returns the statuscode.
