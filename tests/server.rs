@@ -2,6 +2,8 @@ use async_std::task;
 use async_std::future;
 use std::time::Duration;
 
+use serde::{Serialize, Deserialize};
+
 #[test]
 fn hello_world() -> Result<(), surf::Exception> {
     task::block_on(async {
@@ -47,6 +49,39 @@ fn echo_server() -> Result<(), surf::Exception> {
                 .recv_string()
                 .await?;
             assert_eq!(string, "chashu".to_string());
+            Ok(())
+        });
+
+        future::select!(server, client).await
+    })
+}
+
+#[test]
+fn json() -> Result<(), surf::Exception> {
+    #[derive(Deserialize, Serialize)]
+    struct Counter { count: usize }
+
+    task::block_on(async {
+        let server = task::spawn(async {
+            let mut app = tide::new();
+            app.at("/").get(|mut req: tide::Request<()>| async move {
+                let mut counter: Counter = req.body_json().await.unwrap();
+                assert_eq!(counter.count, 0);
+                counter.count = 1;
+                tide::Response::new(tide::http::StatusCode::OK)
+                    .body_json(&counter).unwrap()
+            });
+            app.listen("localhost:8082").await?;
+            Result::<(), surf::Exception>::Ok(())
+        });
+
+        let client = task::spawn(async {
+            task::sleep(Duration::from_millis(100)).await;
+            let counter: Counter = surf::get("localhost:8082")
+                .body_json(&Counter { count: 0 })?
+                .recv_json()
+                .await?;
+            assert_eq!(counter.count, 1);
             Ok(())
         });
 
