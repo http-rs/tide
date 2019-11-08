@@ -11,7 +11,7 @@ fn hello_world() -> Result<(), surf::Exception> {
             let mut app = tide::new();
             app.at("/").get(|mut req: tide::Request<()>| async move {
                 assert_eq!(req.body_string().await.unwrap(), "nori".to_string());
-                tide::Response::ok().body_string("says hello".to_string())
+                tide::Response::new(200).body_string("says hello".to_string())
             });
             app.listen("localhost:8080").await?;
             Result::<(), surf::Exception>::Ok(())
@@ -67,7 +67,7 @@ fn json() -> Result<(), surf::Exception> {
                 let mut counter: Counter = req.body_json().await.unwrap();
                 assert_eq!(counter.count, 0);
                 counter.count = 1;
-                tide::Response::ok().body_json(&counter).unwrap()
+                tide::Response::new(200).body_json(&counter).unwrap()
             });
             app.listen("localhost:8082").await?;
             Result::<(), surf::Exception>::Ok(())
