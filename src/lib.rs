@@ -57,7 +57,20 @@
 //! app.listen("127.0.0.1:8080").await?;
 //! #
 //! # Ok(()) }) }
-//! ````
+//! ```
+//!
+//! # Stability
+//! It's still early in Tide's development cycle. While the general shape of Tide might have
+//! roughly established, the exact traits and function paramaters may change between versions. In
+//! practice this means that building your core business on Tide is probably not a wise idea...
+//! yet.
+//!
+//! However we *are* committed to closely following semver, and documenting any and all breaking
+//! changes we make. Also as time goes on you may find that fewer and fewer changes occur, until we
+//! eventually remove this notice entirely.
+//!
+//! The goal of Tide is to build a premier HTTP experience for Async Rust. We have a long journey
+//! ahead of us. But we're excited you're here with us!
 
 mod endpoint;
 mod request;
