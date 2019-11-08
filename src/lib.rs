@@ -16,9 +16,11 @@
 //! ```no_run
 //! # use futures::executor::block_on;
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
+//! #
 //! let mut app = tide::new();
 //! app.at("/").get(|_| async move { "Hello, world!" });
 //! app.listen("127.0.0.1:8080").await?;
+//! #
 //! # Ok(()) }) }
 //! ````
 //!
@@ -26,9 +28,31 @@
 //! ```no_run
 //! # use futures::executor::block_on;
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
+//! #
 //! let mut app = tide::new();
 //! app.at("/").get(|req| async move { req });
 //! app.listen("127.0.0.1:8080").await?;
+//! #
+//! # Ok(()) }) }
+//! ````
+//!
+//! __send and receive json__
+//! ```no_run
+//! # use futures::executor::block_on;
+//! # fn main() -> Result<(), std::io::Error> { block_on(async {
+//! #
+//! #[derive(Debug, Deserialize, Serialize)]
+//! struct Counter { count: usize }
+//!
+//! let mut app = tide::new();
+//! app.at("/").get(|mut req: tide::Request<()>| async move {
+//!    let mut counter: Counter = req.body_json().await?;
+//!    println!("count is {}", counter.count);
+//!    counter.count += 1;
+//!    tide::Response::new(200).body_json(&counter)?
+//! });
+//! app.listen("127.0.0.1:8080").await?;
+//! #
 //! # Ok(()) }) }
 //! ````
 

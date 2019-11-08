@@ -17,12 +17,18 @@ pub struct Response {
 
 impl Response {
     /// Create a new instance.
-    pub fn new(status: http::StatusCode) -> Self {
+    pub fn new(status: u16) -> Self {
+        let status = http::StatusCode::from_u16(status).expect("invalid status code");
         let res = http::Response::builder()
             .status(status)
             .body(Body::empty())
             .unwrap();
         Self { res }
+    }
+
+    /// Create a new instance with an `200 OK` status code.
+    pub fn ok() -> Self {
+        Self::new(200)
     }
 
     /// Returns the statuscode.
@@ -124,20 +130,3 @@ impl From<http_service::Response> for Response {
         Self { res }
     }
 }
-
-// /// Serialize `t` into a JSON-encoded response.
-// pub fn json<T: serde::Serialize>(t: T) -> Response {
-//     let mut res = http::Response::builder();
-//     match serde_json::to_vec(&t) {
-//         Ok(v) => res
-//             .header("Content-Type", "application/json")
-//             .body(Body::from(v))
-//             .unwrap(),
-//         Err(e) => {
-//             log::error!("{}", e);
-//             res.status(http::status::StatusCode::INTERNAL_SERVER_ERROR)
-//                 .body(Body::empty())
-//                 .unwrap()
-//         }
-//     }
-// }
