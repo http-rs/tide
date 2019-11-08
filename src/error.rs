@@ -39,7 +39,7 @@ impl From<Response> for Error {
 impl From<StatusCode> for Error {
     fn from(status: StatusCode) -> Error {
         Error {
-            resp: Response::new(status),
+            resp: Response::new(status.as_u16()),
         }
     }
 }

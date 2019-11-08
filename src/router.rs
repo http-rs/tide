@@ -59,5 +59,5 @@ impl<State: 'static> Router<State> {
 }
 
 fn not_found_endpoint<State>(_cx: Request<State>) -> BoxFuture<'static, Response> {
-    Box::pin(async move { Response::new(http::StatusCode::NOT_FOUND) })
+    Box::pin(async move { Response::new(http::StatusCode::NOT_FOUND.as_u16()) })
 }

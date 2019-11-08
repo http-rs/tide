@@ -41,7 +41,7 @@ pub trait IntoResponse: Send + Sized {
 
 impl IntoResponse for String {
     fn into_response(self) -> Response {
-        Response::new(http::status::StatusCode::OK)
+        Response::ok()
             .set_header("Content-Type", "text/plain; charset=utf-8")
             .body_string(self)
     }
@@ -49,7 +49,7 @@ impl IntoResponse for String {
 
 impl<State: Send + Sync + 'static> IntoResponse for Request<State> {
     fn into_response(self) -> Response {
-        Response::new(http::status::StatusCode::OK).body(self)
+        Response::ok().body(self)
     }
 }
 
