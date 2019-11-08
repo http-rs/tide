@@ -12,12 +12,23 @@
 //!
 //! # Examples
 //!
+//! __hello world__
 //! ```no_run
 //! # use futures::executor::block_on;
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
 //! let mut app = tide::new();
 //! app.at("/").get(|_| async move { "Hello, world!" });
-//! app.listen("127.0.0.1:8000").await?;
+//! app.listen("127.0.0.1:8080").await?;
+//! # Ok(()) }) }
+//! ````
+//!
+//! __echo server__
+//! ```no_run
+//! # use futures::executor::block_on;
+//! # fn main() -> Result<(), std::io::Error> { block_on(async {
+//! let mut app = tide::new();
+//! app.at("/").get(|req| async move { req });
+//! app.listen("127.0.0.1:8080").await?;
 //! # Ok(()) }) }
 //! ````
 
