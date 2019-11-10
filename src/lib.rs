@@ -74,26 +74,24 @@
 //! ahead of us. But we're excited you're here with us!
 
 mod endpoint;
+mod error;
 mod request;
 mod response;
 mod router;
 mod utils;
 
+pub mod prelude;
 pub mod server;
-pub mod error;
 pub mod middleware;
 
 pub use endpoint::Endpoint;
-#[doc(inline)]
-pub use error::Result;
 pub use request::Request;
+pub use error::{Error, Result, ResultExt};
+
 #[doc(inline)]
 pub use response::{IntoResponse, Response};
 #[doc(inline)]
 pub use server::{Route, Server};
-
-#[doc(hidden)]
-pub use error::Error;
 
 pub use http;
 
