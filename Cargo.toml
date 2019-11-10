@@ -37,7 +37,7 @@ serde = "1.0.102"
 serde_json = "1.0.41"
 serde_qs = "0.5.0"
 async-std = { version = "=0.99.11", features = ["unstable"] }
-hyper = "0.12.35"
+hyper = { version = "0.12.35", default-features = false }
 bytes = "0.4.12"
 futures-preview = "0.3.0-alpha.19"
 anyhow = "1.0.19"

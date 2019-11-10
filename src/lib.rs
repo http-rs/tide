@@ -81,13 +81,10 @@ mod utils;
 pub mod server;
 
 #[macro_use]
-#[doc(hidden)]
 pub mod error;
 // #[doc(hidden)]
 // pub mod cookies;
-#[doc(hidden)]
 pub mod middleware;
-#[doc(hidden)]
 pub mod response;
 
 pub use endpoint::Endpoint;
