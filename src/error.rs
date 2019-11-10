@@ -35,7 +35,7 @@ impl From<StatusCode> for Error {
     }
 }
 
-/// Extends the `Result` type with convenient methods for constructing Tide errors.
+/// Extension methods for `Result`.
 pub trait ResultExt<T>: Sized {
     /// Convert to an `Result`, treating the `Err` case as a client
     /// error (response code 400).
