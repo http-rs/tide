@@ -1,3 +1,5 @@
+//! Middleware types.
+
 use std::sync::Arc;
 
 #[doc(inline)]
