@@ -75,17 +75,13 @@
 
 mod endpoint;
 mod request;
+mod response;
 mod router;
 mod utils;
 
 pub mod server;
-
-#[macro_use]
 pub mod error;
-// #[doc(hidden)]
-// pub mod cookies;
 pub mod middleware;
-pub mod response;
 
 pub use endpoint::Endpoint;
 #[doc(inline)]

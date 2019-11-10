@@ -1,7 +1,12 @@
 use std::sync::Arc;
 
+#[doc(inline)]
+pub use crate::{Request, Response};
+#[doc(inline)]
+pub use http_service::{Body, HttpService};
+
+use crate::endpoint::DynEndpoint;
 use crate::utils::BoxFuture;
-use crate::{endpoint::DynEndpoint, Request, Response};
 
 // mod compression;
 // mod cookies;
