@@ -77,6 +77,7 @@ mod endpoint;
 mod error;
 mod request;
 mod response;
+mod redirect;
 mod router;
 mod utils;
 
@@ -85,6 +86,7 @@ pub mod server;
 pub mod middleware;
 
 pub use endpoint::Endpoint;
+pub use redirect::redirect;
 pub use request::Request;
 pub use error::{Error, Result, ResultExt};
 
