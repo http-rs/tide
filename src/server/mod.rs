@@ -37,105 +37,104 @@ pub use route::Route;
 /// - Middleware extends the base Tide framework with additional request or
 /// response processing, such as compression, default headers, or logging. To
 /// add middleware to an app, use the [`Server::middleware`] method.
-///
-/// # Hello, world!
-///
-/// You can start a simple Tide application that listens for `GET` requests at path `/hello`
-/// on `127.0.0.1:8000` with:
-///
-/// ```rust, no_run
-///
-/// let mut app = tide::Server::new();
-/// app.at("/hello").get(|_| async move {"Hello, world!"});
-/// app.run("127.0.0.1:8000").unwrap();
-/// ```
-///
-/// # Routing and parameters
-///
-/// Tide's routing system is simple and similar to many other frameworks. It
-/// uses `:foo` for "wildcard" URL segments, and `*foo` to match the rest of a
-/// URL (which may include multiple segments). Here's an example using wildcard
-/// segments as parameters to endpoints:
-///
-/// ```rust, no_run
-/// use tide::error::ResultExt;
-///
-/// async fn hello(cx: tide::Request<()>) -> tide::Result<String> {
-///     let user: String = cx.param("user").client_err()?;
-///     Ok(format!("Hello, {}!", user))
-/// }
-///
-/// async fn goodbye(cx: tide::Request<()>) -> tide::Result<String> {
-///     let user: String = cx.param("user").client_err()?;
-///     Ok(format!("Goodbye, {}.", user))
-/// }
-///
-/// let mut app = tide::Server::new();
-///
-/// app.at("/hello/:user").get(hello);
-/// app.at("/goodbye/:user").get(goodbye);
-/// app.at("/").get(|_| async move {
-///     "Use /hello/{your name} or /goodbye/{your name}"
-/// });
-///
-/// app.run("127.0.0.1:8000").unwrap();
-/// ```
-///
-/// You can learn more about routing in the [`Server::at`] documentation.
-///
-/// # Serverlication state
-///
-/// ```rust, no_run
-///
-/// use http::status::StatusCode;
-/// use serde::{Deserialize, Serialize};
-/// use std::sync::Mutex;
-/// use tide::{error::ResultExt, response, Server, Request, Result};
-///
-/// #[derive(Default)]
-/// struct Database {
-///     contents: Mutex<Vec<Message>>,
-/// }
-///
-/// #[derive(Serialize, Deserialize, Clone)]
-/// struct Message {
-///     author: Option<String>,
-///     contents: String,
-/// }
-///
-/// impl Database {
-///     fn insert(&self, msg: Message) -> usize {
-///         let mut table = self.contents.lock().unwrap();
-///         table.push(msg);
-///         table.len() - 1
-///     }
-///
-///     fn get(&self, id: usize) -> Option<Message> {
-///         self.contents.lock().unwrap().get(id).cloned()
-///     }
-/// }
-///
-/// async fn new_message(mut cx: Request<Database>) -> Result<String> {
-///     let msg = cx.body_json().await.client_err()?;
-///     Ok(cx.state().insert(msg).to_string())
-/// }
-///
-/// async fn get_message(cx: Request<Database>) -> Result {
-///     let id = cx.param("id").client_err()?;
-///     if let Some(msg) = cx.state().get(id) {
-///         Ok(response::json(msg))
-///     } else {
-///         Err(StatusCode::NOT_FOUND)?
-///     }
-/// }
-///
-/// fn main() {
-///     let mut app = Server::with_state(Database::default());
-///     app.at("/message").post(new_message);
-///     app.at("/message/:id").get(get_message);
-///     app.run("127.0.0.1:8000").unwrap();
-/// }
-/// ```
+/////
+///// # Hello, world!
+/////
+///// You can start a simple Tide application that listens for `GET` requests at path `/hello`
+///// on `127.0.0.1:8000` with:
+/////
+///// ```rust, no_run
+/////
+///// let mut app = tide::Server::new();
+///// app.at("/hello").get(|_| async move {"Hello, world!"});
+///// // app.run("127.0.0.1:8000").unwrap();
+///// ```
+/////
+///// # Routing and parameters
+/////
+///// Tide's routing system is simple and similar to many other frameworks. It
+///// uses `:foo` for "wildcard" URL segments, and `*foo` to match the rest of a
+///// URL (which may include multiple segments). Here's an example using wildcard
+///// segments as parameters to endpoints:
+/////
+///// ```no_run
+///// use tide::error::ResultExt;
+/////
+///// async fn hello(cx: tide::Request<()>) -> tide::Result<String> {
+/////     let user: String = cx.param("user")?;
+/////     Ok(format!("Hello, {}!", user))
+///// }
+/////
+///// async fn goodbye(cx: tide::Request<()>) -> tide::Result<String> {
+/////     let user: String = cx.param("user")?;
+/////     Ok(format!("Goodbye, {}.", user))
+///// }
+/////
+///// let mut app = tide::Server::new();
+/////
+///// app.at("/hello/:user").get(hello);
+///// app.at("/goodbye/:user").get(goodbye);
+///// app.at("/").get(|_| async move {
+/////     "Use /hello/{your name} or /goodbye/{your name}"
+///// });
+/////
+///// // app.run("127.0.0.1:8000").unwrap();
+///// ```
+/////
+///// You can learn more about routing in the [`Server::at`] documentation.
+/////
+///// # Serverlication state
+/////
+///// ```rust,no_run
+///// use http::status::StatusCode;
+///// use serde::{Deserialize, Serialize};
+///// use std::sync::Mutex;
+///// use tide::{error::ResultExt, Server, Request, Result};
+/////
+///// #[derive(Default)]
+///// struct Database {
+/////     contents: Mutex<Vec<Message>>,
+///// }
+/////
+///// #[derive(Serialize, Deserialize, Clone)]
+///// struct Message {
+/////     author: Option<String>,
+/////     contents: String,
+///// }
+/////
+///// impl Database {
+/////     fn insert(&self, msg: Message) -> usize {
+/////         let mut table = self.contents.lock().unwrap();
+/////         table.push(msg);
+/////         table.len() - 1
+/////     }
+/////
+/////     fn get(&self, id: usize) -> Option<Message> {
+/////         self.contents.lock().unwrap().get(id).cloned()
+/////     }
+///// }
+/////
+///// async fn new_message(mut cx: Request<Database>) -> Result<String> {
+/////     let msg = cx.body_json().await?;
+/////     Ok(cx.state().insert(msg).to_string())
+///// }
+/////
+///// async fn get_message(cx: Request<Database>) -> Result {
+/////     let id = cx.param("id").unwrap();
+/////     if let Some(msg) = cx.state().get(id) {
+/////         Ok(response::json(msg))
+/////     } else {
+/////         Err(StatusCode::NOT_FOUND)?
+/////     }
+///// }
+/////
+///// fn main() {
+/////     let mut app = Server::with_state(Database::default());
+/////     app.at("/message").post(new_message);
+/////     app.at("/message/:id").get(get_message);
+/////     // app.run("127.0.0.1:8000").unwrap();
+///// }
+///// ```
 #[allow(missing_debug_implementations)]
 pub struct Server<State> {
     router: Router<State>,

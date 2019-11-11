@@ -19,7 +19,7 @@ use crate::{response::IntoResponse, Request, Response};
 ///
 /// A simple endpoint that is invoked on a `GET` request and returns a `String`:
 ///
-/// ```rust, no_run
+/// ```no_run
 /// async fn hello(_cx: tide::Request<()>) -> String {
 ///     String::from("hello")
 /// }
@@ -27,13 +27,12 @@ use crate::{response::IntoResponse, Request, Response};
 /// fn main() {
 ///     let mut app = tide::Server::new();
 ///     app.at("/hello").get(hello);
-///     app.run("127.0.0.1:8000").unwrap()
 /// }
 /// ```
 ///
 /// An endpoint with similar functionality that does not make use of the `async` keyword would look something like this:
 ///
-/// ```rust, no_run
+/// ```no_run
 /// # use core::future::Future;
 /// fn hello(_cx: tide::Request<()>) -> impl Future<Output = String> {
 ///     futures::future::ready(String::from("hello"))
@@ -42,7 +41,6 @@ use crate::{response::IntoResponse, Request, Response};
 /// fn main() {
 ///     let mut app = tide::Server::new();
 ///     app.at("/hello").get(hello);
-///     app.run("127.0.0.1:8000").unwrap()
 /// }
 /// ```
 ///

@@ -8,7 +8,7 @@ pub trait IntoResponse: Send + Sized {
     /// Create a new `IntoResponse` value that will respond with the given status code.
     ///
     /// ```
-    /// # use tide::response::IntoResponse;
+    /// # use tide::IntoResponse;
     /// let resp = "Hello, 404!".with_status(http::status::StatusCode::NOT_FOUND).into_response();
     /// assert_eq!(resp.status(), http::status::StatusCode::NOT_FOUND);
     /// ```
