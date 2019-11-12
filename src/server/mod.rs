@@ -44,10 +44,12 @@ pub use route::Route;
 /// on `127.0.0.1:8000` with:
 ///
 /// ```rust, no_run
-///
+/// # #![allow(unused_must_use)]
+/// # async {
 /// let mut app = tide::Server::new();
 /// app.at("/hello").get(|_| async move {"Hello, world!"});
-/// app.run("127.0.0.1:8000").unwrap();
+/// app.listen("127.0.0.1:8000").await.unwrap();
+/// # };
 /// ```
 ///
 /// # Routing and parameters
@@ -58,8 +60,9 @@ pub use route::Route;
 /// segments as parameters to endpoints:
 ///
 /// ```rust, no_run
-/// use tide::error::ResultExt;
+/// use tide::ResultExt;
 ///
+/// # async {
 /// async fn hello(cx: tide::Request<()>) -> tide::Result<String> {
 ///     let user: String = cx.param("user").client_err()?;
 ///     Ok(format!("Hello, {}!", user))
@@ -78,7 +81,8 @@ pub use route::Route;
 ///     "Use /hello/{your name} or /goodbye/{your name}"
 /// });
 ///
-/// app.run("127.0.0.1:8000").unwrap();
+/// app.listen("127.0.0.1:8000").await.unwrap();
+/// # };
 /// ```
 ///
 /// You can learn more about routing in the [`Server::at`] documentation.
@@ -90,7 +94,7 @@ pub use route::Route;
 /// use http::status::StatusCode;
 /// use serde::{Deserialize, Serialize};
 /// use std::sync::Mutex;
-/// use tide::{error::ResultExt, response, Server, Request, Result};
+/// use tide::{Server, Request, Result, ResultExt};
 ///
 /// #[derive(Default)]
 /// struct Database {
@@ -120,10 +124,10 @@ pub use route::Route;
 ///     Ok(cx.state().insert(msg).to_string())
 /// }
 ///
-/// async fn get_message(cx: Request<Database>) -> Result {
+/// fn get_message(cx: Request<Database>) -> Result {
 ///     let id = cx.param("id").client_err()?;
 ///     if let Some(msg) = cx.state().get(id) {
-///         Ok(response::json(msg))
+///         Ok(cx.body_json())
 ///     } else {
 ///         Err(StatusCode::NOT_FOUND)?
 ///     }
