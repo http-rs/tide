@@ -52,15 +52,10 @@ jobs:
     steps:
     - uses: actions/checkout@master
 
-    - id: component
-      uses: actions-rs/components-nightly@v1
-      with:
-        component: rustfmt
-
     - uses: actions-rs/toolchain@v1
       with:
-          toolchain: ${{ steps.component.outputs.toolchain }}
-          override: true
+        toolchain: stable
+        override: true
 
     - name: setup
       run: |
@@ -79,7 +74,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Install rust
-        run: rustup update beta && rustup default beta
+        run: rustup update stable && rustup default stable
       - name: Install clippy
         run: rustup component add clippy
       - name: clippy
