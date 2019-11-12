@@ -22,7 +22,7 @@ use crate::{Request, Response, Endpoint};
 /// #
 /// # Ok(()) }) }
 /// ````
-pub async fn redirect<State>(location: impl AsRef<str>) -> impl Endpoint<State> {
+pub fn redirect<State>(location: impl AsRef<str>) -> impl Endpoint<State> {
     let location = location.as_ref().to_owned();
     Redirect { location }
 }
