@@ -34,7 +34,7 @@ were right before splitting up the crate. This release is mostly similar to
 - Added keywords and categories to Cargo.toml.
 - Implemented `Default` for `App`.
 - Added `App::with_state` constructor method.
-- Added `Request::state` (replacing `Request::app_data`)
+- Added `Context::state` (replacing `Request::app_data`)
 
 ### Changed
 
@@ -53,7 +53,7 @@ were right before splitting up the crate. This release is mostly similar to
 - Removed an extra incoming license requirement.
 - Removed outdated version logs.
 - Removed `rustfmt.toml`.
-- Removed `Request::app_data` (replaced with `Request::state`).
+- Removed `Request::app_data` (replaced with `Context::state`).
 
 ## [0.2.0] - 2019-05-03
 
