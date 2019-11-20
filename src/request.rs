@@ -60,6 +60,29 @@ impl<State> Request<State> {
         self.request.headers()
     }
 
+    /// Get an HTTP header.
+    pub fn header(&self, key: &'static str) -> Option<&'_ str> {
+        self.request.headers().get(key).map(|h| h.to_str().unwrap())
+    }
+
+    /// Set an HTTP header.
+    pub fn set_header(mut self, key: &'static str, value: impl AsRef<str>) -> Self {
+        let value = value.as_ref().to_owned();
+        self.request.headers_mut().insert(key, value.parse().unwrap());
+        self
+    }
+
+    /// Get a local value.
+    pub fn local<T: Send + Sync + 'static>(&self) -> Option<&T> {
+        self.request.extensions().get()
+    }
+
+    /// Set a local value.
+    pub fn set_local<T: Send + Sync + 'static>(mut self, val: T) -> Self {
+        self.request.extensions_mut().insert(val);
+        self
+    }
+
     ///  Access app-global state.
     pub fn state(&self) -> &State {
         &self.state
