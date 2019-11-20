@@ -29,12 +29,12 @@ impl Response {
     /// Create a new instance from a reader.
     pub fn with_reader<R>(status: u16, reader: R) -> Self
     where
-        R: Read + Unpin + Send + 'static,
+        R: BufRead + Unpin + Send + 'static,
     {
         let status = http::StatusCode::from_u16(status).expect("invalid status code");
         let res = http::Response::builder()
             .status(status)
-            .body(Box::new(reader).into())
+            .body(Box::pin(reader).into())
             .unwrap();
         Self { res }
     }
@@ -81,9 +81,9 @@ impl Response {
     /// The encoding is set to `text/plain; charset=utf-8`.
     pub fn body<R>(mut self, reader: R) -> Self
     where
-        R: Read + Unpin + Send + 'static,
+        R: BufRead + Unpin + Send + 'static,
     {
-        *self.res.body_mut() = Box::new(reader).into();
+        *self.res.body_mut() = Box::pin(reader).into();
         self.set_mime(mime::APPLICATION_OCTET_STREAM)
     }
 

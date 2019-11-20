@@ -31,15 +31,13 @@ http = "0.1.19"
 http-service = "0.3.1"
 http-service-hyper = { version = "0.3.1", optional = true }
 log = "0.4.8"
-# multipart = { version = "0.16.1", features = ["server"] }
 route-recognizer = "0.1.13"
 serde = "1.0.102"
 serde_json = "1.0.41"
 serde_qs = "0.5.0"
-async-std = { version = "=0.99.11", features = ["unstable"] }
+async-std = { version = "1.0.1", features = ["unstable"] }
 hyper = { version = "0.12.35", default-features = false }
 bytes = "0.4.12"
-futures-preview = "0.3.0-alpha.19"
 anyhow = "1.0.19"
 pin-project-lite = "0.1.0"
 mime = "0.3.14"
@@ -59,6 +57,6 @@ structopt = "0.3.3"
 surf = "1.0.3"
 
 [patch.crates-io]
-http-service = { git = "https://github.com/http-rs/http-service.git" }
-http-service-mock = { git = "https://github.com/http-rs/http-service.git" }
-http-service-hyper = { git = "https://github.com/http-rs/http-service.git" }
+http-service = { git = "https://github.com/http-rs/http-service.git", branch = "read-trait" }
+http-service-mock = { git = "https://github.com/http-rs/http-service.git", branch = "read-trait" }
+http-service-hyper = { git = "https://github.com/http-rs/http-service.git", branch = "read-trait" }

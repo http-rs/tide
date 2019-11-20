@@ -249,7 +249,7 @@ impl<State: Send + Sync + 'static> Server<State> {
         struct Spawner;
 
         impl futures::task::Spawn for &Spawner {
-            fn spawn_obj(&mut self, future: futures::future::FutureObj<'static, ()>) -> Result<(), futures::task::SpawnError> {
+            fn spawn_obj(&self, future: futures::future::FutureObj<'static, ()>) -> Result<(), futures::task::SpawnError> {
                 task::spawn(Box::pin(future));
                 Ok(())
             }

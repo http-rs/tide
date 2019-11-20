@@ -1,4 +1,5 @@
 use crate::{Request, Response};
+use async_std::io::BufReader;
 
 /// Conversion into a `Response`.
 pub trait IntoResponse: Send + Sized {
@@ -49,7 +50,7 @@ impl IntoResponse for String {
 
 impl<State: Send + Sync + 'static> IntoResponse for Request<State> {
     fn into_response(self) -> Response {
-        Response::new(200).body(self)
+        Response::new(200).body(BufReader::new(self))
     }
 }
 
