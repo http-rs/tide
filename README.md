@@ -42,7 +42,7 @@
 </div>
 
 A modular web framework built around async/await. It's actively being developed
-and **not ready for production use yet**.
+and **not ready for production yet**.
 
 ## Examples
 
@@ -55,17 +55,6 @@ fn main() -> Result<(), std::io::Error> {
     Ok(app.run("127.0.0.1:8000")?)
 }
 ```
-
-**More Examples**
-
-- [Hello World](https://github.com/http-rs/tide/tree/master/examples/hello.rs)
-- [Messages](https://github.com/http-rs/tide/blob/master/examples/messages.rs)
-- [Body Types](https://github.com/http-rs/tide/blob/master/examples/body_types.rs)
-- [Multipart Form](https://github.com/http-rs/tide/tree/master/examples/multipart-form/main.rs)
-- [Catch All](https://github.com/http-rs/tide/tree/master/examples/catch_all.rs)
-- [Cookies](https://github.com/http-rs/tide/tree/master/examples/cookies.rs)
-- [Default Headers](https://github.com/http-rs/tide/tree/master/examples/default_headers.rs)
-- [GraphQL](https://github.com/http-rs/tide/tree/master/examples/graphql.rs)
 
 ## Resources
 
@@ -87,8 +76,8 @@ guide][contributing] and take a look at some of these issues:
 #### Conduct
 
 The Tide project adheres to the [Contributor Covenant Code of
-Conduct](https://github.com/http-rs/tide/blob/master/.github/CODE_OF_CONDUCT.md). This
-describes the minimum behavior expected from all contributors.
+Conduct](https://github.com/http-rs/tide/blob/master/.github/CODE_OF_CONDUCT.md).
+This describes the minimum behavior expected from all contributors.
 
 ## License
 
