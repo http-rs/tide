@@ -80,14 +80,16 @@ mod response;
 mod router;
 mod utils;
 
+pub mod middleware;
 pub mod prelude;
 pub mod server;
-pub mod middleware;
 
 pub use endpoint::Endpoint;
-pub use request::Request;
 pub use error::{Error, Result, ResultExt};
+pub use request::Request;
 
+#[doc(inline)]
+pub use middleware::{Middleware, Next};
 #[doc(inline)]
 pub use response::{IntoResponse, Response};
 #[doc(inline)]
