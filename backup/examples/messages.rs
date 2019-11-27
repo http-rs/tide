@@ -1,7 +1,7 @@
 use http::status::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
-use tide::{error::ResultExt, response, Request, Result, Server};
+use tide::{Request, Result, ResultExt, Server};
 
 #[derive(Default)]
 struct Database {
@@ -56,7 +56,7 @@ async fn set_message(mut cx: Request<Database>) -> Result<()> {
 async fn get_message(cx: Request<Database>) -> Result {
     let id = cx.param("id").client_err()?;
     if let Some(msg) = cx.state().get(id) {
-        Ok(response::json(msg))
+        Ok(cx.body_json())
     } else {
         Err(StatusCode::NOT_FOUND)?
     }
