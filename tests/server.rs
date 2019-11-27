@@ -1,4 +1,4 @@
-use async_std::future;
+use async_std::prelude::*;
 use async_std::task;
 use std::time::Duration;
 
@@ -29,7 +29,7 @@ fn hello_world() -> Result<(), surf::Exception> {
             Ok(())
         });
 
-        future::select!(server, client).await
+        server.race(client).await
     })
 }
 
@@ -53,7 +53,7 @@ fn echo_server() -> Result<(), surf::Exception> {
             Ok(())
         });
 
-        future::select!(server, client).await
+        server.race(client).await
     })
 }
 
@@ -89,6 +89,6 @@ fn json() -> Result<(), surf::Exception> {
             Ok(())
         });
 
-        future::select!(server, client).await
+        server.race(client).await
     })
 }
