@@ -1,8 +1,8 @@
 use route_recognizer::{Match, Params, Router as MethodRouter};
 use std::collections::HashMap;
 
-use crate::utils::BoxFuture;
 use crate::endpoint::{DynEndpoint, Endpoint};
+use crate::utils::BoxFuture;
 use crate::{Request, Response};
 
 /// The routing table used by `Server`

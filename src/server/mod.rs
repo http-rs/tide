@@ -2,10 +2,10 @@
 
 use async_std::future::Future;
 use async_std::io;
+use async_std::net::{TcpListener, ToSocketAddrs};
 use async_std::sync::Arc;
-use async_std::task::{Context, Poll};
-use async_std::net::{ToSocketAddrs, TcpListener};
 use async_std::task;
+use async_std::task::{Context, Poll};
 
 use http_service::HttpService;
 
@@ -249,7 +249,10 @@ impl<State: Send + Sync + 'static> Server<State> {
         struct Spawner;
 
         impl futures::task::Spawn for &Spawner {
-            fn spawn_obj(&self, future: futures::future::FutureObj<'static, ()>) -> Result<(), futures::task::SpawnError> {
+            fn spawn_obj(
+                &self,
+                future: futures::future::FutureObj<'static, ()>,
+            ) -> Result<(), futures::task::SpawnError> {
                 task::spawn(Box::pin(future));
                 Ok(())
             }

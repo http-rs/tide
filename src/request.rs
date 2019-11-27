@@ -3,12 +3,12 @@ use http_service::Body;
 use route_recognizer::Params;
 use serde::Deserialize;
 
+use async_std::io::{self, prelude::*};
 use async_std::prelude::*;
 use async_std::task::{Context, Poll};
-use async_std::io::{self, prelude::*};
 
-use std::{str::FromStr, sync::Arc};
 use std::pin::Pin;
+use std::{str::FromStr, sync::Arc};
 
 pin_project_lite::pin_project! {
     /// An HTTP request.
@@ -68,7 +68,9 @@ impl<State> Request<State> {
     /// Set an HTTP header.
     pub fn set_header(mut self, key: &'static str, value: impl AsRef<str>) -> Self {
         let value = value.as_ref().to_owned();
-        self.request.headers_mut().insert(key, value.parse().unwrap());
+        self.request
+            .headers_mut()
+            .insert(key, value.parse().unwrap());
         self
     }
 
@@ -165,11 +167,16 @@ impl<State> Request<State> {
 
     /// Parse the request body as a form.
     pub async fn body_form<T: serde::de::DeserializeOwned>(&mut self) -> io::Result<T> {
-        let body = self.body_bytes()
+        let body = self
+            .body_bytes()
             .await
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
-        let res = serde_qs::from_bytes(&body)
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, format!("could not decode form: {}", e)))?;
+        let res = serde_qs::from_bytes(&body).map_err(|e| {
+            std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("could not decode form: {}", e),
+            )
+        })?;
         Ok(res)
     }
 }
@@ -178,7 +185,7 @@ impl<State> Read for Request<State> {
     fn poll_read(
         self: Pin<&mut Self>,
         cx: &mut Context<'_>,
-        buf: &mut [u8]
+        buf: &mut [u8],
     ) -> Poll<io::Result<usize>> {
         let mut this = self.project();
         Pin::new(this.request.body_mut()).poll_read(cx, buf)

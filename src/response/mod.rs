@@ -1,9 +1,9 @@
 use async_std::io::prelude::*;
 
-use serde::Serialize;
 use http::StatusCode;
 use http_service::Body;
 use mime::Mime;
+use serde::Serialize;
 
 pub use into_response::IntoResponse;
 

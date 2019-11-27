@@ -1,17 +1,19 @@
-use async_std::task;
 use async_std::future;
+use async_std::task;
 use std::time::Duration;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[test]
 fn hello_world() -> Result<(), surf::Exception> {
     task::block_on(async {
         let server = task::spawn(async {
             let mut app = tide::new();
-            app.at("/").get(|mut req: tide::Request<()>| async move {
-                assert_eq!(req.body_string().await.unwrap(), "nori".to_string());
-                tide::Response::new(200).body_string("says hello".to_string())
+            app.at("/").get(|mut req: tide::Request<()>| {
+                async move {
+                    assert_eq!(req.body_string().await.unwrap(), "nori".to_string());
+                    tide::Response::new(200).body_string("says hello".to_string())
+                }
             });
             app.listen("localhost:8080").await?;
             Result::<(), surf::Exception>::Ok(())
@@ -58,16 +60,20 @@ fn echo_server() -> Result<(), surf::Exception> {
 #[test]
 fn json() -> Result<(), surf::Exception> {
     #[derive(Deserialize, Serialize)]
-    struct Counter { count: usize }
+    struct Counter {
+        count: usize,
+    }
 
     task::block_on(async {
         let server = task::spawn(async {
             let mut app = tide::new();
-            app.at("/").get(|mut req: tide::Request<()>| async move {
-                let mut counter: Counter = req.body_json().await.unwrap();
-                assert_eq!(counter.count, 0);
-                counter.count = 1;
-                tide::Response::new(200).body_json(&counter).unwrap()
+            app.at("/").get(|mut req: tide::Request<()>| {
+                async move {
+                    let mut counter: Counter = req.body_json().await.unwrap();
+                    assert_eq!(counter.count, 0);
+                    counter.count = 1;
+                    tide::Response::new(200).body_json(&counter).unwrap()
+                }
             });
             app.listen("localhost:8082").await?;
             Result::<(), surf::Exception>::Ok(())
