@@ -1,6 +1,6 @@
 [package]
 name = "tide"
-version = "0.4.0"
+version = "0.3.0"
 description = "Serve the web – HTTP server framework"
 authors = [
     "Aaron Turon <aturon@mozilla.com>",
@@ -38,6 +38,7 @@ serde_qs = "0.5.0"
 async-std = { version = "1.0.1", features = ["unstable"] }
 hyper = { version = "0.12.35", default-features = false }
 bytes = "0.4.12"
+anyhow = "1.0.19"
 pin-project-lite = "0.1.0"
 mime = "0.3.14"
 
