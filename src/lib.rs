@@ -75,12 +75,12 @@
 
 mod endpoint;
 mod error;
+mod middleware;
 mod request;
 mod response;
 mod router;
 mod utils;
 
-pub mod middleware;
 pub mod prelude;
 pub mod server;
 

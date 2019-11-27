@@ -28,8 +28,8 @@ accept-encoding = "0.2.0-alpha.2"
 cookie = { version = "0.12.0", features = ["percent-encode"] }
 futures = "0.3.1"
 http = "0.1.19"
-http-service = "0.3.1"
-http-service-hyper = { version = "0.3.1", optional = true }
+http-service = "0.4.0"
+http-service-hyper = { version = "0.4.1", optional = true }
 log = "0.4.8"
 route-recognizer = "0.1.13"
 serde = "1.0.102"
@@ -47,7 +47,7 @@ basic-cookies = "0.1.3"
 bytes = "0.4.12"
 futures-fs = "0.0.5"
 futures-util = { version = "0.3.0", features = ["compat"] }
-http-service-mock = "0.3.1"
+http-service-mock = "0.4.0"
 juniper = "0.14.1"
 mime = "0.3.14"
 mime_guess = "2.0.1"
@@ -55,8 +55,3 @@ percent-encoding = "2.1.0"
 serde = { version = "1.0.102", features = ["derive"] }
 structopt = "0.3.3"
 surf = "1.0.3"
-
-[patch.crates-io]
-http-service = { git = "https://github.com/http-rs/http-service.git", branch = "read-trait" }
-http-service-mock = { git = "https://github.com/http-rs/http-service.git", branch = "read-trait" }
-http-service-hyper = { git = "https://github.com/http-rs/http-service.git", branch = "read-trait" }
