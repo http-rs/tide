@@ -4,7 +4,6 @@ use route_recognizer::Params;
 use serde::Deserialize;
 
 use async_std::io::{self, prelude::*};
-use async_std::prelude::*;
 use async_std::task::{Context, Poll};
 
 use std::pin::Pin;
