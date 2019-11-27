@@ -1,29 +1,38 @@
 use http::{HeaderMap, Method, Uri, Version};
 use http_service::Body;
 use route_recognizer::Params;
+use serde::Deserialize;
+
+use async_std::io::{self, prelude::*};
+use async_std::task::{Context, Poll};
+
+use std::pin::Pin;
 use std::{str::FromStr, sync::Arc};
 
-/// State associated with a request-response lifecycle.
-///
-/// The `Context` gives endpoints access to basic information about the incoming
-/// request, route parameters, and various ways of accessing the request's body.
-///
-/// Contexts also provide *extensions*, a type map primarily used for low-level
-/// communication between middleware and endpoints.
-#[derive(Debug)]
-pub struct Context<State> {
-    state: Arc<State>,
-    request: http_service::Request,
-    route_params: Params,
+pin_project_lite::pin_project! {
+    /// An HTTP request.
+    ///
+    /// The `Request` gives endpoints access to basic information about the incoming
+    /// request, route parameters, and various ways of accessing the request's body.
+    ///
+    /// Requests also provide *extensions*, a type map primarily used for low-level
+    /// communication between middleware and endpoints.
+    #[derive(Debug)]
+    pub struct Request<State> {
+        state: Arc<State>,
+        #[pin]
+        request: http_service::Request,
+        route_params: Params,
+    }
 }
 
-impl<State> Context<State> {
+impl<State> Request<State> {
     pub(crate) fn new(
         state: Arc<State>,
         request: http::Request<Body>,
         route_params: Params,
-    ) -> Context<State> {
-        Context {
+    ) -> Request<State> {
+        Request {
             state,
             request,
             route_params,
@@ -50,14 +59,29 @@ impl<State> Context<State> {
         self.request.headers()
     }
 
-    /// Access the entire request.
-    pub fn request(&self) -> &http_service::Request {
-        &self.request
+    /// Get an HTTP header.
+    pub fn header(&self, key: &'static str) -> Option<&'_ str> {
+        self.request.headers().get(key).map(|h| h.to_str().unwrap())
     }
 
-    /// Access a mutable handle to the entire request.
-    pub fn request_mut(&mut self) -> &mut http_service::Request {
-        &mut self.request
+    /// Set an HTTP header.
+    pub fn set_header(mut self, key: &'static str, value: impl AsRef<str>) -> Self {
+        let value = value.as_ref().to_owned();
+        self.request
+            .headers_mut()
+            .insert(key, value.parse().unwrap());
+        self
+    }
+
+    /// Get a local value.
+    pub fn local<T: Send + Sync + 'static>(&self) -> Option<&T> {
+        self.request.extensions().get()
+    }
+
+    /// Set a local value.
+    pub fn set_local<T: Send + Sync + 'static>(mut self, val: T) -> Self {
+        self.request.extensions_mut().insert(val);
+        self
     }
 
     ///  Access app-global state.
@@ -95,7 +119,9 @@ impl<State> Context<State> {
     /// Any I/O error encountered while reading the body is immediately returned
     /// as an `Err`.
     pub async fn body_bytes(&mut self) -> std::io::Result<Vec<u8>> {
-        self.take_body().into_vec().await
+        let mut buf = Vec::with_capacity(1024);
+        self.request.body_mut().read_to_end(&mut buf).await?;
+        Ok(buf)
     }
 
     /// Reads the entire request body into a string.
@@ -128,20 +154,39 @@ impl<State> Context<State> {
         Ok(serde_json::from_slice(&body_bytes).map_err(|_| std::io::ErrorKind::InvalidData)?)
     }
 
-    /// Remove ownership of the request body, replacing it with an empty body.
-    ///
-    /// Used primarily for working directly with the body stream.
-    pub fn take_body(&mut self) -> Body {
-        std::mem::replace(self.request.body_mut(), Body::empty())
+    /// Get the URL querystring.
+    pub fn query<'de, T: Deserialize<'de>>(&'de self) -> Result<T, crate::Error> {
+        let query = self.uri().query();
+        if query.is_none() {
+            return Err(crate::Error::from(http::StatusCode::BAD_REQUEST));
+        }
+        Ok(serde_qs::from_str(query.unwrap())
+            .map_err(|_| crate::Error::from(http::StatusCode::BAD_REQUEST))?)
     }
 
-    /// Access the extensions to the context.
-    pub fn extensions(&self) -> &http::Extensions {
-        self.request.extensions()
+    /// Parse the request body as a form.
+    pub async fn body_form<T: serde::de::DeserializeOwned>(&mut self) -> io::Result<T> {
+        let body = self
+            .body_bytes()
+            .await
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+        let res = serde_qs::from_bytes(&body).map_err(|e| {
+            std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("could not decode form: {}", e),
+            )
+        })?;
+        Ok(res)
     }
+}
 
-    /// Mutably access the extensions to the context.
-    pub fn extensions_mut(&mut self) -> &mut http::Extensions {
-        self.request.extensions_mut()
+impl<State> Read for Request<State> {
+    fn poll_read(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &mut [u8],
+    ) -> Poll<io::Result<usize>> {
+        let mut this = self.project();
+        Pin::new(this.request.body_mut()).poll_read(cx, buf)
     }
 }

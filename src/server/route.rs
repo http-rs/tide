@@ -2,12 +2,12 @@ use crate::{router::Router, Endpoint};
 
 /// A handle to a route.
 ///
-/// All HTTP requests are made against resources. After using [`App::at`] (or
+/// All HTTP requests are made against resources. After using [`Server::at`] (or
 /// [`Route::at`]) to establish a route, the `Route` type can be used to
 /// establish endpoints for various HTTP methods at that path. Also, using
 /// `nest`, it can be used to set up a subrouter.
 ///
-/// [`App::at`]: ./struct.App.html#method.at
+/// [`Server::at`]: ./struct.Server.html#method.at
 #[allow(missing_debug_implementations)]
 pub struct Route<'a, State> {
     router: &'a mut Router<State>,

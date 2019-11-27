@@ -4,12 +4,12 @@ use http::header::HeaderValue;
 
 use crate::{
     middleware::{Middleware, Next},
-    Context, Response,
+    Request, Response,
 };
 
 /// Middleware to work with cookies.
 ///
-/// [`CookiesMiddleware`] along with [`ContextExt`](crate::cookies::ContextExt) provide smooth
+/// [`CookiesMiddleware`] along with [`RequestExt`](crate::cookies::RequestExt) provide smooth
 /// access to request cookies and setting/removing cookies from response. This leverages the
 /// [cookie](https://crates.io/crates/cookie) crate.
 /// This middleware parses cookies from request and caches them in the extension. Once the request
@@ -28,7 +28,7 @@ impl CookiesMiddleware {
 impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
     fn handle<'a>(
         &'a self,
-        mut cx: Context<State>,
+        mut cx: Request<State>,
         next: Next<'a, State>,
     ) -> BoxFuture<'a, Response> {
         Box::pin(async move {
@@ -63,7 +63,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{cookies::ContextExt, Context};
+    use crate::{cookies::RequestExt, Request};
     use cookie::Cookie;
     use futures::executor::block_on;
     use http_service::Body;
@@ -72,26 +72,26 @@ mod tests {
     static COOKIE_NAME: &str = "testCookie";
 
     /// Tide will use the the `Cookies`'s `Extract` implementation to build this parameter.
-    async fn retrieve_cookie(cx: Context<()>) -> String {
+    async fn retrieve_cookie(cx: Request<()>) -> String {
         format!("{}", cx.get_cookie(COOKIE_NAME).unwrap().unwrap().value())
     }
 
-    async fn set_cookie(mut cx: Context<()>) {
+    async fn set_cookie(mut cx: Request<()>) {
         cx.set_cookie(Cookie::new(COOKIE_NAME, "NewCookieValue"))
             .unwrap();
     }
 
-    async fn remove_cookie(mut cx: Context<()>) {
+    async fn remove_cookie(mut cx: Request<()>) {
         cx.remove_cookie(Cookie::named(COOKIE_NAME)).unwrap();
     }
 
-    async fn set_multiple_cookie(mut cx: Context<()>) {
+    async fn set_multiple_cookie(mut cx: Request<()>) {
         cx.set_cookie(Cookie::new("C1", "V1")).unwrap();
         cx.set_cookie(Cookie::new("C2", "V2")).unwrap();
     }
 
-    fn app() -> crate::App<()> {
-        let mut app = crate::App::new();
+    fn app() -> crate::Server<()> {
+        let mut app = crate::Server::new();
         app.middleware(CookiesMiddleware::new());
 
         app.at("/get").get(retrieve_cookie);

@@ -6,7 +6,7 @@ use http::{header, Method, StatusCode};
 use http_service::Body;
 
 use crate::middleware::{Middleware, Next};
-use crate::{Context, Response};
+use crate::{Request, Response};
 
 /// Middleware for CORS
 ///
@@ -147,7 +147,7 @@ impl Cors {
 }
 
 impl<State: Send + Sync + 'static> Middleware<State> for Cors {
-    fn handle<'a>(&'a self, cx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
+    fn handle<'a>(&'a self, cx: Request<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
         Box::pin(async move {
             let origin = cx
                 .request()
@@ -245,8 +245,8 @@ mod test {
 
     const ENDPOINT: &str = "/cors";
 
-    fn app() -> crate::App<()> {
-        let mut app = crate::App::new();
+    fn app() -> crate::Server<()> {
+        let mut app = crate::Server::new();
         app.at(ENDPOINT).get(|_| async move { "Hello World" });
 
         app

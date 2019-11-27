@@ -1,20 +1,17 @@
-use fnv::FnvHashMap;
-use futures::future::{BoxFuture, FutureExt};
-use http_service::Body;
 use route_recognizer::{Match, Params, Router as MethodRouter};
+use std::collections::HashMap;
 
-use crate::{
-    endpoint::{DynEndpoint, Endpoint},
-    Context, Response,
-};
+use crate::endpoint::{DynEndpoint, Endpoint};
+use crate::utils::BoxFuture;
+use crate::{Request, Response};
 
-/// The routing table used by `App`
+/// The routing table used by `Server`
 ///
 /// Internally, we have a separate state machine per http method; indexing
 /// by the method first allows the table itself to be more efficient.
 #[allow(missing_debug_implementations)]
 pub(crate) struct Router<State> {
-    method_map: FnvHashMap<http::Method, MethodRouter<Box<DynEndpoint<State>>>>,
+    method_map: HashMap<http::Method, MethodRouter<Box<DynEndpoint<State>>>>,
 }
 
 /// The result of routing a URL
@@ -26,7 +23,7 @@ pub(crate) struct Selection<'a, State> {
 impl<State: 'static> Router<State> {
     pub(crate) fn new() -> Router<State> {
         Router {
-            method_map: FnvHashMap::default(),
+            method_map: HashMap::default(),
         }
     }
 
@@ -34,7 +31,7 @@ impl<State: 'static> Router<State> {
         self.method_map
             .entry(method)
             .or_insert_with(MethodRouter::new)
-            .add(path, Box::new(move |cx| ep.call(cx).boxed()))
+            .add(path, Box::new(move |cx| Box::pin(ep.call(cx))))
     }
 
     pub(crate) fn route(&self, path: &str, method: http::Method) -> Selection<'_, State> {
@@ -61,11 +58,6 @@ impl<State: 'static> Router<State> {
     }
 }
 
-fn not_found_endpoint<State>(_cx: Context<State>) -> BoxFuture<'static, Response> {
-    Box::pin(async move {
-        http::Response::builder()
-            .status(http::StatusCode::NOT_FOUND)
-            .body(Body::empty())
-            .unwrap()
-    })
+fn not_found_endpoint<State>(_cx: Request<State>) -> BoxFuture<'static, Response> {
+    Box::pin(async move { Response::new(http::StatusCode::NOT_FOUND.as_u16()) })
 }

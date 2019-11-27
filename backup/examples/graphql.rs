@@ -6,9 +6,9 @@
 use http::status::StatusCode;
 use juniper::graphql_object;
 use std::sync::{atomic, Arc};
-use tide::{error::ResultExt, response, App, Context, EndpointResult};
+use tide::{error::ResultExt, response, Request, Result, Server};
 
-// First, we define `State` that holds accumulator state. This is accessible as App data in
+// First, we define `State` that holds accumulator state. This is accessible as Server data in
 // Tide, and as executor context in Juniper.
 #[derive(Clone, Default)]
 struct State(Arc<atomic::AtomicIsize>);
@@ -43,7 +43,7 @@ type Schema = juniper::RootNode<'static, Query, Mutation>;
 
 // Finally, we'll bridge between Tide and Juniper. `GraphQLRequest` from Juniper implements
 // `Deserialize`, so we use `Json` extractor to deserialize the request body.
-async fn handle_graphql(mut cx: Context<State>) -> EndpointResult {
+async fn handle_graphql(mut cx: Request<State>) -> Result {
     let query: juniper::http::GraphQLRequest = cx.body_json().await.client_err()?;
     let schema = Schema::new(Query, Mutation);
     let response = query.execute(&schema, cx.state());
@@ -58,7 +58,7 @@ async fn handle_graphql(mut cx: Context<State>) -> EndpointResult {
 }
 
 fn main() {
-    let mut app = App::with_state(State::default());
+    let mut app = Server::with_state(State::default());
     app.at("/graphql").post(handle_graphql);
     app.run("127.0.0.1:8000").unwrap();
 }

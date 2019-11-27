@@ -7,19 +7,63 @@ and this project adheres to [Semantic Versioning](https://book.async.rs/overview
 
 ## [Unreleased]
 
+## [0.4.0] - 2019-11-26
+
+This release is a further polishing of Tide's APIs, and works towards
+significantly improving Tide's user experience. The biggest question left
+unanswered after this patch is how we want to do error handling, but aside from
+that the end-user API should be pretty close to where we want it to be.
+
+The biggest changes in this patch is endpoints now take `Request` instead of
+`Context`. The new `Request` and `Response` types are no longer type aliases but
+concrete types, making them substantially easier to use. This also means that
+we've been able to fold in all the `Ext` methods we were exposing, enabling
+methods such as `let values: Schema = req.body_json()?;` to deserialize an
+incoming JSON body through a `Serde` schema. This should make it significantly
+easier to write APIs with Tide out of the box.
+
+## Example
+
+```rust
+use async_std::task;
+
+fn main() -> Result<(), std::io::Error> {
+    task::block_on(async {
+        let mut app = tide::new();
+        app.at("/").get(|_| async move { "Hello, world!" });
+        app.listen("127.0.0.1:8080").await?;
+        Ok(())
+    })
+}
+```
+
 ### Added
 
-- Added `logger::RequestLogger` based on `log` (replaces `logger:RootLogger`)
+- Added `logger::RequestLogger` based on `log` (replaces `logger:RootLogger`).
+- Added `Request` with inherent methods (replaces `Context`).
+- Added `Server` (replaces `App`).
+- Added `Response` (replacing a type alias of the same name).
+- Added a `prelude` submodule, holding all public traits.
+- Added a `new` free function, a shorthand for `Server::new`.
+- Added a `with_state` free function, a shorthand for `Server::with_state`.
+- Added `Result` type alias (replaces `EndpointResult`).
 
 ### Changed
 
 - Resolved an `#[allow(unused_mut)]` workaround.
 - Renamed `ExtractForms` to `ContextExt`.
+- `Response` is now a newly defined type.
 
 ### Removed
 
-- Removed `logger::RootLogger` (replaced by `logger:RequestLogger`)
-- Removed internal use of the `box_async` macro
+- Removed `logger::RootLogger` (replaced by `logger:RequestLogger`).
+- Removed internal use of the `box_async` macro.
+- Removed `Context` (replaced by `Request`).
+- Removed the `Response` type alias (replaced by a new `Response` struct).
+- Removed `App` (replaced by `Server`).
+- Temporarily disabled the multipart family of APIs, improving compilation
+  speed by ~30%.
+- Removed `EndpointResult` (replaced by `Result`).
 
 ## [0.3.0] - 2019-10-31
 
@@ -34,7 +78,9 @@ were right before splitting up the crate. This release is mostly similar to
 - Added keywords and categories to Cargo.toml.
 - Implemented `Default` for `App`.
 - Added `App::with_state` constructor method.
-- Added `Context::state` (replacing `Context::app_data`)
+- Added `Context::state` (replacing `Request::app_data`)
+- Added examples to the documentation root.
+- Added a section about stability guarantees to the documentation root.
 
 ### Changed
 
@@ -53,7 +99,7 @@ were right before splitting up the crate. This release is mostly similar to
 - Removed an extra incoming license requirement.
 - Removed outdated version logs.
 - Removed `rustfmt.toml`.
-- Removed `Context::app_data` (replaced with `Context::state`).
+- Removed `Request::app_data` (replaced with `Context::state`).
 
 ## [0.2.0] - 2019-05-03
 

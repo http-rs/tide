@@ -3,12 +3,12 @@ pub use accept_encoding::Encoding;
 use async_compression::stream;
 use futures::future::BoxFuture;
 use http::{header::CONTENT_ENCODING, status::StatusCode, HeaderMap};
-use http_service::{Body, Request};
+use http_service::Body;
 
 use crate::{
     middleware::{Middleware, Next},
     response::IntoResponse,
-    Context, Error, Response,
+    Request, Error, Response,
 };
 
 /// Encode settings for the compression middleware.
@@ -120,7 +120,7 @@ impl Compression {
 }
 
 impl<Data: Send + Sync + 'static> Middleware<Data> for Compression {
-    fn handle<'a>(&'a self, cx: Context<Data>, next: Next<'a, Data>) -> BoxFuture<'a, Response> {
+    fn handle<'a>(&'a self, cx: Request<Data>, next: Next<'a, Data>) -> BoxFuture<'a, Response> {
         Box::pin(async move {
             let encoding = match self.preferred_encoding(cx.headers()) {
                 Ok(encoding) => encoding,
@@ -155,7 +155,7 @@ impl Decompression {
         }
     }
 
-    fn decode(&self, req: &mut Request) -> Result<(), Error> {
+    fn decode(&self, req: &mut http_service::Request) -> Result<(), Error> {
         let encodings = if let Some(hval) = req.headers().get(CONTENT_ENCODING) {
             let hval = match hval.to_str() {
                 Ok(hval) => hval,
@@ -206,7 +206,7 @@ impl Decompression {
 impl<Data: Send + Sync + 'static> Middleware<Data> for Decompression {
     fn handle<'a>(
         &'a self,
-        mut cx: Context<Data>,
+        mut cx: Request<Data>,
         next: Next<'a, Data>,
     ) -> BoxFuture<'a, Response> {
         Box::pin(async move {
@@ -232,7 +232,7 @@ mod tests {
     use http_service::Body;
     use http_service_mock::make_server;
 
-    async fn lorem_ipsum(_cx: Context<()>) -> String {
+    async fn lorem_ipsum(_cx: Request<()>) -> String {
         String::from(
             r#"
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam rutrum et risus sed egestas. Maecenas dapibus enim a posuere
@@ -253,13 +253,13 @@ mod tests {
     }
 
     // Echoes the request body in bytes.
-    async fn echo_bytes(mut cx: Context<()>) -> Vec<u8> {
+    async fn echo_bytes(mut cx: Request<()>) -> Vec<u8> {
         cx.body_bytes().await.unwrap()
     }
 
     // Generates the app.
-    fn app() -> crate::App<()> {
-        let mut app = crate::App::new();
+    fn app() -> crate::Server<()> {
+        let mut app = crate::Server::new();
         app.at("/").get(lorem_ipsum);
         app.at("/echo").post(echo_bytes);
         app.middleware(Compression::new());

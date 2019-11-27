@@ -7,7 +7,7 @@ use http::{
 
 use crate::{
     middleware::{Middleware, Next},
-    Context, Response,
+    Request, Response,
 };
 
 /// Middleware for providing a set of default headers for all responses.
@@ -40,7 +40,7 @@ impl DefaultHeaders {
 }
 
 impl<State: Send + Sync + 'static> Middleware<State> for DefaultHeaders {
-    fn handle<'a>(&'a self, cx: Context<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
+    fn handle<'a>(&'a self, cx: Request<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
         Box::pin(async move {
             let mut res = next.run(cx).await;
 

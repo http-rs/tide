@@ -1,8 +1,9 @@
-use cookie::{Cookie, CookieJar, ParseError};
+use cookie::{Cookie, CookieJar};
+// use cookie::ParseError
 
 use crate::error::StringError;
-use crate::Context;
-use http::HeaderMap;
+use crate::Request;
+// use http::HeaderMap;
 use std::sync::{Arc, RwLock};
 
 const MIDDLEWARE_MISSING_MSG: &str =
@@ -15,20 +16,21 @@ pub(crate) struct CookieData {
 }
 
 impl CookieData {
-    pub fn from_headers(headers: &HeaderMap) -> Self {
-        CookieData {
-            content: Arc::new(RwLock::new(
-                headers
-                    .get(http::header::COOKIE)
-                    .and_then(|raw| parse_from_header(raw.to_str().unwrap()).ok())
-                    .unwrap_or_default(),
-            )),
-        }
-    }
+    // TODO(yoshuawuyts): re-enable this
+    // pub fn from_headers(headers: &HeaderMap) -> Self {
+    //     CookieData {
+    //         content: Arc::new(RwLock::new(
+    //             headers
+    //                 .get(http::header::COOKIE)
+    //                 .and_then(|raw| parse_from_header(raw.to_str().unwrap()).ok())
+    //                 .unwrap_or_default(),
+    //         )),
+    //     }
+    // }
 }
 
-/// An extension to `Context` that provides cached access to cookies
-pub trait ContextExt {
+/// An extension to `Request` that provides cached access to cookies
+pub trait RequestExt {
     /// returns a `Cookie` by name of the cookie
     fn get_cookie(&self, name: &str) -> Result<Option<Cookie<'static>>, StringError>;
 
@@ -40,7 +42,7 @@ pub trait ContextExt {
     fn remove_cookie(&mut self, cookie: Cookie<'static>) -> Result<(), StringError>;
 }
 
-impl<State> ContextExt for Context<State> {
+impl<State> RequestExt for Request<State> {
     fn get_cookie(&self, name: &str) -> Result<Option<Cookie<'static>>, StringError> {
         let cookie_data = self
             .extensions()
@@ -83,13 +85,14 @@ impl<State> ContextExt for Context<State> {
     }
 }
 
-fn parse_from_header(s: &str) -> Result<CookieJar, ParseError> {
-    let mut jar = CookieJar::new();
+// TODO(yoshuawuyts): re-enable this
+// fn parse_from_header(s: &str) -> Result<CookieJar, ParseError> {
+//     let mut jar = CookieJar::new();
 
-    s.split(';').try_for_each(|s| -> Result<_, ParseError> {
-        jar.add_original(Cookie::parse(s.trim().to_owned())?);
-        Ok(())
-    })?;
+//     s.split(';').try_for_each(|s| -> Result<_, ParseError> {
+//         jar.add_original(Cookie::parse(s.trim().to_owned())?);
+//         Ok(())
+//     })?;
 
-    Ok(jar)
-}
+//     Ok(jar)
+// }
