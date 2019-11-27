@@ -1,9 +1,9 @@
-use async_std::task::{Context, Poll};
 use async_std::future;
+use async_std::task::{Context, Poll};
 
 use std::pin::Pin;
 
-use crate::{Request, Response, Endpoint};
+use crate::{Endpoint, Request, Response};
 
 /// Redirect a route to another route.
 ///
@@ -52,4 +52,3 @@ impl future::Future for Future {
         Poll::Ready(self.res.take().unwrap())
     }
 }
-

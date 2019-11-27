@@ -24,16 +24,27 @@ easier to write APIs with Tide out of the box.
 
 ## Example
 
+Create a "hello world" app:
 ```rust
-use async_std::task;
+#[async_std::main]
+async fn main() -> Result<(), std::io::Error> {
+    let mut app = tide::new();
+    app.at("/").get(|_| async move { "Hello, world!" });
+    app.listen("127.0.0.1:8080").await?;
+    Ok(())
+}
+```
 
-fn main() -> Result<(), std::io::Error> {
-    task::block_on(async {
-        let mut app = tide::new();
-        app.at("/").get(|_| async move { "Hello, world!" });
-        app.listen("127.0.0.1:8080").await?;
-        Ok(())
-    })
+Redirect from `/nori` to `/chashu`:
+
+```rust
+#[async_std::main]
+async fn main() -> Result<(), std::io::Error> {
+    let mut app = tide::new();
+    app.at("/chashu").get(|_| async move { "meow" });
+    app.at("/nori").get(tide::redirect("/chashu"));
+    app.listen("127.0.0.1:8080").await?;
+    Ok(())
 }
 ```
 
@@ -47,6 +58,7 @@ fn main() -> Result<(), std::io::Error> {
 - Added a `new` free function, a shorthand for `Server::new`.
 - Added a `with_state` free function, a shorthand for `Server::with_state`.
 - Added `Result` type alias (replaces `EndpointResult`).
+- Added a `redirect` free function to redirect from one endpoint to another.
 
 ### Changed
 
