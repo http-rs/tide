@@ -35,7 +35,7 @@
       Contributing
     </a>
     <span> | </span>
-    <a href="https://discordapp.com/channels/442252698964721669/474974025454452766">
+    <a href="https://discord.gg/x2gKzst">
       Chat
     </a>
   </h3>
