@@ -43,6 +43,7 @@ pin-project-lite = "0.1.0"
 mime = "0.3.14"
 
 [dev-dependencies]
+async-std = { version = "1.0.1", features = ["unstable", "attributes"] }
 basic-cookies = "0.1.3"
 bytes = "0.4.12"
 futures-fs = "0.0.5"

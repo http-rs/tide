@@ -40,6 +40,24 @@ impl<State> Request<State> {
     }
 
     /// Access the request's HTTP method.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use futures::executor::block_on;
+    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
+    /// #
+    /// use tide::Request;
+    ///
+    /// let mut app = tide::new();
+    /// app.at("/").get(|req: Request<()>| async move {
+    ///     assert_eq!(req.method(), http::Method::GET);
+    ///     "Hello world!"
+    /// });
+    /// app.listen("127.0.0.1:8080").await?;
+    /// #
+    /// # Ok(()) })}
+    /// ```
     pub fn method(&self) -> &Method {
         self.request.method()
     }

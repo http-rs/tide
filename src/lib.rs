@@ -50,7 +50,7 @@
 //! # use futures::executor::block_on;
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
 //! #
-//! #[derive(Debug, Deserialize, Serialize)]
+//! #[derive(Debug, serde::Deserialize, serde::Serialize)]
 //! struct Counter { count: usize }
 //!
 //! let mut app = tide::new();
@@ -84,7 +84,7 @@
 //! and abort early. This is useful for e.g. authentication middleware. Tide's middleware works
 //! like a stack. A simplified example of the logger middleware is something like this:
 //!
-//! ```rust
+//! ```ignore
 //! async fn log(req: Request, next: Next) -> Result<Response> {
 //!     println!("Incoming request from {} on url {}", req.peer_addr(), req.url());
 //!     let res = next().await?;
@@ -125,13 +125,15 @@
 //! Extension traits are written by defining a trait + trait impl for the struct that's being
 //! extended:
 //!
-//! ```rust
+//! ```no_run
+//! # use tide::Request;
+//!
 //! pub trait RequestExt {
-//!     pub fn bark(&self) -> String;
+//!     fn bark(&self) -> String;
 //! }
 //!
 //! impl<State> RequestExt for Request<State> {
-//!     pub fn bark(&self) -> String {
+//!     fn bark(&self) -> String {
 //!         "woof".to_string()
 //!     }
 //! }
@@ -139,11 +141,23 @@
 //!
 //! Tide apps will then have access to the `bark` method on `Request`:
 //!
-//! ```rust
+//! ```no_run
+//! # use tide::Request;
+//! #
+//! # pub trait RequestExt {
+//! #     fn bark(&self) -> String;
+//! # }
+//!
+//! # impl<State> RequestExt for Request<State> {
+//! #     fn bark(&self) -> String {
+//! #         "woof".to_string()
+//! #     }
+//! # }
+//!
 //! #[async_std::main]
 //! async fn main() -> Result<(), std::io::Error> {
 //!     let mut app = tide::new();
-//!     app.at("/").get(|req| async move { req.bark() });
+//!     app.at("/").get(|req: Request<()>| async move { req.bark() });
 //!     app.listen("127.0.0.1:8080").await
 //! }
 //! ```
