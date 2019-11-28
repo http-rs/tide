@@ -151,7 +151,9 @@ impl Server<()> {
     /// # use futures::executor::block_on;
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
-    /// let mut _app = tide::new();
+    /// let mut app = tide::new();
+    /// app.at("/").get(|_| async move { "Hello, world!" });
+    /// app.listen("127.0.0.1:8080").await?;
     /// #
     /// # Ok(()) }) }
     /// ```
