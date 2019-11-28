@@ -1,10 +1,3 @@
-// #![warn(missing_docs)]
-#![warn(missing_debug_implementations, rust_2018_idioms)]
-#![allow(clippy::mutex_atomic, clippy::module_inception)]
-#![doc(test(attr(deny(rust_2018_idioms, warnings))))]
-#![doc(test(attr(allow(unused_extern_crates, unused_variables))))]
-#![cfg_attr(feature = "docs", feature(doc_cfg))]
-
 //! # Serve the web
 //!
 //! Tide is a friendly HTTP server built for casual Rustaceans and veterans alike. It's completely
@@ -173,6 +166,11 @@
 //! changes we make. Also as time goes on you may find that fewer and fewer changes occur, until we
 //! eventually remove this notice entirely. The goal of Tide is to build a premier HTTP experience
 //! for Async Rust. We have a long journey ahead of us. But we're excited you're here with us!
+
+// #![warn(missing_docs)]
+#![warn(missing_debug_implementations, rust_2018_idioms)]
+#![doc(test(attr(deny(rust_2018_idioms, warnings))))]
+#![doc(test(attr(allow(unused_extern_crates, unused_variables))))]
 
 mod endpoint;
 mod error;
