@@ -52,7 +52,7 @@ impl<State> Request<State> {
     /// let mut app = tide::new();
     /// app.at("/").get(|req: Request<()>| async move {
     ///     assert_eq!(req.method(), http::Method::GET);
-    ///     "Hello world!"
+    ///     ""
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
@@ -63,11 +63,47 @@ impl<State> Request<State> {
     }
 
     /// Access the request's full URI method.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use futures::executor::block_on;
+    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
+    /// #
+    /// use tide::Request;
+    ///
+    /// let mut app = tide::new();
+    /// app.at("/").get(|req: Request<()>| async move {
+    ///     assert_eq!(req.uri(), &"/".parse::<tide::http::Uri>().unwrap());
+    ///     ""
+    /// });
+    /// app.listen("127.0.0.1:8080").await?;
+    /// #
+    /// # Ok(()) })}
+    /// ```
     pub fn uri(&self) -> &Uri {
         self.request.uri()
     }
 
     /// Access the request's HTTP version.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use futures::executor::block_on;
+    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
+    /// #
+    /// use tide::Request;
+    ///
+    /// let mut app = tide::new();
+    /// app.at("/").get(|req: Request<()>| async move {
+    ///     assert_eq!(req.version(), tide::http::Version::HTTP_11);
+    ///     ""
+    /// });
+    /// app.listen("127.0.0.1:8080").await?;
+    /// #
+    /// # Ok(()) })}
+    /// ```
     pub fn version(&self) -> Version {
         self.request.version()
     }
@@ -78,17 +114,26 @@ impl<State> Request<State> {
     }
 
     /// Get an HTTP header.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use futures::executor::block_on;
+    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
+    /// #
+    /// use tide::Request;
+    ///
+    /// let mut app = tide::new();
+    /// app.at("/").get(|req: Request<()>| async move {
+    ///     assert_eq!(req.header("X-Forwarded-For"), Some("127.0.0.1"));
+    ///     ""
+    /// });
+    /// app.listen("127.0.0.1:8080").await?;
+    /// #
+    /// # Ok(()) })}
+    /// ```
     pub fn header(&self, key: &'static str) -> Option<&'_ str> {
         self.request.headers().get(key).map(|h| h.to_str().unwrap())
-    }
-
-    /// Set an HTTP header.
-    pub fn set_header(mut self, key: &'static str, value: impl AsRef<str>) -> Self {
-        let value = value.as_ref().to_owned();
-        self.request
-            .headers_mut()
-            .insert(key, value.parse().unwrap());
-        self
     }
 
     /// Get a local value.
@@ -148,6 +193,24 @@ impl<State> Request<State> {
     ///
     /// Any I/O error encountered while reading the body is immediately returned
     /// as an `Err`.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use futures::executor::block_on;
+    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
+    /// #
+    /// use tide::Request;
+    ///
+    /// let mut app = tide::new();
+    /// app.at("/").get(|mut req: Request<()>| async move {
+    ///     let _body: Vec<u8> = req.body_bytes().await.unwrap();
+    ///     ""
+    /// });
+    /// app.listen("127.0.0.1:8080").await?;
+    /// #
+    /// # Ok(()) })}
+    /// ```
     pub async fn body_bytes(&mut self) -> std::io::Result<Vec<u8>> {
         let mut buf = Vec::with_capacity(1024);
         self.request.body_mut().read_to_end(&mut buf).await?;
@@ -165,6 +228,24 @@ impl<State> Request<State> {
     /// as an `Err`.
     ///
     /// If the body cannot be interpreted as valid UTF-8, an `Err` is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use futures::executor::block_on;
+    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
+    /// #
+    /// use tide::Request;
+    ///
+    /// let mut app = tide::new();
+    /// app.at("/").get(|mut req: Request<()>| async move {
+    ///     let _body: String = req.body_string().await.unwrap();
+    ///     ""
+    /// });
+    /// app.listen("127.0.0.1:8080").await?;
+    /// #
+    /// # Ok(()) })}
+    /// ```
     pub async fn body_string(&mut self) -> std::io::Result<String> {
         let body_bytes = self.body_bytes().await?;
         Ok(String::from_utf8(body_bytes).map_err(|_| std::io::ErrorKind::InvalidData)?)
