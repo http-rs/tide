@@ -143,7 +143,18 @@ pub struct Server<State> {
 }
 
 impl Server<()> {
-    /// Create an empty `Server`, with no initial middleware or configuration.
+    /// Create a new Tide server.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use futures::executor::block_on;
+    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
+    /// #
+    /// let mut _app = tide::new();
+    /// #
+    /// # Ok(()) }) }
+    /// ```
     pub fn new() -> Server<()> {
         Self::with_state(())
     }
@@ -156,7 +167,37 @@ impl Default for Server<()> {
 }
 
 impl<State: Send + Sync + 'static> Server<State> {
-    /// Create an `Server`, with initial middleware or configuration.
+    /// Create a new Tide server with shared global state.
+    ///
+    /// Global state is useful for storing items
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use futures::executor::block_on;
+    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
+    /// #
+    /// use tide::Request;
+    ///
+    /// /// The shared application state.
+    /// struct State {
+    ///     name: String,
+    /// }
+    ///
+    /// // Define a new instance of the state.
+    /// let state = State {
+    ///     name: "Nori".to_string()
+    /// };
+    ///
+    /// // Initialize the application with state.
+    /// let mut app = tide::with_state(state);
+    /// app.at("/").get(|req: Request<State>| async move {
+    ///     format!("Hello, {}!", &req.state().name)
+    /// });
+    /// app.listen("127.0.0.1:8080").await?;
+    /// #
+    /// # Ok(()) }) }
+    /// ```
     pub fn with_state(state: State) -> Server<State> {
         Server {
             router: Router::new(),

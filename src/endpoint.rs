@@ -20,7 +20,7 @@ use crate::{response::IntoResponse, Request, Response};
 /// A simple endpoint that is invoked on a `GET` request and returns a `String`:
 ///
 /// ```no_run
-/// async fn hello(_cx: tide::Request<()>) -> String {
+/// async fn hello(_req: tide::Request<()>) -> String {
 ///     String::from("hello")
 /// }
 ///
@@ -34,7 +34,7 @@ use crate::{response::IntoResponse, Request, Response};
 ///
 /// ```no_run
 /// # use core::future::Future;
-/// fn hello(_cx: tide::Request<()>) -> impl Future<Output = String> {
+/// fn hello(_req: tide::Request<()>) -> impl Future<Output = String> {
 ///     futures::future::ready(String::from("hello"))
 /// }
 ///
@@ -50,7 +50,7 @@ pub trait Endpoint<State>: Send + Sync + 'static {
     type Fut: Future<Output = Response> + Send + 'static;
 
     /// Invoke the endpoint within the given context
-    fn call(&self, cx: Request<State>) -> Self::Fut;
+    fn call(&self, req: Request<State>) -> Self::Fut;
 }
 
 pub(crate) type DynEndpoint<State> =
@@ -63,8 +63,8 @@ where
     Fut::Output: IntoResponse,
 {
     type Fut = BoxFuture<'static, Response>;
-    fn call(&self, cx: Request<State>) -> Self::Fut {
-        let fut = (self)(cx);
+    fn call(&self, req: Request<State>) -> Self::Fut {
+        let fut = (self)(req);
         Box::pin(async move { fut.await.into_response() })
     }
 }
