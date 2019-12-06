@@ -106,7 +106,13 @@ impl<State> Request<State> {
     ///
     /// Panic if `key` is not a parameter for the route.
     pub fn param<T: FromStr>(&self, key: &str) -> Result<T, T::Err> {
-        self.route_params.iter().rev().filter_map(|params| params.find(key)).next().unwrap().parse()
+        self.route_params
+            .iter()
+            .rev()
+            .filter_map(|params| params.find(key))
+            .next()
+            .unwrap()
+            .parse()
     }
 
     /// Reads the entire request body into a byte buffer.

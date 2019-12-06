@@ -315,7 +315,11 @@ impl<State: Sync + Send + 'static> Endpoint<State> for Service<State> {
     type Fut = BoxFuture<'static, Response>;
 
     fn call(&self, req: Request<State>) -> Self::Fut {
-        let Request { request: req, mut route_params, .. } = req;
+        let Request {
+            request: req,
+            mut route_params,
+            ..
+        } = req;
         let path = req.uri().path().to_owned();
         let method = req.method().to_owned();
         let router = self.router.clone();

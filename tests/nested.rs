@@ -17,18 +17,14 @@ fn nested() {
     let mut server = make_server(outer.into_http_service()).unwrap();
 
     let mut buf = Vec::new();
-    let req = http::Request::get("/foo/foo")
-        .body(Body::empty())
-        .unwrap();
+    let req = http::Request::get("/foo/foo").body(Body::empty()).unwrap();
     let res = server.simulate(req).unwrap();
     assert_eq!(res.status(), 200);
     block_on(res.into_body().read_to_end(&mut buf)).unwrap();
     assert_eq!(&*buf, &*b"foo");
 
     buf.clear();
-    let req = http::Request::get("/foo/bar")
-        .body(Body::empty())
-        .unwrap();
+    let req = http::Request::get("/foo/bar").body(Body::empty()).unwrap();
     let res = server.simulate(req).unwrap();
     assert_eq!(res.status(), 200);
     block_on(res.into_body().read_to_end(&mut buf)).unwrap();
