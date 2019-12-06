@@ -336,7 +336,7 @@ impl<State: Sync + Send + 'static> Endpoint<State> for Service<State> {
                 next_middleware: &middleware,
             };
 
-            next.run(req).await.into()
+            next.run(req).await
         })
     }
 }
