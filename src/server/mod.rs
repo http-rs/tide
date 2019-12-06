@@ -15,7 +15,7 @@ use crate::utils::BoxFuture;
 use crate::{
     middleware::{Middleware, Next},
     router::{Router, Selection},
-    Request,
+    Endpoint, Request, Response,
 };
 
 mod route;
@@ -305,6 +305,17 @@ impl<State: Sync + Send + 'static> HttpService for Service<State> {
     }
 
     fn respond(&self, _conn: &mut (), req: http_service::Request) -> Self::ResponseFuture {
+        let req = Request::new(self.state.clone(), req, Vec::new());
+        let fut = self.call(req);
+        Box::pin(async move { Ok(fut.await.into()) })
+    }
+}
+
+impl<State: Sync + Send + 'static> Endpoint<State> for Service<State> {
+    type Fut = BoxFuture<'static, Response>;
+
+    fn call(&self, req: Request<State>) -> Self::Fut {
+        let Request { request: req, mut route_params, .. } = req;
         let path = req.uri().path().to_owned();
         let method = req.method().to_owned();
         let router = self.router.clone();
@@ -313,14 +324,15 @@ impl<State: Sync + Send + 'static> HttpService for Service<State> {
 
         Box::pin(async move {
             let Selection { endpoint, params } = router.route(&path, method);
+            route_params.push(params);
+            let req = Request::new(state, req, route_params);
+
             let next = Next {
                 endpoint,
                 next_middleware: &middleware,
             };
 
-            let req = Request::new(state, req, params);
-            let res: http_service::Response = next.run(req).await.into();
-            Ok(res)
+            next.run(req).await.into()
         })
     }
 }

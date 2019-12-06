@@ -19,10 +19,10 @@ pin_project_lite::pin_project! {
     /// communication between middleware and endpoints.
     #[derive(Debug)]
     pub struct Request<State> {
-        state: Arc<State>,
+        pub(crate) state: Arc<State>,
         #[pin]
-        request: http_service::Request,
-        route_params: Params,
+        pub(crate) request: http_service::Request,
+        pub(crate) route_params: Vec<Params>,
     }
 }
 
@@ -30,7 +30,7 @@ impl<State> Request<State> {
     pub(crate) fn new(
         state: Arc<State>,
         request: http::Request<Body>,
-        route_params: Params,
+        route_params: Vec<Params>,
     ) -> Request<State> {
         Request {
             state,
@@ -106,7 +106,7 @@ impl<State> Request<State> {
     ///
     /// Panic if `key` is not a parameter for the route.
     pub fn param<T: FromStr>(&self, key: &str) -> Result<T, T::Err> {
-        self.route_params.find(key).unwrap().parse()
+        self.route_params.iter().rev().filter_map(|params| params.find(key)).next().unwrap().parse()
     }
 
     /// Reads the entire request body into a byte buffer.
