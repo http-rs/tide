@@ -115,6 +115,12 @@ impl<State> Request<State> {
             .parse()
     }
 
+    pub(crate) fn rest(&self) -> Option<&str> {
+        self.route_params
+            .last()
+            .and_then(|params| params.find("--tide-path-rest"))
+    }
+
     /// Reads the entire request body into a byte buffer.
     ///
     /// This method can be called after the body has already been read, but will
