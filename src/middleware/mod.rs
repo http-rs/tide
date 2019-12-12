@@ -13,13 +13,13 @@ use crate::{Request, Response};
 // mod cookies;
 // mod cors;
 // mod default_headers;
-// mod logger;
+mod logger;
 
 // pub use compression::{Compression, Decompression};
 // pub use cookies::CookiesMiddleware;
 // pub use cors::{Cors, Origin};
 // pub use default_headers::DefaultHeaders;
-// pub use logger::RequestLogger;
+pub use logger::RequestLogger;
 
 /// Middleware that wraps around remaining middleware chain.
 pub trait Middleware<State>: 'static + Send + Sync {
