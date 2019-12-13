@@ -75,7 +75,7 @@
 
 mod endpoint;
 mod error;
-mod middleware;
+pub mod middleware;
 mod redirect;
 mod request;
 mod response;
