@@ -55,6 +55,8 @@ impl<'a, State: 'static> Route<'a, State> {
     /// Treat the current path as a prefix, and strip prefixes from requests.
     ///
     /// Endpoints will be given a path with the prefix removed.
+    #[cfg(any(feature = "unstable", feature = "docs"))]
+    #[cfg_attr(feature = "docs", doc(cfg(unstable)))]
     pub fn strip_prefix(&mut self) -> &mut Self {
         self.prefix = true;
         self

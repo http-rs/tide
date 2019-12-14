@@ -3,6 +3,7 @@
 #![allow(clippy::mutex_atomic, clippy::module_inception)]
 #![doc(test(attr(deny(rust_2018_idioms, warnings))))]
 #![doc(test(attr(allow(unused_extern_crates, unused_variables))))]
+#![cfg_attr(feature = "docs", feature(doc_cfg))]
 
 //! # Serve the web
 //!
