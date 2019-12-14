@@ -12,6 +12,10 @@ use crate::{router::Router, Endpoint};
 pub struct Route<'a, State> {
     router: &'a mut Router<State>,
     path: String,
+    /// Indicates whether the path of current route is treated as a prefix. Set by
+    /// [`strip_prefix`].
+    ///
+    /// [`strip_prefix`]: #method.strip_prefix
     prefix: bool,
 }
 
