@@ -79,9 +79,8 @@ impl<State> Request<State> {
     }
 
     /// Set a local value.
-    pub fn set_local<T: Send + Sync + 'static>(mut self, val: T) -> Self {
-        self.request.extensions_mut().insert(val);
-        self
+    pub fn set_local<T: Send + Sync + 'static>(&mut self, val: T) -> Option<T> {
+        self.request.extensions_mut().insert(val)
     }
 
     ///  Access app-global state.
