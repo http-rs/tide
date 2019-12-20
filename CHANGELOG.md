@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://book.async.rs/overview
 
 ## [Unreleased]
 
+## [0.5.0] - 2019-12-20
+
+This release introduces the ability to nest applications, add logging
+middleware, and improves our documentation.
+
+Nesting applications is a useful technique that can be used to create several
+sub-applications. This allows creating clear points of isolation in applications
+that can be used completely independently of the main application. But can be
+recombined into a single binary if required.
+
+Being able to nest applications is also a necessary first step to re-introduce
+per-route middleware, which we'll do in subsequent patches.
+
+## Examples
+
+```rust
+let mut inner = tide::new();
+inner.at("/").get(|_| async { "root" });
+inner.at("/foo").get(|_| async { "foo" });
+inner.at("/bar").get(|_| async { "bar" });
+
+let mut outer = tide::new();
+outer
+    .at("/nested")
+    .strip_prefix() // catch /nested and /nested/*
+    .get(inner.into_http_service()); // the prefix /nested will be stripped here
+```
+
+## Added
+
+- Added `Route::strip_prefix` [(#364)](https://github.com/http-rs/tide/pull/364)
+- Added the ability `Service`s to be nested [(#364)](https://github.com/http-rs/tide/pull/364)
+- Added `middleware::RequestLogger` [(#367)](https://github.com/http-rs/tide/pull/367)
+
+## Changed
+
+- Updated and improved the documentation [(#363)](https://github.com/http-rs/tide/pull/363)
+
 ## [0.4.0] - 2019-11-26
 
 This release is a further polishing of Tide's APIs, and works towards
@@ -141,11 +179,13 @@ Log not kept.
 
 Log not kept.
 
-[Unreleased]: https://github.com/http-rs/tide/compare/v0.3.0...HEAD
-[0.3.0]: https://github.com/http-rs/tide/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/http-rs/tide/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/http-rs/tide/compare/v0.0.5...v0.1.0
-[0.0.5]: https://github.com/http-rs/tide/compare/v0.0.4...v0.0.5
-[0.0.4]: https://github.com/http-rs/tide/compare/v0.0.3...v0.0.4
-[0.0.3]: https://github.com/http-rs/tide/compare/v0.0.1...v0.0.3
-[0.0.1]: https://github.com/http-rs/tide/compare/v0.0.1
+[Unreleased]: https://github.com/http-rs/tide/compare/0.5.0...HEAD
+[0.5.0]: https://github.com/http-rs/tide/compare/0.4.0...0.5.0
+[0.4.0]: https://github.com/http-rs/tide/compare/0.3.0...0.4.0
+[0.3.0]: https://github.com/http-rs/tide/compare/0.2.0...0.3.0
+[0.2.0]: https://github.com/http-rs/tide/compare/0.1.0...0.2.0
+[0.1.0]: https://github.com/http-rs/tide/compare/0.0.5...0.1.0
+[0.0.5]: https://github.com/http-rs/tide/compare/0.0.4...0.0.5
+[0.0.4]: https://github.com/http-rs/tide/compare/0.0.3...0.0.4
+[0.0.3]: https://github.com/http-rs/tide/compare/0.0.1...0.0.3
+[0.0.1]: https://github.com/http-rs/tide/compare/0.0.1
