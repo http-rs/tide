@@ -12,11 +12,20 @@ use crate::{router::Router, Endpoint};
 pub struct Route<'a, State> {
     router: &'a mut Router<State>,
     path: String,
+    /// Indicates whether the path of current route is treated as a prefix. Set by
+    /// [`strip_prefix`].
+    ///
+    /// [`strip_prefix`]: #method.strip_prefix
+    prefix: bool,
 }
 
 impl<'a, State: 'static> Route<'a, State> {
     pub(crate) fn new(router: &'a mut Router<State>, path: String) -> Route<'a, State> {
-        Route { router, path }
+        Route {
+            router,
+            path,
+            prefix: false,
+        }
     }
 
     /// Extend the route with the given `path`.
@@ -34,6 +43,7 @@ impl<'a, State: 'static> Route<'a, State> {
         Route {
             router: &mut self.router,
             path: p,
+            prefix: false,
         }
     }
 
@@ -42,9 +52,26 @@ impl<'a, State: 'static> Route<'a, State> {
         self
     }
 
+    /// Treat the current path as a prefix, and strip prefixes from requests.
+    ///
+    /// Endpoints will be given a path with the prefix removed.
+    #[cfg(any(feature = "unstable", feature = "docs"))]
+    #[cfg_attr(feature = "docs", doc(cfg(unstable)))]
+    pub fn strip_prefix(&mut self) -> &mut Self {
+        self.prefix = true;
+        self
+    }
+
     /// Add an endpoint for the given HTTP method
     pub fn method(&mut self, method: http::Method, ep: impl Endpoint<State>) -> &mut Self {
-        self.router.add(&self.path, method, ep);
+        if self.prefix {
+            let ep = StripPrefixEndpoint::new(ep);
+            self.router.add(&self.path, method.clone(), ep.clone());
+            let wildcard = self.at("*--tide-path-rest");
+            wildcard.router.add(&wildcard.path, method, ep);
+        } else {
+            self.router.add(&self.path, method, ep);
+        }
         self
     }
 
@@ -100,5 +127,46 @@ impl<'a, State: 'static> Route<'a, State> {
     pub fn trace(&mut self, ep: impl Endpoint<State>) -> &mut Self {
         self.method(http::Method::TRACE, ep);
         self
+    }
+}
+
+#[derive(Debug)]
+struct StripPrefixEndpoint<E>(std::sync::Arc<E>);
+
+impl<E> StripPrefixEndpoint<E> {
+    fn new(ep: E) -> Self {
+        Self(std::sync::Arc::new(ep))
+    }
+}
+
+impl<E> Clone for StripPrefixEndpoint<E> {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
+
+impl<State, E: Endpoint<State>> Endpoint<State> for StripPrefixEndpoint<E> {
+    type Fut = E::Fut;
+
+    fn call(&self, mut req: crate::Request<State>) -> Self::Fut {
+        let rest = req.rest().unwrap_or("");
+        let mut path_and_query = format!("/{}", rest);
+        let uri = req.uri();
+        if let Some(query) = uri.query() {
+            path_and_query.push('?');
+            path_and_query.push_str(query);
+        }
+        let mut new_uri = http::Uri::builder();
+        if let Some(scheme) = uri.scheme_part() {
+            new_uri.scheme(scheme.clone());
+        }
+        if let Some(authority) = uri.authority_part() {
+            new_uri.authority(authority.clone());
+        }
+        new_uri.path_and_query(path_and_query.as_str());
+        let new_uri = new_uri.build().unwrap();
+        *req.request.uri_mut() = new_uri;
+
+        self.0.call(req)
     }
 }

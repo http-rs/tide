@@ -18,9 +18,14 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/http-rs/tide"
 
+[package.metadata.docs.rs]
+features = ["docs"]
+rustdoc-args = ["--cfg", "feature=\"docs\""]
+
 [features]
 default = ["hyper-server"]
 hyper-server = ["http-service-hyper"]
+docs = ["unstable"]
 unstable = []
 
 [dependencies]
@@ -50,3 +55,8 @@ percent-encoding = "2.1.0"
 serde = { version = "1.0.102", features = ["derive"] }
 structopt = "0.3.3"
 surf = "1.0.3"
+
+[[test]]
+name = "nested"
+path = "tests/nested.rs"
+required-features = ["unstable"]
