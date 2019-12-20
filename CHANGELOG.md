@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://book.async.rs/overview
 
 ## [0.5.0] - 2019-12-20
 
+[API Documentation](https://docs.rs/tide/0.5.0/tide)
+
 This release introduces the ability to nest applications, add logging
 middleware, and improves our documentation.
 
