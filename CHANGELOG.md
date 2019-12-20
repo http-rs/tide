@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://book.async.rs/overview
 
 ## [Unreleased]
 
+## [0.5.1] - 2019-12-20
+
+[API Documentation](https://docs.rs/tide/0.5.1/tide)
+
+This fixes a rendering issue on docs.rs.
+
+## Fixes
+
+- Fix a rendering issue on docs.rs [(#376)](https://github.com/http-rs/tide/pull/376)
+
 ## [0.5.0] - 2019-12-20
 
 [API Documentation](https://docs.rs/tide/0.5.0/tide)
