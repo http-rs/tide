@@ -179,6 +179,10 @@ impl<State: Send + Sync + 'static> Middleware<State> for Cors {
             if let Some(allow_credentials) = self.allow_credentials.clone() {
                 headers.append(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, allow_credentials);
             }
+
+            if let Some(expose_headers) = self.expose_headers.clone() {
+                headers.append(header::ACCESS_CONTROL_EXPOSE_HEADERS, expose_headers);
+            }
             response.into()
         })
     }
