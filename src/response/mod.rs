@@ -78,7 +78,7 @@ impl Response {
     ///
     /// # Mime
     ///
-    /// The encoding is set to `text/plain; charset=utf-8`.
+    /// The encoding is set to `application/octet-stream`.
     pub fn body<R>(mut self, reader: R) -> Self
     where
         R: BufRead + Unpin + Send + 'static,
@@ -88,6 +88,10 @@ impl Response {
     }
 
     /// Encode a struct as a form and set as the response body.
+    ///
+    /// # Mime
+    ///
+    /// The encoding is set to `application/x-www-form-urlencoded`.
     pub async fn body_form<T: serde::Serialize>(
         mut self,
         form: T,
@@ -96,10 +100,14 @@ impl Response {
         *self.res.body_mut() = Body::from(serde_qs::to_string(&form)?.into_bytes());
         Ok(self
             .set_status(StatusCode::OK)
-            .set_header("Content-Type", "application/x-www-form-urlencoded"))
+            .set_mime(mime::APPLICATION_WWW_FORM_URLENCODED))
     }
 
     /// Encode a struct as a form and set as the response body.
+    ///
+    /// # Mime
+    ///
+    /// The encoding is set to `application/json`.
     pub fn body_json(mut self, json: &impl Serialize) -> serde_json::Result<Self> {
         *self.res.body_mut() = serde_json::to_vec(json)?.into();
         Ok(self.set_mime(mime::APPLICATION_JSON))
