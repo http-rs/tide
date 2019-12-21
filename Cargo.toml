@@ -25,7 +25,8 @@ rustdoc-args = ["--cfg", "feature=\"docs\""]
 [features]
 default = ["hyper-server"]
 hyper-server = ["http-service-hyper"]
-docs = ["unstable"]
+docs = ["unstable", "cookies"]
+cookies = ["cookie"]
 unstable = []
 
 [dependencies]
@@ -41,6 +42,7 @@ serde_qs = "0.5.0"
 async-std = { version = "1.0.1", features = ["unstable"] }
 pin-project-lite = "0.1.0"
 mime = "0.3.14"
+cookie = { version="0.12.0", features = ["percent-encode"], optional = true }
 
 [dev-dependencies]
 async-std = { version = "1.0.1", features = ["unstable", "attributes"] }

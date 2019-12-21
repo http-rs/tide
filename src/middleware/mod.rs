@@ -10,16 +10,19 @@ use crate::utils::BoxFuture;
 use crate::{Request, Response};
 
 // mod compression;
-// mod cookies;
+#[cfg(feature = "cookies")]
+mod cookies;
 // mod cors;
 // mod default_headers;
 mod logger;
 
 // pub use compression::{Compression, Decompression};
-// pub use cookies::CookiesMiddleware;
 // pub use cors::{Cors, Origin};
 // pub use default_headers::DefaultHeaders;
 pub use logger::RequestLogger;
+
+#[cfg(feature = "cookies")]
+pub use cookies::CookiesMiddleware;
 
 /// Middleware that wraps around remaining middleware chain.
 pub trait Middleware<State>: 'static + Send + Sync {
