@@ -57,6 +57,13 @@ impl Response {
         self
     }
 
+    /// Append an HTTP header.
+    pub fn append_header(mut self, key: &'static str, value: impl AsRef<str>) -> Self {
+        let value = value.as_ref().to_owned();
+        self.res.headers_mut().append(key, value.parse().unwrap());
+        self
+    }
+
     /// Set the request MIME.
     ///
     /// [Read more on MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types)
