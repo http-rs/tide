@@ -37,7 +37,8 @@ impl<State: 'static> Router<State> {
     }
 
     pub(crate) fn add_all(&mut self, path: &str, ep: impl Endpoint<State>) {
-        self.all_method_router.add(path, Box::new(move |cx| Box::pin(ep.call(cx))))
+        self.all_method_router
+            .add(path, Box::new(move |cx| Box::pin(ep.call(cx))))
     }
 
     pub(crate) fn route(&self, path: &str, method: http::Method) -> Selection<'_, State> {
@@ -50,10 +51,7 @@ impl<State: 'static> Router<State> {
                 endpoint: &**handler,
                 params,
             }
-        } else if let Ok(Match { handler, params }) = self
-            .all_method_router
-            .recognize(path)
-        {
+        } else if let Ok(Match { handler, params }) = self.all_method_router.recognize(path) {
             Selection {
                 endpoint: &**handler,
                 params,
