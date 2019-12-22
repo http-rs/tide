@@ -12,6 +12,7 @@ use crate::{Request, Response};
 #[allow(missing_debug_implementations)]
 pub(crate) struct Router<State> {
     method_map: HashMap<http::Method, MethodRouter<Box<DynEndpoint<State>>>>,
+    all_method_router: MethodRouter<Box<DynEndpoint<State>>>,
 }
 
 /// The result of routing a URL
@@ -24,6 +25,7 @@ impl<State: 'static> Router<State> {
     pub(crate) fn new() -> Router<State> {
         Router {
             method_map: HashMap::default(),
+            all_method_router: MethodRouter::new(),
         }
     }
 
@@ -34,11 +36,23 @@ impl<State: 'static> Router<State> {
             .add(path, Box::new(move |cx| Box::pin(ep.call(cx))))
     }
 
+    pub(crate) fn add_all(&mut self, path: &str, ep: impl Endpoint<State>) {
+        self.all_method_router.add(path, Box::new(move |cx| Box::pin(ep.call(cx))))
+    }
+
     pub(crate) fn route(&self, path: &str, method: http::Method) -> Selection<'_, State> {
         if let Some(Match { handler, params }) = self
             .method_map
             .get(&method)
             .and_then(|r| r.recognize(path).ok())
+        {
+            Selection {
+                endpoint: &**handler,
+                params,
+            }
+        } else if let Ok(Match { handler, params }) = self
+            .all_method_router
+            .recognize(path)
         {
             Selection {
                 endpoint: &**handler,
