@@ -5,7 +5,7 @@ use crate::{
 use cookie::{Cookie, CookieJar, ParseError};
 use futures::future::BoxFuture;
 
-use crate::Error;
+use crate::{error::ResultExt, error::StringError, Error};
 use http::{status::StatusCode, HeaderMap};
 use std::sync::{Arc, RwLock};
 
@@ -109,25 +109,29 @@ impl<State> RequestExt for Request<State> {
     fn get_cookie(&self, name: &str) -> Result<Option<Cookie<'static>>, Error> {
         let cookie_data = self
             .local::<CookieData>()
-            .ok_or_else(|| Error::from(StatusCode::INTERNAL_SERVER_ERROR))?;
+            .ok_or_else(|| StringError(MIDDLEWARE_MISSING_MSG.to_owned()))
+            .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
 
         let locked_jar = cookie_data
             .content
             .read()
-            .map_err(|e| Error::from(StatusCode::INTERNAL_SERVER_ERROR))?; // better mapping here
-                                                                           // .map_err(|e| StringError(format!("Failed to get write lock: {}", e)))?;
+            .map_err(|e| StringError(format!("Failed to get read lock: {}", e)))
+            .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
+
         Ok(locked_jar.get(name).cloned())
     }
 
     fn set_cookie(&mut self, cookie: Cookie<'static>) -> Result<(), Error> {
         let cookie_data = self
             .local::<CookieData>()
-            .ok_or_else(|| Error::from(StatusCode::INTERNAL_SERVER_ERROR))?;
+            .ok_or_else(|| StringError(MIDDLEWARE_MISSING_MSG.to_owned()))
+            .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
 
         let mut locked_jar = cookie_data
             .content
             .write()
-            .map_err(|e| Error::from(StatusCode::INTERNAL_SERVER_ERROR))?; // better mapping here
+            .map_err(|e| StringError(format!("Failed to get read lock: {}", e)))
+            .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
         locked_jar.add(cookie);
         Ok(())
     }
@@ -135,12 +139,14 @@ impl<State> RequestExt for Request<State> {
     fn remove_cookie(&mut self, cookie: Cookie<'static>) -> Result<(), Error> {
         let cookie_data = self
             .local::<CookieData>()
-            .ok_or_else(|| Error::from(StatusCode::INTERNAL_SERVER_ERROR))?;
+            .ok_or_else(|| StringError(MIDDLEWARE_MISSING_MSG.to_owned()))
+            .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
 
         let mut locked_jar = cookie_data
             .content
             .write()
-            .map_err(|e| Error::from(StatusCode::INTERNAL_SERVER_ERROR))?; // better mapping here
+            .map_err(|e| StringError(format!("Failed to get read lock: {}", e)))
+            .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
         locked_jar.remove(cookie);
         Ok(())
     }
@@ -157,7 +163,6 @@ mod tests {
 
     static COOKIE_NAME: &str = "testCookie";
 
-    /// Tide will use the the  `Cookies`'s `Extract` implementation to build this parameter.
     async fn retrieve_cookie(cx: Request<()>) -> String {
         cx.get_cookie(COOKIE_NAME)
             .unwrap()
@@ -210,7 +215,7 @@ mod tests {
         assert_eq!(res.status(), 200);
 
         let body = block_on(async move {
-            let mut buffer = Vec::new(); // init the buffer to read the data into
+            let mut buffer = Vec::new();
             res.body_mut().read_to_end(&mut buffer).await.unwrap();
             buffer
         });

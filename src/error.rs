@@ -35,6 +35,20 @@ impl From<StatusCode> for Error {
     }
 }
 
+/// A simple error type that wraps a String
+#[derive(Debug)]
+pub struct StringError(pub String);
+impl std::error::Error for StringError {}
+
+impl std::fmt::Display for StringError {
+    fn fmt(
+        &self,
+        formatter: &mut std::fmt::Formatter<'_>,
+    ) -> std::result::Result<(), std::fmt::Error> {
+        self.0.fmt(formatter)
+    }
+}
+
 /// Extension methods for `Result`.
 pub trait ResultExt<T>: Sized {
     /// Convert to an `Result`, treating the `Err` case as a client
