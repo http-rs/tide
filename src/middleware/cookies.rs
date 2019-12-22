@@ -40,9 +40,9 @@ impl CookiesMiddleware {
             cookie_data.content.clone()
         } else {
             let cookie_data = CookieData::from_headers(ctx.headers());
-            let cloned_content = cookie_data.content.clone(); // TODO: hmm does look ugly but needed because of moved cookie_data
+            let content = cookie_data.content.clone();
             ctx = ctx.set_local(cookie_data);
-            cloned_content
+            content
         };
 
         let mut res = next.run(ctx).await;
