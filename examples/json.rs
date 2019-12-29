@@ -1,5 +1,6 @@
 use async_std::io;
 use async_std::task;
+use http_types::StatusCode;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -19,7 +20,8 @@ fn main() -> io::Result<()> {
                 let cat = Cat {
                     name: "chashu".into(),
                 };
-                tide::Response::new(200).body_json(&cat).unwrap()
+
+                tide::Response::new(StatusCode::Ok).body_json(&cat).unwrap()
             });
 
         app.listen("127.0.0.1:8080").await?;

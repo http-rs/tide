@@ -2,9 +2,8 @@
 
 use async_std::future::Future;
 use async_std::io;
-use async_std::net::{TcpListener, ToSocketAddrs};
+use async_std::net::ToSocketAddrs;
 use async_std::sync::Arc;
-use async_std::task;
 use async_std::task::{Context, Poll};
 
 use http_service::HttpService;
@@ -86,7 +85,7 @@ pub use route::Route;
 ///// # Serverlication state
 /////
 ///// ```rust,no_run
-///// use http::status::StatusCode;
+///// use http_types::status::StatusCode;
 ///// use serde::{Deserialize, Serialize};
 ///// use std::sync::Mutex;
 ///// use tide::{error::ResultExt, Server, Request, Result};
@@ -290,6 +289,8 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// Asynchronously serve the app at the given address.
     #[cfg(feature = "hyper-server")]
     pub async fn listen(self, addr: impl ToSocketAddrs) -> std::io::Result<()> {
+        use async_std::task;
+
         #[derive(Copy, Clone)]
         struct Spawner;
 
@@ -303,7 +304,7 @@ impl<State: Send + Sync + 'static> Server<State> {
             }
         }
 
-        let listener = TcpListener::bind(addr).await?;
+        let listener = async_std::net::TcpListener::bind(addr).await?;
         log::info!("Server is listening on: http://{}", listener.local_addr()?);
         let http_service = self.into_http_service();
 
@@ -314,6 +315,20 @@ impl<State: Send + Sync + 'static> Server<State> {
 
         res.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
         Ok(())
+    }
+
+    /// Asynchronously serve the app at the given address.
+    #[cfg(feature = "h1-server")]
+    pub async fn listen(self, addr: impl ToSocketAddrs) -> std::io::Result<()> {
+        let listener = async_std::net::TcpListener::bind(addr).await?;
+
+        let addr = format!("http://{}", listener.local_addr()?);
+        log::info!("Server is listening on: {}", addr);
+        let http_service = self.into_http_service();
+
+        let mut server = http_service_h1::Server::new(addr, listener.incoming(), http_service);
+
+        server.run().await
     }
 }
 
@@ -352,13 +367,15 @@ impl Future for ReadyFuture {
 impl<State: Sync + Send + 'static> HttpService for Service<State> {
     type Connection = ();
     type ConnectionFuture = ReadyFuture;
-    type ResponseFuture = BoxFuture<'static, Result<http_service::Response, std::io::Error>>;
+    type ConnectionError = io::Error;
+    type ResponseFuture = BoxFuture<'static, Result<http_service::Response, io::Error>>;
+    type ResponseError = io::Error;
 
     fn connect(&self) -> Self::ConnectionFuture {
         ReadyFuture {}
     }
 
-    fn respond(&self, _conn: &mut (), req: http_service::Request) -> Self::ResponseFuture {
+    fn respond(&self, _conn: (), req: http_service::Request) -> Self::ResponseFuture {
         let req = Request::new(self.state.clone(), req, Vec::new());
         let service = self.clone();
         Box::pin(async move { Ok(service.call(req).await.into()) })
@@ -374,7 +391,7 @@ impl<State: Sync + Send + 'static, InnerState: Sync + Send + 'static> Endpoint<S
             mut route_params,
             ..
         } = req;
-        let path = req.uri().path().to_owned();
+        let path = req.url().path().to_owned();
         let method = req.method().to_owned();
         let router = self.router.clone();
         let middleware = self.middleware.clone();

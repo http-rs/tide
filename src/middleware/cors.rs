@@ -1,9 +1,8 @@
 //! Cors middleware
 
-use futures::future::BoxFuture;
-use http::header::HeaderValue;
-use http::{header, Method, StatusCode};
-use http_service::Body;
+use crate::utils::BoxFuture;
+use http_types::headers::HeaderValue;
+use http_types::{headers, Method, StatusCode};
 
 use crate::middleware::{Middleware, Next};
 use crate::{Request, Response};
@@ -13,11 +12,11 @@ use crate::{Request, Response};
 /// # Example
 ///
 /// ```no_run
-/// use http::header::HeaderValue;
+/// use http_types::headers::HeaderValue;
 /// use tide::middleware::{Cors, Origin};
 ///
 /// Cors::new()
-///     .allow_methods(HeaderValue::from_static("GET, POST, OPTIONS"))
+///     .allow_methods("GET, POST, OPTIONS".parse::<HeaderValue>().unwrap())
 ///     .allow_origin(Origin::from("*"))
 ///     .allow_credentials(false);
 /// ```
@@ -40,17 +39,17 @@ impl Cors {
     pub fn new() -> Self {
         Self {
             allow_credentials: None,
-            allow_headers: HeaderValue::from_static(WILDCARD),
-            allow_methods: HeaderValue::from_static(DEFAULT_METHODS),
+            allow_headers: WILDCARD.parse().unwrap(),
+            allow_methods: DEFAULT_METHODS.parse().unwrap(),
             allow_origin: Origin::Any,
             expose_headers: None,
-            max_age: HeaderValue::from_static(DEFAULT_MAX_AGE),
+            max_age: DEFAULT_MAX_AGE.parse().unwrap(),
         }
     }
 
     /// Set allow_credentials and return new Cors
     pub fn allow_credentials(mut self, allow_credentials: bool) -> Self {
-        self.allow_credentials = match HeaderValue::from_str(&allow_credentials.to_string()) {
+        self.allow_credentials = match allow_credentials.to_string().parse() {
             Ok(header) => Some(header),
             Err(_) => None,
         };
@@ -87,56 +86,57 @@ impl Cors {
         self
     }
 
-    fn build_preflight_response(&self, origin: &HeaderValue) -> http::response::Response<Body> {
-        let mut response = http::Response::builder()
-            .status(StatusCode::OK)
-            .header::<_, HeaderValue>(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin.clone())
-            .header(
-                header::ACCESS_CONTROL_ALLOW_METHODS,
+    fn build_preflight_response(&self, origin: &[HeaderValue]) -> http_types::Response {
+        let mut response = http_types::Response::new(StatusCode::Ok);
+        response
+            .insert_header(headers::ACCESS_CONTROL_ALLOW_ORIGIN, origin.clone())
+            .unwrap();
+        response
+            .insert_header(
+                headers::ACCESS_CONTROL_ALLOW_METHODS,
                 self.allow_methods.clone(),
             )
-            .header(
-                header::ACCESS_CONTROL_ALLOW_HEADERS,
+            .unwrap();
+        response
+            .insert_header(
+                headers::ACCESS_CONTROL_ALLOW_HEADERS,
                 self.allow_headers.clone(),
             )
-            .header(header::ACCESS_CONTROL_MAX_AGE, self.max_age.clone())
-            .body(Body::empty())
+            .unwrap();
+        response
+            .insert_header(headers::ACCESS_CONTROL_MAX_AGE, self.max_age.clone())
             .unwrap();
 
         if let Some(allow_credentials) = self.allow_credentials.clone() {
             response
-                .headers_mut()
-                .append(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, allow_credentials);
+                .insert_header(headers::ACCESS_CONTROL_ALLOW_CREDENTIALS, allow_credentials)
+                .unwrap();
         }
 
         if let Some(expose_headers) = self.expose_headers.clone() {
             response
-                .headers_mut()
-                .append(header::ACCESS_CONTROL_EXPOSE_HEADERS, expose_headers);
+                .insert_header(headers::ACCESS_CONTROL_EXPOSE_HEADERS, expose_headers)
+                .unwrap();
         }
 
         response
     }
 
     /// Look at origin of request and determine allow_origin
-    fn response_origin<T: Into<HeaderValue>>(&self, origin: T) -> Option<HeaderValue> {
-        let origin = origin.into();
-        if !self.is_valid_origin(origin.clone()) {
+    fn response_origin(&self, origin: &HeaderValue) -> Option<HeaderValue> {
+        if !self.is_valid_origin(origin) {
             return None;
         }
 
         match self.allow_origin {
-            Origin::Any => Some(HeaderValue::from_static(WILDCARD)),
-            _ => Some(origin),
+            Origin::Any => Some(WILDCARD.parse().unwrap()),
+            _ => Some(origin.clone()),
         }
     }
 
     /// Determine if origin is appropriate
-    fn is_valid_origin<T: Into<HeaderValue>>(&self, origin: T) -> bool {
-        let origin = match origin.into().to_str() {
-            Ok(s) => s.to_string(),
-            Err(_) => return false,
-        };
+    fn is_valid_origin(&self, origin: &HeaderValue) -> bool {
+        let origin = origin.as_str().to_string();
 
         match &self.allow_origin {
             Origin::Any => true,
@@ -149,39 +149,41 @@ impl Cors {
 impl<State: Send + Sync + 'static> Middleware<State> for Cors {
     fn handle<'a>(&'a self, req: Request<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
         Box::pin(async move {
-            let origin = req
-                .headers()
-                .get(header::ORIGIN)
+            let origins = req
+                .header(&headers::ORIGIN)
                 .cloned()
-                .unwrap_or_else(|| HeaderValue::from_static(""));
+                .unwrap_or_else(|| vec!["".parse::<HeaderValue>().unwrap()]);
 
-            if !self.is_valid_origin(&origin) {
-                return http::Response::builder()
-                    .status(StatusCode::UNAUTHORIZED)
-                    .body(Body::empty())
-                    .unwrap()
-                    .into();
+            // TODO: how should multiple origin values be handled?
+            let origin = &origins[0];
+
+            if !self.is_valid_origin(origin) {
+                return http_types::Response::new(StatusCode::Unauthorized).into();
             }
 
             // Return results immediately upon preflight request
-            if req.method() == Method::OPTIONS {
-                return self.build_preflight_response(&origin).into();
+            if req.method() == Method::Options {
+                return self.build_preflight_response(&origins).into();
             }
 
             let mut response: http_service::Response = next.run(req).await.into();
-            let headers = response.headers_mut();
-
-            headers.append(
-                header::ACCESS_CONTROL_ALLOW_ORIGIN,
-                self.response_origin(origin).unwrap(),
-            );
+            response
+                .insert_header(
+                    headers::ACCESS_CONTROL_ALLOW_ORIGIN,
+                    self.response_origin(&origin).unwrap(),
+                )
+                .unwrap();
 
             if let Some(allow_credentials) = self.allow_credentials.clone() {
-                headers.append(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, allow_credentials);
+                response
+                    .insert_header(headers::ACCESS_CONTROL_ALLOW_CREDENTIALS, allow_credentials)
+                    .unwrap();
             }
 
             if let Some(expose_headers) = self.expose_headers.clone() {
-                headers.append(header::ACCESS_CONTROL_EXPOSE_HEADERS, expose_headers);
+                response
+                    .insert_header(headers::ACCESS_CONTROL_EXPOSE_HEADERS, expose_headers)
+                    .unwrap();
             }
             response.into()
         })
@@ -239,15 +241,20 @@ impl From<Vec<&str>> for Origin {
 #[cfg(test)]
 mod test {
     use super::*;
-    use http::header::HeaderValue;
-    use http_service::Body;
     use http_service_mock::make_server;
+    use http_types::headers::{self, HeaderValue};
 
     const ALLOW_ORIGIN: &str = "example.com";
     const ALLOW_METHODS: &str = "GET, POST, OPTIONS, DELETE";
     const EXPOSE_HEADER: &str = "X-My-Custom-Header";
 
     const ENDPOINT: &str = "/cors";
+
+    fn endpoint_url() -> http_types::Url {
+        format!("http://{}{}", ALLOW_ORIGIN, ENDPOINT)
+            .parse()
+            .unwrap()
+    }
 
     fn app() -> crate::Server<()> {
         let mut app = crate::Server::new();
@@ -256,12 +263,11 @@ mod test {
         app
     }
 
-    fn request() -> http::Request<http_service::Body> {
-        http::Request::get(ENDPOINT)
-            .header(http::header::ORIGIN, ALLOW_ORIGIN)
-            .method(http::method::Method::GET)
-            .body(Body::empty())
-            .unwrap()
+    fn request() -> http_types::Request {
+        let mut req = http_types::Request::new(http_types::Method::Get, endpoint_url());
+        req.insert_header(http_types::headers::ORIGIN, ALLOW_ORIGIN)
+            .unwrap();
+        req
     }
 
     #[test]
@@ -270,17 +276,15 @@ mod test {
         app.middleware(
             Cors::new()
                 .allow_origin(Origin::from(ALLOW_ORIGIN))
-                .allow_methods(HeaderValue::from_static(ALLOW_METHODS))
-                .expose_headers(HeaderValue::from_static(EXPOSE_HEADER))
+                .allow_methods(ALLOW_METHODS.parse::<HeaderValue>().unwrap())
+                .expose_headers(EXPOSE_HEADER.parse::<HeaderValue>().unwrap())
                 .allow_credentials(true),
         );
 
         let mut server = make_server(app.into_http_service()).unwrap();
 
-        let req = http::Request::get(ENDPOINT)
-            .header(http::header::ORIGIN, ALLOW_ORIGIN)
-            .method(http::method::Method::OPTIONS)
-            .body(Body::empty())
+        let mut req = http_types::Request::new(http_types::Method::Options, endpoint_url());
+        req.insert_header(http_types::headers::ORIGIN, ALLOW_ORIGIN)
             .unwrap();
 
         let res = server.simulate(req).unwrap();
@@ -288,26 +292,26 @@ mod test {
         assert_eq!(res.status(), 200);
 
         assert_eq!(
-            res.headers().get("access-control-allow-origin").unwrap(),
+            res.header(&headers::ACCESS_CONTROL_ALLOW_ORIGIN).unwrap()[0].as_str(),
             ALLOW_ORIGIN
         );
         assert_eq!(
-            res.headers().get("access-control-allow-methods").unwrap(),
+            res.header(&headers::ACCESS_CONTROL_ALLOW_METHODS).unwrap()[0].as_str(),
             ALLOW_METHODS
         );
         assert_eq!(
-            res.headers().get("access-control-allow-headers").unwrap(),
+            res.header(&headers::ACCESS_CONTROL_ALLOW_HEADERS).unwrap()[0].as_str(),
             WILDCARD
         );
         assert_eq!(
-            res.headers().get("access-control-max-age").unwrap(),
+            res.header(&headers::ACCESS_CONTROL_MAX_AGE).unwrap()[0].as_str(),
             DEFAULT_MAX_AGE
         );
 
         assert_eq!(
-            res.headers()
-                .get("access-control-allow-credentials")
-                .unwrap(),
+            res.header(&headers::ACCESS_CONTROL_ALLOW_CREDENTIALS)
+                .unwrap()[0]
+                .as_str(),
             "true"
         );
     }
@@ -322,7 +326,7 @@ mod test {
         assert_eq!(res.status(), 200);
 
         assert_eq!(
-            res.headers().get("access-control-allow-origin").unwrap(),
+            res.header(&headers::ACCESS_CONTROL_ALLOW_ORIGIN).unwrap()[0].as_str(),
             "*"
         );
     }
@@ -334,8 +338,8 @@ mod test {
             Cors::new()
                 .allow_origin(Origin::from(ALLOW_ORIGIN))
                 .allow_credentials(false)
-                .allow_methods(HeaderValue::from_static(ALLOW_METHODS))
-                .expose_headers(HeaderValue::from_static(EXPOSE_HEADER)),
+                .allow_methods(ALLOW_METHODS.parse::<HeaderValue>().unwrap())
+                .expose_headers(EXPOSE_HEADER.parse::<HeaderValue>().unwrap()),
         );
 
         let mut server = make_server(app.into_http_service()).unwrap();
@@ -343,7 +347,7 @@ mod test {
 
         assert_eq!(res.status(), 200);
         assert_eq!(
-            res.headers().get("access-control-allow-origin").unwrap(),
+            res.header(&headers::ACCESS_CONTROL_ALLOW_ORIGIN).unwrap()[0].as_str(),
             ALLOW_ORIGIN
         );
     }
@@ -358,9 +362,9 @@ mod test {
 
         assert_eq!(res.status(), 200);
         assert_eq!(
-            res.headers()
-                .get("access-control-allow-credentials")
-                .unwrap(),
+            res.header(&headers::ACCESS_CONTROL_ALLOW_CREDENTIALS)
+                .unwrap()[0]
+                .as_str(),
             "true"
         );
     }
@@ -373,18 +377,17 @@ mod test {
         let mut server = make_server(app.into_http_service()).unwrap();
 
         for origin in origins {
-            let request = http::Request::get(ENDPOINT)
-                .header(http::header::ORIGIN, origin)
-                .method(http::method::Method::GET)
-                .body(Body::empty())
+            let mut request = http_types::Request::new(http_types::Method::Get, endpoint_url());
+            request
+                .insert_header(http_types::headers::ORIGIN, origin)
                 .unwrap();
 
             let res = server.simulate(request).unwrap();
 
             assert_eq!(res.status(), 200);
             assert_eq!(
-                res.headers().get("access-control-allow-origin").unwrap(),
-                origin
+                res.header(&headers::ACCESS_CONTROL_ALLOW_ORIGIN),
+                Some(&vec![origin.parse().unwrap()])
             );
         }
     }
@@ -394,10 +397,7 @@ mod test {
         let mut app = app();
         app.middleware(Cors::new());
 
-        let request = http::Request::get(ENDPOINT)
-            .method(http::method::Method::GET)
-            .body(Body::empty())
-            .unwrap();
+        let request = http_types::Request::new(http_types::Method::Get, endpoint_url());
 
         let mut server = make_server(app.into_http_service()).unwrap();
         let res = server.simulate(request).unwrap();
@@ -410,10 +410,9 @@ mod test {
         let mut app = app();
         app.middleware(Cors::new().allow_origin(ALLOW_ORIGIN));
 
-        let request = http::Request::get(ENDPOINT)
-            .header(http::header::ORIGIN, "unauthorize-origin.net")
-            .method(http::method::Method::GET)
-            .body(Body::empty())
+        let mut request = http_types::Request::new(http_types::Method::Get, endpoint_url());
+        request
+            .insert_header(http_types::headers::ORIGIN, "unauthorize-origin.net")
             .unwrap();
 
         let mut server = make_server(app.into_http_service()).unwrap();

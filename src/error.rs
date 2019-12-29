@@ -1,37 +1,28 @@
 //! Tide error types.
-use http::{HttpTryFrom, StatusCode};
-use http_service::Body;
+use http_types::StatusCode;
 
 use crate::response::{IntoResponse, Response};
 
 /// A specialized Result type for Tide.
 pub type Result<T = Response> = std::result::Result<T, Error>;
 
-/// A generic error.
-#[derive(Debug)]
-pub struct Error {
-    resp: Response,
+/// Error type.
+pub use http_types::Error;
+
+impl From<Response> for Error {
+    fn from(resp: Response) -> Error {
+        Error::from_str(resp.status(), "")
+    }
 }
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        self.resp
-    }
-}
-
-struct Cause(Box<dyn std::error::Error + Send + Sync>);
-
-impl From<Response> for Error {
-    fn from(resp: Response) -> Error {
-        Error { resp }
-    }
-}
-
-impl From<StatusCode> for Error {
-    fn from(status: StatusCode) -> Error {
-        Error {
-            resp: Response::new(status.as_u16()),
-        }
+        Response::new(self.status())
+            .set_header(
+                http_types::headers::CONTENT_TYPE,
+                "text/plain; charset=utf-8",
+            )
+            .body_string(self.to_string())
     }
 }
 
@@ -54,34 +45,22 @@ pub trait ResultExt<T>: Sized {
     /// Convert to an `Result`, treating the `Err` case as a client
     /// error (response code 400).
     fn client_err(self) -> Result<T> {
-        self.with_err_status(400)
+        self.with_err_status(StatusCode::BadRequest)
     }
 
     /// Convert to an `Result`, treating the `Err` case as a server
     /// error (response code 500).
     fn server_err(self) -> Result<T> {
-        self.with_err_status(500)
+        self.with_err_status(StatusCode::InternalServerError)
     }
 
     /// Convert to an `Result`, wrapping the `Err` case with a custom
     /// response status.
-    fn with_err_status<S>(self, status: S) -> Result<T>
-    where
-        StatusCode: HttpTryFrom<S>;
+    fn with_err_status(self, status: StatusCode) -> Result<T>;
 }
 
 impl<T, E: std::error::Error + Send + Sync + 'static> ResultExt<T> for std::result::Result<T, E> {
-    fn with_err_status<S>(self, status: S) -> Result<T>
-    where
-        StatusCode: HttpTryFrom<S>,
-    {
-        self.map_err(|e| Error {
-            resp: http::Response::builder()
-                .status(status)
-                .extension(Cause(Box::new(e)))
-                .body(Body::empty())
-                .unwrap()
-                .into(),
-        })
+    fn with_err_status(self, status: StatusCode) -> Result<T> {
+        self.map_err(|err| Error::new(status, err))
     }
 }

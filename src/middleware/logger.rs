@@ -2,7 +2,7 @@ use crate::{
     middleware::{Middleware, Next},
     Request, Response,
 };
-use futures::future::BoxFuture;
+use futures_core::future::BoxFuture;
 
 /// A simple requests logger
 ///
@@ -27,7 +27,7 @@ impl RequestLogger {
         next: Next<'a, State>,
     ) -> Response {
         let path = ctx.uri().path().to_owned();
-        let method = ctx.method().as_str().to_owned();
+        let method = ctx.method().to_string();
         log::trace!("IN => {} {}", method, path);
         let start = std::time::Instant::now();
         let res = next.run(ctx).await;
@@ -36,7 +36,7 @@ impl RequestLogger {
             "{} {} {} {}ms",
             method,
             path,
-            status.as_str(),
+            status,
             start.elapsed().as_millis()
         );
         res
