@@ -2,8 +2,7 @@
 use tide::{IntoResponse, Response};
 
 #[test]
-#[should_panic]
-fn into_response_for_result_panics_if_error_case_maps_to_200() {
+fn into_response_for_result_does_not_panic_if_error_case_maps_to_200() {
     struct DummyResponse {}
 
     impl IntoResponse for DummyResponse {
@@ -13,7 +12,7 @@ fn into_response_for_result_panics_if_error_case_maps_to_200() {
     }
 
     let result: Result<String, _> = Err(DummyResponse {});
-    result.into_response();
+    assert!(result.into_response().status().is_success());
 }
 
 // #[test]
