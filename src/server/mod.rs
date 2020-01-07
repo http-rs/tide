@@ -354,7 +354,9 @@ impl<State: Sync + Send + 'static> HttpService for Service<State> {
     }
 }
 
-impl<State: Sync + Send + 'static> Endpoint<State> for Service<State> {
+impl<State: Sync + Send + 'static, InnerState: Sync + Send + 'static> Endpoint<State>
+    for Service<InnerState>
+{
     type Fut = BoxFuture<'static, Response>;
 
     fn call(&self, req: Request<State>) -> Self::Fut {
@@ -381,5 +383,24 @@ impl<State: Sync + Send + 'static> Endpoint<State> for Service<State> {
 
             next.run(req).await
         })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate as tide;
+
+    #[test]
+    fn allow_nested_server_with_same_state() {
+        let inner = tide::new();
+        let mut outer = tide::new();
+        outer.at("/foo").get(inner.into_http_service());
+    }
+
+    #[test]
+    fn allow_nested_server_with_different_state() {
+        let inner = tide::with_state(1);
+        let mut outer = tide::new();
+        outer.at("/foo").get(inner.into_http_service());
     }
 }
