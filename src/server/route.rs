@@ -47,11 +47,6 @@ impl<'a, State: 'static> Route<'a, State> {
         }
     }
 
-    pub fn nest(&mut self, f: impl FnOnce(&mut Route<'a, State>)) -> &mut Self {
-        f(self);
-        self
-    }
-
     /// Treat the current path as a prefix, and strip prefixes from requests.
     ///
     /// This method is marked unstable as its name might change in the near future.
@@ -67,7 +62,7 @@ impl<'a, State: 'static> Route<'a, State> {
     /// Nest a [`Server`] at the current path.
     ///
     /// [`Server`]: struct.Server.html
-    pub fn nest_service(&mut self, service: crate::Server<State>) -> &mut Self
+    pub fn nest(&mut self, service: crate::Server<State>) -> &mut Self
     where
         State: Send + Sync + 'static,
     {
