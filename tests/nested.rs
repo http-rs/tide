@@ -12,10 +12,7 @@ fn nested() {
 
     let mut outer = tide::new();
     // Nest the inner app on /foo
-    outer
-        .at("/foo")
-        .strip_prefix()
-        .get(inner.into_http_service());
+    outer.at("/foo").nest(inner);
 
     let mut server = make_server(outer.into_http_service()).unwrap();
 
@@ -48,13 +45,13 @@ fn nested_middleware() {
     }
 
     let mut app = tide::new();
-    app.at("/foo").nest(|route| {
-        let mut app = tide::new();
-        app.middleware(test_middleware);
-        app.at("/echo").get(echo_path);
-        app.at("/:foo/bar").strip_prefix().get(echo_path);
-        route.strip_prefix().get(app.into_http_service());
-    });
+
+    let mut inner_app = tide::new();
+    inner_app.middleware(test_middleware);
+    inner_app.at("/echo").get(echo_path);
+    inner_app.at("/:foo/bar").strip_prefix().get(echo_path);
+    app.at("/foo").nest(inner_app);
+
     app.at("/bar").get(echo_path);
 
     let mut server = make_server(app.into_http_service()).unwrap();
