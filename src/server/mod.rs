@@ -10,7 +10,7 @@ use async_std::sync::Arc;
 use async_std::task;
 use async_std::task::{Context, Poll};
 
-use async_listen::{ListenExt, backpressure};
+use async_listen::{backpressure, ListenExt};
 
 use http_service::HttpService;
 
@@ -323,11 +323,12 @@ impl<State: Send + Sync + 'static> Server<State> {
         println!("Server is listening on: http://{}", listener.local_addr()?);
         let http_service = self.into_http_service();
 
-        let listener = listener.incoming()
+        let listener = listener
+            .incoming()
             .log_warnings(|e| log::error!("{}. Listener paused for 0.5s...", e))
             .handle_errors(Duration::from_millis(500))
             .backpressure_wrapper(bp)
-            .map(|conn| Ok::<_, io::Error>(conn));  // http-service wants errors
+            .map(|conn| Ok::<_, io::Error>(conn)); // http-service wants errors
 
         let res = http_service_hyper::Server::builder(listener)
             .with_spawner(Spawner {})
