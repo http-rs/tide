@@ -98,10 +98,7 @@ fn nested_with_different_state() {
         format!("the number is {}", num)
     });
     outer.at("/").get(|_| async move { "Hello, world!" });
-    outer
-        .at("/foo")
-        .strip_prefix()
-        .get(inner.into_http_service());
+    outer.at("/foo").nest(inner);
 
     let mut server = make_server(outer.into_http_service()).unwrap();
 
