@@ -41,7 +41,7 @@ serde_qs = "0.5.0"
 async-std = { version = "1.0.1", features = ["unstable"] }
 pin-project-lite = "0.1.0"
 mime = "0.3.14"
-async-listen = "0.1.2"
+async-listen = "0.1.4"
 
 [dev-dependencies]
 async-std = { version = "1.0.1", features = ["unstable", "attributes"] }

@@ -10,7 +10,7 @@ use async_std::sync::Arc;
 use async_std::task;
 use async_std::task::{Context, Poll};
 
-use async_listen::{backpressure, ListenExt};
+use async_listen::{backpressure, error_hint, ListenExt};
 
 use http_service::HttpService;
 
@@ -325,7 +325,7 @@ impl<State: Send + Sync + 'static> Server<State> {
 
         let listener = listener
             .incoming()
-            .log_warnings(|e| log::error!("{}. Listener paused for 0.5s...", e))
+            .log_warnings(log_accept_error)
             .handle_errors(Duration::from_millis(500))
             .backpressure_wrapper(bp)
             .map(|conn| Ok::<_, io::Error>(conn)); // http-service wants errors
@@ -338,6 +338,10 @@ impl<State: Send + Sync + 'static> Server<State> {
         res.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
         Ok(())
     }
+}
+
+fn log_accept_error(e: &io::Error) {
+    log::error!("{}. Listener paused for 0.5s. {}", e, error_hint(e))
 }
 
 /// An instantiated Tide server.
