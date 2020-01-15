@@ -62,9 +62,10 @@ impl<'a, State: 'static> Route<'a, State> {
     /// Nest a [`Server`] at the current path.
     ///
     /// [`Server`]: struct.Server.html
-    pub fn nest(&mut self, service: crate::Server<State>) -> &mut Self
+    pub fn nest<InnerState>(&mut self, service: crate::Server<InnerState>) -> &mut Self
     where
         State: Send + Sync + 'static,
+        InnerState: Send + Sync + 'static,
     {
         self.prefix = true;
         self.all(service.into_http_service());
