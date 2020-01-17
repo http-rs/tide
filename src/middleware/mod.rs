@@ -10,8 +10,7 @@ use crate::utils::BoxFuture;
 use crate::{Request, Response};
 
 // mod compression;
-#[cfg(feature = "cookies")]
-mod cookies;
+pub(crate) mod cookies;
 // mod cors;
 // mod default_headers;
 mod logger;
@@ -21,7 +20,6 @@ mod logger;
 // pub use default_headers::DefaultHeaders;
 pub use logger::RequestLogger;
 
-#[cfg(feature = "cookies")]
 pub use cookies::CookiesMiddleware;
 
 /// Middleware that wraps around remaining middleware chain.

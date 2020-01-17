@@ -1,4 +1,5 @@
-use http::{HeaderMap, Method, Uri, Version};
+use cookie::Cookie;
+use http::{status::StatusCode, HeaderMap, Method, Uri, Version};
 use http_service::Body;
 use route_recognizer::Params;
 use serde::Deserialize;
@@ -8,6 +9,12 @@ use async_std::task::{Context, Poll};
 
 use std::pin::Pin;
 use std::{str::FromStr, sync::Arc};
+
+use crate::error::{Error, ResultExt, StringError};
+use crate::middleware::cookies::CookieData;
+
+const MIDDLEWARE_MISSING_MSG: &str =
+    "CookiesMiddleware must be used to populate request and response cookies";
 
 pin_project_lite::pin_project! {
     /// An HTTP request.
@@ -288,6 +295,55 @@ impl<State> Request<State> {
             )
         })?;
         Ok(res)
+    }
+
+    /// returns a `Cookie` by name of the cookie.
+    pub fn get_cookie(&self, name: &str) -> Result<Option<Cookie<'static>>, Error> {
+        let cookie_data = self
+            .local::<CookieData>()
+            .ok_or_else(|| StringError(MIDDLEWARE_MISSING_MSG.to_owned()))
+            .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        let locked_jar = cookie_data
+            .content
+            .read()
+            .map_err(|e| StringError(format!("Failed to get read lock: {}", e)))
+            .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        Ok(locked_jar.get(name).cloned())
+    }
+
+    /// Add cookie to the cookie jar.
+    pub fn set_cookie(&mut self, cookie: Cookie<'static>) -> Result<(), Error> {
+        let cookie_data = self
+            .local::<CookieData>()
+            .ok_or_else(|| StringError(MIDDLEWARE_MISSING_MSG.to_owned()))
+            .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        let mut locked_jar = cookie_data
+            .content
+            .write()
+            .map_err(|e| StringError(format!("Failed to get read lock: {}", e)))
+            .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
+        locked_jar.add(cookie);
+        Ok(())
+    }
+
+    /// Removes the cookie. This instructs the `CookiesMiddleware` to send a cookie with empty value
+    /// in the response.
+    pub fn remove_cookie(&mut self, cookie: Cookie<'static>) -> Result<(), Error> {
+        let cookie_data = self
+            .local::<CookieData>()
+            .ok_or_else(|| StringError(MIDDLEWARE_MISSING_MSG.to_owned()))
+            .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        let mut locked_jar = cookie_data
+            .content
+            .write()
+            .map_err(|e| StringError(format!("Failed to get read lock: {}", e)))
+            .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
+        locked_jar.remove(cookie);
+        Ok(())
     }
 }
 
