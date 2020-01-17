@@ -147,10 +147,9 @@ impl Cors {
 }
 
 impl<State: Send + Sync + 'static> Middleware<State> for Cors {
-    fn handle<'a>(&'a self, cx: Request<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
+    fn handle<'a>(&'a self, req: Request<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
         Box::pin(async move {
-            let origin = cx
-                .request()
+            let origin = req
                 .headers()
                 .get(header::ORIGIN)
                 .cloned()
@@ -160,15 +159,16 @@ impl<State: Send + Sync + 'static> Middleware<State> for Cors {
                 return http::Response::builder()
                     .status(StatusCode::UNAUTHORIZED)
                     .body(Body::empty())
-                    .unwrap();
+                    .unwrap()
+                    .into();
             }
 
             // Return results immediately upon preflight request
-            if cx.method() == Method::OPTIONS {
-                return self.build_preflight_response(&origin);
+            if req.method() == Method::OPTIONS {
+                return self.build_preflight_response(&origin).into();
             }
 
-            let mut response = next.run(cx).await;
+            let mut response: http_service::Response = next.run(req).await.into();
             let headers = response.headers_mut();
 
             headers.append(
@@ -179,7 +179,11 @@ impl<State: Send + Sync + 'static> Middleware<State> for Cors {
             if let Some(allow_credentials) = self.allow_credentials.clone() {
                 headers.append(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, allow_credentials);
             }
-            response
+
+            if let Some(expose_headers) = self.expose_headers.clone() {
+                headers.append(header::ACCESS_CONTROL_EXPOSE_HEADERS, expose_headers);
+            }
+            response.into()
         })
     }
 }

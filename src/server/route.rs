@@ -47,18 +47,29 @@ impl<'a, State: 'static> Route<'a, State> {
         }
     }
 
-    pub fn nest(&mut self, f: impl FnOnce(&mut Route<'a, State>)) -> &mut Self {
-        f(self);
-        self
-    }
-
     /// Treat the current path as a prefix, and strip prefixes from requests.
+    ///
+    /// This method is marked unstable as its name might change in the near future.
     ///
     /// Endpoints will be given a path with the prefix removed.
     #[cfg(any(feature = "unstable", feature = "docs"))]
     #[cfg_attr(feature = "docs", doc(cfg(unstable)))]
     pub fn strip_prefix(&mut self) -> &mut Self {
         self.prefix = true;
+        self
+    }
+
+    /// Nest a [`Server`] at the current path.
+    ///
+    /// [`Server`]: struct.Server.html
+    pub fn nest<InnerState>(&mut self, service: crate::Server<InnerState>) -> &mut Self
+    where
+        State: Send + Sync + 'static,
+        InnerState: Send + Sync + 'static,
+    {
+        self.prefix = true;
+        self.all(service.into_http_service());
+        self.prefix = false;
         self
     }
 
@@ -71,6 +82,21 @@ impl<'a, State: 'static> Route<'a, State> {
             wildcard.router.add(&wildcard.path, method, ep);
         } else {
             self.router.add(&self.path, method, ep);
+        }
+        self
+    }
+
+    /// Add an endpoint for all HTTP methods, as a fallback.
+    ///
+    /// Routes with specific HTTP methods will be tried first.
+    pub fn all(&mut self, ep: impl Endpoint<State>) -> &mut Self {
+        if self.prefix {
+            let ep = StripPrefixEndpoint::new(ep);
+            self.router.add_all(&self.path, ep.clone());
+            let wildcard = self.at("*--tide-path-rest");
+            wildcard.router.add_all(&wildcard.path, ep);
+        } else {
+            self.router.add_all(&self.path, ep);
         }
         self
     }

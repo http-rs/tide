@@ -274,12 +274,16 @@ impl<State> Request<State> {
 
     /// Get the URL querystring.
     pub fn query<'de, T: Deserialize<'de>>(&'de self) -> Result<T, crate::Error> {
-        let query = self.uri().query();
-        if query.is_none() {
-            return Err(crate::Error::from(http::StatusCode::BAD_REQUEST));
-        }
-        Ok(serde_qs::from_str(query.unwrap())
-            .map_err(|_| crate::Error::from(http::StatusCode::BAD_REQUEST))?)
+        // Default to an empty query string if no query parameter has been specified.
+        // This allows successful deserialisation of structs where all fields are optional
+        // when none of those fields has actually been passed by the caller.
+        let query = self.uri().query().unwrap_or("");
+        serde_qs::from_str(query).map_err(|e| {
+            // Return the displayable version of the deserialisation error to the caller
+            // for easier debugging.
+            let response = crate::Response::new(400).body_string(format!("{}", e));
+            crate::Error::from(response)
+        })
     }
 
     /// Parse the request body as a form.
