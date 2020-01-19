@@ -266,17 +266,20 @@ impl<State> Request<State> {
     }
 
     /// Get the URL querystring.
-    pub fn query<'de, T: Deserialize<'de>>(&'de self) -> Result<T, crate::Error> {
+    pub fn query<'de, T: Deserialize<'de>>(&'de self) -> std::io::Result<T> {
         // Default to an empty query string if no query parameter has been specified.
         // This allows successful deserialisation of structs where all fields are optional
         // when none of those fields has actually been passed by the caller.
         let query = self.uri().query().unwrap_or("");
-        serde_qs::from_str(query).map_err(|e| {
-            // Return the displayable version of the deserialisation error to the caller
-            // for easier debugging.
-            let response = crate::Response::new(400).body_string(format!("{}", e));
-            crate::Error::from(response)
-        })
+
+        let query = serde_qs::from_str(query).map_err(|e| {
+            std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("could not decode query: {}", e),
+            )
+        })?;
+
+        Ok(query)
     }
 
     /// Parse the request body as a form.
