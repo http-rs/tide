@@ -61,6 +61,11 @@ impl<State: 'static> Router<State> {
             // if not then fallback to the behavior of HTTP GET else proceed as usual
 
             self.route(path, http::Method::GET)
+        } else if self.method_map.values().any(|r| r.recognize(path).is_ok()) {
+            Selection {
+                endpoint: &method_not_allawed,
+                params: Params::new(),
+            }
         } else {
             Selection {
                 endpoint: &not_found_endpoint,
@@ -72,4 +77,8 @@ impl<State: 'static> Router<State> {
 
 fn not_found_endpoint<State>(_cx: Request<State>) -> BoxFuture<'static, Response> {
     Box::pin(async move { Response::new(http::StatusCode::NOT_FOUND.as_u16()) })
+}
+
+fn method_not_allawed<State>(_cx: Request<State>) -> BoxFuture<'static, Response> {
+    Box::pin(async move { Response::new(http::StatusCode::METHOD_NOT_ALLOWED.as_u16()) })
 }
