@@ -5,7 +5,7 @@ use tide::{middleware::CookiesMiddleware, Request, Response};
 /// Tide will use the the `Cookies`'s `Extract` implementation to build this parameter.
 ///
 async fn retrieve_cookie(cx: Request<()>) -> String {
-    format!("hello cookies: {:?}", cx.get_cookie("hello").unwrap())
+    format!("hello cookies: {:?}", cx.cookie("hello").unwrap())
 }
 
 async fn set_cookie(mut cx: Request<()>) -> Response {

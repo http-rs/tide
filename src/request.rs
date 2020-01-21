@@ -13,8 +13,7 @@ use std::{str::FromStr, sync::Arc};
 use crate::error::{Error, ResultExt, StringError};
 use crate::middleware::cookies::CookieData;
 
-const MIDDLEWARE_MISSING_MSG: &str =
-    "`CookiesMiddleware` has not been enabled";
+const MIDDLEWARE_MISSING_MSG: &str = "`CookiesMiddleware` has not been enabled";
 
 pin_project_lite::pin_project! {
     /// An HTTP request.
@@ -308,12 +307,7 @@ impl<State> Request<State> {
             .ok_or_else(|| StringError(MIDDLEWARE_MISSING_MSG.to_owned()))
             .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
 
-        let locked_jar = cookie_data
-            .content
-            .read()
-            .map_err(|e| StringError(format!("Failed to get read lock: {}", e)))
-            .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
-
+        let locked_jar = cookie_data.content.read().unwrap();
         Ok(locked_jar.get(name).cloned())
     }
 
@@ -324,11 +318,7 @@ impl<State> Request<State> {
             .ok_or_else(|| StringError(MIDDLEWARE_MISSING_MSG.to_owned()))
             .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
 
-        let mut locked_jar = cookie_data
-            .content
-            .write()
-            .map_err(|e| StringError(format!("Failed to get read lock: {}", e)))
-            .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
+        let mut locked_jar = cookie_data.content.write().unwrap();
         locked_jar.add(cookie);
         Ok(())
     }
@@ -341,11 +331,7 @@ impl<State> Request<State> {
             .ok_or_else(|| StringError(MIDDLEWARE_MISSING_MSG.to_owned()))
             .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
 
-        let mut locked_jar = cookie_data
-            .content
-            .write()
-            .map_err(|e| StringError(format!("Failed to get read lock: {}", e)))
-            .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
+        let mut locked_jar = cookie_data.content.write().unwrap();
         locked_jar.remove(cookie);
         Ok(())
     }

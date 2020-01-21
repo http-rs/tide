@@ -9,11 +9,7 @@ use tide::{middleware::CookiesMiddleware, Request, Response, Server};
 static COOKIE_NAME: &str = "testCookie";
 
 async fn retrieve_cookie(cx: Request<()>) -> String {
-    cx.get_cookie(COOKIE_NAME)
-        .unwrap()
-        .unwrap()
-        .value()
-        .to_string()
+    cx.cookie(COOKIE_NAME).unwrap().unwrap().value().to_string()
 }
 
 async fn set_cookie(mut cx: Request<()>) -> Response {
