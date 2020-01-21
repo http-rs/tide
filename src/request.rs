@@ -302,7 +302,7 @@ impl<State> Request<State> {
     }
 
     /// returns a `Cookie` by name of the cookie.
-    pub fn get_cookie(&self, name: &str) -> Result<Option<Cookie<'static>>, Error> {
+    pub fn cookie(&self, name: &str) -> Result<Option<Cookie<'static>>, Error> {
         let cookie_data = self
             .local::<CookieData>()
             .ok_or_else(|| StringError(MIDDLEWARE_MISSING_MSG.to_owned()))
