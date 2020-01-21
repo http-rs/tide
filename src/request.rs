@@ -14,7 +14,7 @@ use crate::error::{Error, ResultExt, StringError};
 use crate::middleware::cookies::CookieData;
 
 const MIDDLEWARE_MISSING_MSG: &str =
-    "CookiesMiddleware must be used to populate request and response cookies";
+    "`CookiesMiddleware` has not been enabled";
 
 pin_project_lite::pin_project! {
     /// An HTTP request.
