@@ -302,7 +302,7 @@ impl<State: Send + Sync + 'static> Server<State> {
         }
 
         let listener = TcpListener::bind(addr).await?;
-        println!("Server is listening on: http://{}", listener.local_addr()?);
+        log::info!("Server is listening on: http://{}", listener.local_addr()?);
         let http_service = self.into_http_service();
 
         let res = http_service_hyper::Server::builder(listener.incoming())
