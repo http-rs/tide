@@ -12,21 +12,23 @@ async fn retrieve_cookie(cx: Request<()>) -> String {
     cx.cookie(COOKIE_NAME).unwrap().unwrap().value().to_string()
 }
 
-async fn set_cookie(mut cx: Request<()>) -> Response {
-    cx.set_cookie(Cookie::new(COOKIE_NAME, "NewCookieValue"))
-        .unwrap();
-    Response::new(200)
+async fn set_cookie(_req: Request<()>) -> Response {
+    let mut res = Response::new(200);
+    res.set_cookie(Cookie::new(COOKIE_NAME, "NewCookieValue"));
+    res
 }
 
-async fn remove_cookie(mut cx: Request<()>) -> Response {
-    cx.remove_cookie(Cookie::named(COOKIE_NAME)).unwrap();
-    Response::new(200)
+async fn remove_cookie(_req: Request<()>) -> Response {
+    let mut res = Response::new(200);
+    res.remove_cookie(Cookie::named(COOKIE_NAME));
+    res
 }
 
-async fn set_multiple_cookie(mut cx: Request<()>) -> Response {
-    cx.set_cookie(Cookie::new("C1", "V1")).unwrap();
-    cx.set_cookie(Cookie::new("C2", "V2")).unwrap();
-    Response::new(200)
+async fn set_multiple_cookie(_req: Request<()>) -> Response {
+    let mut res = Response::new(200);
+    res.set_cookie(Cookie::new("C1", "V1"));
+    res.set_cookie(Cookie::new("C2", "V2"));
+    res
 }
 
 fn app() -> crate::Server<()> {

@@ -8,14 +8,21 @@ async fn retrieve_cookie(cx: Request<()>) -> String {
     format!("hello cookies: {:?}", cx.cookie("hello").unwrap())
 }
 
-async fn set_cookie(mut cx: Request<()>) -> Response {
-    cx.set_cookie(Cookie::new("hello", "world")).unwrap();
-    tide::Response::new(200)
+// async fn set_cookie(mut cx: Request<()>) -> Response {
+//     cx.set_cookie(Cookie::new("hello", "world")).unwrap();
+//     tide::Response::new(200)
+// }
+
+async fn set_cookie(_req: Request<()>) -> Response {
+    let mut res = tide::Response::new(200);
+    res.set_cookie(Cookie::new("hello", "world"));
+    res
 }
 
-async fn remove_cookie(mut cx: Request<()>) -> Response {
-    cx.remove_cookie(Cookie::named("hello")).unwrap();
-    tide::Response::new(200)
+async fn remove_cookie(_req: Request<()>) -> Response {
+    let mut res = tide::Response::new(200);
+    res.remove_cookie(Cookie::named("hello"));
+    res
 }
 
 fn main() -> Result<(), std::io::Error> {

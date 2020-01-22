@@ -310,31 +310,6 @@ impl<State> Request<State> {
         let locked_jar = cookie_data.content.read().unwrap();
         Ok(locked_jar.get(name).cloned())
     }
-
-    /// Add cookie to the cookie jar.
-    pub fn set_cookie(&mut self, cookie: Cookie<'static>) -> Result<(), Error> {
-        let cookie_data = self
-            .local::<CookieData>()
-            .ok_or_else(|| StringError(MIDDLEWARE_MISSING_MSG.to_owned()))
-            .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
-
-        let mut locked_jar = cookie_data.content.write().unwrap();
-        locked_jar.add(cookie);
-        Ok(())
-    }
-
-    /// Removes the cookie. This instructs the `CookiesMiddleware` to send a cookie with empty value
-    /// in the response.
-    pub fn remove_cookie(&mut self, cookie: Cookie<'static>) -> Result<(), Error> {
-        let cookie_data = self
-            .local::<CookieData>()
-            .ok_or_else(|| StringError(MIDDLEWARE_MISSING_MSG.to_owned()))
-            .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
-
-        let mut locked_jar = cookie_data.content.write().unwrap();
-        locked_jar.remove(cookie);
-        Ok(())
-    }
 }
 
 impl<State> Read for Request<State> {

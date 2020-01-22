@@ -1,5 +1,6 @@
 use crate::{
     middleware::{Middleware, Next},
+    response::CookieEvent,
     Request, Response,
 };
 use cookie::{Cookie, CookieJar, ParseError};
@@ -45,6 +46,16 @@ impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
             };
 
             let mut res = next.run(ctx).await;
+
+            // add modifications from response to original
+            for cookie in res.cookie_events.drain(..) {
+                match cookie {
+                    CookieEvent::Added(cookie) => cookie_jar.write().unwrap().add(cookie.clone()),
+                    CookieEvent::Removed(cookie) => {
+                        cookie_jar.write().unwrap().remove(cookie.clone())
+                    }
+                }
+            }
 
             // iterate over added and removed cookies
             for cookie in cookie_jar.read().unwrap().delta() {
