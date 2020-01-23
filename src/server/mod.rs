@@ -1,11 +1,16 @@
 //! An HTTP server
 
+use std::time::Duration;
+
 use async_std::future::Future;
 use async_std::io;
 use async_std::net::{TcpListener, ToSocketAddrs};
+use async_std::stream::StreamExt;
 use async_std::sync::Arc;
 use async_std::task;
 use async_std::task::{Context, Poll};
+
+use async_listen::{backpressure, error_hint, ListenExt};
 
 use http_service::HttpService;
 
@@ -140,6 +145,7 @@ pub struct Server<State> {
     router: Router<State>,
     middleware: Vec<Arc<dyn Middleware<State>>>,
     state: State,
+    max_connections: usize,
 }
 
 impl Server<()> {
@@ -205,6 +211,7 @@ impl<State: Send + Sync + 'static> Server<State> {
             router: Router::new(),
             middleware: Vec::new(),
             state,
+            max_connections: 1000,
         }
     }
 
@@ -273,6 +280,16 @@ impl<State: Send + Sync + 'static> Server<State> {
         self
     }
 
+    /// Set the limit on the number of simultaneous connections to the server
+    ///
+    /// Default is 1000. Note: when raising a limit make shure that the system
+    /// limits are large enough, in particular the file descriptor limit (check
+    /// with `ulimit -n` on unix).
+    pub fn max_connections(&mut self, max_connections: usize) -> &mut Self {
+        self.max_connections = max_connections;
+        self
+    }
+
     /// Make this app into an `HttpService`.
     ///
     /// This lower-level method lets you host a Tide application within an HTTP
@@ -301,11 +318,19 @@ impl<State: Send + Sync + 'static> Server<State> {
             }
         }
 
+        let (_, bp) = backpressure::new(self.max_connections);
         let listener = TcpListener::bind(addr).await?;
         log::info!("Server is listening on: http://{}", listener.local_addr()?);
         let http_service = self.into_http_service();
 
-        let res = http_service_hyper::Server::builder(listener.incoming())
+        let listener = listener
+            .incoming()
+            .log_warnings(log_accept_error)
+            .handle_errors(Duration::from_millis(500))
+            .backpressure_wrapper(bp)
+            .map(|conn| Ok::<_, io::Error>(conn)); // http-service wants errors
+
+        let res = http_service_hyper::Server::builder(listener)
             .with_spawner(Spawner {})
             .serve(http_service)
             .await;
@@ -313,6 +338,10 @@ impl<State: Send + Sync + 'static> Server<State> {
         res.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
         Ok(())
     }
+}
+
+fn log_accept_error(e: &io::Error) {
+    log::error!("{}. Listener paused for 0.5s. {}", e, error_hint(e))
 }
 
 /// An instantiated Tide server.
