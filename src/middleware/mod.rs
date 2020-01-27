@@ -16,12 +16,9 @@ mod cors;
 mod logger;
 
 // pub use compression::{Compression, Decompression};
-// pub use cookies::CookiesMiddleware;
 pub use cors::{Cors, Origin};
 // pub use default_headers::DefaultHeaders;
 pub use logger::RequestLogger;
-
-pub use cookies::CookiesMiddleware;
 
 /// Middleware that wraps around remaining middleware chain.
 pub trait Middleware<State>: 'static + Send + Sync {

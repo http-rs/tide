@@ -203,7 +203,9 @@ impl<State: Send + Sync + 'static> Server<State> {
     pub fn with_state(state: State) -> Server<State> {
         Server {
             router: Router::new(),
-            middleware: Vec::new(),
+            middleware: vec![Arc::new(
+                crate::middleware::cookies::CookiesMiddleware::new(),
+            )],
             state,
         }
     }

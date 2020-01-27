@@ -22,11 +22,10 @@ use std::sync::{Arc, RwLock};
 ///     res.set_cookie(cookie::Cookie::new("testCookie", "NewCookieValue"));
 ///     res
 /// });
-/// app.middleware(tide::middleware::CookiesMiddleware::new());
 ///
 /// ```
 #[derive(Debug, Clone, Default)]
-pub struct CookiesMiddleware;
+pub(crate) struct CookiesMiddleware;
 
 impl CookiesMiddleware {
     /// Creates a new CookiesMiddleware.

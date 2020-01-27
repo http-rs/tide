@@ -1,17 +1,12 @@
 use async_std::task;
 use cookie::Cookie;
-use tide::{middleware::CookiesMiddleware, Request, Response};
+use tide::{Request, Response};
 
 /// Tide will use the the `Cookies`'s `Extract` implementation to build this parameter.
 ///
 async fn retrieve_cookie(cx: Request<()>) -> String {
     format!("hello cookies: {:?}", cx.cookie("hello").unwrap())
 }
-
-// async fn set_cookie(mut cx: Request<()>) -> Response {
-//     cx.set_cookie(Cookie::new("hello", "world")).unwrap();
-//     tide::Response::new(200)
-// }
 
 async fn set_cookie(_req: Request<()>) -> Response {
     let mut res = tide::Response::new(200);
@@ -28,7 +23,6 @@ async fn remove_cookie(_req: Request<()>) -> Response {
 fn main() -> Result<(), std::io::Error> {
     task::block_on(async {
         let mut app = tide::new();
-        app.middleware(CookiesMiddleware::new());
 
         app.at("/").get(retrieve_cookie);
         app.at("/set").get(set_cookie);

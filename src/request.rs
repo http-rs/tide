@@ -1,5 +1,5 @@
 use cookie::Cookie;
-use http::{status::StatusCode, HeaderMap, Method, Uri, Version};
+use http::{HeaderMap, Method, Uri, Version};
 use http_service::Body;
 use route_recognizer::Params;
 use serde::Deserialize;
@@ -10,10 +10,8 @@ use async_std::task::{Context, Poll};
 use std::pin::Pin;
 use std::{str::FromStr, sync::Arc};
 
-use crate::error::{Error, ResultExt, StringError};
+use crate::error::Error;
 use crate::middleware::cookies::CookieData;
-
-const MIDDLEWARE_MISSING_MSG: &str = "`CookiesMiddleware` has not been enabled";
 
 pin_project_lite::pin_project! {
     /// An HTTP request.
@@ -304,8 +302,7 @@ impl<State> Request<State> {
     pub fn cookie(&self, name: &str) -> Result<Option<Cookie<'static>>, Error> {
         let cookie_data = self
             .local::<CookieData>()
-            .ok_or_else(|| StringError(MIDDLEWARE_MISSING_MSG.to_owned()))
-            .with_err_status(StatusCode::INTERNAL_SERVER_ERROR)?;
+            .expect("should always be set by the cookies middleware");
 
         let locked_jar = cookie_data.content.read().unwrap();
         Ok(locked_jar.get(name).cloned())

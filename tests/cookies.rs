@@ -4,7 +4,7 @@ use futures::AsyncReadExt;
 use http_service::Body;
 use http_service_mock::make_server;
 
-use tide::{middleware::CookiesMiddleware, Request, Response, Server};
+use tide::{Request, Response, Server};
 
 static COOKIE_NAME: &str = "testCookie";
 
@@ -33,7 +33,6 @@ async fn set_multiple_cookie(_req: Request<()>) -> Response {
 
 fn app() -> crate::Server<()> {
     let mut app = tide::new();
-    app.middleware(CookiesMiddleware::new());
 
     app.at("/get").get(retrieve_cookie);
     app.at("/set").get(set_cookie);
