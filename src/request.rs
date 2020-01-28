@@ -113,6 +113,11 @@ impl<State> Request<State> {
         self.request.headers()
     }
 
+    /// Access the request's headers for mutation.
+    pub fn headers_mut(&mut self) -> &mut HeaderMap {
+        self.request.headers_mut()
+    }
+
     /// Get an HTTP header.
     ///
     /// # Examples
