@@ -7,6 +7,99 @@ and this project adheres to [Semantic Versioning](https://book.async.rs/overview
 
 ## [Unreleased]
 
+## [0.6.0] - 2020-01-30
+
+[API Documentation](https://docs.rs/tide/0.6.0/tide)
+
+This patch introduces a new cookies API, based on the excellent
+[cookie](https://docs.rs/cookie/) crate. Working with cookies is a staple for
+any web server, and Tide's new API now makes this entirely declarative.
+
+Additionally we've added back CORS support. This makes it possible for
+possible to configure the single-origin policy of browsers, which is an
+incredibly valuable resource.
+
+And finally nesting services with Tide has become even easier. Building on
+the APIs in 0.5.0, the manual song-and-dance required to nest APIs is no
+longer required, and services can now be nested as-is through the
+`Route::nest` API.
+
+### Examples
+
+#### Cookies
+
+```rust
+use cookie::Cookie;
+use tide::Response;
+
+let mut app = tide::new();
+
+app.at("/").get(|req| async move {
+    println!("cat snack: {:?}", req.cookie("snack"));
+    Response::new(200)
+});
+app.at("/set").get(|req| async move {
+    let mut res = Response::new(200);
+    res.set_cookie(Cookie::new("snack", "tuna"));
+    res
+});
+app.listen("127.0.0.1:8080").await?;
+```
+
+#### CORS
+
+Make GET, POST, and OPTIONS endpoints on this server accessible from any web
+page.
+
+```rust
+use http::header::HeaderValue;
+use tide::middleware::{Cors, Origin};
+
+let rules = Cors::new()
+    .allow_methods(HeaderValue::from_static("GET, POST, OPTIONS"))
+    .allow_origin(Origin::from("*"))
+    .allow_credentials(false);
+
+let mut app = tide::new();
+app.middleware(rules);
+app.at("/").post(|_| async { Response::new(200) });
+app.listen("localhost:8080").await?;
+```
+
+#### Nesting
+
+Nest the inner serve inside the outer service, exposing `GET /nori/cat`.
+
+```rust
+let mut inner = tide::new();
+inner.at("/nori").get(|_| async { Response::new(200) });
+
+let mut outer = tide::new();
+outer.at("/cat").nest(inner);
+
+outer.listen("localhost:8080").await?;
+```
+
+### Added
+
+- Added `Route::all` to match all HTTP methods on a route ([#379](https://github.com/http-rs/tide/pull/379))
+- Added `Route::nest` to nest instances of `tide::Server` on sub-routes ([#379](https://github.com/http-rs/tide/pull/379))
+- Added a new `cors` submodule containing CORS control middleware ([#373](https://github.com/http-rs/tide/pull/373))
+- Added `Request::cookie` to get a cookie sent by the client ([#380](https://github.com/http-rs/tide/pull/380/files))
+- Added `Response::set_cookie` to instruct the client to set a cookie ([#380](https://github.com/http-rs/tide/pull/380/files))
+- Added `Response::remove_cookie` to instruct the client to unset a cookie ([#380](https://github.com/http-rs/tide/pull/380/files))
+
+### Changed
+
+- Changed the behavior of optional params in `Request.query` to be more intuitive ([384](https://github.com/http-rs/tide/pull/384))
+- Improved the debugging experience of query deserialization errors ([384](https://github.com/http-rs/tide/pull/384))
+- Updated the GraphQL example to use the latest version of Juniper ([#372](https://github.com/http-rs/tide/pull/372))
+- Tide no longer prints to stdout when started ([387](https://github.com/http-rs/tide/pull/387))
+
+### Fixed
+
+- Fixed an incorrect MIME type definition on `Response::body` ([378](https://github.com/http-rs/tide/pull/378))
+
 ## [0.5.1] - 2019-12-20
 
 [API Documentation](https://docs.rs/tide/0.5.1/tide)
