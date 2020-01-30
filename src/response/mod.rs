@@ -1,5 +1,6 @@
 use async_std::io::prelude::*;
 
+use cookie::Cookie;
 use http::StatusCode;
 use http_service::Body;
 use mime::Mime;
@@ -9,10 +10,18 @@ pub use into_response::IntoResponse;
 
 mod into_response;
 
+#[derive(Debug)]
+pub(crate) enum CookieEvent {
+    Added(Cookie<'static>),
+    Removed(Cookie<'static>),
+}
+
 /// An HTTP response
 #[derive(Debug)]
 pub struct Response {
     res: http_service::Response,
+    // tracking here
+    pub(crate) cookie_events: Vec<CookieEvent>,
 }
 
 impl Response {
@@ -23,7 +32,10 @@ impl Response {
             .status(status)
             .body(Body::empty())
             .unwrap();
-        Self { res }
+        Self {
+            res,
+            cookie_events: vec![],
+        }
     }
 
     /// Create a new instance from a reader.
@@ -36,7 +48,10 @@ impl Response {
             .status(status)
             .body(Box::pin(reader).into())
             .unwrap();
-        Self { res }
+        Self {
+            res,
+            cookie_events: vec![],
+        }
     }
 
     /// Returns the statuscode.
@@ -54,6 +69,13 @@ impl Response {
     pub fn set_header(mut self, key: &'static str, value: impl AsRef<str>) -> Self {
         let value = value.as_ref().to_owned();
         self.res.headers_mut().insert(key, value.parse().unwrap());
+        self
+    }
+
+    /// Append an HTTP header.
+    pub fn append_header(mut self, key: &'static str, value: impl AsRef<str>) -> Self {
+        let value = value.as_ref().to_owned();
+        self.res.headers_mut().append(key, value.parse().unwrap());
         self
     }
 
@@ -131,6 +153,17 @@ impl Response {
     //         Ok(Multipart::with_body(Cursor::new(body), boundary))
     //     })
     // }
+
+    /// Add cookie to the cookie jar.
+    pub fn set_cookie(&mut self, cookie: Cookie<'static>) {
+        self.cookie_events.push(CookieEvent::Added(cookie));
+    }
+
+    /// Removes the cookie. This instructs the `CookiesMiddleware` to send a cookie with empty value
+    /// in the response.
+    pub fn remove_cookie(&mut self, cookie: Cookie<'static>) {
+        self.cookie_events.push(CookieEvent::Removed(cookie));
+    }
 }
 
 #[doc(hidden)]
@@ -143,6 +176,9 @@ impl Into<http_service::Response> for Response {
 #[doc(hidden)]
 impl From<http_service::Response> for Response {
     fn from(res: http_service::Response) -> Self {
-        Self { res }
+        Self {
+            res,
+            cookie_events: vec![],
+        }
     }
 }
