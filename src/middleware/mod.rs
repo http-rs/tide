@@ -52,7 +52,7 @@ impl<'a, State: 'static> Next<'a, State> {
             self.next_middleware = next;
             current.handle(req, self)
         } else {
-            (self.endpoint)(req)
+            self.endpoint.call(req)
         }
     }
 }

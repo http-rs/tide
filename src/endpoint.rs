@@ -46,15 +46,11 @@ use crate::{response::IntoResponse, Request, Response};
 ///
 /// Tide routes will also accept endpoints with `Fn` signatures of this form, but using the `async` keyword has better ergonomics.
 pub trait Endpoint<State>: Send + Sync + 'static {
-    /// The async result of `call`.
-    type Fut: Future<Output = Response> + Send + 'static;
-
     /// Invoke the endpoint within the given context
-    fn call(&self, req: Request<State>) -> Self::Fut;
+    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, Response>;
 }
 
-pub(crate) type DynEndpoint<State> =
-    dyn (Fn(Request<State>) -> BoxFuture<'static, Response>) + 'static + Send + Sync;
+pub(crate) type DynEndpoint<State> = dyn Endpoint<State>;
 
 impl<State, F: Send + Sync + 'static, Fut> Endpoint<State> for F
 where
@@ -62,8 +58,7 @@ where
     Fut: Future + Send + 'static,
     Fut::Output: IntoResponse,
 {
-    type Fut = BoxFuture<'static, Response>;
-    fn call(&self, req: Request<State>) -> Self::Fut {
+    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, Response> {
         let fut = (self)(req);
         Box::pin(async move { fut.await.into_response() })
     }
