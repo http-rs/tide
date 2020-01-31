@@ -68,7 +68,7 @@ app.listen("localhost:8080").await?;
 
 #### Nesting
 
-Nest the inner serve inside the outer service, exposing `GET /nori/cat`.
+Nest the inner serve inside the outer service, exposing `GET /cat/nori`.
 
 ```rust
 let mut inner = tide::new();
