@@ -321,12 +321,21 @@ impl<State: Send + Sync + 'static> Server<State> {
 ///
 /// This type is useful only in conjunction with the [`HttpService`] trait,
 /// i.e. for hosting a Tide app within some custom HTTP server.
-#[derive(Clone)]
 #[allow(missing_debug_implementations)]
 pub struct Service<State> {
     router: Arc<Router<State>>,
     state: Arc<State>,
     middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
+}
+
+impl<State> Clone for Service<State> {
+    fn clone(&self) -> Self {
+        Self {
+            router: self.router.clone(),
+            state: self.state.clone(),
+            middleware: self.middleware.clone(),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -351,17 +360,17 @@ impl<State: Sync + Send + 'static> HttpService for Service<State> {
 
     fn respond(&self, _conn: &mut (), req: http_service::Request) -> Self::ResponseFuture {
         let req = Request::new(self.state.clone(), req, Vec::new());
-        let fut = self.call(req);
-        Box::pin(async move { Ok(fut.await.into()) })
+        let service = self.clone();
+        Box::pin(async move {
+            Ok(service.call(req).await.into())
+        })
     }
 }
 
 impl<State: Sync + Send + 'static, InnerState: Sync + Send + 'static> Endpoint<State>
     for Service<InnerState>
 {
-    type Fut = BoxFuture<'static, Response>;
-
-    fn call(&self, req: Request<State>) -> Self::Fut {
+    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, Response> {
         let Request {
             request: req,
             mut route_params,

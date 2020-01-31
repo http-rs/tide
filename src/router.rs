@@ -33,12 +33,12 @@ impl<State: 'static> Router<State> {
         self.method_map
             .entry(method)
             .or_insert_with(MethodRouter::new)
-            .add(path, Box::new(move |cx| Box::pin(ep.call(cx))))
+            .add(path, Box::new(ep))
     }
 
     pub(crate) fn add_all(&mut self, path: &str, ep: impl Endpoint<State>) {
         self.all_method_router
-            .add(path, Box::new(move |cx| Box::pin(ep.call(cx))))
+            .add(path, Box::new(ep))
     }
 
     pub(crate) fn route(&self, path: &str, method: http::Method) -> Selection<'_, State> {

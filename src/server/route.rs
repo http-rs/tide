@@ -1,4 +1,5 @@
-use crate::{router::Router, Endpoint};
+use crate::utils::BoxFuture;
+use crate::{router::Router, Endpoint, Response};
 
 /// A handle to a route.
 ///
@@ -172,9 +173,7 @@ impl<E> Clone for StripPrefixEndpoint<E> {
 }
 
 impl<State, E: Endpoint<State>> Endpoint<State> for StripPrefixEndpoint<E> {
-    type Fut = E::Fut;
-
-    fn call(&self, mut req: crate::Request<State>) -> Self::Fut {
+    fn call<'a>(&'a self, mut req: crate::Request<State>) -> BoxFuture<'a, Response> {
         let rest = req.rest().unwrap_or("");
         let mut path_and_query = format!("/{}", rest);
         let uri = req.uri();
