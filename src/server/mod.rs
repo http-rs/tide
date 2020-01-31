@@ -361,9 +361,7 @@ impl<State: Sync + Send + 'static> HttpService for Service<State> {
     fn respond(&self, _conn: &mut (), req: http_service::Request) -> Self::ResponseFuture {
         let req = Request::new(self.state.clone(), req, Vec::new());
         let service = self.clone();
-        Box::pin(async move {
-            Ok(service.call(req).await.into())
-        })
+        Box::pin(async move { Ok(service.call(req).await.into()) })
     }
 }
 

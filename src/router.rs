@@ -37,8 +37,7 @@ impl<State: 'static> Router<State> {
     }
 
     pub(crate) fn add_all(&mut self, path: &str, ep: impl Endpoint<State>) {
-        self.all_method_router
-            .add(path, Box::new(ep))
+        self.all_method_router.add(path, Box::new(ep))
     }
 
     pub(crate) fn route(&self, path: &str, method: http::Method) -> Selection<'_, State> {
