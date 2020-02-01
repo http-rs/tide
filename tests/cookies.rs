@@ -2,7 +2,7 @@ use cookie::Cookie;
 use futures::executor::block_on;
 use futures::AsyncReadExt;
 use http_service::Body;
-use http_service_mock::make_server;
+use std::io;
 
 use tide::{Request, Response, Server};
 
@@ -43,7 +43,7 @@ fn app() -> crate::Server<()> {
 
 fn make_request(endpoint: &str) -> http::response::Response<http_service::Body> {
     let app = app();
-    let mut server = make_server(app.into_http_service()).unwrap();
+    let mut server = app.into_mock().unwrap();
     let req = http::Request::get(endpoint)
         .header(http::header::COOKIE, "testCookie=RequestCookieValue")
         .body(Body::empty())
@@ -115,26 +115,28 @@ fn successfully_set_multiple_cookies() {
 }
 
 #[test]
-fn nested_cookies() {
+fn nested_cookies() -> io::Result<()> {
     let mut inner = tide::new();
-    inner.at("/2").get(|_req| async move {
-        let mut r = Response::new(200);
-        r.set_cookie(Cookie::new("snack", "tuna"));
-        r.body_string(String::from("ok"))
+    inner.at("/2").get(|_req| {
+        async move {
+            let mut r = Response::new(200);
+            r.set_cookie(Cookie::new("snack", "tuna"));
+            r.body_string(String::from("ok"))
+        }
     });
 
     let mut outer = tide::new();
     outer.at("/1").nest(inner);
 
-    let mut server = make_server(outer.into_http_service()).unwrap();
+    let mut server = outer.into_mock()?;
 
-    let req = http::Request::get("/1/2")
-        .body(Body::empty())
-        .unwrap();
+    let req = http::Request::get("/1/2").body(Body::empty()).unwrap();
 
     let res = server.simulate(req).unwrap();
 
-    let mut cookies = res.headers().get_all(http::header::SET_COOKIE).iter();
-    assert_eq!(cookies.next().unwrap(), "snack=tuna");
-    assert!(cookies.next().is_none());
+    let cookie_header = res.headers().get_all(http::header::SET_COOKIE);
+    let mut iter = dbg!(cookie_header.iter());
+    assert_eq!(iter.next().unwrap(), "snack=tuna");
+    assert!(iter.next().is_none());
+    Ok(())
 }

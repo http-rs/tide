@@ -203,9 +203,7 @@ impl<State: Send + Sync + 'static> Server<State> {
     pub fn with_state(state: State) -> Server<State> {
         Server {
             router: Router::new(),
-            middleware: vec![Arc::new(
-                crate::middleware::cookies::CookiesMiddleware::new(),
-            )],
+            middleware: vec![],
             state,
         }
     }
@@ -279,6 +277,11 @@ impl<State: Send + Sync + 'static> Server<State> {
     ///
     /// This lower-level method lets you host a Tide application within an HTTP
     /// server of your choice, via the `http_service` interface crate.
+    ///
+    /// # Middleware
+    ///
+    /// This method does not enable default middleware. See `into_mock` for
+    /// converting Tide into a server that can be used for testing purposes.
     pub fn into_http_service(self) -> Service<State> {
         Service {
             router: Arc::new(self.router),
@@ -287,9 +290,16 @@ impl<State: Send + Sync + 'static> Server<State> {
         }
     }
 
+    /// Insert default middleware to the start of the middleware stack.
+    fn enable_default_middleware(&mut self) {
+        use crate::middleware::cookies::CookiesMiddleware;
+        self.middleware
+            .insert(0, Arc::new(CookiesMiddleware::new()));
+    }
+
     /// Asynchronously serve the app at the given address.
     #[cfg(feature = "hyper-server")]
-    pub async fn listen(self, addr: impl ToSocketAddrs) -> std::io::Result<()> {
+    pub async fn listen(mut self, addr: impl ToSocketAddrs) -> std::io::Result<()> {
         #[derive(Copy, Clone)]
         struct Spawner;
 
@@ -305,8 +315,12 @@ impl<State: Send + Sync + 'static> Server<State> {
 
         let listener = TcpListener::bind(addr).await?;
         log::info!("Server is listening on: http://{}", listener.local_addr()?);
-        let http_service = self.into_http_service();
 
+        // Enable middleware.
+        self.enable_default_middleware();
+
+        // Start listening
+        let http_service = self.into_http_service();
         let res = http_service_hyper::Server::builder(listener.incoming())
             .with_spawner(Spawner {})
             .serve(http_service)
@@ -314,6 +328,20 @@ impl<State: Send + Sync + 'static> Server<State> {
 
         res.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
         Ok(())
+    }
+
+    /// Convert the server into a mock server.
+    ///
+    /// Unlike `into_http_service` this method enables default middleware.
+    ///
+    /// # Stability
+    ///
+    /// This method will be expanded in the future to allow mocking requests
+    /// in a more direct manner.
+    pub fn into_mock(mut self) -> io::Result<http_service_mock::TestBackend<Service<State>>> {
+        self.enable_default_middleware();
+        let server = http_service_mock::make_server(self.into_http_service())?;
+        Ok(server)
     }
 }
 

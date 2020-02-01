@@ -11,8 +11,8 @@ fn main() -> io::Result<()> {
     task::block_on(async {
         let mut app = tide::new();
 
-        app.at("/submit")
-            .post(|mut req: tide::Request<()>| async move {
+        app.at("/submit").post(|mut req: tide::Request<()>| {
+            async move {
                 let cat: Cat = req.body_json().await.unwrap();
                 println!("cat name: {}", cat.name);
 
@@ -20,7 +20,8 @@ fn main() -> io::Result<()> {
                     name: "chashu".into(),
                 };
                 tide::Response::new(200).body_json(&cat).unwrap()
-            });
+            }
+        });
 
         app.listen("127.0.0.1:8080").await?;
         Ok(())
