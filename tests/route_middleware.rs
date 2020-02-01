@@ -28,14 +28,12 @@ async fn echo_path<State>(req: tide::Request<State>) -> String {
 fn route_middleware() {
     let mut app = tide::new();
     let mut foo_route = app.at("/foo");
-    foo_route.middleware(TestMiddleware("foo"))
-        .get(echo_path);
-    foo_route.at("/bar")
+    foo_route.middleware(TestMiddleware("foo")).get(echo_path);
+    foo_route
+        .at("/bar")
         .middleware(TestMiddleware("bar"))
         .get(echo_path);
-    foo_route.post(echo_path)
-        .reset_middleware()
-        .put(echo_path);
+    foo_route.post(echo_path).reset_middleware().put(echo_path);
     let mut server = make_server(app.into_http_service()).unwrap();
 
     let mut buf = Vec::new();
