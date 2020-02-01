@@ -113,28 +113,3 @@ fn successfully_set_multiple_cookies() {
 
     assert!(iter.next().is_none());
 }
-
-#[test]
-fn nested_cookies() {
-    let mut inner = tide::new();
-    inner.at("/2").get(|_req| async move {
-        let mut r = Response::new(200);
-        r.set_cookie(Cookie::new("snack", "tuna"));
-        r.body_string(String::from("ok"))
-    });
-
-    let mut outer = tide::new();
-    outer.at("/1").nest(inner);
-
-    let mut server = make_server(outer.into_http_service()).unwrap();
-
-    let req = http::Request::get("/1/2")
-        .body(Body::empty())
-        .unwrap();
-
-    let res = server.simulate(req).unwrap();
-
-    let mut cookies = res.headers().get_all(http::header::SET_COOKIE).iter();
-    assert_eq!(cookies.next().unwrap(), "snack=tuna");
-    assert!(cookies.next().is_none());
-}
