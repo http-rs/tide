@@ -118,9 +118,9 @@ fn successfully_set_multiple_cookies() {
 fn nested_cookies() -> io::Result<()> {
     let mut inner = tide::new();
     inner.at("/2").get(|_req| async move {
-        let mut r = Response::new(200);
-        r.set_cookie(Cookie::new("snack", "tuna"));
-        r.body_string(String::from("ok"))
+        let mut res = Response::new(200);
+        res.set_cookie(Cookie::new("snack", "tuna"));
+        res
     });
 
     let mut outer = tide::new();
