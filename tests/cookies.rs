@@ -125,16 +125,13 @@ fn nested_cookies() -> io::Result<()> {
 
     let mut outer = tide::new();
     outer.at("/1").nest(inner);
-
     let mut server = outer.into_mock()?;
 
     let req = http::Request::get("/1/2").body(Body::empty()).unwrap();
-
     let res = server.simulate(req).unwrap();
 
-    let cookie_header = res.headers().get_all(http::header::SET_COOKIE);
-    let mut iter = dbg!(cookie_header.iter());
-    assert_eq!(iter.next().unwrap(), "snack=tuna");
-    assert!(iter.next().is_none());
+    let mut cookies = res.headers().get_all(http::header::SET_COOKIE).iter();
+    assert_eq!(cookies.next().unwrap(), "snack=tuna");
+    assert!(cookies.next().is_none());
     Ok(())
 }
