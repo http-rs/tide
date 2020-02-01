@@ -1,7 +1,10 @@
+use std::sync::Arc;
+
 use async_std::future::Future;
 
+use crate::middleware::Next;
 use crate::utils::BoxFuture;
-use crate::{response::IntoResponse, Request, Response};
+use crate::{response::IntoResponse, Middleware, Request, Response};
 
 /// An HTTP request handler.
 ///
@@ -61,5 +64,54 @@ where
     fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, Response> {
         let fut = (self)(req);
         Box::pin(async move { fut.await.into_response() })
+    }
+}
+
+pub struct MiddlewareEndpoint<E, State> {
+    endpoint: E,
+    middleware: Vec<Arc<dyn Middleware<State>>>,
+}
+
+impl<E: Clone, State> Clone for MiddlewareEndpoint<E, State> {
+    fn clone(&self) -> Self {
+        Self {
+            endpoint: self.endpoint.clone(),
+            middleware: self.middleware.clone(),
+        }
+    }
+}
+
+impl<E, State> std::fmt::Debug for MiddlewareEndpoint<E, State> {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            fmt,
+            "MiddlewareEndpoint (length: {})",
+            self.middleware.len(),
+        )
+    }
+}
+
+impl<E, State> MiddlewareEndpoint<E, State>
+where
+    E: Endpoint<State>,
+{
+    pub fn wrap_with_middleware(ep: E, middleware: &[Arc<dyn Middleware<State>>]) -> Self {
+        Self {
+            endpoint: ep,
+            middleware: middleware.to_vec(),
+        }
+    }
+}
+
+impl<E, State: 'static> Endpoint<State> for MiddlewareEndpoint<E, State>
+where
+    E: Endpoint<State>,
+{
+    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, Response> {
+        let next = Next {
+            endpoint: &self.endpoint,
+            next_middleware: &self.middleware,
+        };
+        next.run(req)
     }
 }

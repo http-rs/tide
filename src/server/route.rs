@@ -1,5 +1,8 @@
+use std::sync::Arc;
+
+use crate::endpoint::MiddlewareEndpoint;
 use crate::utils::BoxFuture;
-use crate::{router::Router, Endpoint, Response};
+use crate::{router::Router, Endpoint, Middleware, Response};
 
 /// A handle to a route.
 ///
@@ -13,6 +16,7 @@ use crate::{router::Router, Endpoint, Response};
 pub struct Route<'a, State> {
     router: &'a mut Router<State>,
     path: String,
+    middleware: Vec<Arc<dyn Middleware<State>>>,
     /// Indicates whether the path of current route is treated as a prefix. Set by
     /// [`strip_prefix`].
     ///
@@ -25,11 +29,14 @@ impl<'a, State: 'static> Route<'a, State> {
         Route {
             router,
             path,
+            middleware: Vec::new(),
             prefix: false,
         }
     }
 
     /// Extend the route with the given `path`.
+    ///
+    /// The returned route won't have any middleware applied.
     pub fn at<'b>(&'b mut self, path: &str) -> Route<'b, State> {
         let mut p = self.path.clone();
 
@@ -44,6 +51,7 @@ impl<'a, State: 'static> Route<'a, State> {
         Route {
             router: &mut self.router,
             path: p,
+            middleware: Vec::new(),
             prefix: false,
         }
     }
@@ -57,6 +65,18 @@ impl<'a, State: 'static> Route<'a, State> {
     #[cfg_attr(feature = "docs", doc(cfg(unstable)))]
     pub fn strip_prefix(&mut self) -> &mut Self {
         self.prefix = true;
+        self
+    }
+
+    /// Apply the given middleware to the current route.
+    pub fn middleware(&mut self, middleware: impl Middleware<State>) -> &mut Self {
+        self.middleware.push(Arc::new(middleware));
+        self
+    }
+
+    /// Reset the middleware chain for the current route, if any.
+    pub fn reset_middleware(&mut self) -> &mut Self {
+        self.middleware.clear();
         self
     }
 
@@ -78,10 +98,29 @@ impl<'a, State: 'static> Route<'a, State> {
     pub fn method(&mut self, method: http::Method, ep: impl Endpoint<State>) -> &mut Self {
         if self.prefix {
             let ep = StripPrefixEndpoint::new(ep);
-            self.router.add(&self.path, method.clone(), ep.clone());
+            let (ep1, ep2): (Box<dyn Endpoint<_>>, Box<dyn Endpoint<_>>) =
+                if self.middleware.is_empty() {
+                    let ep = Box::new(ep);
+                    (ep.clone(), ep)
+                } else {
+                    let ep = Box::new(MiddlewareEndpoint::wrap_with_middleware(
+                        ep,
+                        &self.middleware,
+                    ));
+                    (ep.clone(), ep)
+                };
+            self.router.add(&self.path, method.clone(), ep1);
             let wildcard = self.at("*--tide-path-rest");
-            wildcard.router.add(&wildcard.path, method, ep);
+            wildcard.router.add(&wildcard.path, method, ep2);
         } else {
+            let ep: Box<dyn Endpoint<_>> = if self.middleware.is_empty() {
+                Box::new(ep)
+            } else {
+                Box::new(MiddlewareEndpoint::wrap_with_middleware(
+                    ep,
+                    &self.middleware,
+                ))
+            };
             self.router.add(&self.path, method, ep);
         }
         self
@@ -93,10 +132,29 @@ impl<'a, State: 'static> Route<'a, State> {
     pub fn all(&mut self, ep: impl Endpoint<State>) -> &mut Self {
         if self.prefix {
             let ep = StripPrefixEndpoint::new(ep);
-            self.router.add_all(&self.path, ep.clone());
+            let (ep1, ep2): (Box<dyn Endpoint<_>>, Box<dyn Endpoint<_>>) =
+                if self.middleware.is_empty() {
+                    let ep = Box::new(ep);
+                    (ep.clone(), ep)
+                } else {
+                    let ep = Box::new(MiddlewareEndpoint::wrap_with_middleware(
+                        ep,
+                        &self.middleware,
+                    ));
+                    (ep.clone(), ep)
+                };
+            self.router.add_all(&self.path, ep1);
             let wildcard = self.at("*--tide-path-rest");
-            wildcard.router.add_all(&wildcard.path, ep);
+            wildcard.router.add_all(&wildcard.path, ep2);
         } else {
+            let ep: Box<dyn Endpoint<_>> = if self.middleware.is_empty() {
+                Box::new(ep)
+            } else {
+                Box::new(MiddlewareEndpoint::wrap_with_middleware(
+                    ep,
+                    &self.middleware,
+                ))
+            };
             self.router.add_all(&self.path, ep);
         }
         self

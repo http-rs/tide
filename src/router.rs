@@ -1,7 +1,7 @@
 use route_recognizer::{Match, Params, Router as MethodRouter};
 use std::collections::HashMap;
 
-use crate::endpoint::{DynEndpoint, Endpoint};
+use crate::endpoint::DynEndpoint;
 use crate::utils::BoxFuture;
 use crate::{Request, Response};
 
@@ -29,15 +29,15 @@ impl<State: 'static> Router<State> {
         }
     }
 
-    pub(crate) fn add(&mut self, path: &str, method: http::Method, ep: impl Endpoint<State>) {
+    pub(crate) fn add(&mut self, path: &str, method: http::Method, ep: Box<DynEndpoint<State>>) {
         self.method_map
             .entry(method)
             .or_insert_with(MethodRouter::new)
-            .add(path, Box::new(ep))
+            .add(path, ep)
     }
 
-    pub(crate) fn add_all(&mut self, path: &str, ep: impl Endpoint<State>) {
-        self.all_method_router.add(path, Box::new(ep))
+    pub(crate) fn add_all(&mut self, path: &str, ep: Box<DynEndpoint<State>>) {
+        self.all_method_router.add(path, ep)
     }
 
     pub(crate) fn route(&self, path: &str, method: http::Method) -> Selection<'_, State> {
