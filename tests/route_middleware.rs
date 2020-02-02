@@ -64,6 +64,70 @@ fn route_middleware() {
 }
 
 #[test]
+fn app_and_route_middleware() {
+    let mut app = tide::new();
+    app.middleware(TestMiddleware::with_header_name("X-Root", "root"));
+    app.at("/foo")
+        .middleware(TestMiddleware::with_header_name("X-Foo", "foo"))
+        .get(echo_path);
+    app.at("/bar")
+        .middleware(TestMiddleware::with_header_name("X-Bar", "bar"))
+        .get(echo_path);
+    let mut server = make_server(app.into_http_service()).unwrap();
+
+    let req = http::Request::get("/foo").body(Body::empty()).unwrap();
+    let res = server.simulate(req).unwrap();
+    assert_eq!(res.headers().get("X-Root"), Some(&"root".parse().unwrap()));
+    assert_eq!(res.headers().get("X-Foo"), Some(&"foo".parse().unwrap()));
+    assert_eq!(res.headers().get("X-Bar"), None);
+
+    let req = http::Request::get("/bar").body(Body::empty()).unwrap();
+    let res = server.simulate(req).unwrap();
+    assert_eq!(res.headers().get("X-Root"), Some(&"root".parse().unwrap()));
+    assert_eq!(res.headers().get("X-Foo"), None);
+    assert_eq!(res.headers().get("X-Bar"), Some(&"bar".parse().unwrap()));
+}
+
+#[test]
+fn nested_app_with_route_middleware() {
+    let mut inner = tide::new();
+    inner.middleware(TestMiddleware::with_header_name("X-Inner", "inner"));
+    inner
+        .at("/baz")
+        .middleware(TestMiddleware::with_header_name("X-Baz", "baz"))
+        .get(echo_path);
+
+    let mut app = tide::new();
+    app.middleware(TestMiddleware::with_header_name("X-Root", "root"));
+    app.at("/foo")
+        .middleware(TestMiddleware::with_header_name("X-Foo", "foo"))
+        .get(echo_path);
+    app.at("/bar")
+        .middleware(TestMiddleware::with_header_name("X-Bar", "bar"))
+        .nest(inner);
+    let mut server = make_server(app.into_http_service()).unwrap();
+
+    let req = http::Request::get("/foo").body(Body::empty()).unwrap();
+    let res = server.simulate(req).unwrap();
+    assert_eq!(res.headers().get("X-Root"), Some(&"root".parse().unwrap()));
+    assert_eq!(res.headers().get("X-Inner"), None);
+    assert_eq!(res.headers().get("X-Foo"), Some(&"foo".parse().unwrap()));
+    assert_eq!(res.headers().get("X-Bar"), None);
+    assert_eq!(res.headers().get("X-Baz"), None);
+
+    let req = http::Request::get("/bar/baz").body(Body::empty()).unwrap();
+    let res = server.simulate(req).unwrap();
+    assert_eq!(res.headers().get("X-Root"), Some(&"root".parse().unwrap()));
+    assert_eq!(
+        res.headers().get("X-Inner"),
+        Some(&"inner".parse().unwrap())
+    );
+    assert_eq!(res.headers().get("X-Foo"), None);
+    assert_eq!(res.headers().get("X-Bar"), Some(&"bar".parse().unwrap()));
+    assert_eq!(res.headers().get("X-Baz"), Some(&"baz".parse().unwrap()));
+}
+
+#[test]
 fn subroute_not_nested() {
     let mut app = tide::new();
     app.at("/parent") // /parent
