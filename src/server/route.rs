@@ -35,8 +35,6 @@ impl<'a, State: 'static> Route<'a, State> {
     }
 
     /// Extend the route with the given `path`.
-    ///
-    /// The returned route won't have any middleware applied.
     pub fn at<'b>(&'b mut self, path: &str) -> Route<'b, State> {
         let mut p = self.path.clone();
 
@@ -51,7 +49,7 @@ impl<'a, State: 'static> Route<'a, State> {
         Route {
             router: &mut self.router,
             path: p,
-            middleware: Vec::new(),
+            middleware: self.middleware.clone(),
             prefix: false,
         }
     }
