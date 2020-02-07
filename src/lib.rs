@@ -180,7 +180,6 @@ mod redirect;
 mod request;
 mod response;
 mod router;
-mod utils;
 
 pub mod prelude;
 pub mod server;
