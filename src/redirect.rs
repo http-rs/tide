@@ -1,4 +1,5 @@
-use crate::utils::BoxFuture;
+use futures::future::BoxFuture;
+
 use crate::{Endpoint, Request, Response};
 
 /// Redirect a route to another route.

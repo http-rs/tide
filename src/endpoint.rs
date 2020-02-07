@@ -1,6 +1,7 @@
 use async_std::future::Future;
 
-use crate::utils::BoxFuture;
+use futures::future::BoxFuture;
+
 use crate::{response::IntoResponse, Request, Response};
 
 /// An HTTP request handler.

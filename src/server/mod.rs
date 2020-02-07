@@ -9,9 +9,10 @@ use async_std::task::{Context, Poll};
 
 use http_service::HttpService;
 
+use futures::future::BoxFuture;
+
 use std::pin::Pin;
 
-use crate::utils::BoxFuture;
 use crate::{
     middleware::{Middleware, Next},
     router::{Router, Selection},

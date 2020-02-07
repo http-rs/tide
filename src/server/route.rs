@@ -1,4 +1,5 @@
-use crate::utils::BoxFuture;
+use futures::future::BoxFuture;
+
 use crate::{router::Router, Endpoint, Response};
 
 /// A handle to a route.

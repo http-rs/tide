@@ -1,12 +1,13 @@
 //! Middleware types.
 
+use futures::future::BoxFuture;
+
 use std::sync::Arc;
 
 #[doc(inline)]
 pub use http_service::HttpService;
 
 use crate::endpoint::DynEndpoint;
-use crate::utils::BoxFuture;
 use crate::{Request, Response};
 
 // mod compression;
