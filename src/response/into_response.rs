@@ -109,3 +109,16 @@ impl<R: IntoResponse> IntoResponse for WithStatus<R> {
         self.inner.into_response().set_status(self.status)
     }
 }
+
+impl<T, E> IntoResponse for Result<T, E>
+where
+    T: IntoResponse,
+    E: IntoResponse,
+{
+    fn into_response(self) -> Response {
+        match self {
+            Ok(t) => t.into_response(),
+            Err(e) => e.into_response(),
+        }
+    }
+}
