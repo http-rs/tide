@@ -4,7 +4,7 @@ use route_recognizer::Params;
 
 use std::ops::Index;
 use std::pin::Pin;
-use std::{str::FromStr, sync::Arc};
+use std::{fmt, str::FromStr, sync::Arc};
 
 use crate::cookies::CookieData;
 use crate::http::cookies::Cookie;
@@ -25,6 +25,23 @@ pub struct Request<State> {
     pub(crate) req: http::Request,
     pub(crate) route_params: Vec<Params>,
 }
+
+#[derive(Debug)]
+pub enum ParamError<E> {
+    NotFound(String),
+    ParsingError(E),
+}
+
+impl<E: fmt::Debug + fmt::Display> fmt::Display for ParamError<E> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ParamError::NotFound(name) => write!(f, "Param \"{}\" not found!", name),
+            ParamError::ParsingError(err) => write!(f, "Param failed to parse: {}", err),
+        }
+    }
+}
+
+impl<T: fmt::Debug + fmt::Display> std::error::Error for ParamError<T> {}
 
 impl<State> Request<State> {
     /// Create a new `Request`.
@@ -265,19 +282,38 @@ impl<State> Request<State> {
     ///
     /// # Errors
     ///
-    /// Yields an `Err` if the parameter was found but failed to parse as an
+    /// Yields a `ParamError::ParsingError` if the parameter was found but failed to parse as an
     /// instance of type `T`.
     ///
-    /// # Panics
+    /// Yields a `ParamError::NotFound` if `key` is not a parameter for the route.
     ///
-    /// Panic if `key` is not a parameter for the route.
-    pub fn param<T: FromStr>(&self, key: &str) -> Result<T, T::Err> {
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use async_std::task::block_on;
+    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
+    /// #
+    /// use tide::{Request, Result};
+    ///
+    /// async fn greet(req: Request<()>) -> Result<String> {
+    ///     let name = req.param("name").unwrap_or("world".to_owned());
+    ///     Ok(format!("Hello, {}!", name))
+    /// }
+    ///
+    /// let mut app = tide::new();
+    /// app.at("/hello").get(greet);
+    /// app.at("/hello/:name").get(greet);
+    /// app.listen("127.0.0.1:8080").await?;
+    /// #
+    /// # Ok(()) })}
+    /// ```
+    pub fn param<T: FromStr>(&self, key: &str) -> Result<T, ParamError<T::Err>> {
         self.route_params
             .iter()
             .rev()
             .find_map(|params| params.find(key))
-            .unwrap()
-            .parse()
+            .ok_or_else(|| ParamError::NotFound(key.to_string()))
+            .and_then(|param| param.parse().map_err(ParamError::ParsingError))
     }
 
     /// Parse the URL query component into a struct, using [serde_qs](serde_qs). To get the entire
