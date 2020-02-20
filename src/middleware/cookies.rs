@@ -65,7 +65,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
 
             // iterate over added and removed cookies
             for cookie in cookie_jar.read().unwrap().delta() {
-                let set_cookie_header = http::header::SET_COOKIE.as_ref();
+                let set_cookie_header = http::header::SET_COOKIE;
                 let encoded_cookie = cookie.encoded().to_string();
                 res = res.append_header(set_cookie_header, encoded_cookie);
             }

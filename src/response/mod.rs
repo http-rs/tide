@@ -66,14 +66,20 @@ impl Response {
     }
 
     /// Insert an HTTP header.
-    pub fn set_header(mut self, key: &'static str, value: impl AsRef<str>) -> Self {
+    pub fn set_header<K>(mut self, key: K, value: impl AsRef<str>) -> Self
+    where
+        K: http::header::IntoHeaderName,
+    {
         let value = value.as_ref().to_owned();
         self.res.headers_mut().insert(key, value.parse().unwrap());
         self
     }
 
     /// Append an HTTP header.
-    pub fn append_header(mut self, key: &'static str, value: impl AsRef<str>) -> Self {
+    pub fn append_header<K>(mut self, key: K, value: impl AsRef<str>) -> Self
+    where
+        K: http::header::IntoHeaderName,
+    {
         let value = value.as_ref().to_owned();
         self.res.headers_mut().append(key, value.parse().unwrap());
         self
