@@ -168,22 +168,31 @@ impl<State: Send + Sync + 'static> Middleware<State> for Cors {
                 return self.build_preflight_response(&origin).into();
             }
 
-            let mut response: http_service::Response = next.run(req).await.into();
-            let headers = response.headers_mut();
+            let access_control_allow_origin = header::ACCESS_CONTROL_ALLOW_ORIGIN.as_ref();
+            let access_control_allow_credentials =
+                header::ACCESS_CONTROL_ALLOW_CREDENTIALS.as_ref();
+            let access_control_expose_headers = header::ACCESS_CONTROL_EXPOSE_HEADERS.as_ref();
 
-            headers.append(
-                header::ACCESS_CONTROL_ALLOW_ORIGIN,
-                self.response_origin(origin).unwrap(),
+            let response = next.run(req).await.append_header(
+                access_control_allow_origin,
+                self.response_origin(origin).unwrap().to_str().unwrap(),
             );
 
-            if let Some(allow_credentials) = self.allow_credentials.clone() {
-                headers.append(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, allow_credentials);
-            }
+            let response = match self.allow_credentials.clone() {
+                Some(allow_credentials) => response.append_header(
+                    access_control_allow_credentials,
+                    allow_credentials.to_str().unwrap(),
+                ),
+                None => response,
+            };
 
-            if let Some(expose_headers) = self.expose_headers.clone() {
-                headers.append(header::ACCESS_CONTROL_EXPOSE_HEADERS, expose_headers);
+            match self.expose_headers.clone() {
+                Some(expose_headers) => response.append_header(
+                    access_control_expose_headers,
+                    expose_headers.to_str().unwrap(),
+                ),
+                None => response,
             }
-            response.into()
         })
     }
 }
