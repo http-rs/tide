@@ -13,21 +13,18 @@ use std::{str::FromStr, sync::Arc};
 use crate::error::Error;
 use crate::middleware::cookies::CookieData;
 
-pin_project_lite::pin_project! {
-    /// An HTTP request.
-    ///
-    /// The `Request` gives endpoints access to basic information about the incoming
-    /// request, route parameters, and various ways of accessing the request's body.
-    ///
-    /// Requests also provide *extensions*, a type map primarily used for low-level
-    /// communication between middleware and endpoints.
-    #[derive(Debug)]
-    pub struct Request<State> {
-        pub(crate) state: Arc<State>,
-        #[pin]
-        pub(crate) request: http_service::Request,
-        pub(crate) route_params: Vec<Params>,
-    }
+/// An HTTP request.
+///
+/// The `Request` gives endpoints access to basic information about the incoming
+/// request, route parameters, and various ways of accessing the request's body.
+///
+/// Requests also provide *extensions*, a type map primarily used for low-level
+/// communication between middleware and endpoints.
+#[derive(Debug)]
+pub struct Request<State> {
+    pub(crate) state: Arc<State>,
+    pub(crate) request: http_service::Request,
+    pub(crate) route_params: Vec<Params>,
 }
 
 impl<State> Request<State> {
@@ -311,11 +308,11 @@ impl<State> Request<State> {
 
 impl<State> Read for Request<State> {
     fn poll_read(
-        self: Pin<&mut Self>,
+        mut self: Pin<&mut Self>,
         cx: &mut Context<'_>,
         buf: &mut [u8],
     ) -> Poll<io::Result<usize>> {
-        let mut this = self.project();
+        let this = &mut *self;
         Pin::new(this.request.body_mut()).poll_read(cx, buf)
     }
 }
