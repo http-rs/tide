@@ -13,16 +13,14 @@ use std::sync::{Arc, RwLock};
 ///
 /// # Examples
 ///
-/// ```rust
-///
+/// ```
 /// let mut app = tide::Server::new();
-/// app.at("/get").get(|cx: tide::Request<()>| async move { cx.cookie("testCookie").unwrap().unwrap().value().to_string() });
+/// app.at("/get").get(|cx: tide::Request<()>| async move { cx.cookie("testCookie").unwrap().value().to_string() });
 /// app.at("/set").get(|_| async {
 ///     let mut res = tide::Response::new(200);
 ///     res.set_cookie(cookie::Cookie::new("testCookie", "NewCookieValue"));
 ///     res
 /// });
-///
 /// ```
 #[derive(Debug, Clone, Default)]
 pub(crate) struct CookiesMiddleware;
