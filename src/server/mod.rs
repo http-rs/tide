@@ -310,9 +310,11 @@ impl<State: Send + Sync + 'static> Server<State> {
                 // This is not at all efficient, but that's okay for now.
                 let mut buf = vec![0; 1024];
                 let read = futures::ready!(Pin::new(&mut self.body).poll_read(cx, &mut buf))?;
+                dbg!(read);
                 if read == 0 {
                     return Poll::Ready(None);
                 } else {
+                    dbg!(&buf);
                     Poll::Ready(Some(Ok(buf.clone())))
                 }
             }
@@ -348,15 +350,21 @@ impl<State: Send + Sync + 'static> Server<State> {
                         let service = service.clone();
 
                         // Convert Request
+                        let length = req
+                            .headers()
+                            .get("content-length")
+                            .and_then(|v| v.to_str().ok())
+                            .and_then(|v| v.parse().ok());
+
                         let req_hyper: http::Request<Body> = req.map(|body| {
                             use futures::stream::TryStreamExt;
                             let body_stream = body.map(|chunk| {
-                                chunk.map(|c| c.to_vec()).map_err(|err| {
+                                chunk.map_err(|err| {
                                     io::Error::new(io::ErrorKind::Other, err.to_string())
                                 })
                             });
                             let body_reader = body_stream.into_async_read();
-                            Body::from_reader(body_reader, None)
+                            Body::from_reader(body_reader, length)
                         });
 
                         let connection = connection.clone();
@@ -372,7 +380,9 @@ impl<State: Send + Sync + 'static> Server<State> {
                                 .respond(connection, req)
                                 .into_future()
                                 .await
-                                .map_err(|_| io::Error::from(io::ErrorKind::Other))?;
+                                .map_err(|err| {
+                                    io::Error::new(io::ErrorKind::Other, err.to_string())
+                                })?;
                             let res_hyper = hyper::Response::<Body>::from(res);
 
                             let (parts, body) = res_hyper.into_parts();
