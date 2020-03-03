@@ -290,27 +290,162 @@ impl<State: Send + Sync + 'static> Server<State> {
     #[cfg(feature = "hyper-server")]
     pub async fn listen(self, addr: impl ToSocketAddrs) -> std::io::Result<()> {
         use async_std::task;
+        use futures::prelude::*;
+        use http_service::Body;
+        use std::convert::TryInto;
+
+        /// A type that wraps an `AsyncRead` into a `Stream` of `hyper::Chunk`. Used for writing data to a
+        /// Hyper response.
+        struct ChunkStream<R: AsyncRead> {
+            body: R,
+        }
+
+        impl<R: AsyncRead + Unpin> futures::Stream for ChunkStream<R> {
+            type Item = Result<Vec<u8>, Box<dyn std::error::Error + Send + Sync + 'static>>;
+
+            fn poll_next(
+                mut self: Pin<&mut Self>,
+                cx: &mut task::Context<'_>,
+            ) -> Poll<Option<Self::Item>> {
+                // This is not at all efficient, but that's okay for now.
+                let mut buf = vec![0; 1024];
+                let read = futures::ready!(Pin::new(&mut self.body).poll_read(cx, &mut buf))?;
+                if read == 0 {
+                    return Poll::Ready(None);
+                } else {
+                    Poll::Ready(Some(Ok(buf.clone())))
+                }
+            }
+        }
 
         #[derive(Copy, Clone)]
         struct Spawner;
 
-        impl futures::task::Spawn for &Spawner {
-            fn spawn_obj(
-                &self,
-                future: futures::future::FutureObj<'static, ()>,
-            ) -> Result<(), futures::task::SpawnError> {
-                task::spawn(Box::pin(future));
-                Ok(())
+        impl<F> hyper::rt::Executor<F> for Spawner
+        where
+            F: Future + Send + 'static,
+            F::Output: Send,
+        {
+            fn execute(&self, future: F) {
+                task::spawn(future);
             }
         }
 
-        let listener = async_std::net::TcpListener::bind(addr).await?;
-        log::info!("Server is listening on: http://{}", listener.local_addr()?);
         let http_service = self.into_http_service();
+        let service = Arc::new(http_service);
 
-        let res = http_service_hyper::Server::builder(listener.incoming())
-            .with_spawner(Spawner {})
-            .serve(http_service)
+        let make_svc = hyper::service::make_service_fn(|_socket: &Stream| {
+            let service = service.clone();
+            async move {
+                let connection = service
+                    .connect()
+                    .into_future()
+                    .await
+                    .map_err(|_| io::Error::from(io::ErrorKind::Other))?;
+
+                Ok::<_, io::Error>(hyper::service::service_fn(
+                    move |req: http::Request<hyper::Body>| {
+                        let service = service.clone();
+
+                        // Convert Request
+                        let req_hyper: http::Request<Body> = req.map(|body| {
+                            use futures::stream::TryStreamExt;
+                            let body_stream = body.map(|chunk| {
+                                chunk.map(|c| c.to_vec()).map_err(|err| {
+                                    io::Error::new(io::ErrorKind::Other, err.to_string())
+                                })
+                            });
+                            let body_reader = body_stream.into_async_read();
+                            Body::from_reader(body_reader, None)
+                        });
+
+                        let connection = connection.clone();
+
+                        // Convert Request
+                        async move {
+                            let req: http_types::Request =
+                                req_hyper.try_into().map_err(|err: url::ParseError| {
+                                    io::Error::new(io::ErrorKind::Other, err.to_string())
+                                })?;
+
+                            let res: http_types::Response = service
+                                .respond(connection, req)
+                                .into_future()
+                                .await
+                                .map_err(|_| io::Error::from(io::ErrorKind::Other))?;
+                            let res_hyper = hyper::Response::<Body>::from(res);
+
+                            let (parts, body) = res_hyper.into_parts();
+                            let body = hyper::Body::wrap_stream(ChunkStream { body });
+
+                            Ok::<_, io::Error>(hyper::Response::from_parts(parts, body))
+                        }
+                    },
+                ))
+            }
+        });
+
+        let listener = async_std::net::TcpListener::bind(addr).await?;
+        let addr = format!("http://{}", listener.local_addr()?);
+        log::info!("Server is listening on: {}", addr);
+
+        struct Incoming<'a>(async_std::net::Incoming<'a>);
+        let listener = Incoming(listener.incoming());
+
+        struct Stream(async_std::net::TcpStream);
+
+        impl<'a> hyper::server::accept::Accept for Incoming<'a> {
+            type Conn = Stream;
+            type Error = async_std::io::Error;
+
+            fn poll_accept(
+                mut self: Pin<&mut Self>,
+                cx: &mut Context<'_>,
+            ) -> Poll<Option<Result<Self::Conn, Self::Error>>> {
+                use futures_core::stream::Stream;
+
+                match Pin::new(&mut self.0).poll_next(cx) {
+                    Poll::Ready(Some(s)) => Poll::Ready(Some(s.map(Stream))),
+                    Poll::Ready(None) => Poll::Ready(None),
+                    Poll::Pending => Poll::Pending,
+                }
+            }
+        }
+
+        impl tokio::io::AsyncRead for Stream {
+            fn poll_read(
+                mut self: Pin<&mut Self>,
+                cx: &mut Context<'_>,
+                buf: &mut [u8],
+            ) -> Poll<io::Result<usize>> {
+                Pin::new(&mut self.0).poll_read(cx, buf)
+            }
+        }
+
+        impl tokio::io::AsyncWrite for Stream {
+            fn poll_write(
+                mut self: Pin<&mut Self>,
+                cx: &mut Context<'_>,
+                buf: &[u8],
+            ) -> Poll<io::Result<usize>> {
+                Pin::new(&mut self.0).poll_write(cx, buf)
+            }
+
+            fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
+                Pin::new(&mut self.0).poll_flush(cx)
+            }
+
+            fn poll_shutdown(
+                mut self: Pin<&mut Self>,
+                cx: &mut Context<'_>,
+            ) -> Poll<io::Result<()>> {
+                Pin::new(&mut self.0).poll_close(cx)
+            }
+        }
+
+        let res = hyper::Server::builder(listener)
+            .executor(Spawner)
+            .serve(make_svc)
             .await;
 
         res.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
