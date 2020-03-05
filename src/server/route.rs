@@ -1,5 +1,9 @@
+use std::fmt::Debug;
+use std::io;
+use std::path::Path;
 use std::sync::Arc;
 
+use super::serve_dir::ServeDir;
 use crate::endpoint::MiddlewareEndpoint;
 use crate::utils::BoxFuture;
 use crate::{router::Router, Endpoint, Middleware, Response};
@@ -54,6 +58,11 @@ impl<'a, State: 'static> Route<'a, State> {
         }
     }
 
+    /// Get the current path.
+    pub fn path(&self) -> &str {
+        &self.path
+    }
+
     /// Treat the current path as a prefix, and strip prefixes from requests.
     ///
     /// This method is marked unstable as its name might change in the near future.
@@ -67,7 +76,15 @@ impl<'a, State: 'static> Route<'a, State> {
     }
 
     /// Apply the given middleware to the current route.
-    pub fn middleware(&mut self, middleware: impl Middleware<State>) -> &mut Self {
+    pub fn middleware<M>(&mut self, middleware: M) -> &mut Self
+    where
+        M: Middleware<State> + Debug,
+    {
+        log::trace!(
+            "Adding middleware {:?} to route {:?}",
+            middleware,
+            self.path
+        );
         self.middleware.push(Arc::new(middleware));
         self
     }
@@ -90,6 +107,33 @@ impl<'a, State: 'static> Route<'a, State> {
         self.all(service);
         self.prefix = false;
         self
+    }
+
+    /// Serve a directory statically.
+    ///
+    /// Each file will be streamed from disk, and a mime type will be determined
+    /// based on magic bytes.
+    ///
+    /// # Examples
+    ///
+    /// Serve the contents of the local directory `./public/images/*` from
+    /// `localhost:8080/images/*`.
+    ///
+    /// ```no_run
+    /// #[async_std::main]
+    /// async fn main() -> Result<(), std::io::Error> {
+    ///     let mut app = tide::new();
+    ///     app.at("/public/images").serve_dir("images/")?;
+    ///     app.listen("127.0.0.1:8080").await?;
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn serve_dir(&mut self, dir: impl AsRef<Path>) -> io::Result<()> {
+        // Verify path exists, return error if it doesn't.
+        let dir = dir.as_ref().to_owned().canonicalize()?;
+        let prefix = self.path().to_string();
+        self.at("*").get(ServeDir::new(prefix, dir));
+        Ok(())
     }
 
     /// Add an endpoint for the given HTTP method

@@ -64,6 +64,11 @@ impl Response {
         self
     }
 
+    /// Get the length of the body.
+    pub fn len(&self) -> Option<usize> {
+        self.res.len()
+    }
+
     /// Insert an HTTP header.
     pub fn set_header(
         mut self,
@@ -119,6 +124,11 @@ impl Response {
         self.res
             .set_body(http_types::Body::from_reader(reader, None));
         self.set_mime(mime::APPLICATION_OCTET_STREAM)
+    }
+
+    /// Set the body reader.
+    pub fn set_body(&mut self, body: impl Into<Body>) {
+        self.res.set_body(body);
     }
 
     /// Encode a struct as a form and set as the response body.

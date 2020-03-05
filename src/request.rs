@@ -302,6 +302,11 @@ impl<State> Request<State> {
         let locked_jar = cookie_data.content.read().unwrap();
         locked_jar.get(name).cloned()
     }
+
+    /// Get the length of the body.
+    pub fn len(&self) -> Option<usize> {
+        self.request.len()
+    }
 }
 
 impl<State> Read for Request<State> {
