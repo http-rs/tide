@@ -4,7 +4,9 @@ use crate::{
 };
 use futures::future::BoxFuture;
 
-/// A simple requests logger
+/// A simple request logger that uses the facade provided by the log crate.
+///
+/// You will need to configure a logger before any output will be visible.
 ///
 /// # Examples
 ///
