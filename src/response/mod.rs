@@ -86,7 +86,7 @@ impl Response {
         self.set_header("Content-Type", format!("{}", mime))
     }
 
-    /// Pass a string as the request body.
+    /// Pass a string as the response body.
     ///
     /// # Mime
     ///
@@ -96,7 +96,7 @@ impl Response {
         self.set_mime(mime::TEXT_PLAIN_UTF_8)
     }
 
-    /// Pass a string as the request body.
+    /// Pass a string as the response body.
     ///
     /// # Mime
     ///
