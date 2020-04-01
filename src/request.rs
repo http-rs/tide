@@ -270,7 +270,8 @@ impl<State> Request<State> {
         {
             let mut body_bytes = self.body_bytes().await?;
             Ok(simd_json::from_slice(&mut body_bytes).map_err(io::Error::from)?)
-        }    }
+        }
+    }
 
     /// Get the URL querystring.
     pub fn query<'de, T: Deserialize<'de>>(&'de self) -> Result<T, crate::Error> {
