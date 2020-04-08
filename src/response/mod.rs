@@ -142,8 +142,15 @@ impl Response {
     /// # Mime
     ///
     /// The encoding is set to `application/json`.
+    #[cfg(not(feature = "simd-json"))]
     pub fn body_json(mut self, json: &impl Serialize) -> serde_json::Result<Self> {
         self.res.set_body(serde_json::to_vec(json)?);
+        Ok(self.set_mime(mime::APPLICATION_JSON))
+    }
+
+    #[cfg(feature = "simd-json")]
+    pub fn body_json(mut self, json: &impl Serialize) -> simd_json::Result<Self> {
+        *self.res.body_mut() = simd_json::to_vec(json)?.into();
         Ok(self.set_mime(mime::APPLICATION_JSON))
     }
 
