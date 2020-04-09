@@ -38,7 +38,8 @@ impl Response {
         }
     }
 
-    /// Create a new instance from a reader.
+    /// Create a new instance from a status and body reader.
+
     pub fn with_reader<R>(status: u16, reader: R) -> Self
     where
         R: BufRead + Unpin + Send + 'static,
@@ -79,14 +80,14 @@ impl Response {
         self
     }
 
-    /// Set the request MIME.
+    /// Set the response MIME.
     ///
     /// [Read more on MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types)
     pub fn set_mime(self, mime: Mime) -> Self {
         self.set_header("Content-Type", format!("{}", mime))
     }
 
-    /// Pass a string as the request body.
+    /// Set the response body to a String.
     ///
     /// # Mime
     ///
@@ -96,11 +97,24 @@ impl Response {
         self.set_mime(mime::TEXT_PLAIN_UTF_8)
     }
 
-    /// Pass a string as the request body.
+    /// Set the response body to a reader which is `async_std::io::BufRead`.
     ///
     /// # Mime
     ///
     /// The encoding is set to `application/octet-stream`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use async_std::{fs::File, io::BufReader};
+    /// # use tide::Response;
+    /// # #[allow(dead_code)]
+    /// async fn file() -> Response {
+    ///   let file = File::open("./some_file").await.unwrap();
+    ///   Response::new(200).body(BufReader::new(file))
+    /// }
+    /// ```
+
     pub fn body<R>(mut self, reader: R) -> Self
     where
         R: BufRead + Unpin + Send + 'static,
