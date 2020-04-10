@@ -1,6 +1,6 @@
+use async_std::fs;
 use async_std::io::BufReader;
 use async_std::task;
-use async_std::fs;
 use tide::Response;
 
 fn main() -> Result<(), std::io::Error> {
