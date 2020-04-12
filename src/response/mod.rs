@@ -93,7 +93,11 @@ impl Response {
     /// The encoding is set to `text/plain; charset=utf-8`.
     pub fn body_string(mut self, string: String) -> Self {
         *self.res.body_mut() = string.into_bytes().into();
-        self.set_mime(mime::TEXT_PLAIN_UTF_8)
+        if self.res.headers().get("Content-Type").is_none() {
+            self.set_mime(mime::TEXT_PLAIN_UTF_8)
+        } else {
+            self
+        }
     }
 
     /// Pass a string as the request body.
