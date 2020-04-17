@@ -1,12 +1,12 @@
+use crate::utils::BoxFuture;
 use crate::{
     middleware::{Middleware, Next},
     response::CookieEvent,
     Request, Response,
 };
-use cookie::{Cookie, CookieJar, ParseError};
-use futures::future::BoxFuture;
+use cookie::CookieJar;
+use http_types::headers;
 
-use http::HeaderMap;
 use std::sync::{Arc, RwLock};
 
 /// A middleware for making cookie data available in requests.
@@ -17,7 +17,7 @@ use std::sync::{Arc, RwLock};
 /// let mut app = tide::Server::new();
 /// app.at("/get").get(|cx: tide::Request<()>| async move { cx.cookie("testCookie").unwrap().value().to_string() });
 /// app.at("/set").get(|_| async {
-///     let mut res = tide::Response::new(200);
+///     let mut res = tide::Response::new(http_types::StatusCode::Ok);
 ///     res.set_cookie(cookie::Cookie::new("testCookie", "NewCookieValue"));
 ///     res
 /// });
@@ -43,7 +43,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
                 cookie_data.content.clone()
             } else {
                 // no cookie data in local context, so we need to create it
-                let cookie_data = CookieData::from_headers(ctx.headers());
+                let cookie_data = CookieData::from_request(&ctx);
                 let content = cookie_data.content.clone();
                 ctx = ctx.set_local(cookie_data);
                 content
@@ -63,9 +63,8 @@ impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
 
             // iterate over added and removed cookies
             for cookie in cookie_jar.read().unwrap().delta() {
-                let set_cookie_header = http::header::SET_COOKIE.as_ref();
                 let encoded_cookie = cookie.encoded().to_string();
-                res = res.append_header(set_cookie_header, encoded_cookie);
+                res = res.append_header(headers::SET_COOKIE, encoded_cookie);
             }
             res
         })
@@ -78,23 +77,14 @@ pub(crate) struct CookieData {
 }
 
 impl CookieData {
-    pub(crate) fn from_headers(headers: &HeaderMap) -> Self {
-        let cookie_header = headers.get(http::header::COOKIE);
-        let cookie_jar = cookie_header.and_then(|raw| {
+    pub(crate) fn from_request<S>(req: &Request<S>) -> Self {
+        let cookie_jar = req.request.cookies().and_then(|cookies| {
             let mut jar = CookieJar::new();
-
-            // as long as we have an ascii string this will start parsing the cookie
-            if let Some(raw_str) = raw.to_str().ok() {
-                raw_str
-                    .split(';')
-                    .try_for_each(|s| -> Result<_, ParseError> {
-                        jar.add_original(Cookie::parse(s.trim().to_owned())?);
-                        Ok(())
-                    })
-                    .ok()?;
+            for cookie in cookies.into_iter() {
+                jar.add_original(cookie.into_owned());
             }
 
-            Some(jar)
+            Ok(jar)
         });
         let content = Arc::new(RwLock::new(cookie_jar.unwrap_or_default()));
 

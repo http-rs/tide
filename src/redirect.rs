@@ -1,4 +1,6 @@
 use crate::utils::BoxFuture;
+use http_types::StatusCode;
+
 use crate::{Endpoint, Request, Response};
 
 /// Redirect a route to another route.
@@ -30,7 +32,8 @@ pub struct Redirect {
 
 impl<State> Endpoint<State> for Redirect {
     fn call<'a>(&'a self, _req: Request<State>) -> BoxFuture<'a, Response> {
-        let res = Response::new(307).set_header("Location", &self.location);
+        let res = Response::new(StatusCode::TemporaryRedirect)
+            .set_header("location".parse().unwrap(), self.location.clone());
         Box::pin(async move { res })
     }
 }

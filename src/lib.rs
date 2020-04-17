@@ -51,7 +51,7 @@
 //!    let mut counter: Counter = req.body_json().await.unwrap();
 //!    println!("count is {}", counter.count);
 //!    counter.count += 1;
-//!    tide::Response::new(200).body_json(&counter).unwrap()
+//!    tide::Response::new(http_types::StatusCode::Ok).body_json(&counter).unwrap()
 //! });
 //! app.listen("127.0.0.1:8080").await?;
 //! #
@@ -197,7 +197,7 @@ pub use response::{IntoResponse, Response};
 #[doc(inline)]
 pub use server::{Route, Server};
 
-pub use http;
+pub use http_types;
 
 /// Create a new Tide server.
 ///

@@ -1,5 +1,6 @@
 use async_std::task;
 use cookie::Cookie;
+use http_types::StatusCode;
 use tide::{Request, Response};
 
 /// Tide will use the the `Cookies`'s `Extract` implementation to build this parameter.
@@ -9,13 +10,13 @@ async fn retrieve_cookie(cx: Request<()>) -> String {
 }
 
 async fn set_cookie(_req: Request<()>) -> Response {
-    let mut res = tide::Response::new(200);
+    let mut res = tide::Response::new(StatusCode::Ok);
     res.set_cookie(Cookie::new("hello", "world"));
     res
 }
 
 async fn remove_cookie(_req: Request<()>) -> Response {
-    let mut res = tide::Response::new(200);
+    let mut res = tide::Response::new(StatusCode::Ok);
     res.remove_cookie(Cookie::named("hello"));
     res
 }

@@ -1,25 +1,26 @@
 use async_std::prelude::*;
 use async_std::task;
+use http_types::StatusCode;
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
 #[test]
-fn hello_world() -> Result<(), surf::Exception> {
+fn hello_world() -> Result<(), http_types::Error> {
     task::block_on(async {
         let server = task::spawn(async {
             let mut app = tide::new();
             app.at("/").get(|mut req: tide::Request<()>| async move {
                 assert_eq!(req.body_string().await.unwrap(), "nori".to_string());
-                tide::Response::new(200).body_string("says hello".to_string())
+                tide::Response::new(StatusCode::Ok).body_string("says hello".to_string())
             });
             app.listen("localhost:8080").await?;
-            Result::<(), surf::Exception>::Ok(())
+            Result::<(), http_types::Error>::Ok(())
         });
 
         let client = task::spawn(async {
             task::sleep(Duration::from_millis(100)).await;
-            let string = surf::get("localhost:8080")
+            let string = surf::get("http://localhost:8080")
                 .body_string("nori".to_string())
                 .recv_string()
                 .await?;
@@ -32,18 +33,19 @@ fn hello_world() -> Result<(), surf::Exception> {
 }
 
 #[test]
-fn echo_server() -> Result<(), surf::Exception> {
+fn echo_server() -> Result<(), http_types::Error> {
     task::block_on(async {
         let server = task::spawn(async {
             let mut app = tide::new();
             app.at("/").get(|req| async move { req });
+
             app.listen("localhost:8081").await?;
-            Result::<(), surf::Exception>::Ok(())
+            Result::<(), http_types::Error>::Ok(())
         });
 
         let client = task::spawn(async {
             task::sleep(Duration::from_millis(100)).await;
-            let string = surf::get("localhost:8081")
+            let string = surf::get("http://localhost:8081")
                 .body_string("chashu".to_string())
                 .recv_string()
                 .await?;
@@ -56,7 +58,7 @@ fn echo_server() -> Result<(), surf::Exception> {
 }
 
 #[test]
-fn json() -> Result<(), surf::Exception> {
+fn json() -> Result<(), http_types::Error> {
     #[derive(Deserialize, Serialize)]
     struct Counter {
         count: usize,
@@ -69,15 +71,17 @@ fn json() -> Result<(), surf::Exception> {
                 let mut counter: Counter = req.body_json().await.unwrap();
                 assert_eq!(counter.count, 0);
                 counter.count = 1;
-                tide::Response::new(200).body_json(&counter).unwrap()
+                tide::Response::new(StatusCode::Ok)
+                    .body_json(&counter)
+                    .unwrap()
             });
             app.listen("localhost:8082").await?;
-            Result::<(), surf::Exception>::Ok(())
+            Result::<(), http_types::Error>::Ok(())
         });
 
         let client = task::spawn(async {
             task::sleep(Duration::from_millis(100)).await;
-            let counter: Counter = surf::get("localhost:8082")
+            let counter: Counter = surf::get("http://localhost:8082")
                 .body_json(&Counter { count: 0 })?
                 .recv_json()
                 .await?;

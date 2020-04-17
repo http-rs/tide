@@ -1,4 +1,5 @@
 use async_std::task;
+use http_types::StatusCode;
 use juniper::RootNode;
 use std::sync::RwLock;
 use tide::{Request, Response, Server};
@@ -80,7 +81,11 @@ async fn handle_graphql(mut cx: Request<State>) -> Response {
 
     let schema = create_schema(); // probably worth making the schema a singleton using lazy_static library
     let response = query.execute(&schema, cx.state());
-    let status = if response.is_ok() { 200 } else { 400 };
+    let status = if response.is_ok() {
+        StatusCode::Ok
+    } else {
+        StatusCode::BadRequest
+    };
 
     Response::new(status)
         .body_json(&response)
@@ -88,9 +93,9 @@ async fn handle_graphql(mut cx: Request<State>) -> Response {
 }
 
 async fn handle_graphiql(_: Request<State>) -> Response {
-    Response::new(200)
+    Response::new(StatusCode::Ok)
         .body_string(juniper::http::graphiql::graphiql_source("/graphql"))
-        .set_header("content-type", "text/html;charset=utf-8")
+        .set_header("content-type".parse().unwrap(), "text/html;charset=utf-8")
 }
 
 fn main() -> std::io::Result<()> {
