@@ -1,11 +1,11 @@
-use async_std::io::prelude::*;
-use futures::executor::block_on;
 use futures::future::BoxFuture;
-use http_service::Body;
 use http_service_mock::make_server;
+use http_types::headers::{HeaderName, HeaderValue};
+use http_types::{Method, Request, Url};
+use std::str::FromStr;
 
-#[test]
-fn nested() {
+#[async_std::test]
+async fn nested() {
     let mut inner = tide::new();
     inner.at("/foo").get(|_| async { "foo" });
     inner.at("/bar").get(|_| async { "bar" });
@@ -16,23 +16,25 @@ fn nested() {
 
     let mut server = make_server(outer.into_http_service()).unwrap();
 
-    let mut buf = Vec::new();
-    let req = http::Request::get("/foo/foo").body(Body::empty()).unwrap();
+    let req = Request::new(
+        Method::Get,
+        Url::parse("http://example.com/foo/foo").unwrap(),
+    );
     let res = server.simulate(req).unwrap();
     assert_eq!(res.status(), 200);
-    block_on(res.into_body().read_to_end(&mut buf)).unwrap();
-    assert_eq!(&*buf, &*b"foo");
+    assert_eq!(res.body_string().await.unwrap(), "foo");
 
-    buf.clear();
-    let req = http::Request::get("/foo/bar").body(Body::empty()).unwrap();
+    let req = Request::new(
+        Method::Get,
+        Url::parse("http://example.com/foo/bar").unwrap(),
+    );
     let res = server.simulate(req).unwrap();
     assert_eq!(res.status(), 200);
-    block_on(res.into_body().read_to_end(&mut buf)).unwrap();
-    assert_eq!(&*buf, &*b"bar");
+    assert_eq!(res.body_string().await.unwrap(), "bar");
 }
 
-#[test]
-fn nested_middleware() {
+#[async_std::test]
+async fn nested_middleware() {
     let echo_path = |req: tide::Request<()>| async move { req.uri().path().to_string() };
     fn test_middleware(
         req: tide::Request<()>,
@@ -40,7 +42,10 @@ fn nested_middleware() {
     ) -> BoxFuture<'_, tide::Response> {
         Box::pin(async move {
             let res = next.run(req).await;
-            res.set_header("X-Tide-Test", "1")
+            res.set_header(
+                HeaderName::from_ascii("X-Tide-Test".to_owned().into_bytes()).unwrap(),
+                "1",
+            )
         })
     }
 
@@ -56,41 +61,33 @@ fn nested_middleware() {
 
     let mut server = make_server(app.into_http_service()).unwrap();
 
-    let mut buf = Vec::new();
-    let req = http::Request::get("/foo/echo").body(Body::empty()).unwrap();
-    let res = server.simulate(req).unwrap();
-    assert_eq!(
-        res.headers().get("X-Tide-Test"),
-        Some(&"1".parse().unwrap())
+    let req = Request::new(
+        Method::Get,
+        Url::parse("http://example.com/foo/echo").unwrap(),
     );
-    assert_eq!(res.status(), 200);
-    block_on(res.into_body().read_to_end(&mut buf)).unwrap();
-    assert_eq!(&*buf, &*b"/echo");
-
-    buf.clear();
-    let req = http::Request::get("/foo/x/bar")
-        .body(Body::empty())
-        .unwrap();
     let res = server.simulate(req).unwrap();
-    assert_eq!(
-        res.headers().get("X-Tide-Test"),
-        Some(&"1".parse().unwrap())
+    assert_header(&res, "X-Tide-Test", Some("1"));
+    assert_eq!(res.status(), 200);
+    assert_eq!(res.body_string().await.unwrap(), "/echo");
+
+    let req = Request::new(
+        Method::Get,
+        Url::parse("http://example.com/foo/x/bar").unwrap(),
     );
-    assert_eq!(res.status(), 200);
-    block_on(res.into_body().read_to_end(&mut buf)).unwrap();
-    assert_eq!(&*buf, &*b"/");
-
-    buf.clear();
-    let req = http::Request::get("/bar").body(Body::empty()).unwrap();
     let res = server.simulate(req).unwrap();
-    assert_eq!(res.headers().get("X-Tide-Test"), None);
+    assert_header(&res, "X-Tide-Test", Some("1"));
     assert_eq!(res.status(), 200);
-    block_on(res.into_body().read_to_end(&mut buf)).unwrap();
-    assert_eq!(&*buf, &*b"/bar");
+    assert_eq!(res.body_string().await.unwrap(), "/");
+
+    let req = Request::new(Method::Get, Url::parse("http://example.com/bar").unwrap());
+    let res = server.simulate(req).unwrap();
+    assert_header(&res, "X-Tide-Test", None);
+    assert_eq!(res.status(), 200);
+    assert_eq!(res.body_string().await.unwrap(), "/bar");
 }
 
-#[test]
-fn nested_with_different_state() {
+#[async_std::test]
+async fn nested_with_different_state() {
     let mut outer = tide::new();
     let mut inner = tide::with_state(42);
     inner.at("/").get(|req: tide::Request<i32>| async move {
@@ -102,17 +99,37 @@ fn nested_with_different_state() {
 
     let mut server = make_server(outer.into_http_service()).unwrap();
 
-    let mut buf = Vec::new();
-    let req = http::Request::get("/foo").body(Body::empty()).unwrap();
+    let req = Request::new(Method::Get, Url::parse("http://example.com/foo").unwrap());
     let res = server.simulate(req).unwrap();
     assert_eq!(res.status(), 200);
-    block_on(res.into_body().read_to_end(&mut buf)).unwrap();
-    assert_eq!(&*buf, &*b"the number is 42");
+    assert_eq!(res.body_string().await.unwrap(), "the number is 42");
 
-    buf.clear();
-    let req = http::Request::get("/").body(Body::empty()).unwrap();
+    let req = Request::new(Method::Get, Url::parse("http://example.com/").unwrap());
     let res = server.simulate(req).unwrap();
     assert_eq!(res.status(), 200);
-    block_on(res.into_body().read_to_end(&mut buf)).unwrap();
-    assert_eq!(&*buf, &*b"Hello, world!");
+    assert_eq!(res.body_string().await.unwrap(), "Hello, world!");
+}
+
+// See https://github.com/http-rs/http-types/issues/89 for a proposed fix to this boilerplate.
+fn assert_header(headers: impl AsRef<http_types::Headers>, lhs: &str, rhs: Option<&str>) {
+    match rhs {
+        Some(s) => {
+            let header = headers
+                .as_ref()
+                .get(
+                    &http_types::headers::HeaderName::from_ascii(lhs.to_owned().into_bytes())
+                        .unwrap(),
+                )
+                .unwrap()
+                .iter()
+                .next();
+            assert_eq!(header, Some(&HeaderValue::from_str(s).unwrap()));
+        }
+        None => {
+            let header = headers.as_ref().get(
+                &http_types::headers::HeaderName::from_ascii(lhs.to_owned().into_bytes()).unwrap(),
+            );
+            assert_eq!(header, None);
+        }
+    }
 }
