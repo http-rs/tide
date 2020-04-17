@@ -1,6 +1,6 @@
 [package]
 name = "tide"
-version = "0.6.0"
+version = "0.7.0"
 description = "Serve the web – HTTP server framework"
 authors = [
     "Aaron Turon <aturon@mozilla.com>",
