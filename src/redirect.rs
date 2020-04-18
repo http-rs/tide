@@ -14,7 +14,7 @@ use crate::{Endpoint, Request, Response};
 /// # fn main() -> Result<(), std::io::Error> { block_on(async {
 /// #
 /// let mut app = tide::new();
-/// app.at("/").get(|_| async move { "meow" });
+/// app.at("/").get(|_| async move { Ok("meow") });
 /// app.at("/nori").get(tide::redirect("/"));
 /// app.listen("127.0.0.1:8080").await?;
 /// #

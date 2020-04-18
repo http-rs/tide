@@ -20,7 +20,7 @@ async fn handler(cx: Request<()>) -> tide::Result<Response> {
     let p = cx.query::<Params>();
     match p {
         Ok(params) => Ok(params.msg.into_response()),
-        Err(error) => Ok(Response::new(error.status())),
+        Err(error) => Ok(err_to_res(error)),
     }
 }
 
@@ -28,7 +28,7 @@ async fn optional_handler(cx: Request<()>) -> tide::Result<Response> {
     let p = cx.query::<OptionalParams>();
     match p {
         Ok(_) => Ok(Response::new(StatusCode::Ok)),
-        Err(error) => Ok(Response::new(error.status())),
+        Err(error) => Ok(err_to_res(error)),
     }
 }
 
@@ -93,4 +93,13 @@ fn empty_query_string_for_struct_with_no_required_fields() {
     );
     let res = server.simulate(req).unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
+}
+
+fn err_to_res(err: http_types::Error) -> crate::Response {
+    Response::new(err.status())
+        .set_header(
+            http_types::headers::CONTENT_TYPE,
+            "text/plain; charset=utf-8",
+        )
+        .body_string(err.to_string())
 }

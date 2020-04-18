@@ -20,7 +20,7 @@
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
 //! #
 //! let mut app = tide::new();
-//! app.at("/").get(|_| async move { "Hello, world!" });
+//! app.at("/").get(|_| async move { Ok("Hello, world!") });
 //! app.listen("127.0.0.1:8080").await?;
 //! #
 //! # Ok(()) }) }
@@ -32,7 +32,7 @@
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
 //! #
 //! let mut app = tide::new();
-//! app.at("/").get(|req| async move { req });
+//! app.at("/").get(|req| async move { Ok(req) });
 //! app.listen("127.0.0.1:8080").await?;
 //! #
 //! # Ok(()) }) }
@@ -48,10 +48,10 @@
 //!
 //! let mut app = tide::new();
 //! app.at("/").get(|mut req: tide::Request<()>| async move {
-//!    let mut counter: Counter = req.body_json().await.unwrap();
+//!    let mut counter: Counter = req.body_json().await?;
 //!    println!("count is {}", counter.count);
 //!    counter.count += 1;
-//!    tide::Response::new(http_types::StatusCode::Ok).body_json(&counter).unwrap()
+//!    Ok(tide::Response::new(tide::http::StatusCode::Ok).body_json(&counter)?)
 //! });
 //! app.listen("127.0.0.1:8080").await?;
 //! #
@@ -150,7 +150,7 @@
 //! #[async_std::main]
 //! async fn main() -> Result<(), std::io::Error> {
 //!     let mut app = tide::new();
-//!     app.at("/").get(|req: Request<()>| async move { req.bark() });
+//!     app.at("/").get(|req: Request<()>| async move { Ok(req.bark()) });
 //!     app.listen("127.0.0.1:8080").await
 //! }
 //! ```
@@ -210,7 +210,7 @@ pub use http_types as http;
 /// # fn main() -> Result<(), std::io::Error> { block_on(async {
 /// #
 /// let mut app = tide::new();
-/// app.at("/").get(|_| async move { "Hello, world!" });
+/// app.at("/").get(|_| async move { Ok("Hello, world!") });
 /// app.listen("127.0.0.1:8080").await?;
 /// #
 /// # Ok(()) }) }
@@ -244,7 +244,7 @@ pub fn new() -> server::Server<()> {
 /// // Initialize the application with state.
 /// let mut app = tide::with_state(state);
 /// app.at("/").get(|req: Request<State>| async move {
-///     format!("Hello, {}!", &req.state().name)
+///     Ok(format!("Hello, {}!", &req.state().name))
 /// });
 /// app.listen("127.0.0.1:8080").await?;
 /// #

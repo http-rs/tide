@@ -24,8 +24,8 @@ use crate::{Middleware, Request, Response};
 /// A simple endpoint that is invoked on a `GET` request and returns a `String`:
 ///
 /// ```no_run
-/// async fn hello(_req: tide::Request<()>) -> String {
-///     String::from("hello")
+/// async fn hello(_req: tide::Request<()>) -> tide::Result<String> {
+///     Ok(String::from("hello"))
 /// }
 ///
 /// fn main() {
@@ -38,8 +38,8 @@ use crate::{Middleware, Request, Response};
 ///
 /// ```no_run
 /// # use core::future::Future;
-/// fn hello(_req: tide::Request<()>) -> impl Future<Output = String> {
-///     futures::future::ready(String::from("hello"))
+/// fn hello(_req: tide::Request<()>) -> impl Future<Output = tide::Result<String>> {
+///     futures::future::ready(Ok(String::from("hello")))
 /// }
 ///
 /// fn main() {
