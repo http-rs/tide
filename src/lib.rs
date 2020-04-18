@@ -174,7 +174,6 @@
 #![doc(test(attr(allow(unused_extern_crates, unused_variables))))]
 
 mod endpoint;
-mod error;
 pub mod middleware;
 mod redirect;
 mod request;
@@ -186,9 +185,11 @@ pub mod prelude;
 pub mod server;
 
 pub use endpoint::Endpoint;
-pub use error::{Error, Result, ResultExt};
 pub use redirect::redirect;
 pub use request::Request;
+
+#[doc(inline)]
+pub use http_types::{Error, Result, Status};
 
 #[doc(inline)]
 pub use middleware::{Middleware, Next};

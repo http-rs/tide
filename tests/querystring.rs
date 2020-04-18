@@ -20,7 +20,7 @@ async fn handler(cx: Request<()>) -> Response {
     let p = cx.query::<Params>();
     match p {
         Ok(params) => params.msg.into_response(),
-        Err(error) => error.into_response(),
+        Err(error) => Response::new(error.status()),
     }
 }
 
@@ -28,7 +28,7 @@ async fn optional_handler(cx: Request<()>) -> Response {
     let p = cx.query::<OptionalParams>();
     match p {
         Ok(_) => Response::new(StatusCode::Ok),
-        Err(error) => error.into_response(),
+        Err(error) => Response::new(error.status()),
     }
 }
 
