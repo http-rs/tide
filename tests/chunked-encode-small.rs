@@ -32,7 +32,13 @@ async fn chunked_large() -> Result<(), http_types::Error> {
         task::sleep(Duration::from_millis(100)).await;
         let mut res = surf::get("http://localhost:8080").await?;
         assert_eq!(res.status(), 200);
-        assert_eq!(res.header(&"transfer-encoding".parse().unwrap()), Some(&vec![http_types::headers::HeaderValue::from_ascii(b"chunked").unwrap()]));
+        assert_eq!(
+            res.header(&"transfer-encoding".parse().unwrap()),
+            Some(&vec![http_types::headers::HeaderValue::from_ascii(
+                b"chunked"
+            )
+            .unwrap()])
+        );
         assert_eq!(res.header(&"content-length".parse().unwrap()), None);
         let string = res.body_string().await?;
         assert_eq!(string, TEXT.to_string());
