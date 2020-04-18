@@ -7,8 +7,8 @@ use std::str::FromStr;
 #[async_std::test]
 async fn nested() {
     let mut inner = tide::new();
-    inner.at("/foo").get(|_| async { "foo" });
-    inner.at("/bar").get(|_| async { "bar" });
+    inner.at("/foo").get(|_| async { Ok("foo") });
+    inner.at("/bar").get(|_| async { Ok("bar") });
 
     let mut outer = tide::new();
     // Nest the inner app on /foo
@@ -35,17 +35,18 @@ async fn nested() {
 
 #[async_std::test]
 async fn nested_middleware() {
-    let echo_path = |req: tide::Request<()>| async move { req.uri().path().to_string() };
+    let echo_path = |req: tide::Request<()>| async move { Ok(req.uri().path().to_string()) };
     fn test_middleware(
         req: tide::Request<()>,
         next: tide::Next<'_, ()>,
-    ) -> BoxFuture<'_, tide::Response> {
+    ) -> BoxFuture<'_, tide::Result<tide::Response>> {
         Box::pin(async move {
-            let res = next.run(req).await;
-            res.set_header(
+            let res = next.run(req).await?;
+            let res = res.set_header(
                 HeaderName::from_ascii("X-Tide-Test".to_owned().into_bytes()).unwrap(),
                 "1",
-            )
+            );
+            Ok(res)
         })
     }
 
@@ -92,9 +93,9 @@ async fn nested_with_different_state() {
     let mut inner = tide::with_state(42);
     inner.at("/").get(|req: tide::Request<i32>| async move {
         let num = req.state();
-        format!("the number is {}", num)
+        Ok(format!("the number is {}", num))
     });
-    outer.at("/").get(|_| async move { "Hello, world!" });
+    outer.at("/").get(|_| async move { Ok("Hello, world!") });
     outer.at("/foo").nest(inner);
 
     let mut server = make_server(outer.into_http_service()).unwrap();
