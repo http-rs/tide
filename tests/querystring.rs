@@ -16,19 +16,19 @@ struct OptionalParams {
     _time: Option<u64>,
 }
 
-async fn handler(cx: Request<()>) -> Response {
+async fn handler(cx: Request<()>) -> tide::Result<Response> {
     let p = cx.query::<Params>();
     match p {
-        Ok(params) => params.msg.into_response(),
-        Err(error) => Response::new(error.status()),
+        Ok(params) => Ok(params.msg.into_response()),
+        Err(error) => Ok(Response::new(error.status())),
     }
 }
 
-async fn optional_handler(cx: Request<()>) -> Response {
+async fn optional_handler(cx: Request<()>) -> tide::Result<Response> {
     let p = cx.query::<OptionalParams>();
     match p {
-        Ok(_) => Response::new(StatusCode::Ok),
-        Err(error) => Response::new(error.status()),
+        Ok(_) => Ok(Response::new(StatusCode::Ok)),
+        Err(error) => Ok(Response::new(error.status())),
     }
 }
 

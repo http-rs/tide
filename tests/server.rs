@@ -12,7 +12,8 @@ fn hello_world() -> Result<(), http_types::Error> {
             let mut app = tide::new();
             app.at("/").get(|mut req: tide::Request<()>| async move {
                 assert_eq!(req.body_string().await.unwrap(), "nori".to_string());
-                tide::Response::new(StatusCode::Ok).body_string("says hello".to_string())
+                let res = tide::Response::new(StatusCode::Ok).body_string("says hello".to_string());
+                Ok(res)
             });
             app.listen("localhost:8080").await?;
             Result::<(), http_types::Error>::Ok(())
@@ -37,7 +38,7 @@ fn echo_server() -> Result<(), http_types::Error> {
     task::block_on(async {
         let server = task::spawn(async {
             let mut app = tide::new();
-            app.at("/").get(|req| async move { req });
+            app.at("/").get(|req| async move { Ok(req) });
 
             app.listen("localhost:8081").await?;
             Result::<(), http_types::Error>::Ok(())
@@ -71,9 +72,8 @@ fn json() -> Result<(), http_types::Error> {
                 let mut counter: Counter = req.body_json().await.unwrap();
                 assert_eq!(counter.count, 0);
                 counter.count = 1;
-                tide::Response::new(StatusCode::Ok)
-                    .body_json(&counter)
-                    .unwrap()
+                let res = tide::Response::new(StatusCode::Ok).body_json(&counter)?;
+                Ok(res)
             });
             app.listen("localhost:8082").await?;
             Result::<(), http_types::Error>::Ok(())

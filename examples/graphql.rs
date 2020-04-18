@@ -73,7 +73,7 @@ fn create_schema() -> Schema {
     Schema::new(QueryRoot {}, MutationRoot {})
 }
 
-async fn handle_graphql(mut cx: Request<State>) -> Response {
+async fn handle_graphql(mut cx: Request<State>) -> tide::Result<Response> {
     let query: juniper::http::GraphQLRequest = cx
         .body_json()
         .await
@@ -87,15 +87,17 @@ async fn handle_graphql(mut cx: Request<State>) -> Response {
         StatusCode::BadRequest
     };
 
-    Response::new(status)
+    let res = Response::new(status)
         .body_json(&response)
-        .expect("be able to serialize the graphql response")
+        .expect("be able to serialize the graphql response");
+    Ok(res)
 }
 
-async fn handle_graphiql(_: Request<State>) -> Response {
-    Response::new(StatusCode::Ok)
+async fn handle_graphiql(_: Request<State>) -> tide::Result<Response> {
+    let res = Response::new(StatusCode::Ok)
         .body_string(juniper::http::graphiql::graphiql_source("/graphql"))
-        .set_header("content-type".parse().unwrap(), "text/html;charset=utf-8")
+        .set_header("content-type".parse().unwrap(), "text/html;charset=utf-8");
+    Ok(res)
 }
 
 fn main() -> std::io::Result<()> {

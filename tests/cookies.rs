@@ -8,27 +8,27 @@ use tide::{Request, Response, Server};
 
 static COOKIE_NAME: &str = "testCookie";
 
-async fn retrieve_cookie(cx: Request<()>) -> String {
-    cx.cookie(COOKIE_NAME).unwrap().value().to_string()
+async fn retrieve_cookie(cx: Request<()>) -> tide::Result<String> {
+    Ok(cx.cookie(COOKIE_NAME).unwrap().value().to_string())
 }
 
-async fn set_cookie(_req: Request<()>) -> Response {
+async fn set_cookie(_req: Request<()>) -> tide::Result<Response> {
     let mut res = Response::new(StatusCode::Ok);
     res.set_cookie(Cookie::new(COOKIE_NAME, "NewCookieValue"));
-    res
+    Ok(res)
 }
 
-async fn remove_cookie(_req: Request<()>) -> Response {
+async fn remove_cookie(_req: Request<()>) -> tide::Result<Response> {
     let mut res = Response::new(StatusCode::Ok);
     res.remove_cookie(Cookie::named(COOKIE_NAME));
-    res
+    Ok(res)
 }
 
-async fn set_multiple_cookie(_req: Request<()>) -> Response {
+async fn set_multiple_cookie(_req: Request<()>) -> tide::Result<Response> {
     let mut res = Response::new(StatusCode::Ok);
     res.set_cookie(Cookie::new("C1", "V1"));
     res.set_cookie(Cookie::new("C2", "V2"));
-    res
+    Ok(res)
 }
 
 fn app() -> crate::Server<()> {

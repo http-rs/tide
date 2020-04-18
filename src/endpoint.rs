@@ -56,10 +56,11 @@ pub trait Endpoint<State>: Send + Sync + 'static {
 
 pub(crate) type DynEndpoint<State> = dyn Endpoint<State>;
 
-impl<State, F: Send + Sync + 'static, Fut> Endpoint<State> for F
+impl<State, F: Send + Sync + 'static, Fut, Res> Endpoint<State> for F
 where
     F: Fn(Request<State>) -> Fut,
-    Fut: Future<Output = Result<Response>> + Send + 'static,
+    Fut: Future<Output = Result<Res>> + Send + 'static,
+    Res: IntoResponse,
 {
     fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, Result<Response>> {
         let fut = (self)(req);
