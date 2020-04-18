@@ -5,7 +5,7 @@ use http_types::headers::HeaderValue;
 use http_types::{headers, Method, StatusCode};
 
 use crate::middleware::{Middleware, Next};
-use crate::{Request, Response};
+use crate::{Request, Response, Result};
 
 /// Middleware for CORS
 ///
@@ -147,7 +147,11 @@ impl Cors {
 }
 
 impl<State: Send + Sync + 'static> Middleware<State> for Cors {
-    fn handle<'a>(&'a self, req: Request<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
+    fn handle<'a>(
+        &'a self,
+        req: Request<State>,
+        next: Next<'a, State>,
+    ) -> BoxFuture<'a, Result<Response>> {
         Box::pin(async move {
             let origins = req.header(&headers::ORIGIN).cloned().unwrap_or_default();
 
@@ -161,15 +165,15 @@ impl<State: Send + Sync + 'static> Middleware<State> for Cors {
             };
 
             if !self.is_valid_origin(origin) {
-                return http_types::Response::new(StatusCode::Unauthorized).into();
+                return Ok(http_types::Response::new(StatusCode::Unauthorized).into());
             }
 
             // Return results immediately upon preflight request
             if req.method() == Method::Options {
-                return self.build_preflight_response(&origins).into();
+                return Ok(self.build_preflight_response(&origins).into());
             }
 
-            let mut response: http_service::Response = next.run(req).await.into();
+            let mut response: http_service::Response = next.run(req).await?.into();
             response
                 .insert_header(
                     headers::ACCESS_CONTROL_ALLOW_ORIGIN,
@@ -188,7 +192,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for Cors {
                     .insert_header(headers::ACCESS_CONTROL_EXPOSE_HEADERS, expose_headers)
                     .unwrap();
             }
-            response.into()
+            Ok(response.into())
         })
     }
 }
@@ -261,7 +265,7 @@ mod test {
 
     fn app() -> crate::Server<()> {
         let mut app = crate::Server::new();
-        app.at(ENDPOINT).get(|_| async move { "Hello World" });
+        app.at(ENDPOINT).get(|_| async move { Ok("Hello World") });
 
         app
     }

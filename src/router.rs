@@ -1,3 +1,4 @@
+use http_types::Result;
 use route_recognizer::{Match, Params, Router as MethodRouter};
 use std::collections::HashMap;
 
@@ -86,10 +87,14 @@ impl<State: 'static> Router<State> {
     }
 }
 
-fn not_found_endpoint<State>(_cx: Request<State>) -> BoxFuture<'static, Response> {
-    Box::pin(async move { Response::new(http_types::StatusCode::NotFound.into()) })
+fn not_found_endpoint<State>(_cx: Request<State>) -> BoxFuture<'static, Result<Response>> {
+    Box::pin(async move { Ok(Response::new(http_types::StatusCode::NotFound.into())) })
 }
 
-fn method_not_allowed<State>(_cx: Request<State>) -> BoxFuture<'static, Response> {
-    Box::pin(async move { Response::new(http_types::StatusCode::MethodNotAllowed.into()) })
+fn method_not_allowed<State>(_cx: Request<State>) -> BoxFuture<'static, Result<Response>> {
+    Box::pin(async move {
+        Ok(Response::new(
+            http_types::StatusCode::MethodNotAllowed.into(),
+        ))
+    })
 }

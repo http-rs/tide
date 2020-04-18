@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 #[doc(inline)]
 pub use http_service::HttpService;
+use http_types::Result;
 
 use crate::endpoint::DynEndpoint;
 use crate::utils::BoxFuture;
@@ -23,7 +24,11 @@ pub use logger::RequestLogger;
 /// Middleware that wraps around remaining middleware chain.
 pub trait Middleware<State>: 'static + Send + Sync {
     /// Asynchronously handle the request, and return a response.
-    fn handle<'a>(&'a self, cx: Request<State>, next: Next<'a, State>) -> BoxFuture<'a, Response>;
+    fn handle<'a>(
+        &'a self,
+        cx: Request<State>,
+        next: Next<'a, State>,
+    ) -> BoxFuture<'a, Result<Response>>;
 }
 
 impl<State, F> Middleware<State> for F
@@ -31,9 +36,13 @@ where
     F: Send
         + Sync
         + 'static
-        + for<'a> Fn(Request<State>, Next<'a, State>) -> BoxFuture<'a, Response>,
+        + for<'a> Fn(Request<State>, Next<'a, State>) -> BoxFuture<'a, crate::Result<Response>>,
 {
-    fn handle<'a>(&'a self, req: Request<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
+    fn handle<'a>(
+        &'a self,
+        req: Request<State>,
+        next: Next<'a, State>,
+    ) -> BoxFuture<'a, crate::Result<Response>> {
         (self)(req, next)
     }
 }
@@ -47,7 +56,7 @@ pub struct Next<'a, State> {
 
 impl<'a, State: 'static> Next<'a, State> {
     /// Asynchronously execute the remaining middleware chain.
-    pub fn run(mut self, req: Request<State>) -> BoxFuture<'a, Response> {
+    pub fn run(mut self, req: Request<State>) -> BoxFuture<'a, Result<Response>> {
         if let Some((current, next)) = self.next_middleware.split_first() {
             self.next_middleware = next;
             current.handle(req, self)

@@ -1,9 +1,8 @@
+use crate::middleware::{Middleware, Next};
+use crate::response::CookieEvent;
 use crate::utils::BoxFuture;
-use crate::{
-    middleware::{Middleware, Next},
-    response::CookieEvent,
-    Request, Response,
-};
+use crate::{Request, Response, Result};
+
 use cookie::CookieJar;
 use http_types::headers;
 
@@ -37,7 +36,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
         &'a self,
         mut ctx: Request<State>,
         next: Next<'a, State>,
-    ) -> BoxFuture<'a, Response> {
+    ) -> BoxFuture<'a, Result<Response>> {
         Box::pin(async move {
             let cookie_jar = if let Some(cookie_data) = ctx.local::<CookieData>() {
                 cookie_data.content.clone()
@@ -49,7 +48,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
                 content
             };
 
-            let mut res = next.run(ctx).await;
+            let mut res = next.run(ctx).await?;
 
             // add modifications from response to original
             for cookie in res.cookie_events.drain(..) {
@@ -66,7 +65,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
                 let encoded_cookie = cookie.encoded().to_string();
                 res = res.append_header(headers::SET_COOKIE, encoded_cookie);
             }
-            res
+            Ok(res)
         })
     }
 }

@@ -31,9 +31,9 @@ pub struct Redirect {
 }
 
 impl<State> Endpoint<State> for Redirect {
-    fn call<'a>(&'a self, _req: Request<State>) -> BoxFuture<'a, Response> {
+    fn call<'a>(&'a self, _req: Request<State>) -> BoxFuture<'a, crate::Result<Response>> {
         let res = Response::new(StatusCode::TemporaryRedirect)
             .set_header("location".parse().unwrap(), self.location.clone());
-        Box::pin(async move { res })
+        Box::pin(async move { Ok(res) })
     }
 }
