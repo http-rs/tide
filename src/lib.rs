@@ -198,7 +198,8 @@ pub use response::{IntoResponse, Response};
 #[doc(inline)]
 pub use server::{Route, Server};
 
-pub use http_types;
+#[doc(inline)]
+pub use http_types as http;
 
 /// Create a new Tide server.
 ///
