@@ -148,7 +148,7 @@ impl Response {
     }
 
     /// Send a File as the response body.
-    pub async fn body_file(mut self, file: async_std::fs::File) -> http_types::Result<Response> {
+    pub async fn body_file(mut self, file: async_std::fs::File) -> async_std::io::Result<Response> {
         let metadata = file.metadata().await?;
         let len = metadata.len() as usize;
         let reader = async_std::io::BufReader::new(file);
