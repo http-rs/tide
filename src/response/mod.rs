@@ -147,6 +147,16 @@ impl Response {
         Ok(self.set_mime(mime::APPLICATION_JSON))
     }
 
+    /// Send a File as the response body.
+    pub async fn body_file(mut self, file: async_std::fs::File) -> http_types::Result<Response> {
+        let metadata = file.metadata().await?;
+        let len = metadata.len() as usize;
+        let reader = async_std::io::BufReader::new(file);
+        self.res
+            .set_body(http_types::Body::from_reader(reader, Some(len)));
+        Ok(self)
+    }
+
     // fn body_multipart(&mut self) -> BoxTryFuture<Multipart<Cursor<Vec<u8>>>> {
     //     const BOUNDARY: &str = "boundary=";
     //     let boundary = self.headers().get("content-type").and_then(|ct| {
