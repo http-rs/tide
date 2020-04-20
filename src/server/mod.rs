@@ -347,7 +347,28 @@ impl<State: Sync + Send + 'static> HttpService for Service<State> {
     fn respond(&self, _conn: (), req: http_service::Request) -> Self::ResponseFuture {
         let req = Request::new(self.state.clone(), req, Vec::new());
         let service = self.clone();
-        Box::pin(async move { Ok(service.call(req).await?.into()) })
+        Box::pin(async move {
+            match service.call(req).await {
+                Ok(value) => {
+                    let res = value.into();
+                    // We assume that if an error was manually cast to a
+                    // Response that we actually want to send the body to the
+                    // client. At this point we don't scrub the message.
+                    Ok(res)
+                }
+                Err(err) => {
+                    let mut res = http_types::Response::new(err.status());
+                    res.set_content_type(http_types::mime::PLAIN);
+                    // Only send the message if it is a non-500 range error. All
+                    // errors default to 500 by default, so sending the error
+                    // body is opt-in at the call site.
+                    if !res.status().is_server_error() {
+                        res.set_body(err.to_string());
+                    }
+                    Ok(res)
+                }
+            }
+        })
     }
 }
 

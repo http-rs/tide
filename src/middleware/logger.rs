@@ -30,16 +30,30 @@ impl RequestLogger {
         let method = ctx.method().to_string();
         log::trace!("IN => {} {}", method, path);
         let start = std::time::Instant::now();
-        let res = next.run(ctx).await?;
-        let status = res.status();
-        log::info!(
-            "{} {} {} {}ms",
-            method,
-            path,
-            status,
-            start.elapsed().as_millis()
-        );
-        Ok(res)
+        match next.run(ctx).await {
+            Ok(res) => {
+                let status = res.status();
+                log::info!(
+                    "{} {} {} {}ms",
+                    method,
+                    path,
+                    status,
+                    start.elapsed().as_millis()
+                );
+                Ok(res)
+            }
+            Err(err) => {
+                let msg = err.to_string();
+                log::error!(
+                    "{} {} {} {}ms",
+                    msg,
+                    method,
+                    path,
+                    start.elapsed().as_millis()
+                );
+                Err(err)
+            }
+        }
     }
 }
 
