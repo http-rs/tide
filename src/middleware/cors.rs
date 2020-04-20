@@ -149,13 +149,16 @@ impl Cors {
 impl<State: Send + Sync + 'static> Middleware<State> for Cors {
     fn handle<'a>(&'a self, req: Request<State>, next: Next<'a, State>) -> BoxFuture<'a, Response> {
         Box::pin(async move {
-            let origins = req
-                .header(&headers::ORIGIN)
-                .cloned()
-                .unwrap_or_else(|| vec!["".parse::<HeaderValue>().unwrap()]);
+            let origins = req.header(&headers::ORIGIN).cloned().unwrap_or_default();
 
             // TODO: how should multiple origin values be handled?
-            let origin = &origins[0];
+            let origin = match origins.first() {
+                Some(origin) => origin,
+                None => {
+                    // This is not a CORS request if there is no Origin header
+                    return next.run(req).await;
+                }
+            };
 
             if !self.is_valid_origin(origin) {
                 return http_types::Response::new(StatusCode::Unauthorized).into();
@@ -395,7 +398,7 @@ mod test {
     #[test]
     fn not_set_origin_header() {
         let mut app = app();
-        app.middleware(Cors::new());
+        app.middleware(Cors::new().allow_origin(ALLOW_ORIGIN));
 
         let request = http_types::Request::new(http_types::Method::Get, endpoint_url());
 
