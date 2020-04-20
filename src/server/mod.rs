@@ -10,12 +10,10 @@ use http_service::HttpService;
 
 use std::pin::Pin;
 
+use crate::middleware::{Middleware, Next};
+use crate::router::{Router, Selection};
 use crate::utils::BoxFuture;
-use crate::{
-    middleware::{Middleware, Next},
-    router::{Router, Selection},
-    Endpoint, Request, Response,
-};
+use crate::{Endpoint, Request, Response};
 
 mod route;
 
@@ -136,9 +134,9 @@ pub use route::Route;
 ///// ```
 #[allow(missing_debug_implementations)]
 pub struct Server<State> {
-    router: Router<State>,
-    middleware: Vec<Arc<dyn Middleware<State>>>,
-    state: State,
+    router: Arc<Router<State>>,
+    state: Arc<State>,
+    middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
 }
 
 impl Server<()> {
@@ -201,11 +199,11 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// ```
     pub fn with_state(state: State) -> Server<State> {
         Server {
-            router: Router::new(),
-            middleware: vec![Arc::new(
+            router: Arc::new(Router::new()),
+            middleware: Arc::new(vec![Arc::new(
                 crate::middleware::cookies::CookiesMiddleware::new(),
-            )],
-            state,
+            )]),
+            state: Arc::new(state),
         }
     }
 
@@ -256,7 +254,8 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// match or not, which means that the order of adding resources has no
     /// effect.
     pub fn at<'a>(&'a mut self, path: &'a str) -> Route<'a, State> {
-        Route::new(&mut self.router, path.to_owned())
+        let router = Arc::get_mut(&mut self.router).unwrap();
+        Route::new(router, path.to_owned())
     }
 
     /// Add middleware to an application.
@@ -270,7 +269,8 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// Middleware can only be added at the "top level" of an application,
     /// and is processed in the order in which it is applied.
     pub fn middleware(&mut self, m: impl Middleware<State>) -> &mut Self {
-        self.middleware.push(Arc::new(m));
+        let middleware = Arc::get_mut(&mut self.middleware).unwrap();
+        middleware.push(Arc::new(m));
         self
     }
 
@@ -278,12 +278,13 @@ impl<State: Send + Sync + 'static> Server<State> {
     ///
     /// This lower-level method lets you host a Tide application within an HTTP
     /// server of your choice, via the `http_service` interface crate.
-    pub fn into_http_service(self) -> Service<State> {
-        Service {
-            router: Arc::new(self.router),
-            state: Arc::new(self.state),
-            middleware: Arc::new(self.middleware),
-        }
+    pub fn into_http_service(self) -> Self {
+        self
+        // Service {
+        //     router: Arc::new(self.router),
+        //     state: Arc::new(self.state),
+        //     middleware: Arc::new(self.middleware),
+        // }
     }
 
     /// Asynchronously serve the app at the given address.
@@ -301,18 +302,7 @@ impl<State: Send + Sync + 'static> Server<State> {
     }
 }
 
-/// An instantiated Tide server.
-///
-/// This type is useful only in conjunction with the [`HttpService`] trait,
-/// i.e. for hosting a Tide app within some custom HTTP server.
-#[allow(missing_debug_implementations)]
-pub struct Service<State> {
-    router: Arc<Router<State>>,
-    state: Arc<State>,
-    middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
-}
-
-impl<State> Clone for Service<State> {
+impl<State> Clone for Server<State> {
     fn clone(&self) -> Self {
         Self {
             router: self.router.clone(),
@@ -333,7 +323,7 @@ impl Future for ReadyFuture {
     }
 }
 
-impl<State: Sync + Send + 'static> HttpService for Service<State> {
+impl<State: Sync + Send + 'static> HttpService for Server<State> {
     type Connection = ();
     type ConnectionFuture = ReadyFuture;
     type ConnectionError = io::Error;
@@ -373,7 +363,7 @@ impl<State: Sync + Send + 'static> HttpService for Service<State> {
 }
 
 impl<State: Sync + Send + 'static, InnerState: Sync + Send + 'static> Endpoint<State>
-    for Service<InnerState>
+    for Server<InnerState>
 {
     fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, crate::Result<Response>> {
         let Request {
