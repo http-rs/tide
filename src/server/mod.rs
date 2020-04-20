@@ -151,7 +151,7 @@ impl Server<()> {
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
     /// let mut app = tide::new();
-    /// app.at("/").get(|_| async move { "Hello, world!" });
+    /// app.at("/").get(|_| async move { Ok("Hello, world!") });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
     /// # Ok(()) }) }
@@ -193,7 +193,7 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// // Initialize the application with state.
     /// let mut app = tide::with_state(state);
     /// app.at("/").get(|req: Request<State>| async move {
-    ///     format!("Hello, {}!", &req.state().name)
+    ///     Ok(format!("Hello, {}!", &req.state().name))
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
@@ -219,7 +219,7 @@ impl<State: Send + Sync + 'static> Server<State> {
     ///
     /// ```rust,no_run
     /// # let mut app = tide::Server::new();
-    /// app.at("/").get(|_| async move {"Hello, world!"});
+    /// app.at("/").get(|_| async move { Ok("Hello, world!") });
     /// ```
     ///
     /// A path is comprised of zero or many segments, i.e. non-empty strings
@@ -337,8 +337,8 @@ impl<State: Sync + Send + 'static> HttpService for Service<State> {
     type Connection = ();
     type ConnectionFuture = ReadyFuture;
     type ConnectionError = io::Error;
-    type ResponseFuture = BoxFuture<'static, Result<http_service::Response, io::Error>>;
-    type ResponseError = io::Error;
+    type ResponseFuture = BoxFuture<'static, Result<http_service::Response, http_types::Error>>;
+    type ResponseError = http_types::Error;
 
     fn connect(&self) -> Self::ConnectionFuture {
         ReadyFuture {}
@@ -347,14 +347,35 @@ impl<State: Sync + Send + 'static> HttpService for Service<State> {
     fn respond(&self, _conn: (), req: http_service::Request) -> Self::ResponseFuture {
         let req = Request::new(self.state.clone(), req, Vec::new());
         let service = self.clone();
-        Box::pin(async move { Ok(service.call(req).await.into()) })
+        Box::pin(async move {
+            match service.call(req).await {
+                Ok(value) => {
+                    let res = value.into();
+                    // We assume that if an error was manually cast to a
+                    // Response that we actually want to send the body to the
+                    // client. At this point we don't scrub the message.
+                    Ok(res)
+                }
+                Err(err) => {
+                    let mut res = http_types::Response::new(err.status());
+                    res.set_content_type(http_types::mime::PLAIN);
+                    // Only send the message if it is a non-500 range error. All
+                    // errors default to 500 by default, so sending the error
+                    // body is opt-in at the call site.
+                    if !res.status().is_server_error() {
+                        res.set_body(err.to_string());
+                    }
+                    Ok(res)
+                }
+            }
+        })
     }
 }
 
 impl<State: Sync + Send + 'static, InnerState: Sync + Send + 'static> Endpoint<State>
     for Service<InnerState>
 {
-    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, Response> {
+    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, crate::Result<Response>> {
         let Request {
             request: req,
             mut route_params,
@@ -376,7 +397,8 @@ impl<State: Sync + Send + 'static, InnerState: Sync + Send + 'static> Endpoint<S
                 next_middleware: &middleware,
             };
 
-            next.run(req).await
+            let res = next.run(req).await?;
+            Ok(res)
         })
     }
 }

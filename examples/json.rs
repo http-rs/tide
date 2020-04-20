@@ -14,14 +14,14 @@ fn main() -> io::Result<()> {
 
         app.at("/submit")
             .post(|mut req: tide::Request<()>| async move {
-                let cat: Cat = req.body_json().await.unwrap();
+                let cat: Cat = req.body_json().await?;
                 println!("cat name: {}", cat.name);
 
                 let cat = Cat {
                     name: "chashu".into(),
                 };
 
-                tide::Response::new(StatusCode::Ok).body_json(&cat).unwrap()
+                Ok(tide::Response::new(StatusCode::Ok).body_json(&cat)?)
             });
 
         app.listen("127.0.0.1:8080").await?;

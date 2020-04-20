@@ -20,7 +20,7 @@
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
 //! #
 //! let mut app = tide::new();
-//! app.at("/").get(|_| async move { "Hello, world!" });
+//! app.at("/").get(|_| async move { Ok("Hello, world!") });
 //! app.listen("127.0.0.1:8080").await?;
 //! #
 //! # Ok(()) }) }
@@ -32,7 +32,7 @@
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
 //! #
 //! let mut app = tide::new();
-//! app.at("/").get(|req| async move { req });
+//! app.at("/").get(|req| async move { Ok(req) });
 //! app.listen("127.0.0.1:8080").await?;
 //! #
 //! # Ok(()) }) }
@@ -48,10 +48,10 @@
 //!
 //! let mut app = tide::new();
 //! app.at("/").get(|mut req: tide::Request<()>| async move {
-//!    let mut counter: Counter = req.body_json().await.unwrap();
+//!    let mut counter: Counter = req.body_json().await?;
 //!    println!("count is {}", counter.count);
 //!    counter.count += 1;
-//!    tide::Response::new(http_types::StatusCode::Ok).body_json(&counter).unwrap()
+//!    Ok(tide::Response::new(tide::http::StatusCode::Ok).body_json(&counter)?)
 //! });
 //! app.listen("127.0.0.1:8080").await?;
 //! #
@@ -150,7 +150,7 @@
 //! #[async_std::main]
 //! async fn main() -> Result<(), std::io::Error> {
 //!     let mut app = tide::new();
-//!     app.at("/").get(|req: Request<()>| async move { req.bark() });
+//!     app.at("/").get(|req: Request<()>| async move { Ok(req.bark()) });
 //!     app.listen("127.0.0.1:8080").await
 //! }
 //! ```
@@ -174,7 +174,6 @@
 #![doc(test(attr(allow(unused_extern_crates, unused_variables))))]
 
 mod endpoint;
-mod error;
 pub mod middleware;
 mod redirect;
 mod request;
@@ -186,9 +185,11 @@ pub mod prelude;
 pub mod server;
 
 pub use endpoint::Endpoint;
-pub use error::{Error, Result, ResultExt};
 pub use redirect::redirect;
 pub use request::Request;
+
+#[doc(inline)]
+pub use http_types::{Error, Result, Status};
 
 #[doc(inline)]
 pub use middleware::{Middleware, Next};
@@ -197,7 +198,8 @@ pub use response::{IntoResponse, Response};
 #[doc(inline)]
 pub use server::{Route, Server};
 
-pub use http_types;
+#[doc(inline)]
+pub use http_types as http;
 
 /// Create a new Tide server.
 ///
@@ -208,7 +210,7 @@ pub use http_types;
 /// # fn main() -> Result<(), std::io::Error> { block_on(async {
 /// #
 /// let mut app = tide::new();
-/// app.at("/").get(|_| async move { "Hello, world!" });
+/// app.at("/").get(|_| async move { Ok("Hello, world!") });
 /// app.listen("127.0.0.1:8080").await?;
 /// #
 /// # Ok(()) }) }
@@ -242,7 +244,7 @@ pub fn new() -> server::Server<()> {
 /// // Initialize the application with state.
 /// let mut app = tide::with_state(state);
 /// app.at("/").get(|req: Request<State>| async move {
-///     format!("Hello, {}!", &req.state().name)
+///     Ok(format!("Hello, {}!", &req.state().name))
 /// });
 /// app.listen("127.0.0.1:8080").await?;
 /// #

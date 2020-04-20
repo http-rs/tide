@@ -54,7 +54,7 @@ impl<State> Request<State> {
     /// let mut app = tide::new();
     /// app.at("/").get(|req: Request<()>| async move {
     ///     assert_eq!(req.method(), http_types::Method::Get);
-    ///     ""
+    ///     Ok("")
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
@@ -76,8 +76,8 @@ impl<State> Request<State> {
     ///
     /// let mut app = tide::new();
     /// app.at("/").get(|req: Request<()>| async move {
-    ///     assert_eq!(req.uri(), &"/".parse::<tide::http_types::Url>().unwrap());
-    ///     ""
+    ///     assert_eq!(req.uri(), &"/".parse::<tide::http::Url>().unwrap());
+    ///     Ok("")
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
@@ -99,8 +99,8 @@ impl<State> Request<State> {
     ///
     /// let mut app = tide::new();
     /// app.at("/").get(|req: Request<()>| async move {
-    ///     assert_eq!(req.version(), Some(tide::http_types::Version::Http1_1));
-    ///     ""
+    ///     assert_eq!(req.version(), Some(http_types::Version::Http1_1));
+    ///     Ok("")
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
@@ -123,7 +123,7 @@ impl<State> Request<State> {
     /// let mut app = tide::new();
     /// app.at("/").get(|req: Request<()>| async move {
     ///     assert_eq!(req.header(&"X-Forwarded-For".parse().unwrap()), Some(&vec!["127.0.0.1".parse().unwrap()]));
-    ///     ""
+    ///     Ok("")
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
@@ -205,7 +205,7 @@ impl<State> Request<State> {
     /// let mut app = tide::new();
     /// app.at("/").get(|mut req: Request<()>| async move {
     ///     let _body: Vec<u8> = req.body_bytes().await.unwrap();
-    ///     ""
+    ///     Ok("")
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
@@ -240,7 +240,7 @@ impl<State> Request<State> {
     /// let mut app = tide::new();
     /// app.at("/").get(|mut req: Request<()>| async move {
     ///     let _body: String = req.body_string().await.unwrap();
-    ///     ""
+    ///     Ok("")
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #

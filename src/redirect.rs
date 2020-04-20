@@ -14,7 +14,7 @@ use crate::{Endpoint, Request, Response};
 /// # fn main() -> Result<(), std::io::Error> { block_on(async {
 /// #
 /// let mut app = tide::new();
-/// app.at("/").get(|_| async move { "meow" });
+/// app.at("/").get(|_| async move { Ok("meow") });
 /// app.at("/nori").get(tide::redirect("/"));
 /// app.listen("127.0.0.1:8080").await?;
 /// #
@@ -31,9 +31,9 @@ pub struct Redirect {
 }
 
 impl<State> Endpoint<State> for Redirect {
-    fn call<'a>(&'a self, _req: Request<State>) -> BoxFuture<'a, Response> {
+    fn call<'a>(&'a self, _req: Request<State>) -> BoxFuture<'a, crate::Result<Response>> {
         let res = Response::new(StatusCode::TemporaryRedirect)
             .set_header("location".parse().unwrap(), self.location.clone());
-        Box::pin(async move { res })
+        Box::pin(async move { Ok(res) })
     }
 }

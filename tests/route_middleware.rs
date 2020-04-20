@@ -17,16 +17,16 @@ impl<State: Send + Sync + 'static> Middleware<State> for TestMiddleware {
         &'a self,
         req: tide::Request<State>,
         next: tide::Next<'a, State>,
-    ) -> BoxFuture<'a, tide::Response> {
+    ) -> BoxFuture<'a, tide::Result<tide::Response>> {
         Box::pin(async move {
-            let res = next.run(req).await;
-            res.set_header(self.0.clone(), self.1)
+            let res = next.run(req).await?;
+            Ok(res.set_header(self.0.clone(), self.1))
         })
     }
 }
 
-async fn echo_path<State>(req: tide::Request<State>) -> String {
-    req.uri().path().to_string()
+async fn echo_path<State>(req: tide::Request<State>) -> tide::Result<String> {
+    Ok(req.uri().path().to_string())
 }
 
 #[test]

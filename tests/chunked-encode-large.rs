@@ -71,9 +71,10 @@ async fn chunked_large() -> Result<(), http_types::Error> {
         let mut app = tide::new();
         app.at("/").get(|mut _req: tide::Request<()>| async move {
             let body = Cursor::new(TEXT.to_owned());
-            Response::new(StatusCode::Ok)
+            let res = Response::new(StatusCode::Ok)
                 .body(body)
-                .set_header(headers::CONTENT_TYPE, "text/plain; charset=utf-8")
+                .set_header(headers::CONTENT_TYPE, "text/plain; charset=utf-8");
+            Ok(res)
         });
         app.listen("localhost:8080").await?;
         Result::<(), http_types::Error>::Ok(())
