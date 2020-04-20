@@ -179,10 +179,10 @@ mod redirect;
 mod request;
 mod response;
 mod router;
+mod server;
 mod utils;
 
 pub mod prelude;
-pub mod server;
 
 pub use endpoint::Endpoint;
 pub use redirect::redirect;
