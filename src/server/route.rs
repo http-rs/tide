@@ -87,7 +87,7 @@ impl<'a, State: 'static> Route<'a, State> {
         InnerState: Send + Sync + 'static,
     {
         self.prefix = true;
-        self.all(service.into_http_service());
+        self.all(service);
         self.prefix = false;
         self
     }

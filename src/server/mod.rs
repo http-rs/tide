@@ -274,19 +274,6 @@ impl<State: Send + Sync + 'static> Server<State> {
         self
     }
 
-    /// Make this app into an `HttpService`.
-    ///
-    /// This lower-level method lets you host a Tide application within an HTTP
-    /// server of your choice, via the `http_service` interface crate.
-    pub fn into_http_service(self) -> Self {
-        self
-        // Service {
-        //     router: Arc::new(self.router),
-        //     state: Arc::new(self.state),
-        //     middleware: Arc::new(self.middleware),
-        // }
-    }
-
     /// Asynchronously serve the app at the given address.
     #[cfg(feature = "h1-server")]
     pub async fn listen(self, addr: impl ToSocketAddrs) -> std::io::Result<()> {
@@ -294,9 +281,7 @@ impl<State: Send + Sync + 'static> Server<State> {
 
         let addr = format!("http://{}", listener.local_addr()?);
         log::info!("Server is listening on: {}", addr);
-        let http_service = self.into_http_service();
-
-        let mut server = http_service_h1::Server::new(addr, listener.incoming(), http_service);
+        let mut server = http_service_h1::Server::new(addr, listener.incoming(), self);
 
         server.run().await
     }
@@ -401,13 +386,13 @@ mod test {
     fn allow_nested_server_with_same_state() {
         let inner = tide::new();
         let mut outer = tide::new();
-        outer.at("/foo").get(inner.into_http_service());
+        outer.at("/foo").get(inner);
     }
 
     #[test]
     fn allow_nested_server_with_different_state() {
         let inner = tide::with_state(1);
         let mut outer = tide::new();
-        outer.at("/foo").get(inner.into_http_service());
+        outer.at("/foo").get(inner);
     }
 }

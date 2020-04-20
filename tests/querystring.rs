@@ -36,7 +36,7 @@ fn get_server() -> TestBackend<Server<()>> {
     let mut app = Server::new();
     app.at("/").get(handler);
     app.at("/optional").get(optional_handler);
-    make_server(app.into_http_service()).unwrap()
+    make_server(app).unwrap()
 }
 
 #[test]

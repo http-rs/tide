@@ -44,7 +44,7 @@ fn route_middleware() {
         .post(echo_path)
         .reset_middleware()
         .put(echo_path);
-    let mut server = make_server(app.into_http_service()).unwrap();
+    let mut server = make_server(app).unwrap();
 
     let req = Request::new(Method::Get, "http://localhost/foo".parse().unwrap());
     let res = server.simulate(req).unwrap();
@@ -86,7 +86,7 @@ fn app_and_route_middleware() {
     app.at("/bar")
         .middleware(TestMiddleware::with_header_name("X-Bar", "bar"))
         .get(echo_path);
-    let mut server = make_server(app.into_http_service()).unwrap();
+    let mut server = make_server(app).unwrap();
 
     let req = Request::new(Method::Get, "http://localhost/foo".parse().unwrap());
     let res = server.simulate(req).unwrap();
@@ -130,7 +130,7 @@ fn nested_app_with_route_middleware() {
     app.at("/bar")
         .middleware(TestMiddleware::with_header_name("X-Bar", "bar"))
         .nest(inner);
-    let mut server = make_server(app.into_http_service()).unwrap();
+    let mut server = make_server(app).unwrap();
 
     let req = Request::new(Method::Get, "http://localhost/foo".parse().unwrap());
     let res = server.simulate(req).unwrap();
@@ -176,7 +176,7 @@ fn subroute_not_nested() {
     app.at("/parent/child") // /parent/child, not nested
         .middleware(TestMiddleware::with_header_name("X-Child", "child"))
         .get(echo_path);
-    let mut server = make_server(app.into_http_service()).unwrap();
+    let mut server = make_server(app).unwrap();
 
     let req = Request::new(
         Method::Get,
