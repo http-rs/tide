@@ -254,7 +254,8 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// match or not, which means that the order of adding resources has no
     /// effect.
     pub fn at<'a>(&'a mut self, path: &'a str) -> Route<'a, State> {
-        let router = Arc::get_mut(&mut self.router).unwrap();
+        let router = Arc::get_mut(&mut self.router)
+            .expect("Registering routes is not possible after the Server has started");
         Route::new(router, path.to_owned())
     }
 
@@ -269,7 +270,8 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// Middleware can only be added at the "top level" of an application,
     /// and is processed in the order in which it is applied.
     pub fn middleware(&mut self, m: impl Middleware<State>) -> &mut Self {
-        let middleware = Arc::get_mut(&mut self.middleware).unwrap();
+        let middleware = Arc::get_mut(&mut self.middleware)
+            .expect("Registering middleware is not possible after the Server has started");
         middleware.push(Arc::new(m));
         self
     }
