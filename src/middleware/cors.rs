@@ -288,7 +288,7 @@ mod test {
                 .allow_credentials(true),
         );
 
-        let mut server = make_server(app.into_http_service()).unwrap();
+        let mut server = make_server(app).unwrap();
 
         let mut req = http_types::Request::new(http_types::Method::Options, endpoint_url());
         req.insert_header(http_types::headers::ORIGIN, ALLOW_ORIGIN)
@@ -327,7 +327,7 @@ mod test {
         let mut app = app();
         app.middleware(Cors::new());
 
-        let mut server = make_server(app.into_http_service()).unwrap();
+        let mut server = make_server(app).unwrap();
         let res = server.simulate(request()).unwrap();
 
         assert_eq!(res.status(), 200);
@@ -349,7 +349,7 @@ mod test {
                 .expose_headers(EXPOSE_HEADER.parse::<HeaderValue>().unwrap()),
         );
 
-        let mut server = make_server(app.into_http_service()).unwrap();
+        let mut server = make_server(app).unwrap();
         let res = server.simulate(request()).unwrap();
 
         assert_eq!(res.status(), 200);
@@ -364,7 +364,7 @@ mod test {
         let mut app = app();
         app.middleware(Cors::new().allow_credentials(true));
 
-        let mut server = make_server(app.into_http_service()).unwrap();
+        let mut server = make_server(app).unwrap();
         let res = server.simulate(request()).unwrap();
 
         assert_eq!(res.status(), 200);
@@ -381,7 +381,7 @@ mod test {
         let mut app = app();
         let origins = vec![ALLOW_ORIGIN, "foo.com", "bar.com"];
         app.middleware(Cors::new().allow_origin(origins.clone()));
-        let mut server = make_server(app.into_http_service()).unwrap();
+        let mut server = make_server(app).unwrap();
 
         for origin in origins {
             let mut request = http_types::Request::new(http_types::Method::Get, endpoint_url());
@@ -406,7 +406,7 @@ mod test {
 
         let request = http_types::Request::new(http_types::Method::Get, endpoint_url());
 
-        let mut server = make_server(app.into_http_service()).unwrap();
+        let mut server = make_server(app).unwrap();
         let res = server.simulate(request).unwrap();
 
         assert_eq!(res.status(), 200);
@@ -422,7 +422,7 @@ mod test {
             .insert_header(http_types::headers::ORIGIN, "unauthorize-origin.net")
             .unwrap();
 
-        let mut server = make_server(app.into_http_service()).unwrap();
+        let mut server = make_server(app).unwrap();
         let res = server.simulate(request).unwrap();
 
         assert_eq!(res.status(), 401);

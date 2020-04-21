@@ -1,9 +1,9 @@
-use async_std::io::prelude::ReadExt;
+use async_std::prelude::*;
 use futures::executor::block_on;
 use http_service_mock::{make_server, TestBackend};
 use http_types::StatusCode;
 use serde::Deserialize;
-use tide::{server::Service, IntoResponse, Request, Response, Server};
+use tide::{IntoResponse, Request, Response, Server};
 
 #[derive(Deserialize)]
 struct Params {
@@ -32,11 +32,11 @@ async fn optional_handler(cx: Request<()>) -> tide::Result<Response> {
     }
 }
 
-fn get_server() -> TestBackend<Service<()>> {
+fn get_server() -> TestBackend<Server<()>> {
     let mut app = Server::new();
     app.at("/").get(handler);
     app.at("/optional").get(optional_handler);
-    make_server(app.into_http_service()).unwrap()
+    make_server(app).unwrap()
 }
 
 #[test]

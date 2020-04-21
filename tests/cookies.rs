@@ -43,7 +43,7 @@ fn app() -> crate::Server<()> {
 
 fn make_request(endpoint: &str) -> http_types::Response {
     let app = app();
-    let mut server = make_server(app.into_http_service()).unwrap();
+    let mut server = make_server(app).unwrap();
     let mut req = http_types::Request::new(
         http_types::Method::Get,
         format!("http://example.com{}", endpoint).parse().unwrap(),

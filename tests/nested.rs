@@ -14,7 +14,7 @@ async fn nested() {
     // Nest the inner app on /foo
     outer.at("/foo").nest(inner);
 
-    let mut server = make_server(outer.into_http_service()).unwrap();
+    let mut server = make_server(outer).unwrap();
 
     let req = Request::new(
         Method::Get,
@@ -60,7 +60,7 @@ async fn nested_middleware() {
 
     app.at("/bar").get(echo_path);
 
-    let mut server = make_server(app.into_http_service()).unwrap();
+    let mut server = make_server(app).unwrap();
 
     let req = Request::new(
         Method::Get,
@@ -98,7 +98,7 @@ async fn nested_with_different_state() {
     outer.at("/").get(|_| async move { Ok("Hello, world!") });
     outer.at("/foo").nest(inner);
 
-    let mut server = make_server(outer.into_http_service()).unwrap();
+    let mut server = make_server(outer).unwrap();
 
     let req = Request::new(Method::Get, Url::parse("http://example.com/foo").unwrap());
     let res = server.simulate(req).unwrap();
