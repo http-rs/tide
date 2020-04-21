@@ -4,6 +4,7 @@ use http_types::{headers::HeaderName, Method, Request};
 use std::convert::TryInto;
 use tide::Middleware;
 
+#[derive(Debug)]
 struct TestMiddleware(HeaderName, &'static str);
 
 impl TestMiddleware {

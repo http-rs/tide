@@ -5,17 +5,18 @@ use async_std::io;
 use async_std::net::ToSocketAddrs;
 use async_std::sync::Arc;
 use async_std::task::{Context, Poll};
-
 use http_service::HttpService;
 
+use std::fmt::Debug;
 use std::pin::Pin;
 
-use crate::middleware::{Middleware, Next};
+use crate::middleware::{cookies, Middleware, Next};
 use crate::router::{Router, Selection};
 use crate::utils::BoxFuture;
 use crate::{Endpoint, Request, Response};
 
 mod route;
+mod serve_dir;
 
 pub use route::Route;
 
@@ -198,13 +199,13 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// # Ok(()) }) }
     /// ```
     pub fn with_state(state: State) -> Server<State> {
-        Server {
+        let mut server = Server {
             router: Arc::new(Router::new()),
-            middleware: Arc::new(vec![Arc::new(
-                crate::middleware::cookies::CookiesMiddleware::new(),
-            )]),
+            middleware: Arc::new(vec![]),
             state: Arc::new(state),
-        }
+        };
+        server.middleware(cookies::CookiesMiddleware::new());
+        server
     }
 
     /// Add a new route at the given `path`, relative to root.
@@ -269,10 +270,14 @@ impl<State: Send + Sync + 'static> Server<State> {
     ///
     /// Middleware can only be added at the "top level" of an application,
     /// and is processed in the order in which it is applied.
-    pub fn middleware(&mut self, m: impl Middleware<State>) -> &mut Self {
-        let middleware = Arc::get_mut(&mut self.middleware)
+    pub fn middleware<M>(&mut self, middleware: M) -> &mut Self
+    where
+        M: Middleware<State> + Debug,
+    {
+        log::trace!("Adding middleware {:?}", middleware);
+        let m = Arc::get_mut(&mut self.middleware)
             .expect("Registering middleware is not possible after the Server has started");
-        middleware.push(Arc::new(m));
+        m.push(Arc::new(middleware));
         self
     }
 
