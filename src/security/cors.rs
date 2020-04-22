@@ -1,5 +1,3 @@
-//! Cors middleware
-
 use crate::utils::BoxFuture;
 use http_types::headers::HeaderValue;
 use http_types::{headers, Method, StatusCode};
@@ -21,7 +19,7 @@ use crate::{Request, Response, Result};
 ///     .allow_credentials(false);
 /// ```
 #[derive(Clone, Debug, Hash)]
-pub struct Cors {
+pub struct CorsMiddleware {
     allow_credentials: Option<HeaderValue>,
     allow_headers: HeaderValue,
     allow_methods: HeaderValue,
@@ -34,7 +32,7 @@ pub const DEFAULT_MAX_AGE: &str = "86400";
 pub const DEFAULT_METHODS: &str = "GET, POST, OPTIONS";
 pub const WILDCARD: &str = "*";
 
-impl Cors {
+impl CorsMiddleware {
     /// Creates a new Cors middleware.
     pub fn new() -> Self {
         Self {
@@ -146,7 +144,7 @@ impl Cors {
     }
 }
 
-impl<State: Send + Sync + 'static> Middleware<State> for Cors {
+impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
     fn handle<'a>(
         &'a self,
         req: Request<State>,
@@ -197,7 +195,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for Cors {
     }
 }
 
-impl Default for Cors {
+impl Default for CorsMiddleware {
     fn default() -> Self {
         Self::new()
     }
@@ -281,7 +279,7 @@ mod test {
     fn preflight_request() {
         let mut app = app();
         app.middleware(
-            Cors::new()
+            CorsMiddleware::new()
                 .allow_origin(Origin::from(ALLOW_ORIGIN))
                 .allow_methods(ALLOW_METHODS.parse::<HeaderValue>().unwrap())
                 .expose_headers(EXPOSE_HEADER.parse::<HeaderValue>().unwrap())
@@ -325,7 +323,7 @@ mod test {
     #[test]
     fn default_cors_middleware() {
         let mut app = app();
-        app.middleware(Cors::new());
+        app.middleware(CorsMiddleware::new());
 
         let mut server = make_server(app).unwrap();
         let res = server.simulate(request()).unwrap();
@@ -342,7 +340,7 @@ mod test {
     fn custom_cors_middleware() {
         let mut app = app();
         app.middleware(
-            Cors::new()
+            CorsMiddleware::new()
                 .allow_origin(Origin::from(ALLOW_ORIGIN))
                 .allow_credentials(false)
                 .allow_methods(ALLOW_METHODS.parse::<HeaderValue>().unwrap())
@@ -362,7 +360,7 @@ mod test {
     #[test]
     fn credentials_true() {
         let mut app = app();
-        app.middleware(Cors::new().allow_credentials(true));
+        app.middleware(CorsMiddleware::new().allow_credentials(true));
 
         let mut server = make_server(app).unwrap();
         let res = server.simulate(request()).unwrap();
@@ -380,7 +378,7 @@ mod test {
     fn set_allow_origin_list() {
         let mut app = app();
         let origins = vec![ALLOW_ORIGIN, "foo.com", "bar.com"];
-        app.middleware(Cors::new().allow_origin(origins.clone()));
+        app.middleware(CorsMiddleware::new().allow_origin(origins.clone()));
         let mut server = make_server(app).unwrap();
 
         for origin in origins {
@@ -402,7 +400,7 @@ mod test {
     #[test]
     fn not_set_origin_header() {
         let mut app = app();
-        app.middleware(Cors::new().allow_origin(ALLOW_ORIGIN));
+        app.middleware(CorsMiddleware::new().allow_origin(ALLOW_ORIGIN));
 
         let request = http_types::Request::new(http_types::Method::Get, endpoint_url());
 
@@ -415,7 +413,7 @@ mod test {
     #[test]
     fn unauthorized_origin() {
         let mut app = app();
-        app.middleware(Cors::new().allow_origin(ALLOW_ORIGIN));
+        app.middleware(CorsMiddleware::new().allow_origin(ALLOW_ORIGIN));
 
         let mut request = http_types::Request::new(http_types::Method::Get, endpoint_url());
         request

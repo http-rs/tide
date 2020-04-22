@@ -183,8 +183,9 @@
 #![doc(test(attr(deny(rust_2018_idioms, warnings))))]
 #![doc(test(attr(allow(unused_extern_crates, unused_variables))))]
 
+mod cookies;
 mod endpoint;
-pub mod middleware;
+mod middleware;
 mod request;
 mod response;
 mod router;
@@ -194,6 +195,7 @@ mod utils;
 pub mod log;
 pub mod prelude;
 pub mod redirect;
+pub mod security;
 
 pub use endpoint::Endpoint;
 pub use request::Request;
