@@ -204,7 +204,7 @@ pub use request::Request;
 pub mod sse;
 
 #[doc(inline)]
-pub use http_types::{Error, Result, Status, StatusCode};
+pub use http_types::{Body, Error, Result, Status, StatusCode};
 
 #[doc(inline)]
 pub use middleware::{Middleware, Next};

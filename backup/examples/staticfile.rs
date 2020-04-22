@@ -5,8 +5,7 @@ use http::{
     header::{self, HeaderMap},
     StatusCode,
 };
-use http_service::Body;
-use tide::{Request, Response, Result, Server};
+use tide::{Body, Request, Response, Result, Server};
 
 use std::path::{Component, Path, PathBuf};
 use std::{fs, io};
