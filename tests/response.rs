@@ -1,5 +1,19 @@
 // use futures::executor::block_on;
-// use tide::*;
+use tide::{IntoResponse, Response};
+
+#[test]
+fn into_response_for_result_does_not_panic_if_error_case_maps_to_200() {
+    struct DummyResponse {}
+
+    impl IntoResponse for DummyResponse {
+        fn into_response(self) -> Response {
+            Response::new(200)
+        }
+    }
+
+    let result: Result<String, _> = Err(DummyResponse {});
+    assert!(result.into_response().status().is_success());
+}
 
 // #[test]
 // fn test_status() {
