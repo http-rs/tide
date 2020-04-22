@@ -2,7 +2,7 @@ use async_std::task;
 use http_types::StatusCode;
 use juniper::RootNode;
 use std::sync::RwLock;
-use tide::{Request, Response, Server};
+use tide::{redirect, Request, Response, Server};
 
 #[derive(Clone)]
 struct User {
@@ -105,7 +105,7 @@ fn main() -> std::io::Result<()> {
         let mut app = Server::with_state(State {
             users: RwLock::new(Vec::new()),
         });
-        app.at("/").get(tide::redirect("/graphiql"));
+        app.at("/").get(redirect::permanent("/graphiql"));
         app.at("/graphql").post(handle_graphql);
         app.at("/graphiql").get(handle_graphiql);
         app.listen("0.0.0.0:8080").await?;
