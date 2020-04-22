@@ -29,6 +29,7 @@ docs = ["unstable"]
 unstable = []
 
 [dependencies]
+async-sse = "2.1.0"
 http-types = "1.0.1"
 http-service = "0.5.0"
 http-service-h1 = { version = "0.1.0", optional = true }
