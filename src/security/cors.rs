@@ -11,9 +11,9 @@ use crate::{Request, Response, Result};
 ///
 /// ```no_run
 /// use http_types::headers::HeaderValue;
-/// use tide::middleware::{Cors, Origin};
+/// use tide::security::{CorsMiddleware, Origin};
 ///
-/// Cors::new()
+/// CorsMiddleware::new()
 ///     .allow_methods("GET, POST, OPTIONS".parse::<HeaderValue>().unwrap())
 ///     .allow_origin(Origin::from("*"))
 ///     .allow_credentials(false);
