@@ -206,6 +206,7 @@ impl<State: Send + Sync + 'static> Server<State> {
             state: Arc::new(state),
         };
         server.middleware(cookies::CookiesMiddleware::new());
+        server.middleware(log::LogMiddleware::new());
         server
     }
 

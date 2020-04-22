@@ -23,4 +23,4 @@ pub use kv_log_macro::{max_level, Level};
 
 mod middleware;
 
-pub use middleware::{middleware, LogMiddleware};
+pub use middleware::LogMiddleware;
