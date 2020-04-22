@@ -16,9 +16,9 @@
 //!
 //! Add two dependencies to your project's `Cargo.toml` file: `tide` itself, and `async-std` with the feature `attributes` enabled:
 //! ```toml
-//!# Example, use the version numbers you need
-//!tide = "0.7.0"
-//!async-std = { version = "1.5.0", features = ["attributes"] }
+//! # Example, use the version numbers you need
+//! tide = "0.7.0"
+//! async-std = { version = "1.5.0", features = ["attributes"] }
 //!```
 //!
 //! # Examples
@@ -51,16 +51,17 @@
 //! ```no_run
 //! # use futures::executor::block_on;
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
+//! # use tide::{Request, Response};
 //! #
 //! #[derive(Debug, serde::Deserialize, serde::Serialize)]
 //! struct Counter { count: usize }
 //!
 //! let mut app = tide::new();
-//! app.at("/").get(|mut req: tide::Request<()>| async move {
+//! app.at("/").get(|mut req: Request<()>| async move {
 //!    let mut counter: Counter = req.body_json().await?;
 //!    println!("count is {}", counter.count);
 //!    counter.count += 1;
-//!    Ok(tide::Response::new(tide::http::StatusCode::Ok).body_json(&counter)?)
+//!    Ok(Response::new(tide::http::StatusCode::Ok).body_json(&counter)?)
 //! });
 //! app.listen("127.0.0.1:8080").await?;
 //! #
@@ -129,7 +130,7 @@
 //!
 //! ```no_run
 //! # use tide::Request;
-//!
+//! #
 //! pub trait RequestExt {
 //!     fn bark(&self) -> String;
 //! }
@@ -149,13 +150,13 @@
 //! # pub trait RequestExt {
 //! #     fn bark(&self) -> String;
 //! # }
-//!
+//! #
 //! # impl<State> RequestExt for Request<State> {
 //! #     fn bark(&self) -> String {
 //! #         "woof".to_string()
 //! #     }
 //! # }
-//!
+//! #
 //! #[async_std::main]
 //! async fn main() -> Result<(), std::io::Error> {
 //!     let mut app = tide::new();
@@ -167,7 +168,7 @@
 //! # Stability
 //!
 //! It's still early in Tide's development cycle. While the general shape of Tide might have
-//! roughly established, the exact traits and function paramaters may change between versions. In
+//! roughly established, the exact traits and function parameters may change between versions. In
 //! practice this means that building your core business on Tide is probably not a wise idea...
 //! yet.
 //!
