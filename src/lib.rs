@@ -175,6 +175,9 @@
 //! changes we make. Also as time goes on you may find that fewer and fewer changes occur, until we
 //! eventually remove this notice entirely. The goal of Tide is to build a premier HTTP experience
 //! for Async Rust. We have a long journey ahead of us. But we're excited you're here with us!
+//!
+//! # Features
+//! - __`simd-json`:__ uses simd-json instead of serde for json parsing. Note: you got to pass `-C target-feature=+avx,+avx2,+sse4.2` to `RUSTFLAGS` if this is enabled.
 
 #![cfg_attr(feature = "docs", feature(doc_cfg))]
 // #![warn(missing_docs)]

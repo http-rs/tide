@@ -261,8 +261,16 @@ impl<State> Request<State> {
     /// If the body cannot be interpreted as valid json for the target type `T`,
     /// an `Err` is returned.
     pub async fn body_json<T: serde::de::DeserializeOwned>(&mut self) -> std::io::Result<T> {
-        let body_bytes = self.body_bytes().await?;
-        Ok(serde_json::from_slice(&body_bytes).map_err(|_| std::io::ErrorKind::InvalidData)?)
+        #[cfg(not(feature = "simd-json"))]
+        {
+            let body_bytes = self.body_bytes().await?;
+            Ok(serde_json::from_slice(&body_bytes).map_err(|_| std::io::ErrorKind::InvalidData)?)
+        }
+        #[cfg(feature = "simd-json")]
+        {
+            let mut body_bytes = self.body_bytes().await?;
+            Ok(simd_json::from_slice(&mut body_bytes).map_err(io::Error::from)?)
+        }
     }
 
     /// Get the URL querystring.
