@@ -53,6 +53,52 @@ impl Response {
         }
     }
 
+    /// Creates a response that represents a permanent redirect to `location`.
+    ///
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use tide::{Response, Request};
+    /// # fn canonicalize(uri: &url::Url) -> Option<&url::Url> { None }
+    /// # #[allow(dead_code)]
+    /// async fn route_handler(request: Request<()>) -> tide::Result<Response> {
+    ///     if let Some(canonical_redirect) = canonicalize(request.uri()) {
+    ///         Ok(Response::redirect_perm(canonical_redirect))
+    ///     } else {
+    ///          //...
+    /// #        Ok(Response::new(http_types::StatusCode::Ok)) // ...
+    ///     }
+    /// }
+    /// ```
+    pub fn redirect_perm(location: impl AsRef<str>) -> Self {
+        Response::new(StatusCode::PermanentRedirect)
+            .set_header("location".parse().unwrap(), location)
+    }
+
+    /// Creates a response that represents a temporary redirect to `location`.
+    ///
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use tide::{Response, Request};
+    /// # fn special_sale_today() -> Option<String> { None }
+    /// # #[allow(dead_code)]
+    /// async fn route_handler(request: Request<()>) -> tide::Result<Response> {
+    ///     if let Some(sale_url) = special_sale_today() {
+    ///         Ok(Response::redirect_temp(sale_url))
+    ///     } else {
+    ///         //...
+    /// #       Ok(Response::new(http_types::StatusCode::Ok)) //...
+    ///     }
+    /// }
+    /// ```
+    pub fn redirect_temp(location: impl AsRef<str>) -> Self {
+        Response::new(StatusCode::TemporaryRedirect)
+            .set_header("location".parse().unwrap(), location)
+    }
+
     /// Returns the statuscode.
     pub fn status(&self) -> http_types::StatusCode {
         self.res.status()
