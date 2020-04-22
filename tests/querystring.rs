@@ -1,9 +1,8 @@
 use async_std::prelude::*;
 use futures::executor::block_on;
 use http_service_mock::{make_server, TestBackend};
-use http_types::StatusCode;
 use serde::Deserialize;
-use tide::{IntoResponse, Request, Response, Server};
+use tide::{IntoResponse, Request, Response, Server, StatusCode};
 
 #[derive(Deserialize)]
 struct Params {

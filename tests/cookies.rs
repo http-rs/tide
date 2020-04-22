@@ -2,9 +2,8 @@ use cookie::Cookie;
 use futures::executor::block_on;
 use futures::AsyncReadExt;
 use http_service_mock::make_server;
-use http_types::StatusCode;
 
-use tide::{Request, Response, Server};
+use tide::{Request, Response, Server, StatusCode};
 
 static COOKIE_NAME: &str = "testCookie";
 

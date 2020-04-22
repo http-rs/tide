@@ -1,6 +1,6 @@
+use crate::StatusCode;
 use crate::{Request, Response};
 use async_std::io::BufReader;
-use http_types::StatusCode;
 
 /// Conversion into a `Response`.
 pub trait IntoResponse: Send + Sized {
@@ -14,7 +14,7 @@ pub trait IntoResponse: Send + Sized {
     /// let resp = "Hello, 404!".with_status(http_types::StatusCode::NotFound).into_response();
     /// assert_eq!(resp.status(), http_types::StatusCode::NotFound);
     /// ```
-    fn with_status(self, status: http_types::StatusCode) -> WithStatus<Self> {
+    fn with_status(self, status: StatusCode) -> WithStatus<Self> {
         WithStatus {
             inner: self,
             status,

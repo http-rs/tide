@@ -1,8 +1,7 @@
 use async_std::fs;
 use async_std::io::BufReader;
 use async_std::task;
-use http_types::StatusCode;
-use tide::Response;
+use tide::{Response, StatusCode};
 
 fn main() -> Result<(), std::io::Error> {
     task::block_on(async {

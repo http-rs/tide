@@ -1,18 +1,18 @@
 use async_std::prelude::*;
 use async_std::task;
-use http_types::StatusCode;
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
+use tide::{Request, Response, StatusCode};
 
 #[test]
 fn hello_world() -> Result<(), http_types::Error> {
     task::block_on(async {
         let server = task::spawn(async {
             let mut app = tide::new();
-            app.at("/").get(|mut req: tide::Request<()>| async move {
+            app.at("/").get(|mut req: Request<()>| async move {
                 assert_eq!(req.body_string().await.unwrap(), "nori".to_string());
-                let res = tide::Response::new(StatusCode::Ok).body_string("says hello".to_string());
+                let res = Response::new(StatusCode::Ok).body_string("says hello".to_string());
                 Ok(res)
             });
             app.listen("localhost:8080").await?;
@@ -68,11 +68,11 @@ fn json() -> Result<(), http_types::Error> {
     task::block_on(async {
         let server = task::spawn(async {
             let mut app = tide::new();
-            app.at("/").get(|mut req: tide::Request<()>| async move {
+            app.at("/").get(|mut req: Request<()>| async move {
                 let mut counter: Counter = req.body_json().await.unwrap();
                 assert_eq!(counter.count, 0);
                 counter.count = 1;
-                let res = tide::Response::new(StatusCode::Ok).body_json(&counter)?;
+                let res = Response::new(StatusCode::Ok).body_json(&counter)?;
                 Ok(res)
             });
             app.listen("localhost:8082").await?;
