@@ -1,28 +1,30 @@
 use crate::log;
-use crate::{
-    middleware::{Middleware, Next},
-    Request, Response,
-};
+use crate::{Middleware, Next, Request, Response};
 use futures_core::future::BoxFuture;
 
-/// A simple requests logger
+/// Log all incoming requests and responses.
+///
+/// This middleware is enabled by default in Tide.
 ///
 /// # Examples
 ///
-/// ```rust
-///
-/// let mut app = tide::Server::new();
-/// app.middleware(tide::middleware::RequestLogger::new());
 /// ```
-#[derive(Debug, Clone, Default)]
-pub struct RequestLogger;
+/// let mut app = tide::Server::new();
+/// app.middleware(tide::log::middleware());
+/// ```
+#[derive(Debug, Clone)]
+pub struct LogMiddleware {
+    _priv: (),
+}
 
-impl RequestLogger {
+impl LogMiddleware {
+    /// Create a new instance of `LogMiddleware`.
     pub fn new() -> Self {
-        Self::default()
+        Self { _priv: () }
     }
 
-    async fn log_basic<'a, State: Send + Sync + 'static>(
+    /// Log a request and a response.
+    async fn log<'a, State: Send + Sync + 'static>(
         &'a self,
         ctx: Request<State>,
         next: Next<'a, State>,
@@ -58,12 +60,12 @@ impl RequestLogger {
     }
 }
 
-impl<State: Send + Sync + 'static> Middleware<State> for RequestLogger {
+impl<State: Send + Sync + 'static> Middleware<State> for LogMiddleware {
     fn handle<'a>(
         &'a self,
         ctx: Request<State>,
         next: Next<'a, State>,
     ) -> BoxFuture<'a, crate::Result<Response>> {
-        Box::pin(async move { self.log_basic(ctx, next).await })
+        Box::pin(async move { self.log(ctx, next).await })
     }
 }

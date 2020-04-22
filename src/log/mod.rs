@@ -20,3 +20,7 @@
 
 pub use kv_log_macro::{debug, error, info, log, trace, warn};
 pub use kv_log_macro::{max_level, Level};
+
+mod middleware;
+
+pub use middleware::{middleware, LogMiddleware};
