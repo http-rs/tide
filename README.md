@@ -44,6 +44,15 @@
 A modular web framework built around async/await. It's actively being developed
 and **not ready for production yet**.
 
+## Getting started
+
+Add two dependencies to your project's `Cargo.toml` file: `tide` itself, and `async-std` with the feature `attributes` enabled:
+```toml
+# Example, use the version numbers you need
+tide = "0.7.0"
+async-std = { version = "1.5.0", features = ["attributes"] }
+```
+
 ## Examples
 
 **Hello World**

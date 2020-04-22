@@ -12,6 +12,15 @@
 //! - __Minimal:__ With only a few concepts to learn, Tide is easy to pick up and become productive
 //!     with.
 //!
+//! # Getting started
+//!
+//! Add two dependencies to your project's `Cargo.toml` file: `tide` itself, and `async-std` with the feature `attributes` enabled:
+//! ```toml
+//!# Example, use the version numbers you need
+//!tide = "0.7.0"
+//!async-std = { version = "1.5.0", features = ["attributes"] }
+//!```
+//!
 //! # Examples
 //!
 //! __hello world__
