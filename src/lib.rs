@@ -84,15 +84,22 @@
 //! Middleware wrap each request and response pair, allowing code to be run before the endpoint,
 //! and after each endpoint. Additionally each handler can choose to never yield to the endpoint
 //! and abort early. This is useful for e.g. authentication middleware. Tide's middleware works
-//! like a stack. A simplified example of the logger middleware is something like this:
+//! like a stack. A simplified example a logger middleware is something like this:
 //!
-//! ```ignore
-//! async fn log(req: Request, next: Next) -> Result<Response> {
-//!     println!("Incoming request from {} on url {}", req.peer_addr(), req.url());
-//!     let res = next().await?;
-//!     println!("Outgoing response with status {}", res.status());
-//!     res
+//! ```no_run
+//! use futures::future::BoxFuture;
+//!
+//! fn log(req: tide::Request<()>, next: tide::Next<'_, ()>) -> BoxFuture<'_, tide::Response> {
+//!     Box::pin(async move {
+//!         println!("Incoming {} request to {}", req.method(), req.uri());
+//!         let res = next.run(req).await;
+//!         println!("Outgoing response with status {}", res.status());
+//!         res
+//!     })
 //! }
+//!
+//! let mut app = tide::Server::new();
+//! app.middleware(log);
 //! ```
 //!
 //! As a new request comes in, we perform some logic. Then we yield to the next

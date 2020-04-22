@@ -193,7 +193,7 @@ impl Response {
             .set_mime(mime::APPLICATION_WWW_FORM_URLENCODED))
     }
 
-    /// Encode a struct as a form and set as the response body.
+    /// Serialize a struct as JSON and set as the response body.
     ///
     /// # Mime
     ///
