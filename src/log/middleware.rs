@@ -10,7 +10,7 @@ use futures_core::future::BoxFuture;
 ///
 /// ```
 /// let mut app = tide::Server::new();
-/// app.middleware(tide::log::middleware());
+/// app.middleware(tide::log::LogMiddleware::new());
 /// ```
 #[derive(Debug, Clone)]
 pub struct LogMiddleware {
