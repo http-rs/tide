@@ -1,3 +1,4 @@
+use crate::log;
 use crate::{
     middleware::{Middleware, Next},
     Request, Response,

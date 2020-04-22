@@ -10,6 +10,7 @@ use http_service::HttpService;
 use std::fmt::Debug;
 use std::pin::Pin;
 
+use crate::log;
 use crate::middleware::{cookies, Middleware, Next};
 use crate::router::{Router, Selection};
 use crate::utils::BoxFuture;
