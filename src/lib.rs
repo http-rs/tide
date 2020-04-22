@@ -15,7 +15,7 @@
 //! # Getting started
 //!
 //! Add two dependencies to your project's `Cargo.toml` file: `tide` itself, and `async-std` with the feature `attributes` enabled:
-//! ```text
+//! ```toml
 //!# Example, use the version numbers you need
 //!tide = "0.7.0"
 //!async-std = { version = "1.5.0", features = ["attributes"] }
