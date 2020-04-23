@@ -23,7 +23,7 @@ pub(crate) enum CookieEvent {
 /// An HTTP response
 #[derive(Debug)]
 pub struct Response {
-    res: http_service::Response,
+    pub(crate) res: http_service::Response,
     // tracking here
     pub(crate) cookie_events: Vec<CookieEvent>,
 }
