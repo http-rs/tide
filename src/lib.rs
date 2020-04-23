@@ -182,6 +182,8 @@
 #![warn(missing_debug_implementations, rust_2018_idioms)]
 #![doc(test(attr(deny(rust_2018_idioms, warnings))))]
 #![doc(test(attr(allow(unused_extern_crates, unused_variables))))]
+#![doc(html_favicon_url = "https://yoshuawuyts.com/assets/http-rs/favicon.ico")]
+#![doc(html_logo_url = "https://yoshuawuyts.com/assets/http-rs/logo-rounded.png")]
 
 mod cookies;
 mod endpoint;
