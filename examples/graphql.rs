@@ -72,7 +72,7 @@ fn create_schema() -> Schema {
     Schema::new(QueryRoot {}, MutationRoot {})
 }
 
-async fn handle_graphql(mut cx: Request<State>) -> tide::Result<Response> {
+async fn handle_graphql(mut cx: Request<State>) -> tide::Result {
     let query: juniper::http::GraphQLRequest = cx
         .body_json()
         .await
@@ -92,7 +92,7 @@ async fn handle_graphql(mut cx: Request<State>) -> tide::Result<Response> {
     Ok(res)
 }
 
-async fn handle_graphiql(_: Request<State>) -> tide::Result<Response> {
+async fn handle_graphiql(_: Request<State>) -> tide::Result {
     let res = Response::new(StatusCode::Ok)
         .body_string(juniper::http::graphiql::graphiql_source("/graphql"))
         .set_header("content-type".parse().unwrap(), "text/html;charset=utf-8");

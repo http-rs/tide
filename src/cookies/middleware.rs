@@ -1,7 +1,6 @@
 use crate::response::CookieEvent;
 use crate::utils::BoxFuture;
-use crate::{Middleware, Next};
-use crate::{Request, Response, Result};
+use crate::{Middleware, Next, Request};
 
 use cookie::CookieJar;
 use http_types::headers;
@@ -37,7 +36,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
         &'a self,
         mut ctx: Request<State>,
         next: Next<'a, State>,
-    ) -> BoxFuture<'a, Result<Response>> {
+    ) -> BoxFuture<'a, crate::Result> {
         Box::pin(async move {
             let cookie_jar = if let Some(cookie_data) = ctx.local::<CookieData>() {
                 cookie_data.content.clone()

@@ -20,7 +20,7 @@ impl ServeDir {
 }
 
 impl<State> Endpoint<State> for ServeDir {
-    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, Result<Response>> {
+    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, Result> {
         let path = req.uri().path();
         let path = path.replacen(&self.prefix, "", 1);
         let path = path.trim_start_matches('/');

@@ -15,7 +15,7 @@ struct OptionalParams {
     _time: Option<u64>,
 }
 
-async fn handler(cx: Request<()>) -> tide::Result<Response> {
+async fn handler(cx: Request<()>) -> tide::Result {
     let p = cx.query::<Params>();
     match p {
         Ok(params) => Ok(params.msg.into_response()),
@@ -23,7 +23,7 @@ async fn handler(cx: Request<()>) -> tide::Result<Response> {
     }
 }
 
-async fn optional_handler(cx: Request<()>) -> tide::Result<Response> {
+async fn optional_handler(cx: Request<()>) -> tide::Result {
     let p = cx.query::<OptionalParams>();
     match p {
         Ok(_) => Ok(Response::new(StatusCode::Ok)),

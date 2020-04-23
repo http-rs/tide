@@ -77,7 +77,7 @@
 //! it's incredibly efficient.
 //!
 //! ```txt
-//! async fn endpoint(req: Request) -> Result<Response>;
+//! async fn endpoint(req: Request) -> Result;
 //! ```
 //!
 //! ## Middleware
@@ -88,7 +88,7 @@
 //! like a stack. A simplified example of the logger middleware is something like this:
 //!
 //! ```ignore
-//! async fn log(req: Request, next: Next) -> Result<Response> {
+//! async fn log(req: Request, next: Next) -> tide::Result {
 //!     println!("Incoming request from {} on url {}", req.peer_addr(), req.url());
 //!     let res = next().await?;
 //!     println!("Outgoing response with status {}", res.status());
@@ -204,7 +204,7 @@ pub use request::Request;
 pub mod sse;
 
 #[doc(inline)]
-pub use http_types::{Body, Error, Result, Status, StatusCode};
+pub use http_types::{Body, Error, Status, StatusCode};
 
 #[doc(inline)]
 pub use middleware::{Middleware, Next};
@@ -271,3 +271,6 @@ where
 {
     Server::with_state(state)
 }
+
+/// A specialized Result type for Tide.
+pub type Result<T = Response> = std::result::Result<T, Error>;

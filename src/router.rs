@@ -1,10 +1,9 @@
-use http_types::Result;
 use route_recognizer::{Match, Params, Router as MethodRouter};
 use std::collections::HashMap;
 
 use crate::endpoint::DynEndpoint;
 use crate::utils::BoxFuture;
-use crate::{Request, Response};
+use crate::{Request, Response, StatusCode};
 
 /// The routing table used by `Server`
 ///
@@ -87,10 +86,10 @@ impl<State: 'static> Router<State> {
     }
 }
 
-fn not_found_endpoint<State>(_cx: Request<State>) -> BoxFuture<'static, Result<Response>> {
-    Box::pin(async move { Ok(Response::new(crate::StatusCode::NotFound.into())) })
+fn not_found_endpoint<State>(_cx: Request<State>) -> BoxFuture<'static, crate::Result> {
+    Box::pin(async move { Ok(Response::new(StatusCode::NotFound)) })
 }
 
-fn method_not_allowed<State>(_cx: Request<State>) -> BoxFuture<'static, Result<Response>> {
-    Box::pin(async move { Ok(Response::new(crate::StatusCode::MethodNotAllowed.into())) })
+fn method_not_allowed<State>(_cx: Request<State>) -> BoxFuture<'static, crate::Result> {
+    Box::pin(async move { Ok(Response::new(StatusCode::MethodNotAllowed)) })
 }

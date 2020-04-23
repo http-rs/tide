@@ -1,6 +1,6 @@
 use crate::log;
-use crate::{Middleware, Next, Request, Response};
-use futures_core::future::BoxFuture;
+use crate::utils::BoxFuture;
+use crate::{Middleware, Next, Request};
 
 /// Log all incoming requests and responses.
 ///
@@ -28,7 +28,7 @@ impl LogMiddleware {
         &'a self,
         ctx: Request<State>,
         next: Next<'a, State>,
-    ) -> crate::Result<Response> {
+    ) -> crate::Result {
         let path = ctx.uri().path().to_owned();
         let method = ctx.method().to_string();
         log::trace!("IN => {} {}", method, path);
@@ -65,7 +65,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for LogMiddleware {
         &'a self,
         ctx: Request<State>,
         next: Next<'a, State>,
-    ) -> BoxFuture<'a, crate::Result<Response>> {
+    ) -> BoxFuture<'a, crate::Result> {
         Box::pin(async move { self.log(ctx, next).await })
     }
 }
