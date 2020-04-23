@@ -68,7 +68,7 @@ const TEXT: &'static str = concat![
 
 #[async_std::test]
 async fn chunked_large() -> Result<(), http_types::Error> {
-    let bind = test_utils::determine_port_to_bind().await;
+    let bind = test_utils::find_port().await;
     let server = task::spawn(async move {
         let mut app = tide::new();
         app.at("/").get(|mut _req: tide::Request<()>| async {

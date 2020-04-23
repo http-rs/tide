@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 #[test]
 fn hello_world() -> Result<(), http_types::Error> {
     task::block_on(async {
-        let bind = test_utils::determine_port_to_bind().await;
+        let port = test_utils::find_port().await;
         let server = task::spawn(async move {
             let mut app = tide::new();
             app.at("/").get(|mut req: tide::Request<()>| async move {
@@ -17,13 +17,13 @@ fn hello_world() -> Result<(), http_types::Error> {
                 let res = tide::Response::new(StatusCode::Ok).body_string("says hello".to_string());
                 Ok(res)
             });
-            app.listen(&bind).await?;
+            app.listen(&port).await?;
             Result::<(), http_types::Error>::Ok(())
         });
 
         let client = task::spawn(async move {
             task::sleep(Duration::from_millis(100)).await;
-            let string = surf::get(format!("http://{}", bind))
+            let string = surf::get(format!("http://{}", port))
                 .body_string("nori".to_string())
                 .recv_string()
                 .await?;
@@ -38,18 +38,18 @@ fn hello_world() -> Result<(), http_types::Error> {
 #[test]
 fn echo_server() -> Result<(), http_types::Error> {
     task::block_on(async {
-        let bind = test_utils::determine_port_to_bind().await;
+        let port = test_utils::find_port().await;
         let server = task::spawn(async move {
             let mut app = tide::new();
             app.at("/").get(|req| async move { Ok(req) });
 
-            app.listen(&bind).await?;
+            app.listen(&port).await?;
             Result::<(), http_types::Error>::Ok(())
         });
 
         let client = task::spawn(async move {
             task::sleep(Duration::from_millis(100)).await;
-            let string = surf::get(format!("http://{}", bind))
+            let string = surf::get(format!("http://{}", port))
                 .body_string("chashu".to_string())
                 .recv_string()
                 .await?;
@@ -69,7 +69,7 @@ fn json() -> Result<(), http_types::Error> {
     }
 
     task::block_on(async {
-        let bind = test_utils::determine_port_to_bind().await;
+        let port = test_utils::find_port().await;
         let server = task::spawn(async move {
             let mut app = tide::new();
             app.at("/").get(|mut req: tide::Request<()>| async move {
@@ -79,13 +79,13 @@ fn json() -> Result<(), http_types::Error> {
                 let res = tide::Response::new(StatusCode::Ok).body_json(&counter)?;
                 Ok(res)
             });
-            app.listen(&bind).await?;
+            app.listen(&port).await?;
             Result::<(), http_types::Error>::Ok(())
         });
 
         let client = task::spawn(async move {
             task::sleep(Duration::from_millis(100)).await;
-            let counter: Counter = surf::get(format!("http://{}", &bind))
+            let counter: Counter = surf::get(format!("http://{}", &port))
                 .body_json(&Counter { count: 0 })?
                 .recv_json()
                 .await?;
