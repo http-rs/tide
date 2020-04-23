@@ -1,4 +1,5 @@
 use crate::http::{mime, Body, StatusCode};
+use crate::log;
 use crate::{Request, Response, Result};
 
 use super::Sender;

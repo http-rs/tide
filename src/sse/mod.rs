@@ -18,8 +18,8 @@
 //!
 //! let mut app = tide::new();
 //! app.at("/sse").get(sse::endpoint(|_req, sender| async move {
-//!     sender.send("fruit", "banana").await;
-//!     sender.send("fruit", "apple").await;
+//!     sender.send("fruit", "banana", None).await;
+//!     sender.send("fruit", "apple", None).await;
 //!     Ok(())
 //! }));
 //! app.listen("localhost:8080").await?;
@@ -27,27 +27,9 @@
 //! ```
 
 mod endpoint;
+mod sender;
 mod upgrade;
 
 pub use endpoint::{endpoint, SseEndpoint};
+pub use sender::Sender;
 pub use upgrade::upgrade;
-
-/// An SSE message sender.
-#[derive(Debug)]
-pub struct Sender {
-    sender: async_sse::Sender,
-}
-
-impl Sender {
-    /// Create a new instance of `Sender`.
-    fn new(sender: async_sse::Sender) -> Self {
-        Self { sender }
-    }
-
-    /// Send data from the SSE channel.
-    ///
-    /// Each message constists of a "name" and "data".
-    pub async fn send(&self, name: &str, data: impl AsRef<[u8]>) {
-        self.sender.send(name, data.as_ref(), None).await;
-    }
-}
