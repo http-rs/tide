@@ -32,7 +32,6 @@ unstable = []
 http-types = "1.0.1"
 http-service = "0.5.0"
 http-service-h1 = { version = "0.1.0", optional = true }
-log = "0.4.8"
 route-recognizer = "0.1.13"
 serde = "1.0.102"
 serde_json = "1.0.41"
@@ -45,6 +44,7 @@ futures = { version = "0.3.1", optional = true }
 http = { version = "0.2.0", optional = true }
 tokio = { version = "0.2.13", optional = true }
 url = "2.1.1"
+kv-log-macro = "1.0.4"
 
 [dev-dependencies]
 async-std = { version = "1.4.0", features = ["unstable", "attributes"] }

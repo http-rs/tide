@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 use super::serve_dir::ServeDir;
 use crate::endpoint::MiddlewareEndpoint;
+use crate::log;
 use crate::utils::BoxFuture;
 use crate::{router::Router, Endpoint, Middleware, Response};
 

@@ -10,6 +10,7 @@ use http_service::HttpService;
 use std::fmt::Debug;
 use std::pin::Pin;
 
+use crate::log;
 use crate::middleware::{cookies, Middleware, Next};
 use crate::router::{Router, Selection};
 use crate::utils::BoxFuture;
@@ -205,6 +206,7 @@ impl<State: Send + Sync + 'static> Server<State> {
             state: Arc::new(state),
         };
         server.middleware(cookies::CookiesMiddleware::new());
+        server.middleware(log::LogMiddleware::new());
         server
     }
 
