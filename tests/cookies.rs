@@ -11,19 +11,19 @@ async fn retrieve_cookie(cx: Request<()>) -> tide::Result<String> {
     Ok(cx.cookie(COOKIE_NAME).unwrap().value().to_string())
 }
 
-async fn set_cookie(_req: Request<()>) -> tide::Result<Response> {
+async fn set_cookie(_req: Request<()>) -> tide::Result {
     let mut res = Response::new(StatusCode::Ok);
     res.set_cookie(Cookie::new(COOKIE_NAME, "NewCookieValue"));
     Ok(res)
 }
 
-async fn remove_cookie(_req: Request<()>) -> tide::Result<Response> {
+async fn remove_cookie(_req: Request<()>) -> tide::Result {
     let mut res = Response::new(StatusCode::Ok);
     res.remove_cookie(Cookie::named(COOKIE_NAME));
     Ok(res)
 }
 
-async fn set_multiple_cookie(_req: Request<()>) -> tide::Result<Response> {
+async fn set_multiple_cookie(_req: Request<()>) -> tide::Result {
     let mut res = Response::new(StatusCode::Ok);
     res.set_cookie(Cookie::new("C1", "V1"));
     res.set_cookie(Cookie::new("C2", "V2"));

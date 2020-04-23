@@ -3,7 +3,7 @@ use http_types::headers::HeaderValue;
 use http_types::{headers, Method, StatusCode};
 
 use crate::middleware::{Middleware, Next};
-use crate::{Request, Response, Result};
+use crate::{Request, Result};
 
 /// Middleware for CORS
 ///
@@ -145,11 +145,7 @@ impl CorsMiddleware {
 }
 
 impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
-    fn handle<'a>(
-        &'a self,
-        req: Request<State>,
-        next: Next<'a, State>,
-    ) -> BoxFuture<'a, Result<Response>> {
+    fn handle<'a>(&'a self, req: Request<State>, next: Next<'a, State>) -> BoxFuture<'a, Result> {
         Box::pin(async move {
             let origins = req.header(&headers::ORIGIN).cloned().unwrap_or_default();
 

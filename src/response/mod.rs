@@ -62,7 +62,7 @@ impl Response {
     /// # use tide::{Response, Request, StatusCode};
     /// # fn canonicalize(uri: &url::Url) -> Option<&url::Url> { None }
     /// # #[allow(dead_code)]
-    /// async fn route_handler(request: Request<()>) -> tide::Result<Response> {
+    /// async fn route_handler(request: Request<()>) -> tide::Result {
     ///     if let Some(canonical_redirect) = canonicalize(request.uri()) {
     ///         Ok(Response::redirect_permanent(canonical_redirect))
     ///     } else {
@@ -85,7 +85,7 @@ impl Response {
     /// # use tide::{Response, Request, StatusCode};
     /// # fn special_sale_today() -> Option<String> { None }
     /// # #[allow(dead_code)]
-    /// async fn route_handler(request: Request<()>) -> tide::Result<Response> {
+    /// async fn route_handler(request: Request<()>) -> tide::Result {
     ///     if let Some(sale_url) = special_sale_today() {
     ///         Ok(Response::redirect_temporary(sale_url))
     ///     } else {

@@ -32,7 +32,7 @@ pub struct TemporaryRedirect {
 }
 
 impl<State> Endpoint<State> for TemporaryRedirect {
-    fn call<'a>(&'a self, _req: Request<State>) -> BoxFuture<'a, crate::Result<Response>> {
+    fn call<'a>(&'a self, _req: Request<State>) -> BoxFuture<'a, crate::Result> {
         let res = Response::redirect_temporary(&self.location);
         Box::pin(async move { Ok(res) })
     }

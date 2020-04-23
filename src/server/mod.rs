@@ -15,7 +15,7 @@ use crate::log;
 use crate::middleware::{Middleware, Next};
 use crate::router::{Router, Selection};
 use crate::utils::BoxFuture;
-use crate::{Endpoint, Request, Response};
+use crate::{Endpoint, Request};
 
 mod route;
 mod serve_dir;
@@ -360,7 +360,7 @@ impl<State: Sync + Send + 'static> HttpService for Server<State> {
 impl<State: Sync + Send + 'static, InnerState: Sync + Send + 'static> Endpoint<State>
     for Server<InnerState>
 {
-    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, crate::Result<Response>> {
+    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, crate::Result> {
         let Request {
             request: req,
             mut route_params,
