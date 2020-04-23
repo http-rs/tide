@@ -43,7 +43,7 @@ impl Response {
     where
         R: BufRead + Unpin + Send + Sync + 'static,
     {
-        let status = http_types::StatusCode::try_from(status).expect("invalid status code");
+        let status = crate::StatusCode::try_from(status).expect("invalid status code");
         let mut res = http_types::Response::new(status);
         res.set_body(Body::from_reader(reader, None));
 
@@ -59,7 +59,7 @@ impl Response {
     /// # Example
     ///
     /// ```
-    /// # use tide::{Response, Request};
+    /// # use tide::{Response, Request, StatusCode};
     /// # fn canonicalize(uri: &url::Url) -> Option<&url::Url> { None }
     /// # #[allow(dead_code)]
     /// async fn route_handler(request: Request<()>) -> tide::Result<Response> {
@@ -67,7 +67,7 @@ impl Response {
     ///         Ok(Response::redirect_permanent(canonical_redirect))
     ///     } else {
     ///          //...
-    /// #        Ok(Response::new(http_types::StatusCode::Ok)) // ...
+    /// #        Ok(Response::new(StatusCode::Ok)) // ...
     ///     }
     /// }
     /// ```
@@ -82,7 +82,7 @@ impl Response {
     /// # Example
     ///
     /// ```
-    /// # use tide::{Response, Request};
+    /// # use tide::{Response, Request, StatusCode};
     /// # fn special_sale_today() -> Option<String> { None }
     /// # #[allow(dead_code)]
     /// async fn route_handler(request: Request<()>) -> tide::Result<Response> {
@@ -90,7 +90,7 @@ impl Response {
     ///         Ok(Response::redirect_temporary(sale_url))
     ///     } else {
     ///         //...
-    /// #       Ok(Response::new(http_types::StatusCode::Ok)) //...
+    /// #       Ok(Response::new(StatusCode::Ok)) //...
     ///     }
     /// }
     /// ```
@@ -100,12 +100,12 @@ impl Response {
     }
 
     /// Returns the statuscode.
-    pub fn status(&self) -> http_types::StatusCode {
+    pub fn status(&self) -> crate::StatusCode {
         self.res.status()
     }
 
     /// Set the statuscode.
-    pub fn set_status(mut self, status: http_types::StatusCode) -> Self {
+    pub fn set_status(mut self, status: crate::StatusCode) -> Self {
         self.res.set_status(status);
         self
     }

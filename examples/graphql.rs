@@ -1,8 +1,7 @@
 use async_std::task;
-use http_types::StatusCode;
 use juniper::RootNode;
 use std::sync::RwLock;
-use tide::{redirect, Request, Response, Server};
+use tide::{redirect, Request, Response, Server, StatusCode};
 
 #[derive(Clone)]
 struct User {

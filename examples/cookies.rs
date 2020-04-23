@@ -1,7 +1,6 @@
 use async_std::task;
 use cookie::Cookie;
-use http_types::StatusCode;
-use tide::{Request, Response};
+use tide::{Request, Response, StatusCode};
 
 /// Tide will use the the `Cookies`'s `Extract` implementation to build this parameter.
 ///

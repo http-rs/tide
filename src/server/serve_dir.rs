@@ -1,9 +1,8 @@
+use crate::log;
+use crate::{Body, Endpoint, Request, Response, Result, StatusCode};
+
 use async_std::fs::File;
 use async_std::io::BufReader;
-use http_types::{Body, StatusCode};
-
-use crate::log;
-use crate::{Endpoint, Request, Response, Result};
 
 use std::path::{Path, PathBuf};
 
