@@ -64,14 +64,14 @@ impl Response {
     /// # #[allow(dead_code)]
     /// async fn route_handler(request: Request<()>) -> tide::Result<Response> {
     ///     if let Some(canonical_redirect) = canonicalize(request.uri()) {
-    ///         Ok(Response::redirect_perm(canonical_redirect))
+    ///         Ok(Response::redirect_permanent(canonical_redirect))
     ///     } else {
     ///          //...
     /// #        Ok(Response::new(http_types::StatusCode::Ok)) // ...
     ///     }
     /// }
     /// ```
-    pub fn redirect_perm(location: impl AsRef<str>) -> Self {
+    pub fn redirect_permanent(location: impl AsRef<str>) -> Self {
         Response::new(StatusCode::PermanentRedirect)
             .set_header("location".parse().unwrap(), location)
     }
@@ -87,14 +87,14 @@ impl Response {
     /// # #[allow(dead_code)]
     /// async fn route_handler(request: Request<()>) -> tide::Result<Response> {
     ///     if let Some(sale_url) = special_sale_today() {
-    ///         Ok(Response::redirect_temp(sale_url))
+    ///         Ok(Response::redirect_temporary(sale_url))
     ///     } else {
     ///         //...
     /// #       Ok(Response::new(http_types::StatusCode::Ok)) //...
     ///     }
     /// }
     /// ```
-    pub fn redirect_temp(location: impl AsRef<str>) -> Self {
+    pub fn redirect_temporary(location: impl AsRef<str>) -> Self {
         Response::new(StatusCode::TemporaryRedirect)
             .set_header("location".parse().unwrap(), location)
     }

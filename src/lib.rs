@@ -185,7 +185,6 @@
 
 mod endpoint;
 pub mod middleware;
-mod redirect;
 mod request;
 mod response;
 mod router;
@@ -193,9 +192,9 @@ mod server;
 mod utils;
 
 pub mod prelude;
+pub mod redirect;
 
 pub use endpoint::Endpoint;
-pub use redirect::redirect;
 pub use request::Request;
 
 #[doc(inline)]
