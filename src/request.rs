@@ -12,7 +12,7 @@ use async_std::task::{Context, Poll};
 use std::pin::Pin;
 use std::{str::FromStr, sync::Arc};
 
-use crate::middleware::cookies::CookieData;
+use crate::cookies::CookieData;
 
 /// An HTTP request.
 ///

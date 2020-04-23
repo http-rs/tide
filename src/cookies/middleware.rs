@@ -1,6 +1,6 @@
-use crate::middleware::{Middleware, Next};
 use crate::response::CookieEvent;
 use crate::utils::BoxFuture;
+use crate::{Middleware, Next};
 use crate::{Request, Response, Result};
 
 use cookie::CookieJar;

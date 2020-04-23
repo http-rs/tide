@@ -11,12 +11,9 @@ use crate::utils::BoxFuture;
 use crate::{Request, Response};
 
 // mod compression;
-pub(crate) mod cookies;
-mod cors;
 // mod default_headers;
 
 // pub use compression::{Compression, Decompression};
-pub use cors::{Cors, Origin};
 // pub use default_headers::DefaultHeaders;
 
 /// Middleware that wraps around remaining middleware chain.
