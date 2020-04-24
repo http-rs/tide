@@ -82,6 +82,7 @@ Read about the design here:
 - [Middleware in Tide](https://rustasync.github.io/team/2018/11/07/tide-middleware.html)
 - [Tide's evolving middleware approach](https://rustasync.github.io/team/2018/11/27/tide-middleware-evolution.html)
 - [Tide, the present and future of](https://blog.yoshuawuyts.com/tide/)
+- [Tide channels](https://blog.yoshuawuyts.com/tide-channels/)
 
 ## Contributing
 
