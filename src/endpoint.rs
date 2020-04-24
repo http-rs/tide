@@ -1,11 +1,10 @@
-use crate::response::IntoResponse;
 use async_std::future::Future;
 use async_std::sync::Arc;
 use http_types::Result;
 
 use crate::middleware::Next;
 use crate::utils::BoxFuture;
-use crate::{Middleware, Request};
+use crate::{Middleware, Request, Response};
 
 /// An HTTP request handler.
 ///
@@ -13,7 +12,7 @@ use crate::{Middleware, Request};
 /// directly by Tide users.
 ///
 /// In practice, endpoints are functions that take a `Request<State>` as an argument and
-/// return a type `T` that implements [`IntoResponse`].
+/// return a type `T` that implements `Into<Response>`.
 ///
 /// # Examples
 ///
@@ -60,13 +59,13 @@ impl<State, F: Send + Sync + 'static, Fut, Res> Endpoint<State> for F
 where
     F: Fn(Request<State>) -> Fut,
     Fut: Future<Output = Result<Res>> + Send + 'static,
-    Res: IntoResponse,
+    Res: Into<Response>,
 {
     fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, crate::Result> {
         let fut = (self)(req);
         Box::pin(async move {
             let res = fut.await?;
-            Ok(res.into_response())
+            Ok(res.into())
         })
     }
 }

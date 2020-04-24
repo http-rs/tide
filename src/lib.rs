@@ -209,7 +209,7 @@ pub use http_types::{Body, Error, Status, StatusCode};
 #[doc(inline)]
 pub use middleware::{Middleware, Next};
 #[doc(inline)]
-pub use response::{IntoResponse, Response};
+pub use response::Response;
 #[doc(inline)]
 pub use server::{Route, Server};
 
