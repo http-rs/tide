@@ -2,23 +2,23 @@
 
 use async_std::future::Future;
 use async_std::io;
-use async_std::net::{TcpListener, ToSocketAddrs};
+use async_std::net::ToSocketAddrs;
 use async_std::sync::Arc;
-use async_std::task;
 use async_std::task::{Context, Poll};
-
 use http_service::HttpService;
 
+use std::fmt::Debug;
 use std::pin::Pin;
 
+use crate::cookies;
+use crate::log;
+use crate::middleware::{Middleware, Next};
+use crate::router::{Router, Selection};
 use crate::utils::BoxFuture;
-use crate::{
-    middleware::{Middleware, Next},
-    router::{Router, Selection},
-    Endpoint, Request, Response,
-};
+use crate::{Endpoint, Request};
 
 mod route;
+mod serve_dir;
 
 pub use route::Route;
 
@@ -86,7 +86,7 @@ pub use route::Route;
 ///// # Serverlication state
 /////
 ///// ```rust,no_run
-///// use http::status::StatusCode;
+///// use http_types::status::StatusCode;
 ///// use serde::{Deserialize, Serialize};
 ///// use std::sync::Mutex;
 ///// use tide::{error::ResultExt, Server, Request, Result};
@@ -137,9 +137,9 @@ pub use route::Route;
 ///// ```
 #[allow(missing_debug_implementations)]
 pub struct Server<State> {
-    router: Router<State>,
-    middleware: Vec<Arc<dyn Middleware<State>>>,
-    state: State,
+    router: Arc<Router<State>>,
+    state: Arc<State>,
+    middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
 }
 
 impl Server<()> {
@@ -152,7 +152,7 @@ impl Server<()> {
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
     /// let mut app = tide::new();
-    /// app.at("/").get(|_| async move { "Hello, world!" });
+    /// app.at("/").get(|_| async move { Ok("Hello, world!") });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
     /// # Ok(()) }) }
@@ -194,20 +194,21 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// // Initialize the application with state.
     /// let mut app = tide::with_state(state);
     /// app.at("/").get(|req: Request<State>| async move {
-    ///     format!("Hello, {}!", &req.state().name)
+    ///     Ok(format!("Hello, {}!", &req.state().name))
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
     /// # Ok(()) }) }
     /// ```
     pub fn with_state(state: State) -> Server<State> {
-        Server {
-            router: Router::new(),
-            middleware: vec![Arc::new(
-                crate::middleware::cookies::CookiesMiddleware::new(),
-            )],
-            state,
-        }
+        let mut server = Server {
+            router: Arc::new(Router::new()),
+            middleware: Arc::new(vec![]),
+            state: Arc::new(state),
+        };
+        server.middleware(cookies::CookiesMiddleware::new());
+        server.middleware(log::LogMiddleware::new());
+        server
     }
 
     /// Add a new route at the given `path`, relative to root.
@@ -220,7 +221,7 @@ impl<State: Send + Sync + 'static> Server<State> {
     ///
     /// ```rust,no_run
     /// # let mut app = tide::Server::new();
-    /// app.at("/").get(|_| async move {"Hello, world!"});
+    /// app.at("/").get(|_| async move { Ok("Hello, world!") });
     /// ```
     ///
     /// A path is comprised of zero or many segments, i.e. non-empty strings
@@ -257,7 +258,9 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// match or not, which means that the order of adding resources has no
     /// effect.
     pub fn at<'a>(&'a mut self, path: &'a str) -> Route<'a, State> {
-        Route::new(&mut self.router, path.to_owned())
+        let router = Arc::get_mut(&mut self.router)
+            .expect("Registering routes is not possible after the Server has started");
+        Route::new(router, path.to_owned())
     }
 
     /// Add middleware to an application.
@@ -270,65 +273,31 @@ impl<State: Send + Sync + 'static> Server<State> {
     ///
     /// Middleware can only be added at the "top level" of an application,
     /// and is processed in the order in which it is applied.
-    pub fn middleware(&mut self, m: impl Middleware<State>) -> &mut Self {
-        self.middleware.push(Arc::new(m));
+    pub fn middleware<M>(&mut self, middleware: M) -> &mut Self
+    where
+        M: Middleware<State> + Debug,
+    {
+        log::trace!("Adding middleware {:?}", middleware);
+        let m = Arc::get_mut(&mut self.middleware)
+            .expect("Registering middleware is not possible after the Server has started");
+        m.push(Arc::new(middleware));
         self
     }
 
-    /// Make this app into an `HttpService`.
-    ///
-    /// This lower-level method lets you host a Tide application within an HTTP
-    /// server of your choice, via the `http_service` interface crate.
-    pub fn into_http_service(self) -> Service<State> {
-        Service {
-            router: Arc::new(self.router),
-            state: Arc::new(self.state),
-            middleware: Arc::new(self.middleware),
-        }
-    }
-
     /// Asynchronously serve the app at the given address.
-    #[cfg(feature = "hyper-server")]
+    #[cfg(feature = "h1-server")]
     pub async fn listen(self, addr: impl ToSocketAddrs) -> std::io::Result<()> {
-        #[derive(Copy, Clone)]
-        struct Spawner;
+        let listener = async_std::net::TcpListener::bind(addr).await?;
 
-        impl futures::task::Spawn for &Spawner {
-            fn spawn_obj(
-                &self,
-                future: futures::future::FutureObj<'static, ()>,
-            ) -> Result<(), futures::task::SpawnError> {
-                task::spawn(Box::pin(future));
-                Ok(())
-            }
-        }
+        let addr = format!("http://{}", listener.local_addr()?);
+        log::info!("Server is listening on: {}", addr);
+        let mut server = http_service_h1::Server::new(addr, listener.incoming(), self);
 
-        let listener = TcpListener::bind(addr).await?;
-        log::info!("Server is listening on: http://{}", listener.local_addr()?);
-        let http_service = self.into_http_service();
-
-        let res = http_service_hyper::Server::builder(listener.incoming())
-            .with_spawner(Spawner {})
-            .serve(http_service)
-            .await;
-
-        res.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
-        Ok(())
+        server.run().await
     }
 }
 
-/// An instantiated Tide server.
-///
-/// This type is useful only in conjunction with the [`HttpService`] trait,
-/// i.e. for hosting a Tide app within some custom HTTP server.
-#[allow(missing_debug_implementations)]
-pub struct Service<State> {
-    router: Arc<Router<State>>,
-    state: Arc<State>,
-    middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
-}
-
-impl<State> Clone for Service<State> {
+impl<State> Clone for Server<State> {
     fn clone(&self) -> Self {
         Self {
             router: self.router.clone(),
@@ -349,32 +318,55 @@ impl Future for ReadyFuture {
     }
 }
 
-impl<State: Sync + Send + 'static> HttpService for Service<State> {
+impl<State: Sync + Send + 'static> HttpService for Server<State> {
     type Connection = ();
     type ConnectionFuture = ReadyFuture;
-    type ResponseFuture = BoxFuture<'static, Result<http_service::Response, std::io::Error>>;
+    type ConnectionError = io::Error;
+    type ResponseFuture = BoxFuture<'static, Result<http_service::Response, http_types::Error>>;
+    type ResponseError = http_types::Error;
 
     fn connect(&self) -> Self::ConnectionFuture {
         ReadyFuture {}
     }
 
-    fn respond(&self, _conn: &mut (), req: http_service::Request) -> Self::ResponseFuture {
+    fn respond(&self, _conn: (), req: http_service::Request) -> Self::ResponseFuture {
         let req = Request::new(self.state.clone(), req, Vec::new());
         let service = self.clone();
-        Box::pin(async move { Ok(service.call(req).await.into()) })
+        Box::pin(async move {
+            match service.call(req).await {
+                Ok(value) => {
+                    let res = value.into();
+                    // We assume that if an error was manually cast to a
+                    // Response that we actually want to send the body to the
+                    // client. At this point we don't scrub the message.
+                    Ok(res)
+                }
+                Err(err) => {
+                    let mut res = http_types::Response::new(err.status());
+                    res.set_content_type(http_types::mime::PLAIN);
+                    // Only send the message if it is a non-500 range error. All
+                    // errors default to 500 by default, so sending the error
+                    // body is opt-in at the call site.
+                    if !res.status().is_server_error() {
+                        res.set_body(err.to_string());
+                    }
+                    Ok(res)
+                }
+            }
+        })
     }
 }
 
 impl<State: Sync + Send + 'static, InnerState: Sync + Send + 'static> Endpoint<State>
-    for Service<InnerState>
+    for Server<InnerState>
 {
-    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, Response> {
+    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, crate::Result> {
         let Request {
             request: req,
             mut route_params,
             ..
         } = req;
-        let path = req.uri().path().to_owned();
+        let path = req.url().path().to_owned();
         let method = req.method().to_owned();
         let router = self.router.clone();
         let middleware = self.middleware.clone();
@@ -390,7 +382,8 @@ impl<State: Sync + Send + 'static, InnerState: Sync + Send + 'static> Endpoint<S
                 next_middleware: &middleware,
             };
 
-            next.run(req).await
+            let res = next.run(req).await?;
+            Ok(res)
         })
     }
 }
@@ -403,13 +396,13 @@ mod test {
     fn allow_nested_server_with_same_state() {
         let inner = tide::new();
         let mut outer = tide::new();
-        outer.at("/foo").get(inner.into_http_service());
+        outer.at("/foo").get(inner);
     }
 
     #[test]
     fn allow_nested_server_with_different_state() {
         let inner = tide::with_state(1);
         let mut outer = tide::new();
-        outer.at("/foo").get(inner.into_http_service());
+        outer.at("/foo").get(inner);
     }
 }

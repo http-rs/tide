@@ -1,8 +1,12 @@
 use async_std::io::prelude::*;
+use std::convert::TryFrom;
 
 use cookie::Cookie;
-use http::StatusCode;
 use http_service::Body;
+use http_types::{
+    headers::{HeaderName, HeaderValue},
+    StatusCode,
+};
 use mime::Mime;
 use serde::Serialize;
 
@@ -19,19 +23,15 @@ pub(crate) enum CookieEvent {
 /// An HTTP response
 #[derive(Debug)]
 pub struct Response {
-    res: http_service::Response,
+    pub(crate) res: http_service::Response,
     // tracking here
     pub(crate) cookie_events: Vec<CookieEvent>,
 }
 
 impl Response {
     /// Create a new instance.
-    pub fn new(status: u16) -> Self {
-        let status = http::StatusCode::from_u16(status).expect("invalid status code");
-        let res = http::Response::builder()
-            .status(status)
-            .body(Body::empty())
-            .unwrap();
+    pub fn new(status: StatusCode) -> Self {
+        let res = http_types::Response::new(status);
         Self {
             res,
             cookie_events: vec![],
@@ -41,41 +41,103 @@ impl Response {
     /// Create a new instance from a reader.
     pub fn with_reader<R>(status: u16, reader: R) -> Self
     where
-        R: BufRead + Unpin + Send + 'static,
+        R: BufRead + Unpin + Send + Sync + 'static,
     {
-        let status = http::StatusCode::from_u16(status).expect("invalid status code");
-        let res = http::Response::builder()
-            .status(status)
-            .body(Box::pin(reader).into())
-            .unwrap();
+        let status = crate::StatusCode::try_from(status).expect("invalid status code");
+        let mut res = http_types::Response::new(status);
+        res.set_body(Body::from_reader(reader, None));
+
         Self {
             res,
             cookie_events: vec![],
         }
     }
 
+    /// Creates a response that represents a permanent redirect to `location`.
+    ///
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use tide::{Response, Request, StatusCode};
+    /// # fn canonicalize(uri: &url::Url) -> Option<&url::Url> { None }
+    /// # #[allow(dead_code)]
+    /// async fn route_handler(request: Request<()>) -> tide::Result {
+    ///     if let Some(canonical_redirect) = canonicalize(request.uri()) {
+    ///         Ok(Response::redirect_permanent(canonical_redirect))
+    ///     } else {
+    ///          //...
+    /// #        Ok(Response::new(StatusCode::Ok)) // ...
+    ///     }
+    /// }
+    /// ```
+    pub fn redirect_permanent(location: impl AsRef<str>) -> Self {
+        Response::new(StatusCode::PermanentRedirect)
+            .set_header("location".parse().unwrap(), location)
+    }
+
+    /// Creates a response that represents a temporary redirect to `location`.
+    ///
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use tide::{Response, Request, StatusCode};
+    /// # fn special_sale_today() -> Option<String> { None }
+    /// # #[allow(dead_code)]
+    /// async fn route_handler(request: Request<()>) -> tide::Result {
+    ///     if let Some(sale_url) = special_sale_today() {
+    ///         Ok(Response::redirect_temporary(sale_url))
+    ///     } else {
+    ///         //...
+    /// #       Ok(Response::new(StatusCode::Ok)) //...
+    ///     }
+    /// }
+    /// ```
+    pub fn redirect_temporary(location: impl AsRef<str>) -> Self {
+        Response::new(StatusCode::TemporaryRedirect)
+            .set_header("location".parse().unwrap(), location)
+    }
+
     /// Returns the statuscode.
-    pub fn status(&self) -> http::StatusCode {
+    pub fn status(&self) -> crate::StatusCode {
         self.res.status()
     }
 
     /// Set the statuscode.
-    pub fn set_status(mut self, status: http::StatusCode) -> Self {
-        *self.res.status_mut() = status;
+    pub fn set_status(mut self, status: crate::StatusCode) -> Self {
+        self.res.set_status(status);
         self
     }
 
+    /// Get the length of the body.
+    pub fn len(&self) -> Option<usize> {
+        self.res.len()
+    }
+
     /// Insert an HTTP header.
-    pub fn set_header(mut self, key: &'static str, value: impl AsRef<str>) -> Self {
+    pub fn set_header(
+        mut self,
+        key: http_types::headers::HeaderName,
+        value: impl AsRef<str>,
+    ) -> Self {
         let value = value.as_ref().to_owned();
-        self.res.headers_mut().insert(key, value.parse().unwrap());
+        self.res
+            .insert_header(key, &[value.parse().unwrap()][..])
+            .expect("invalid header");
         self
     }
 
     /// Append an HTTP header.
-    pub fn append_header(mut self, key: &'static str, value: impl AsRef<str>) -> Self {
+    pub fn append_header(
+        mut self,
+        key: http_types::headers::HeaderName,
+        value: impl AsRef<str>,
+    ) -> Self {
         let value = value.as_ref().to_owned();
-        self.res.headers_mut().append(key, value.parse().unwrap());
+        self.res
+            .append_header(key, &[value.parse().unwrap()][..])
+            .expect("invalid header");
         self
     }
 
@@ -83,7 +145,7 @@ impl Response {
     ///
     /// [Read more on MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types)
     pub fn set_mime(self, mime: Mime) -> Self {
-        self.set_header("Content-Type", format!("{}", mime))
+        self.set_header(http_types::headers::CONTENT_TYPE, format!("{}", mime))
     }
 
     /// Pass a string as the response body.
@@ -92,21 +154,28 @@ impl Response {
     ///
     /// The encoding is set to `text/plain; charset=utf-8`.
     pub fn body_string(mut self, string: String) -> Self {
-        *self.res.body_mut() = string.into_bytes().into();
+        self.res.set_body(string);
         self.set_mime(mime::TEXT_PLAIN_UTF_8)
     }
 
-    /// Pass a string as the response body.
+
+    /// Pass raw bytes as the response body.
     ///
     /// # Mime
     ///
     /// The encoding is set to `application/octet-stream`.
     pub fn body<R>(mut self, reader: R) -> Self
     where
-        R: BufRead + Unpin + Send + 'static,
+        R: BufRead + Unpin + Send + Sync + 'static,
     {
-        *self.res.body_mut() = Box::pin(reader).into();
+        self.res
+            .set_body(http_types::Body::from_reader(reader, None));
         self.set_mime(mime::APPLICATION_OCTET_STREAM)
+    }
+
+    /// Set the body reader.
+    pub fn set_body(&mut self, body: impl Into<Body>) {
+        self.res.set_body(body);
     }
 
     /// Encode a struct as a form and set as the response body.
@@ -119,9 +188,9 @@ impl Response {
         form: T,
     ) -> Result<Response, serde_qs::Error> {
         // TODO: think about how to handle errors
-        *self.res.body_mut() = Body::from(serde_qs::to_string(&form)?.into_bytes());
+        self.res.set_body(serde_qs::to_string(&form)?.into_bytes());
         Ok(self
-            .set_status(StatusCode::OK)
+            .set_status(StatusCode::Ok)
             .set_mime(mime::APPLICATION_WWW_FORM_URLENCODED))
     }
 
@@ -131,7 +200,7 @@ impl Response {
     ///
     /// The encoding is set to `application/json`.
     pub fn body_json(mut self, json: &impl Serialize) -> serde_json::Result<Self> {
-        *self.res.body_mut() = serde_json::to_vec(json)?.into();
+        self.res.set_body(serde_json::to_vec(json)?);
         Ok(self.set_mime(mime::APPLICATION_JSON))
     }
 
@@ -164,6 +233,17 @@ impl Response {
     pub fn remove_cookie(&mut self, cookie: Cookie<'static>) {
         self.cookie_events.push(CookieEvent::Removed(cookie));
     }
+
+    /// Get a local value.
+    pub fn local<T: Send + Sync + 'static>(&self) -> Option<&T> {
+        self.res.local().get()
+    }
+
+    /// Set a local value.
+    pub fn set_local<T: Send + Sync + 'static>(mut self, val: T) -> Self {
+        self.res.local_mut().insert(val);
+        self
+    }
 }
 
 #[doc(hidden)]
@@ -180,5 +260,36 @@ impl From<http_service::Response> for Response {
             res,
             cookie_events: vec![],
         }
+    }
+}
+
+impl IntoIterator for Response {
+    type Item = (HeaderName, Vec<HeaderValue>);
+    type IntoIter = http_types::headers::IntoIter;
+
+    /// Returns a iterator of references over the remaining items.
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.res.into_iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a Response {
+    type Item = (&'a HeaderName, &'a Vec<HeaderValue>);
+    type IntoIter = http_types::headers::Iter<'a>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.res.iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a mut Response {
+    type Item = (&'a HeaderName, &'a mut Vec<HeaderValue>);
+    type IntoIter = http_types::headers::IterMut<'a>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.res.iter_mut()
     }
 }

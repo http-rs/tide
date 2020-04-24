@@ -12,6 +12,15 @@
 //! - __Minimal:__ With only a few concepts to learn, Tide is easy to pick up and become productive
 //!     with.
 //!
+//! # Getting started
+//!
+//! Add two dependencies to your project's `Cargo.toml` file: `tide` itself, and `async-std` with the feature `attributes` enabled:
+//! ```toml
+//! # Example, use the version numbers you need
+//! tide = "0.7.0"
+//! async-std = { version = "1.5.0", features = ["attributes"] }
+//!```
+//!
 //! # Examples
 //!
 //! __hello world__
@@ -20,7 +29,7 @@
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
 //! #
 //! let mut app = tide::new();
-//! app.at("/").get(|_| async move { "Hello, world!" });
+//! app.at("/").get(|_| async move { Ok("Hello, world!") });
 //! app.listen("127.0.0.1:8080").await?;
 //! #
 //! # Ok(()) }) }
@@ -32,7 +41,7 @@
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
 //! #
 //! let mut app = tide::new();
-//! app.at("/").get(|req| async move { req });
+//! app.at("/").get(|req| async move { Ok(req) });
 //! app.listen("127.0.0.1:8080").await?;
 //! #
 //! # Ok(()) }) }
@@ -42,16 +51,17 @@
 //! ```no_run
 //! # use futures::executor::block_on;
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
+//! # use tide::{Request, Response};
 //! #
 //! #[derive(Debug, serde::Deserialize, serde::Serialize)]
 //! struct Counter { count: usize }
 //!
 //! let mut app = tide::new();
-//! app.at("/").get(|mut req: tide::Request<()>| async move {
-//!    let mut counter: Counter = req.body_json().await.unwrap();
+//! app.at("/").get(|mut req: Request<()>| async move {
+//!    let mut counter: Counter = req.body_json().await?;
 //!    println!("count is {}", counter.count);
 //!    counter.count += 1;
-//!    tide::Response::new(200).body_json(&counter).unwrap()
+//!    Ok(Response::new(tide::http::StatusCode::Ok).body_json(&counter)?)
 //! });
 //! app.listen("127.0.0.1:8080").await?;
 //! #
@@ -67,7 +77,7 @@
 //! it's incredibly efficient.
 //!
 //! ```txt
-//! async fn endpoint(req: Request) -> Result<Response>;
+//! async fn endpoint(req: Request) -> Result;
 //! ```
 //!
 //! ## Middleware
@@ -78,7 +88,7 @@
 //! like a stack. A simplified example of the logger middleware is something like this:
 //!
 //! ```ignore
-//! async fn log(req: Request, next: Next) -> Result<Response> {
+//! async fn log(req: Request, next: Next) -> tide::Result {
 //!     println!("Incoming request from {} on url {}", req.peer_addr(), req.url());
 //!     let res = next().await?;
 //!     println!("Outgoing response with status {}", res.status());
@@ -120,7 +130,7 @@
 //!
 //! ```no_run
 //! # use tide::Request;
-//!
+//! #
 //! pub trait RequestExt {
 //!     fn bark(&self) -> String;
 //! }
@@ -140,17 +150,17 @@
 //! # pub trait RequestExt {
 //! #     fn bark(&self) -> String;
 //! # }
-//!
+//! #
 //! # impl<State> RequestExt for Request<State> {
 //! #     fn bark(&self) -> String {
 //! #         "woof".to_string()
 //! #     }
 //! # }
-//!
+//! #
 //! #[async_std::main]
 //! async fn main() -> Result<(), std::io::Error> {
 //!     let mut app = tide::new();
-//!     app.at("/").get(|req: Request<()>| async move { req.bark() });
+//!     app.at("/").get(|req: Request<()>| async move { Ok(req.bark()) });
 //!     app.listen("127.0.0.1:8080").await
 //! }
 //! ```
@@ -158,7 +168,7 @@
 //! # Stability
 //!
 //! It's still early in Tide's development cycle. While the general shape of Tide might have
-//! roughly established, the exact traits and function paramaters may change between versions. In
+//! roughly established, the exact traits and function parameters may change between versions. In
 //! practice this means that building your core business on Tide is probably not a wise idea...
 //! yet.
 //!
@@ -172,23 +182,29 @@
 #![warn(missing_debug_implementations, rust_2018_idioms)]
 #![doc(test(attr(deny(rust_2018_idioms, warnings))))]
 #![doc(test(attr(allow(unused_extern_crates, unused_variables))))]
+#![doc(html_favicon_url = "https://yoshuawuyts.com/assets/http-rs/favicon.ico")]
+#![doc(html_logo_url = "https://yoshuawuyts.com/assets/http-rs/logo-rounded.png")]
 
+mod cookies;
 mod endpoint;
-mod error;
-pub mod middleware;
-mod redirect;
+mod middleware;
 mod request;
 mod response;
 mod router;
+mod server;
 mod utils;
 
+pub mod log;
 pub mod prelude;
-pub mod server;
+pub mod redirect;
+pub mod security;
 
 pub use endpoint::Endpoint;
-pub use error::{Error, Result, ResultExt};
-pub use redirect::redirect;
 pub use request::Request;
+pub mod sse;
+
+#[doc(inline)]
+pub use http_types::{Body, Error, Status, StatusCode};
 
 #[doc(inline)]
 pub use middleware::{Middleware, Next};
@@ -197,7 +213,8 @@ pub use response::{IntoResponse, Response};
 #[doc(inline)]
 pub use server::{Route, Server};
 
-pub use http;
+#[doc(inline)]
+pub use http_types as http;
 
 /// Create a new Tide server.
 ///
@@ -208,7 +225,7 @@ pub use http;
 /// # fn main() -> Result<(), std::io::Error> { block_on(async {
 /// #
 /// let mut app = tide::new();
-/// app.at("/").get(|_| async move { "Hello, world!" });
+/// app.at("/").get(|_| async move { Ok("Hello, world!") });
 /// app.listen("127.0.0.1:8080").await?;
 /// #
 /// # Ok(()) }) }
@@ -242,7 +259,7 @@ pub fn new() -> server::Server<()> {
 /// // Initialize the application with state.
 /// let mut app = tide::with_state(state);
 /// app.at("/").get(|req: Request<State>| async move {
-///     format!("Hello, {}!", &req.state().name)
+///     Ok(format!("Hello, {}!", &req.state().name))
 /// });
 /// app.listen("127.0.0.1:8080").await?;
 /// #
@@ -254,3 +271,6 @@ where
 {
     Server::with_state(state)
 }
+
+/// A specialized Result type for Tide.
+pub type Result<T = Response> = std::result::Result<T, Error>;

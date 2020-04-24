@@ -44,6 +44,15 @@
 A modular web framework built around async/await. It's actively being developed
 and **not ready for production yet**.
 
+## Getting started
+
+Add two dependencies to your project's `Cargo.toml` file: `tide` itself, and `async-std` with the feature `attributes` enabled:
+```toml
+# Example, use the version numbers you need
+tide = "0.7.0"
+async-std = { version = "1.5.0", features = ["attributes"] }
+```
+
 ## Examples
 
 **Hello World**
@@ -52,10 +61,16 @@ and **not ready for production yet**.
 #[async_std::main]
 async fn main() -> Result<(), std::io::Error> {
     let mut app = tide::new();
-    app.at("/").get(|_| async move { "Hello, world!" });
+    app.at("/").get(|_| async { Ok("Hello, world!") });
     app.listen("127.0.0.1:8080").await?;
     Ok(())
 }
+```
+
+To try [the included examples](https://github.com/http-rs/tide/tree/master/examples), check out this repository and run
+```sh
+$ cargo run --example # shows a list of available examples
+$ cargo run --example hello
 ```
 
 ## Resources

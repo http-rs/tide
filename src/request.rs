@@ -1,6 +1,8 @@
 use cookie::Cookie;
-use http::{HeaderMap, Method, Uri, Version};
-use http_service::Body;
+use http_types::{
+    headers::{HeaderName, HeaderValue},
+    Method, StatusCode, Url, Version,
+};
 use route_recognizer::Params;
 use serde::Deserialize;
 
@@ -10,7 +12,7 @@ use async_std::task::{Context, Poll};
 use std::pin::Pin;
 use std::{str::FromStr, sync::Arc};
 
-use crate::middleware::cookies::CookieData;
+use crate::cookies::CookieData;
 
 /// An HTTP request.
 ///
@@ -29,7 +31,7 @@ pub struct Request<State> {
 impl<State> Request<State> {
     pub(crate) fn new(
         state: Arc<State>,
-        request: http::Request<Body>,
+        request: http_types::Request,
         route_params: Vec<Params>,
     ) -> Request<State> {
         Request {
@@ -51,14 +53,14 @@ impl<State> Request<State> {
     ///
     /// let mut app = tide::new();
     /// app.at("/").get(|req: Request<()>| async move {
-    ///     assert_eq!(req.method(), http::Method::GET);
-    ///     ""
+    ///     assert_eq!(req.method(), http_types::Method::Get);
+    ///     Ok("")
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
     /// # Ok(()) })}
     /// ```
-    pub fn method(&self) -> &Method {
+    pub fn method(&self) -> Method {
         self.request.method()
     }
 
@@ -74,15 +76,15 @@ impl<State> Request<State> {
     ///
     /// let mut app = tide::new();
     /// app.at("/").get(|req: Request<()>| async move {
-    ///     assert_eq!(req.uri(), &"/".parse::<tide::http::Uri>().unwrap());
-    ///     ""
+    ///     assert_eq!(req.uri(), &"/".parse::<tide::http::Url>().unwrap());
+    ///     Ok("")
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
     /// # Ok(()) })}
     /// ```
-    pub fn uri(&self) -> &Uri {
-        self.request.uri()
+    pub fn uri(&self) -> &Url {
+        self.request.url()
     }
 
     /// Access the request's HTTP version.
@@ -97,20 +99,15 @@ impl<State> Request<State> {
     ///
     /// let mut app = tide::new();
     /// app.at("/").get(|req: Request<()>| async move {
-    ///     assert_eq!(req.version(), tide::http::Version::HTTP_11);
-    ///     ""
+    ///     assert_eq!(req.version(), Some(http_types::Version::Http1_1));
+    ///     Ok("")
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
     /// # Ok(()) })}
     /// ```
-    pub fn version(&self) -> Version {
+    pub fn version(&self) -> Option<Version> {
         self.request.version()
-    }
-
-    /// Access the request's headers.
-    pub fn headers(&self) -> &HeaderMap {
-        self.request.headers()
     }
 
     /// Get an HTTP header.
@@ -125,25 +122,28 @@ impl<State> Request<State> {
     ///
     /// let mut app = tide::new();
     /// app.at("/").get(|req: Request<()>| async move {
-    ///     assert_eq!(req.header("X-Forwarded-For"), Some("127.0.0.1"));
-    ///     ""
+    ///     assert_eq!(req.header(&"X-Forwarded-For".parse().unwrap()), Some(&vec!["127.0.0.1".parse().unwrap()]));
+    ///     Ok("")
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
     /// # Ok(()) })}
     /// ```
-    pub fn header(&self, key: &'static str) -> Option<&'_ str> {
-        self.request.headers().get(key).map(|h| h.to_str().unwrap())
+    pub fn header(
+        &self,
+        key: &http_types::headers::HeaderName,
+    ) -> Option<&Vec<http_types::headers::HeaderValue>> {
+        self.request.header(key)
     }
 
     /// Get a local value.
     pub fn local<T: Send + Sync + 'static>(&self) -> Option<&T> {
-        self.request.extensions().get()
+        self.request.local().get()
     }
 
     /// Set a local value.
     pub fn set_local<T: Send + Sync + 'static>(mut self, val: T) -> Self {
-        self.request.extensions_mut().insert(val);
+        self.request.local_mut().insert(val);
         self
     }
 
@@ -205,7 +205,7 @@ impl<State> Request<State> {
     /// let mut app = tide::new();
     /// app.at("/").get(|mut req: Request<()>| async move {
     ///     let _body: Vec<u8> = req.body_bytes().await.unwrap();
-    ///     ""
+    ///     Ok("")
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
@@ -213,7 +213,7 @@ impl<State> Request<State> {
     /// ```
     pub async fn body_bytes(&mut self) -> std::io::Result<Vec<u8>> {
         let mut buf = Vec::with_capacity(1024);
-        self.request.body_mut().read_to_end(&mut buf).await?;
+        self.request.read_to_end(&mut buf).await?;
         Ok(buf)
     }
 
@@ -240,7 +240,7 @@ impl<State> Request<State> {
     /// let mut app = tide::new();
     /// app.at("/").get(|mut req: Request<()>| async move {
     ///     let _body: String = req.body_string().await.unwrap();
-    ///     ""
+    ///     Ok("")
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
@@ -274,8 +274,7 @@ impl<State> Request<State> {
         serde_qs::from_str(query).map_err(|e| {
             // Return the displayable version of the deserialisation error to the caller
             // for easier debugging.
-            let response = crate::Response::new(400).body_string(format!("{}", e));
-            crate::Error::from(response)
+            crate::Error::from_str(StatusCode::BadRequest, format!("{}", e))
         })
     }
 
@@ -303,6 +302,11 @@ impl<State> Request<State> {
         let locked_jar = cookie_data.content.read().unwrap();
         locked_jar.get(name).cloned()
     }
+
+    /// Get the length of the body.
+    pub fn len(&self) -> Option<usize> {
+        self.request.len()
+    }
 }
 
 impl<State> Read for Request<State> {
@@ -311,7 +315,37 @@ impl<State> Read for Request<State> {
         cx: &mut Context<'_>,
         buf: &mut [u8],
     ) -> Poll<io::Result<usize>> {
-        let this = &mut *self;
-        Pin::new(this.request.body_mut()).poll_read(cx, buf)
+        Pin::new(&mut self.request).poll_read(cx, buf)
+    }
+}
+
+impl<State> IntoIterator for Request<State> {
+    type Item = (HeaderName, Vec<HeaderValue>);
+    type IntoIter = http_types::headers::IntoIter;
+
+    /// Returns a iterator of references over the remaining items.
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.request.into_iter()
+    }
+}
+
+impl<'a, State> IntoIterator for &'a Request<State> {
+    type Item = (&'a HeaderName, &'a Vec<HeaderValue>);
+    type IntoIter = http_types::headers::Iter<'a>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.request.iter()
+    }
+}
+
+impl<'a, State> IntoIterator for &'a mut Request<State> {
+    type Item = (&'a HeaderName, &'a mut Vec<HeaderValue>);
+    type IntoIter = http_types::headers::IterMut<'a>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.request.iter_mut()
     }
 }

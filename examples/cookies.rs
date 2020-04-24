@@ -1,23 +1,23 @@
 use async_std::task;
-use cookie::Cookie;
-use tide::{Request, Response};
+use tide::http::Cookie;
+use tide::{Request, StatusCode};
 
 /// Tide will use the the `Cookies`'s `Extract` implementation to build this parameter.
 ///
-async fn retrieve_cookie(cx: Request<()>) -> String {
-    format!("hello cookies: {:?}", cx.cookie("hello").unwrap())
+async fn retrieve_cookie(cx: Request<()>) -> tide::Result<String> {
+    Ok(format!("hello cookies: {:?}", cx.cookie("hello").unwrap()))
 }
 
-async fn set_cookie(_req: Request<()>) -> Response {
-    let mut res = tide::Response::new(200);
+async fn set_cookie(_req: Request<()>) -> tide::Result {
+    let mut res = tide::Response::new(StatusCode::Ok);
     res.set_cookie(Cookie::new("hello", "world"));
-    res
+    Ok(res)
 }
 
-async fn remove_cookie(_req: Request<()>) -> Response {
-    let mut res = tide::Response::new(200);
+async fn remove_cookie(_req: Request<()>) -> tide::Result {
+    let mut res = tide::Response::new(StatusCode::Ok);
     res.remove_cookie(Cookie::named("hello"));
-    res
+    Ok(res)
 }
 
 fn main() -> Result<(), std::io::Error> {

@@ -1,2 +1,2 @@
 //! The Tide prelude.
-pub use crate::error::ResultExt;
+pub use http_types::Status;

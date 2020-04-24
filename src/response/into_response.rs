@@ -1,3 +1,4 @@
+use crate::StatusCode;
 use crate::{Request, Response};
 use async_std::io::BufReader;
 
@@ -10,10 +11,10 @@ pub trait IntoResponse: Send + Sized {
     ///
     /// ```
     /// # use tide::IntoResponse;
-    /// let resp = "Hello, 404!".with_status(http::status::StatusCode::NOT_FOUND).into_response();
-    /// assert_eq!(resp.status(), http::status::StatusCode::NOT_FOUND);
+    /// let resp = "Hello, 404!".with_status(http_types::StatusCode::NotFound).into_response();
+    /// assert_eq!(resp.status(), http_types::StatusCode::NotFound);
     /// ```
-    fn with_status(self, status: http::status::StatusCode) -> WithStatus<Self> {
+    fn with_status(self, status: StatusCode) -> WithStatus<Self> {
         WithStatus {
             inner: self,
             status,
@@ -42,15 +43,18 @@ pub trait IntoResponse: Send + Sized {
 
 impl IntoResponse for String {
     fn into_response(self) -> Response {
-        Response::new(200)
-            .set_header("Content-Type", "text/plain; charset=utf-8")
+        Response::new(StatusCode::Ok)
+            .set_header(
+                http_types::headers::CONTENT_TYPE,
+                "text/plain; charset=utf-8",
+            )
             .body_string(self)
     }
 }
 
 impl<State: Send + Sync + 'static> IntoResponse for Request<State> {
     fn into_response(self) -> Response {
-        Response::new(200).body(BufReader::new(self))
+        Response::new(StatusCode::Ok).body(BufReader::new(self))
     }
 }
 
@@ -97,7 +101,7 @@ impl IntoResponse for Response {
 #[derive(Debug)]
 pub struct WithStatus<R> {
     inner: R,
-    status: http::status::StatusCode,
+    status: http_types::StatusCode,
 }
 
 impl<R: IntoResponse> IntoResponse for WithStatus<R> {

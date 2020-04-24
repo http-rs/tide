@@ -1,8 +1,13 @@
+use std::fmt::Debug;
+use std::io;
+use std::path::Path;
 use std::sync::Arc;
 
+use super::serve_dir::ServeDir;
 use crate::endpoint::MiddlewareEndpoint;
+use crate::log;
 use crate::utils::BoxFuture;
-use crate::{router::Router, Endpoint, Middleware, Response};
+use crate::{router::Router, Endpoint, Middleware};
 
 /// A handle to a route.
 ///
@@ -54,6 +59,11 @@ impl<'a, State: 'static> Route<'a, State> {
         }
     }
 
+    /// Get the current path.
+    pub fn path(&self) -> &str {
+        &self.path
+    }
+
     /// Treat the current path as a prefix, and strip prefixes from requests.
     ///
     /// This method is marked unstable as its name might change in the near future.
@@ -67,7 +77,15 @@ impl<'a, State: 'static> Route<'a, State> {
     }
 
     /// Apply the given middleware to the current route.
-    pub fn middleware(&mut self, middleware: impl Middleware<State>) -> &mut Self {
+    pub fn middleware<M>(&mut self, middleware: M) -> &mut Self
+    where
+        M: Middleware<State> + Debug,
+    {
+        log::trace!(
+            "Adding middleware {:?} to route {:?}",
+            middleware,
+            self.path
+        );
         self.middleware.push(Arc::new(middleware));
         self
     }
@@ -87,13 +105,40 @@ impl<'a, State: 'static> Route<'a, State> {
         InnerState: Send + Sync + 'static,
     {
         self.prefix = true;
-        self.all(service.into_http_service());
+        self.all(service);
         self.prefix = false;
         self
     }
 
+    /// Serve a directory statically.
+    ///
+    /// Each file will be streamed from disk, and a mime type will be determined
+    /// based on magic bytes.
+    ///
+    /// # Examples
+    ///
+    /// Serve the contents of the local directory `./public/images/*` from
+    /// `localhost:8080/images/*`.
+    ///
+    /// ```no_run
+    /// #[async_std::main]
+    /// async fn main() -> Result<(), std::io::Error> {
+    ///     let mut app = tide::new();
+    ///     app.at("/public/images").serve_dir("images/")?;
+    ///     app.listen("127.0.0.1:8080").await?;
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn serve_dir(&mut self, dir: impl AsRef<Path>) -> io::Result<()> {
+        // Verify path exists, return error if it doesn't.
+        let dir = dir.as_ref().to_owned().canonicalize()?;
+        let prefix = self.path().to_string();
+        self.at("*").get(ServeDir::new(prefix, dir));
+        Ok(())
+    }
+
     /// Add an endpoint for the given HTTP method
-    pub fn method(&mut self, method: http::Method, ep: impl Endpoint<State>) -> &mut Self {
+    pub fn method(&mut self, method: http_types::Method, ep: impl Endpoint<State>) -> &mut Self {
         if self.prefix {
             let ep = StripPrefixEndpoint::new(ep);
             let (ep1, ep2): (Box<dyn Endpoint<_>>, Box<dyn Endpoint<_>>) =
@@ -160,55 +205,55 @@ impl<'a, State: 'static> Route<'a, State> {
 
     /// Add an endpoint for `GET` requests
     pub fn get(&mut self, ep: impl Endpoint<State>) -> &mut Self {
-        self.method(http::Method::GET, ep);
+        self.method(http_types::Method::Get, ep);
         self
     }
 
     /// Add an endpoint for `HEAD` requests
     pub fn head(&mut self, ep: impl Endpoint<State>) -> &mut Self {
-        self.method(http::Method::HEAD, ep);
+        self.method(http_types::Method::Head, ep);
         self
     }
 
     /// Add an endpoint for `PUT` requests
     pub fn put(&mut self, ep: impl Endpoint<State>) -> &mut Self {
-        self.method(http::Method::PUT, ep);
+        self.method(http_types::Method::Put, ep);
         self
     }
 
     /// Add an endpoint for `POST` requests
     pub fn post(&mut self, ep: impl Endpoint<State>) -> &mut Self {
-        self.method(http::Method::POST, ep);
+        self.method(http_types::Method::Post, ep);
         self
     }
 
     /// Add an endpoint for `DELETE` requests
     pub fn delete(&mut self, ep: impl Endpoint<State>) -> &mut Self {
-        self.method(http::Method::DELETE, ep);
+        self.method(http_types::Method::Delete, ep);
         self
     }
 
     /// Add an endpoint for `OPTIONS` requests
     pub fn options(&mut self, ep: impl Endpoint<State>) -> &mut Self {
-        self.method(http::Method::OPTIONS, ep);
+        self.method(http_types::Method::Options, ep);
         self
     }
 
     /// Add an endpoint for `CONNECT` requests
     pub fn connect(&mut self, ep: impl Endpoint<State>) -> &mut Self {
-        self.method(http::Method::CONNECT, ep);
+        self.method(http_types::Method::Connect, ep);
         self
     }
 
     /// Add an endpoint for `PATCH` requests
     pub fn patch(&mut self, ep: impl Endpoint<State>) -> &mut Self {
-        self.method(http::Method::PATCH, ep);
+        self.method(http_types::Method::Patch, ep);
         self
     }
 
     /// Add an endpoint for `TRACE` requests
     pub fn trace(&mut self, ep: impl Endpoint<State>) -> &mut Self {
-        self.method(http::Method::TRACE, ep);
+        self.method(http_types::Method::Trace, ep);
         self
     }
 }
@@ -229,24 +274,13 @@ impl<E> Clone for StripPrefixEndpoint<E> {
 }
 
 impl<State, E: Endpoint<State>> Endpoint<State> for StripPrefixEndpoint<E> {
-    fn call<'a>(&'a self, mut req: crate::Request<State>) -> BoxFuture<'a, Response> {
+    fn call<'a>(&'a self, mut req: crate::Request<State>) -> BoxFuture<'a, crate::Result> {
         let rest = req.rest().unwrap_or("");
-        let mut path_and_query = format!("/{}", rest);
         let uri = req.uri();
-        if let Some(query) = uri.query() {
-            path_and_query.push('?');
-            path_and_query.push_str(query);
-        }
-        let mut new_uri = http::Uri::builder();
-        if let Some(scheme) = uri.scheme_part() {
-            new_uri.scheme(scheme.clone());
-        }
-        if let Some(authority) = uri.authority_part() {
-            new_uri.authority(authority.clone());
-        }
-        new_uri.path_and_query(path_and_query.as_str());
-        let new_uri = new_uri.build().unwrap();
-        *req.request.uri_mut() = new_uri;
+        let mut new_uri = uri.clone();
+        new_uri.set_path(rest);
+
+        *req.request.url_mut() = new_uri;
 
         self.0.call(req)
     }

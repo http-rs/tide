@@ -1,7 +1,7 @@
 use async_std::task;
 use juniper::RootNode;
 use std::sync::RwLock;
-use tide::{Request, Response, Server};
+use tide::{redirect, Request, Response, Server, StatusCode};
 
 #[derive(Clone)]
 struct User {
@@ -72,7 +72,7 @@ fn create_schema() -> Schema {
     Schema::new(QueryRoot {}, MutationRoot {})
 }
 
-async fn handle_graphql(mut cx: Request<State>) -> Response {
+async fn handle_graphql(mut cx: Request<State>) -> tide::Result {
     let query: juniper::http::GraphQLRequest = cx
         .body_json()
         .await
@@ -80,17 +80,23 @@ async fn handle_graphql(mut cx: Request<State>) -> Response {
 
     let schema = create_schema(); // probably worth making the schema a singleton using lazy_static library
     let response = query.execute(&schema, cx.state());
-    let status = if response.is_ok() { 200 } else { 400 };
+    let status = if response.is_ok() {
+        StatusCode::Ok
+    } else {
+        StatusCode::BadRequest
+    };
 
-    Response::new(status)
+    let res = Response::new(status)
         .body_json(&response)
-        .expect("be able to serialize the graphql response")
+        .expect("be able to serialize the graphql response");
+    Ok(res)
 }
 
-async fn handle_graphiql(_: Request<State>) -> Response {
-    Response::new(200)
+async fn handle_graphiql(_: Request<State>) -> tide::Result {
+    let res = Response::new(StatusCode::Ok)
         .body_string(juniper::http::graphiql::graphiql_source("/graphql"))
-        .set_header("content-type", "text/html;charset=utf-8")
+        .set_header("content-type".parse().unwrap(), "text/html;charset=utf-8");
+    Ok(res)
 }
 
 fn main() -> std::io::Result<()> {
@@ -98,7 +104,7 @@ fn main() -> std::io::Result<()> {
         let mut app = Server::with_state(State {
             users: RwLock::new(Vec::new()),
         });
-        app.at("/").get(tide::redirect("/graphiql"));
+        app.at("/").get(redirect::permanent("/graphiql"));
         app.at("/graphql").post(handle_graphql);
         app.at("/graphiql").get(handle_graphiql);
         app.listen("0.0.0.0:8080").await?;

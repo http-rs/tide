@@ -9,7 +9,7 @@ fn fib(n: usize) -> usize {
     }
 }
 
-async fn fibsum(req: Request<()>) -> String {
+async fn fibsum(req: Request<()>) -> tide::Result<String> {
     use std::time::Instant;
     let n: usize = req.param("n").unwrap_or(0);
     // Start a stopwatch
@@ -19,10 +19,11 @@ async fn fibsum(req: Request<()>) -> String {
     // Stop the stopwatch
     let duration = Instant::now().duration_since(start).as_secs();
     // Return the answer
-    format!(
+    let res = format!(
         "The fib of {} is {}.\nIt was computed in {} secs.\n",
         n, fib_n, duration,
-    )
+    );
+    Ok(res)
 }
 // Example: HTTP GET to http://localhost:8080/fib/42
 // $ curl "http://localhost:8080/fib/42"
