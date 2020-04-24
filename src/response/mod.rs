@@ -158,7 +158,6 @@ impl Response {
         self.set_mime(mime::TEXT_PLAIN_UTF_8)
     }
 
-
     /// Pass raw bytes as the response body.
     ///
     /// # Mime
