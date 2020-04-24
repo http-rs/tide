@@ -247,10 +247,23 @@ impl Response {
         self.res.local_mut().insert(val);
         self
     }
+
+    /// Create a `tide::Response` from a type that can be converted into an
+    /// `http_types::Response`.
+    pub fn from_res<T>(value: T) -> Self
+    where
+        T: Into<http_types::Response>,
+    {
+        let res: http_types::Response = value.into();
+        Self {
+            res,
+            cookie_events: vec![],
+        }
+    }
 }
 
 impl Into<http::Response> for Response {
-    fn into(self) -> http::Response {
+    fn into(self) -> http_types::Response {
         self.res
     }
 }
