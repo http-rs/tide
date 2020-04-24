@@ -1,3 +1,4 @@
+mod test_utils;
 use async_std::io::Cursor;
 use async_std::prelude::*;
 use async_std::task;
@@ -16,7 +17,8 @@ const TEXT: &'static str = concat![
 
 #[async_std::test]
 async fn chunked_large() -> Result<(), http_types::Error> {
-    let server = task::spawn(async {
+    let port = test_utils::find_port().await;
+    let server = task::spawn(async move {
         let mut app = tide::new();
         app.at("/").get(|mut _req: tide::Request<()>| async move {
             let body = Cursor::new(TEXT.to_owned());
@@ -25,13 +27,13 @@ async fn chunked_large() -> Result<(), http_types::Error> {
                 .set_header(headers::CONTENT_TYPE, "text/plain; charset=utf-8");
             Ok(res)
         });
-        app.listen("localhost:8080").await?;
+        app.listen(&port).await?;
         Result::<(), http_types::Error>::Ok(())
     });
 
-    let client = task::spawn(async {
+    let client = task::spawn(async move {
         task::sleep(Duration::from_millis(100)).await;
-        let mut res = surf::get("http://localhost:8080").await?;
+        let mut res = surf::get(format!("http://{}", port)).await?;
         assert_eq!(res.status(), 200);
         assert_eq!(
             res.header(&"transfer-encoding".parse().unwrap()),
