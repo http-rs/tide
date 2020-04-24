@@ -73,6 +73,19 @@ $ cargo run --example # shows a list of available examples
 $ cargo run --example hello
 ```
 
+## TLS termination and reverse proxies
+
+Tide does not currently support TLS, and only supports HTTP/1.1.
+
+### To use with nginx
+
+In order to use nginx as reverse proxy for Tide, your upstream proxy configuration must include this line:
+
+```
+proxy_http_version 1.1;
+```
+
+
 ## Resources
 
 Read about the design here:
