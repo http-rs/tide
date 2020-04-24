@@ -15,7 +15,7 @@ use crate::Request;
 // pub use compression::{Compression, Decompression};
 // pub use default_headers::DefaultHeaders;
 
-/// Middleware that wraps around remaining middleware chain.
+/// Middleware that wraps around the remaining middleware chain.
 pub trait Middleware<State>: 'static + Send + Sync {
     /// Asynchronously handle the request, and return a response.
     fn handle<'a>(

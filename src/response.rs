@@ -10,10 +10,6 @@ use http_types::{
 use mime::Mime;
 use serde::Serialize;
 
-pub use into_response::IntoResponse;
-
-mod into_response;
-
 #[derive(Debug)]
 pub(crate) enum CookieEvent {
     Added(Cookie<'static>),
@@ -245,16 +241,38 @@ impl Response {
     }
 }
 
-#[doc(hidden)]
 impl Into<http_service::Response> for Response {
     fn into(self) -> http_service::Response {
         self.res
     }
 }
 
-#[doc(hidden)]
 impl From<http_service::Response> for Response {
     fn from(res: http_service::Response) -> Self {
+        Self {
+            res,
+            cookie_events: vec![],
+        }
+    }
+}
+
+impl From<String> for Response {
+    fn from(s: String) -> Self {
+        let mut res = http_types::Response::new(StatusCode::Ok);
+        res.set_content_type(http_types::mime::PLAIN);
+        res.set_body(s);
+        Self {
+            res,
+            cookie_events: vec![],
+        }
+    }
+}
+
+impl<'a> From<&'a str> for Response {
+    fn from(s: &'a str) -> Self {
+        let mut res = http_types::Response::new(StatusCode::Ok);
+        res.set_content_type(http_types::mime::PLAIN);
+        res.set_body(String::from(s));
         Self {
             res,
             cookie_events: vec![],

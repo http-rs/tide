@@ -2,7 +2,7 @@ use async_std::prelude::*;
 use futures::executor::block_on;
 use http_service_mock::{make_server, TestBackend};
 use serde::Deserialize;
-use tide::{IntoResponse, Request, Response, Server, StatusCode};
+use tide::{Request, Response, Server, StatusCode};
 
 #[derive(Deserialize)]
 struct Params {
@@ -18,7 +18,7 @@ struct OptionalParams {
 async fn handler(cx: Request<()>) -> tide::Result {
     let p = cx.query::<Params>();
     match p {
-        Ok(params) => Ok(params.msg.into_response()),
+        Ok(params) => Ok(params.msg.into()),
         Err(error) => Ok(err_to_res(error)),
     }
 }

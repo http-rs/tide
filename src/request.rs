@@ -6,13 +6,14 @@ use http_types::{
 use route_recognizer::Params;
 use serde::Deserialize;
 
-use async_std::io::{self, prelude::*};
+use async_std::io::{self, prelude::*, BufReader};
 use async_std::task::{Context, Poll};
 
 use std::pin::Pin;
 use std::{str::FromStr, sync::Arc};
 
 use crate::cookies::CookieData;
+use crate::Response;
 
 /// An HTTP request.
 ///
@@ -316,6 +317,14 @@ impl<State> Read for Request<State> {
         buf: &mut [u8],
     ) -> Poll<io::Result<usize>> {
         Pin::new(&mut self.request).poll_read(cx, buf)
+    }
+}
+
+// NOTE: From cannot be implemented for this conversion because `State` needs to
+// be constrained by a type.
+impl<State: Send + Sync + 'static> Into<Response> for Request<State> {
+    fn into(self) -> Response {
+        Response::new(StatusCode::Ok).body(BufReader::new(self))
     }
 }
 
