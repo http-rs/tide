@@ -289,7 +289,6 @@ impl From<http::Response> for Response {
 impl From<String> for Response {
     fn from(s: String) -> Self {
         let mut res = http_types::Response::new(StatusCode::Ok);
-        res.set_content_type(http_types::mime::PLAIN);
         res.set_body(s);
         Self {
             res,
@@ -301,7 +300,6 @@ impl From<String> for Response {
 impl<'a> From<&'a str> for Response {
     fn from(s: &'a str) -> Self {
         let mut res = http_types::Response::new(StatusCode::Ok);
-        res.set_content_type(http_types::mime::PLAIN);
         res.set_body(String::from(s));
         Self {
             res,
