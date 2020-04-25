@@ -294,12 +294,10 @@ impl<State> Request<State> {
     /// returns a `Cookie` by name of the cookie.
     #[must_use]
     pub fn cookie(&self, name: &str) -> Option<Cookie<'static>> {
-        let cookie_data = self
-            .local::<CookieData>()
-            .expect("should always be set by the cookies middleware");
-
-        let locked_jar = cookie_data.content.read().unwrap();
-        locked_jar.get(name).cloned()
+        if let Some(cookie_data) = self.local::<CookieData>() {
+            return cookie_data.content.read().unwrap().get(name).cloned();
+        }
+        None
     }
 
     /// Get the length of the body.

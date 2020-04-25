@@ -340,7 +340,7 @@ impl<State: Send + Sync + 'static> Server<State> {
     where
         R: From<http_types::Response>,
     {
-        match self.handle_request(req).await {
+        match self.clone().handle_request(req.into()).await {
             Ok(value) => {
                 let res: http_types::Response = value.into();
                 // We assume that if an error was manually cast to a
