@@ -364,14 +364,20 @@ impl<State: Send + Sync + 'static> Server<State> {
 
     fn handle_request(self, req: http_types::Request) -> BoxFuture<'static, crate::Result> {
         Box::pin(async move {
+            let Self {
+                router,
+                state,
+                middleware,
+            } = self;
+
             let method = req.method().to_owned();
-            let Selection { endpoint, params } = self.router.route(&req.url().path(), method);
+            let Selection { endpoint, params } = router.route(&req.url().path(), method);
             let route_params = vec![params];
-            let req = Request::new(self.state.clone(), req, route_params);
+            let req = Request::new(state, req, route_params);
 
             let next = Next {
                 endpoint,
-                next_middleware: &self.middleware,
+                next_middleware: &middleware,
             };
 
             let res = next.run(req).await?;
