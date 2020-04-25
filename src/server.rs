@@ -340,10 +340,9 @@ impl<State: Send + Sync + 'static> Server<State> {
     where
         R: From<http_types::Response>,
     {
-        let req = Request::new(self.state.clone(), req.into(), Vec::new());
-        match self.call(req).await {
-            Ok(res) => {
-                let res: http_types::Response = res.into();
+        match self.handle_request(req).await {
+            Ok(value) => {
+                let res: http_types::Response = value.into();
                 // We assume that if an error was manually cast to a
                 // Response that we actually want to send the body to the
                 // client. At this point we don't scrub the message.
@@ -361,6 +360,23 @@ impl<State: Send + Sync + 'static> Server<State> {
                 Ok(res.into())
             }
         }
+    }
+
+    fn handle_request(self, req: http_types::Request) -> BoxFuture<'static, crate::Result> {
+        Box::pin(async move {
+            let method = req.method().to_owned();
+            let Selection { endpoint, params } = self.router.route(&req.url().path(), method);
+            let route_params = vec![params];
+            let req = Request::new(self.state.clone(), req, route_params);
+
+            let next = Next {
+                endpoint,
+                next_middleware: &self.middleware,
+            };
+
+            let res = next.run(req).await?;
+            Ok(res)
+        })
     }
 }
 
