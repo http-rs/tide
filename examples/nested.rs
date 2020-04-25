@@ -9,6 +9,5 @@ async fn main() -> Result<(), std::io::Error> {
             .get(|_| async move { Ok("Goodbye, world") });
         api
     });
-    app.listen("127.0.0.1:8080").await?;
-    Ok(())
+    app.listen("127.0.0.1:8080").await
 }

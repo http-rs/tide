@@ -57,9 +57,9 @@ impl<State> Request<State> {
     ///     assert_eq!(req.method(), http_types::Method::Get);
     ///     Ok("")
     /// });
-    /// app.listen("127.0.0.1:8080").await?;
+    /// app.listen("127.0.0.1:8080").await
     /// #
-    /// # Ok(()) })}
+    /// # })}
     /// ```
     pub fn method(&self) -> Method {
         self.request.method()
@@ -80,9 +80,9 @@ impl<State> Request<State> {
     ///     assert_eq!(req.uri(), &"/".parse::<tide::http::Url>().unwrap());
     ///     Ok("")
     /// });
-    /// app.listen("127.0.0.1:8080").await?;
+    /// app.listen("127.0.0.1:8080").await
     /// #
-    /// # Ok(()) })}
+    /// # })}
     /// ```
     pub fn uri(&self) -> &Url {
         self.request.url()
@@ -103,9 +103,9 @@ impl<State> Request<State> {
     ///     assert_eq!(req.version(), Some(http_types::Version::Http1_1));
     ///     Ok("")
     /// });
-    /// app.listen("127.0.0.1:8080").await?;
+    /// app.listen("127.0.0.1:8080").await
     /// #
-    /// # Ok(()) })}
+    /// # })}
     /// ```
     pub fn version(&self) -> Option<Version> {
         self.request.version()
@@ -126,9 +126,9 @@ impl<State> Request<State> {
     ///     assert_eq!(req.header(&"X-Forwarded-For".parse().unwrap()), Some(&vec!["127.0.0.1".parse().unwrap()]));
     ///     Ok("")
     /// });
-    /// app.listen("127.0.0.1:8080").await?;
+    /// app.listen("127.0.0.1:8080").await
     /// #
-    /// # Ok(()) })}
+    /// # })}
     /// ```
     pub fn header(
         &self,
@@ -208,9 +208,9 @@ impl<State> Request<State> {
     ///     let _body: Vec<u8> = req.body_bytes().await.unwrap();
     ///     Ok("")
     /// });
-    /// app.listen("127.0.0.1:8080").await?;
+    /// app.listen("127.0.0.1:8080").await
     /// #
-    /// # Ok(()) })}
+    /// # })}
     /// ```
     pub async fn body_bytes(&mut self) -> std::io::Result<Vec<u8>> {
         let mut buf = Vec::with_capacity(1024);
@@ -243,9 +243,9 @@ impl<State> Request<State> {
     ///     let _body: String = req.body_string().await.unwrap();
     ///     Ok("")
     /// });
-    /// app.listen("127.0.0.1:8080").await?;
+    /// app.listen("127.0.0.1:8080").await
     /// #
-    /// # Ok(()) })}
+    /// # })}
     /// ```
     pub async fn body_string(&mut self) -> std::io::Result<String> {
         let body_bytes = self.body_bytes().await?;

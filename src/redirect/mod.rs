@@ -11,9 +11,9 @@
 //! let mut app = tide::new();
 //! app.at("/").get(|_| async move { Ok("meow") });
 //! app.at("/nori").get(redirect::temporary("/"));
-//! app.listen("127.0.0.1:8080").await?;
+//! app.listen("127.0.0.1:8080").await
 //! #
-//! # Ok(()) }) }
+//! # }) }
 //! ```
 mod permanent;
 mod temporary;

@@ -23,7 +23,6 @@ fn main() -> io::Result<()> {
             Ok(Response::new(StatusCode::Ok).body_json(&cat)?)
         });
 
-        app.listen("127.0.0.1:8080").await?;
-        Ok(())
+        app.listen("127.0.0.1:8080").await
     })
 }
