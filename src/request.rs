@@ -266,7 +266,50 @@ impl<State> Request<State> {
         Ok(serde_json::from_slice(&body_bytes).map_err(|_| std::io::ErrorKind::InvalidData)?)
     }
 
-    /// Get the URL querystring.
+    /// Extract and parse a query string parameter by name.
+    ///
+    /// Returns the results of parsing the parameter according to the inferred
+    /// output type `T`, which must have the `serde::Deserialize` trait and be
+    /// able to have the `'de` lifetime.
+    ///
+    /// The name should *not* include any of the key-value formatting
+    ///  characters (`?`, `=`, or `&`).
+    ///
+    /// If no query string exists on the uri, this method will default to
+    /// parsing an empty string so that deserialization can be succesful to
+    /// structs where all fields are optional.
+    ///
+    /// # Errors
+    ///
+    /// Yields an `Err` if the parameters were found but failed to parse into an
+    /// instance of type `T`.
+    ///
+    /// # Panics
+    ///
+    /// Panic if `key` is not a parameter within the query string.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use futures::executor::block_on;
+    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
+    /// #
+    /// use tide::Request;
+    /// use serde::Deserialize;
+    ///
+    /// #[derive(Deserialize)]
+    /// struct QueryParams {
+    ///     _param_name: String,
+    /// }
+    ///
+    /// let mut app = tide::new();
+    /// app.at("/").get(|req: Request<()>| async move {
+    ///    let _query_params: QueryParams = req.query::<QueryParams>().unwrap();
+    ///    Ok("")
+    /// });
+    /// #
+    /// # Ok(()) })}
+    /// ```
     pub fn query<'de, T: Deserialize<'de>>(&'de self) -> Result<T, crate::Error> {
         // Default to an empty query string if no query parameter has been specified.
         // This allows successful deserialisation of structs where all fields are optional
