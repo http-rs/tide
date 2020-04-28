@@ -5,9 +5,9 @@ use mime::Mime;
 use serde::Serialize;
 
 use crate::http::cookies::Cookie;
-use crate::http::headers::{HeaderName, HeaderValue};
+use crate::http::headers::{HeaderName, HeaderValues, ToHeaderValues, CONTENT_TYPE};
 use crate::http::{self, Body, StatusCode};
-use crate::Redirect;
+use crate::redirect::Redirect;
 
 #[derive(Debug)]
 pub(crate) enum CookieEvent {
@@ -99,38 +99,24 @@ impl Response {
 
     /// Get an HTTP header.
     #[must_use]
-    pub fn header(&self, name: &HeaderName) -> Option<&Vec<HeaderValue>> {
+    pub fn header(&self, name: impl Into<HeaderName>) -> Option<&HeaderValues> {
         self.res.header(name)
     }
 
     /// Remove a header.
-    pub fn remove_header(&mut self, name: &HeaderName) -> Option<Vec<HeaderValue>> {
+    pub fn remove_header(&mut self, name: impl Into<HeaderName>) -> Option<HeaderValues> {
         self.res.remove_header(name)
     }
 
     /// Insert an HTTP header.
-    pub fn set_header(
-        mut self,
-        key: http_types::headers::HeaderName,
-        value: impl AsRef<str>,
-    ) -> Self {
-        let value = value.as_ref().to_owned();
-        self.res
-            .insert_header(key, &[value.parse().unwrap()][..])
-            .expect("invalid header");
+    pub fn set_header(mut self, key: impl Into<HeaderName>, value: impl ToHeaderValues) -> Self {
+        self.res.insert_header(key, value);
         self
     }
 
     /// Append an HTTP header.
-    pub fn append_header(
-        mut self,
-        key: http_types::headers::HeaderName,
-        value: impl AsRef<str>,
-    ) -> Self {
-        let value = value.as_ref().to_owned();
-        self.res
-            .append_header(key, &[value.parse().unwrap()][..])
-            .expect("invalid header");
+    pub fn append_header(mut self, key: impl Into<HeaderName>, value: impl ToHeaderValues) -> Self {
+        self.res.append_header(key, value);
         self
     }
 
@@ -139,7 +125,7 @@ impl Response {
     /// [Read more on MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types)
     #[must_use]
     pub fn set_mime(self, mime: Mime) -> Self {
-        self.set_header(http_types::headers::CONTENT_TYPE, format!("{}", mime))
+        self.set_header(CONTENT_TYPE, mime.to_string())
     }
 
     /// Pass a string as the request body.
@@ -233,15 +219,15 @@ impl Response {
         self.cookie_events.push(CookieEvent::Removed(cookie));
     }
 
-    /// Get a local value.
+    /// Get a response extension value.
     #[must_use]
-    pub fn local<T: Send + Sync + 'static>(&self) -> Option<&T> {
-        self.res.local().get()
+    pub fn ext<T: Send + Sync + 'static>(&self) -> Option<&T> {
+        self.res.ext().get()
     }
 
     /// Set a local value.
-    pub fn set_local<T: Send + Sync + 'static>(mut self, val: T) -> Self {
-        self.res.local_mut().insert(val);
+    pub fn set_ext<T: Send + Sync + 'static>(mut self, val: T) -> Self {
+        self.res.ext_mut().insert(val);
         self
     }
 
@@ -309,7 +295,7 @@ impl<'a> From<&'a str> for Response {
 }
 
 impl IntoIterator for Response {
-    type Item = (HeaderName, Vec<HeaderValue>);
+    type Item = (HeaderName, HeaderValues);
     type IntoIter = http_types::headers::IntoIter;
 
     /// Returns a iterator of references over the remaining items.
@@ -320,7 +306,7 @@ impl IntoIterator for Response {
 }
 
 impl<'a> IntoIterator for &'a Response {
-    type Item = (&'a HeaderName, &'a Vec<HeaderValue>);
+    type Item = (&'a HeaderName, &'a HeaderValues);
     type IntoIter = http_types::headers::Iter<'a>;
 
     #[inline]
@@ -330,7 +316,7 @@ impl<'a> IntoIterator for &'a Response {
 }
 
 impl<'a> IntoIterator for &'a mut Response {
-    type Item = (&'a HeaderName, &'a mut Vec<HeaderValue>);
+    type Item = (&'a HeaderName, &'a mut HeaderValues);
     type IntoIter = http_types::headers::IterMut<'a>;
 
     #[inline]

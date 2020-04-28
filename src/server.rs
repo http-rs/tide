@@ -295,10 +295,9 @@ impl<State: Send + Sync + 'static> Server<State> {
         let mut incoming = listener.incoming();
         while let Some(stream) = incoming.next().await {
             let stream = stream?;
-            let addr = addr.clone();
             let this = self.clone();
             task::spawn(async move {
-                let res = async_h1::accept(&addr, stream, |req| async {
+                let res = async_h1::accept(stream, |req| async {
                     let res = this.respond(req).await;
                     let res = res.map_err(|_| io::Error::from(io::ErrorKind::Other))?;
                     Ok(res)

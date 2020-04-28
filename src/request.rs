@@ -9,7 +9,7 @@ use std::{str::FromStr, sync::Arc};
 
 use crate::cookies::CookieData;
 use crate::http::cookies::Cookie;
-use crate::http::headers::{HeaderName, HeaderValue};
+use crate::http::headers::{HeaderName, HeaderValues};
 use crate::http::{self, Method, StatusCode, Url, Version};
 use crate::Response;
 
@@ -124,7 +124,7 @@ impl<State> Request<State> {
     ///
     /// let mut app = tide::new();
     /// app.at("/").get(|req: Request<()>| async move {
-    ///     assert_eq!(req.header(&"X-Forwarded-For".parse().unwrap()), Some(&vec!["127.0.0.1".parse().unwrap()]));
+    ///     assert_eq!(req.header("X-Forwarded-For").unwrap().last().as_str(), "127.0.0.1");
     ///     Ok("")
     /// });
     /// app.listen("127.0.0.1:8080").await?;
@@ -134,20 +134,20 @@ impl<State> Request<State> {
     #[must_use]
     pub fn header(
         &self,
-        key: &http_types::headers::HeaderName,
-    ) -> Option<&Vec<http_types::headers::HeaderValue>> {
+        key: impl Into<http_types::headers::HeaderName>,
+    ) -> Option<&http_types::headers::HeaderValues> {
         self.request.header(key)
     }
 
-    /// Get a local value.
+    /// Get a request extension value.
     #[must_use]
-    pub fn local<T: Send + Sync + 'static>(&self) -> Option<&T> {
-        self.request.local().get()
+    pub fn ext<T: Send + Sync + 'static>(&self) -> Option<&T> {
+        self.request.ext().get()
     }
 
-    /// Set a local value.
-    pub fn set_local<T: Send + Sync + 'static>(mut self, val: T) -> Self {
-        self.request.local_mut().insert(val);
+    /// Set a request extension value.
+    pub fn set_ext<T: Send + Sync + 'static>(mut self, val: T) -> Self {
+        self.request.ext_mut().insert(val);
         self
     }
 
@@ -295,9 +295,10 @@ impl<State> Request<State> {
     #[must_use]
     pub fn cookie(&self, name: &str) -> Option<Cookie<'static>> {
         if let Some(cookie_data) = self.local::<CookieData>() {
-            return cookie_data.content.read().unwrap().get(name).cloned();
+            cookie_data.content.read().unwrap().get(name).cloned()
+        } else {
+            None
         }
-        None
     }
 
     /// Get the length of the body.
@@ -349,7 +350,7 @@ impl<State: Send + Sync + 'static> Into<Response> for Request<State> {
 }
 
 impl<State> IntoIterator for Request<State> {
-    type Item = (HeaderName, Vec<HeaderValue>);
+    type Item = (HeaderName, HeaderValues);
     type IntoIter = http_types::headers::IntoIter;
 
     /// Returns a iterator of references over the remaining items.
@@ -360,7 +361,7 @@ impl<State> IntoIterator for Request<State> {
 }
 
 impl<'a, State> IntoIterator for &'a Request<State> {
-    type Item = (&'a HeaderName, &'a Vec<HeaderValue>);
+    type Item = (&'a HeaderName, &'a HeaderValues);
     type IntoIter = http_types::headers::Iter<'a>;
 
     #[inline]
@@ -370,7 +371,7 @@ impl<'a, State> IntoIterator for &'a Request<State> {
 }
 
 impl<'a, State> IntoIterator for &'a mut Request<State> {
-    type Item = (&'a HeaderName, &'a mut Vec<HeaderValue>);
+    type Item = (&'a HeaderName, &'a mut HeaderValues);
     type IntoIter = http_types::headers::IterMut<'a>;
 
     #[inline]
