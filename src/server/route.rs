@@ -275,7 +275,7 @@ impl<E> Clone for StripPrefixEndpoint<E> {
 
 impl<State, E: Endpoint<State>> Endpoint<State> for StripPrefixEndpoint<E> {
     fn call<'a>(&'a self, mut req: crate::Request<State>) -> BoxFuture<'a, crate::Result> {
-        let rest = req.rest().unwrap_or("");
+        let rest = req.rest().unwrap_or_default();
         let uri = req.uri();
         let mut new_uri = uri.clone();
         new_uri.set_path(rest);

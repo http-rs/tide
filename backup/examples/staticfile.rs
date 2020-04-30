@@ -89,7 +89,7 @@ impl StaticFile {
             .fold(PathBuf::new(), |mut result, p| {
                 match p {
                     Component::Normal(x) => result.push({
-                        let s = x.to_str().unwrap_or("");
+                        let s = x.to_str().unwrap_or_default();
                         &*percent_encoding::percent_decode(s.as_bytes()).decode_utf8_lossy()
                     }),
                     Component::ParentDir => {

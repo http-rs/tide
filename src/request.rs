@@ -271,7 +271,7 @@ impl<State> Request<State> {
         // Default to an empty query string if no query parameter has been specified.
         // This allows successful deserialisation of structs where all fields are optional
         // when none of those fields has actually been passed by the caller.
-        let query = self.uri().query().unwrap_or("");
+        let query = self.uri().query().unwrap_or_default();
         serde_qs::from_str(query).map_err(|e| {
             // Return the displayable version of the deserialisation error to the caller
             // for easier debugging.
