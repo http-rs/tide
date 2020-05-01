@@ -12,6 +12,9 @@ use async_std::task::{Context, Poll};
 use std::pin::Pin;
 use std::{str::FromStr, sync::Arc};
 
+use multipart::server::Multipart;
+use std::io::Cursor;
+
 use crate::cookies::CookieData;
 use crate::Response;
 
@@ -292,6 +295,26 @@ impl<State> Request<State> {
             )
         })?;
         Ok(res)
+    }
+
+    pub async fn body_multipart<T: serde::de::DeserializeOwned>(
+        &mut self,
+    ) -> io::Result<Multipart<Cursor<Vec<u8>>>> {
+        const BOUNDARY: &str = "boundary=";
+        let boundary = self
+            .header(&"content-type".parse().unwrap())
+            .and_then(|ct| {
+                let ct: String = ct.iter().map(ToString::to_string).collect();
+
+                let idx = ct.find(BOUNDARY)?;
+                Some(ct[idx + BOUNDARY.len()..].to_string())
+            });
+
+        let body: Vec<u8> = self.body_bytes().await.unwrap();
+
+        Ok(Multipart::with_body(Cursor::new(body), boundary.unwrap())).map_err(|_e: String| {
+            std::io::Error::new(std::io::ErrorKind::Other, "no boundary found")
+        })
     }
 
     /// returns a `Cookie` by name of the cookie.

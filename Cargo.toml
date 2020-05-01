@@ -47,6 +47,11 @@ tokio = { version = "0.2.13", optional = true }
 url = "2.1.1"
 kv-log-macro = "1.0.4"
 
+[dependencies.multipart]
+version = "0.16.1"
+default-features = false
+features = ["server"]
+
 [dev-dependencies]
 async-std = { version = "1.4.0", features = ["unstable", "attributes"] }
 basic-cookies = "0.1.3"
