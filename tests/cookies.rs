@@ -53,7 +53,7 @@ fn make_request(endpoint: &str) -> http_types::Response {
     );
     req.insert_header(
         http_types::headers::COOKIE,
-        "testCookie=RequestCookieValue; secondTestCookie=OtherCookieValue",
+        "testCookie=RequestCookieValue; secondTestCookie=Other%3BCookie%20Value",
     )
     .unwrap();
 
@@ -71,7 +71,7 @@ fn successfully_retrieve_request_cookie() {
         String::from_utf8(buffer).unwrap()
     });
 
-    assert_eq!(&body, "RequestCookieValue and also OtherCookieValue");
+    assert_eq!(&body, "RequestCookieValue and also Other;Cookie Value");
 }
 
 #[test]

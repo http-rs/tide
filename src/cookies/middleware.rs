@@ -83,7 +83,7 @@ impl CookieData {
             for cookie_header in cookie_headers {
                 // spec says there should be only one, so this is permissive
                 for pair in cookie_header.as_str().split(";") {
-                    if let Ok(cookie) = Cookie::parse(String::from(pair)) {
+                    if let Ok(cookie) = Cookie::parse_encoded(String::from(pair)) {
                         jar.add_original(cookie);
                     }
                 }
