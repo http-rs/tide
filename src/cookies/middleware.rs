@@ -2,7 +2,7 @@ use crate::response::CookieEvent;
 use crate::utils::BoxFuture;
 use crate::{Middleware, Next, Request};
 
-use cookie::CookieJar;
+use cookie::{Cookie, CookieJar};
 use http_types::headers;
 
 use std::sync::{Arc, RwLock};
@@ -77,16 +77,21 @@ pub(crate) struct CookieData {
 
 impl CookieData {
     pub(crate) fn from_request<S>(req: &Request<S>) -> Self {
-        let cookie_jar = req.request.cookies().and_then(|cookies| {
-            let mut jar = CookieJar::new();
-            for cookie in cookies.into_iter() {
-                jar.add_original(cookie.into_owned());
+        let mut jar = CookieJar::new();
+
+        if let Some(cookie_headers) = req.header(&headers::COOKIE) {
+            for cookie_header in cookie_headers {
+                // spec says there should be only one, so this is permissive
+                for pair in cookie_header.as_str().split(";").map(str::trim) {
+                    if let Ok(cookie) = Cookie::parse(String::from(pair)) {
+                        jar.add_original(cookie);
+                    }
+                }
             }
+        }
 
-            Ok(jar)
-        });
-        let content = Arc::new(RwLock::new(cookie_jar.unwrap_or_default()));
-
-        CookieData { content }
+        CookieData {
+            content: Arc::new(RwLock::new(jar)),
+        }
     }
 }
