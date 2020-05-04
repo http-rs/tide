@@ -2,7 +2,7 @@
 
 use async_std::future::Future;
 use async_std::io;
-use async_std::net::ToSocketAddrs;
+use async_std::net::{TcpListener, ToSocketAddrs};
 use async_std::sync::Arc;
 use async_std::task::{Context, Poll};
 use http_service::HttpService;
@@ -282,8 +282,14 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// Asynchronously serve the app at the given address.
     #[cfg(feature = "h1-server")]
     pub async fn listen(self, addr: impl ToSocketAddrs) -> std::io::Result<()> {
-        let listener = async_std::net::TcpListener::bind(addr).await?;
+        let listener = TcpListener::bind(addr).await?;
+        self.bind(listener).await
+    }
 
+    /// Asynchronously serve the app from the given TCP listener.
+    #[cfg(feature = "h1-server")]
+    pub async fn bind(self, listener: impl Into<TcpListener>) -> std::io::Result<()> {
+        let listener = listener.into();
         let addr = format!("http://{}", listener.local_addr()?);
         log::info!("Server is listening on: {}", addr);
         let mut server = http_service_h1::Server::new(addr, listener.incoming(), self);
