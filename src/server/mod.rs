@@ -291,7 +291,26 @@ impl<State: Send + Sync + 'static> Server<State> {
 
         let addr = format!("http://{}", listener.local_addr()?);
         log::info!("Server is listening on: {}", addr);
-        let mut server = http_service_h1::Server::new(addr, listener.incoming(), self);
+        let mut server = http_service_h1::Server::new(listener.incoming(), self);
+
+        server.run().await
+    }
+
+    #[cfg(all(feature = "h1-server", unix))]
+    pub async fn listen_unix(self, addr: impl AsRef<async_std::path::Path>) -> io::Result<()> {
+        let listener = async_std::os::unix::net::UnixListener::bind(addr).await?;
+
+        let addr = format!(
+            "unix://{}",
+            listener.local_addr()?.as_pathname().unwrap().display()
+        );
+
+        log::info!("Server is listening on: {}", addr);
+
+        let mut server = http_service_h1::Server::new(
+            http_service_h1::UnixStreamWrapper::stream_from_incoming(listener.incoming()),
+            self,
+        );
 
         server.run().await
     }
