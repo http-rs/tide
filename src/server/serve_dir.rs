@@ -69,6 +69,11 @@ impl<State> Endpoint<State> for ServeDir {
             // TODO: fix related bug where async-h1 crashes on large files
             let mut res = Response::new(StatusCode::Ok);
             res.set_body(body);
+
+            if let Some(content_type) = mime_guess::from_path(&file_path).first() {
+                res = res.set_mime(content_type);
+            }
+
             Ok(res)
         })
     }
