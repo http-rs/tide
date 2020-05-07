@@ -8,7 +8,11 @@ use tide::{Request, Response, Server, StatusCode};
 static COOKIE_NAME: &str = "testCookie";
 
 async fn retrieve_cookie(cx: Request<()>) -> tide::Result<String> {
-    Ok(cx.cookie(COOKIE_NAME).unwrap().value().to_string())
+    Ok(format!(
+        "{} and also {}",
+        cx.cookie(COOKIE_NAME).unwrap().value(),
+        cx.cookie("secondTestCookie").unwrap().value()
+    ))
 }
 
 async fn set_cookie(_req: Request<()>) -> tide::Result {
@@ -47,8 +51,11 @@ fn make_request(endpoint: &str) -> http_types::Response {
         http_types::Method::Get,
         format!("http://example.com{}", endpoint).parse().unwrap(),
     );
-    req.insert_header(http_types::headers::COOKIE, "testCookie=RequestCookieValue")
-        .unwrap();
+    req.insert_header(
+        http_types::headers::COOKIE,
+        "testCookie=RequestCookieValue; secondTestCookie=Other%3BCookie%20Value",
+    )
+    .unwrap();
 
     server.simulate(req).unwrap()
 }
@@ -61,10 +68,10 @@ fn successfully_retrieve_request_cookie() {
     let body = block_on(async move {
         let mut buffer = Vec::new();
         res.read_to_end(&mut buffer).await.unwrap();
-        buffer
+        String::from_utf8(buffer).unwrap()
     });
 
-    assert_eq!(&*body, &*b"RequestCookieValue");
+    assert_eq!(&body, "RequestCookieValue and also Other;Cookie Value");
 }
 
 #[test]
