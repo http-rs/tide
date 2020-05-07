@@ -75,7 +75,7 @@ $ cargo run --example hello
 
 ## TLS termination and reverse proxies
 
-Tide does not currently support TLS, and only supports HTTP/1.1.
+Tide's default backend currently does not support TLS, and only supports HTTP/1.1.
 
 ### To use with nginx
 
