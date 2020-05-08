@@ -15,7 +15,7 @@ use crate::log;
 use crate::middleware::{Middleware, Next};
 use crate::router::{Router, Selection};
 use crate::utils::BoxFuture;
-use crate::{Endpoint, Request};
+use crate::{Endpoint, Request, Response};
 
 mod route;
 mod serve_dir;
@@ -334,8 +334,9 @@ impl<State: Sync + Send + 'static> HttpService for Server<State> {
         let service = self.clone();
         Box::pin(async move {
             match service.call(req).await {
-                Ok(value) => {
-                    let res = value.into();
+                Ok(res) => {
+                    let res: Response = res.into();
+                    let res: http_types::Response = res.into();
                     // We assume that if an error was manually cast to a
                     // Response that we actually want to send the body to the
                     // client. At this point we don't scrub the message.

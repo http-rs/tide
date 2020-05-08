@@ -32,7 +32,7 @@ pub struct PermanentRedirect {
 }
 
 impl<State> Endpoint<State> for PermanentRedirect {
-    fn call<'a>(&'a self, _req: Request<State>) -> BoxFuture<'a, crate::Result<Response>> {
+    fn call<'a>(&'a self, _req: Request<State>) -> BoxFuture<'a, crate::Result> {
         let res = Response::redirect_permanent(&self.location);
         Box::pin(async move { Ok(res) })
     }

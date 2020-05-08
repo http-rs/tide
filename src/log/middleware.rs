@@ -35,6 +35,7 @@ impl LogMiddleware {
         let start = std::time::Instant::now();
         match next.run(ctx).await {
             Ok(res) => {
+                let res = res.into();
                 let status = res.status();
                 log::info!(
                     "{} {} {} {}ms",

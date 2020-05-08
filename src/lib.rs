@@ -273,4 +273,4 @@ where
 }
 
 /// A specialized Result type for Tide.
-pub type Result<T = Response> = std::result::Result<T, Error>;
+pub type Result<T = impl Into<Response>> = std::result::Result<T, Error>;

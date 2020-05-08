@@ -48,7 +48,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
                 content
             };
 
-            let mut res = next.run(ctx).await?;
+            let mut res = next.run(ctx).await?.into();
 
             // add modifications from response to original
             for cookie in res.cookie_events.drain(..) {
