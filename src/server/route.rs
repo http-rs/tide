@@ -125,8 +125,7 @@ impl<'a, State: 'static> Route<'a, State> {
     /// async fn main() -> Result<(), std::io::Error> {
     ///     let mut app = tide::new();
     ///     app.at("/public/images").serve_dir("images/")?;
-    ///     app.listen("127.0.0.1:8080").await?;
-    ///     Ok(())
+    ///     app.listen("127.0.0.1:8080").await
     /// }
     /// ```
     pub fn serve_dir(&mut self, dir: impl AsRef<Path>) -> io::Result<()> {

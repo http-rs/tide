@@ -153,9 +153,9 @@ impl Server<()> {
     /// #
     /// let mut app = tide::new();
     /// app.at("/").get(|_| async move { Ok("Hello, world!") });
-    /// app.listen("127.0.0.1:8080").await?;
+    /// app.listen("127.0.0.1:8080").await
     /// #
-    /// # Ok(()) }) }
+    /// # }) }
     /// ```
     pub fn new() -> Server<()> {
         Self::with_state(())
@@ -196,9 +196,9 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// app.at("/").get(|req: Request<State>| async move {
     ///     Ok(format!("Hello, {}!", &req.state().name))
     /// });
-    /// app.listen("127.0.0.1:8080").await?;
+    /// app.listen("127.0.0.1:8080").await
     /// #
-    /// # Ok(()) }) }
+    /// # }) }
     /// ```
     pub fn with_state(state: State) -> Server<State> {
         let mut server = Server {

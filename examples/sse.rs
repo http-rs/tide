@@ -8,6 +8,5 @@ async fn main() -> Result<(), std::io::Error> {
         sender.send("fruit", "apple", None).await;
         Ok(())
     }));
-    app.listen("localhost:8080").await?;
-    Ok(())
+    app.listen("localhost:8080").await
 }

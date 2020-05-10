@@ -27,8 +27,6 @@ fn main() -> Result<(), std::io::Error> {
         app.at("/").get(retrieve_cookie);
         app.at("/set").get(set_cookie);
         app.at("/remove").get(remove_cookie);
-        app.listen("127.0.0.1:8080").await?;
-
-        Ok(())
+        app.listen("127.0.0.1:8080").await
     })
 }

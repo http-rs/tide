@@ -16,9 +16,9 @@ use crate::{Endpoint, Request, Response};
 /// let mut app = tide::new();
 /// app.at("/").get(|_| async move { Ok("meow") });
 /// app.at("/nori").get(redirect::permanent("/"));
-/// app.listen("127.0.0.1:8080").await?;
+/// app.listen("127.0.0.1:8080").await
 /// #
-/// # Ok(()) }) }
+/// # }) }
 /// ```
 pub fn permanent(location: impl AsRef<str>) -> PermanentRedirect {
     let location = location.as_ref().to_owned();

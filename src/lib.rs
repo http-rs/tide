@@ -30,9 +30,9 @@
 //! #
 //! let mut app = tide::new();
 //! app.at("/").get(|_| async move { Ok("Hello, world!") });
-//! app.listen("127.0.0.1:8080").await?;
+//! app.listen("127.0.0.1:8080").await
 //! #
-//! # Ok(()) }) }
+//! # }) }
 //! ```
 //!
 //! __echo server__
@@ -42,9 +42,9 @@
 //! #
 //! let mut app = tide::new();
 //! app.at("/").get(|req| async move { Ok(req) });
-//! app.listen("127.0.0.1:8080").await?;
+//! app.listen("127.0.0.1:8080").await
 //! #
-//! # Ok(()) }) }
+//! # }) }
 //! ````
 //!
 //! __send and receive json__
@@ -63,9 +63,9 @@
 //!    counter.count += 1;
 //!    Ok(Response::new(tide::http::StatusCode::Ok).body_json(&counter)?)
 //! });
-//! app.listen("127.0.0.1:8080").await?;
+//! app.listen("127.0.0.1:8080").await
 //! #
-//! # Ok(()) }) }
+//! # }) }
 //! ```
 //!
 //! # Concepts
@@ -226,9 +226,9 @@ pub use http_types as http;
 /// #
 /// let mut app = tide::new();
 /// app.at("/").get(|_| async move { Ok("Hello, world!") });
-/// app.listen("127.0.0.1:8080").await?;
+/// app.listen("127.0.0.1:8080").await
 /// #
-/// # Ok(()) }) }
+/// # }) }
 /// ```
 pub fn new() -> server::Server<()> {
     Server::new()
@@ -261,9 +261,9 @@ pub fn new() -> server::Server<()> {
 /// app.at("/").get(|req: Request<State>| async move {
 ///     Ok(format!("Hello, {}!", &req.state().name))
 /// });
-/// app.listen("127.0.0.1:8080").await?;
+/// app.listen("127.0.0.1:8080").await
 /// #
-/// # Ok(()) }) }
+/// # }) }
 /// ```
 pub fn with_state<State>(state: State) -> server::Server<State>
 where

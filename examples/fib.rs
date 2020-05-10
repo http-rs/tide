@@ -25,6 +25,7 @@ async fn fibsum(req: Request<()>) -> tide::Result<String> {
     );
     Ok(res)
 }
+
 // Example: HTTP GET to http://localhost:8080/fib/42
 // $ curl "http://localhost:8080/fib/42"
 // The fib of 42 is 267914296.
@@ -33,7 +34,6 @@ fn main() -> Result<(), std::io::Error> {
     task::block_on(async {
         let mut app = tide::new();
         app.at("/fib/:n").get(fibsum);
-        app.listen("0.0.0.0:8080").await?;
-        Ok(())
+        app.listen("0.0.0.0:8080").await
     })
 }

@@ -11,7 +11,6 @@ fn main() -> Result<(), std::io::Error> {
             let res = Response::new(StatusCode::Ok).body(BufReader::new(file));
             Ok(res)
         });
-        app.listen("127.0.0.1:8080").await?;
-        Ok(())
+        app.listen("127.0.0.1:8080").await
     })
 }
