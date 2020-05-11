@@ -34,6 +34,43 @@ async fn nested() {
 }
 
 #[async_std::test]
+async fn nested_root() {
+    let mut inner = tide::new();
+    inner.at("/").get(|_| async { Ok("inner-root") });
+    inner.at("/bar").get(|_| async { Ok("bar") });
+    inner
+        .at("/bar/")
+        .get(|_| async { Ok("weird-but-compliant") });
+
+    let mut outer = tide::new();
+    // Nest the inner app on /foo
+    outer.at("/foo").nest(inner);
+
+    let mut server = make_server(outer).unwrap();
+
+    let req = Request::new(Method::Get, Url::parse("http://example.com/foo").unwrap());
+    let res = server.simulate(req).unwrap();
+    assert_eq!(res.status(), 200);
+    assert_eq!(res.body_string().await.unwrap(), "inner-root");
+
+    let req = Request::new(
+        Method::Get,
+        Url::parse("http://example.com/foo/bar").unwrap(),
+    );
+    let res = server.simulate(req).unwrap();
+    assert_eq!(res.status(), 200);
+    assert_eq!(res.body_string().await.unwrap(), "bar");
+
+    let req = Request::new(
+        Method::Get,
+        Url::parse("http://example.com/foo/bar/").unwrap(),
+    );
+    let res = server.simulate(req).unwrap();
+    assert_eq!(res.status(), 200);
+    assert_eq!(res.body_string().await.unwrap(), "weird-but-compliant");
+}
+
+#[async_std::test]
 async fn nested_middleware() {
     let echo_path = |req: tide::Request<()>| async move { Ok(req.uri().path().to_string()) };
 

@@ -39,7 +39,7 @@ impl<'a, State: 'static> Route<'a, State> {
         }
     }
 
-    /// Extend the route with the given `path`.
+    /// Creates a route taking the given `path`.
     pub fn at<'b>(&'b mut self, path: &str) -> Route<'b, State> {
         let mut p = self.path.clone();
 
@@ -47,7 +47,7 @@ impl<'a, State: 'static> Route<'a, State> {
             p.push_str("/");
         }
 
-        if path != "/" {
+        if path != "/" || p.ends_with('/') {
             p.push_str(path);
         }
 
