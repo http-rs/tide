@@ -95,6 +95,30 @@ impl Response {
             .set_header("location".parse().unwrap(), location)
     }
 
+    /// Creates a response that represents a see other redirect to `location`.
+    ///
+    /// GET methods are unchanged.
+    /// Other methods are changed to GET and their body lost.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use tide::{Response, Request, StatusCode};
+    /// # fn next_product() -> Option<String> { None }
+    /// # #[allow(dead_code)]
+    /// async fn route_handler(request: Request<()>) -> tide::Result {
+    ///     if let Some(product_url) = next_product() {
+    ///         Ok(Response::redirect_see_other(product_url))
+    ///     } else {
+    ///         //...
+    /// #       Ok(Response::new(StatusCode::Ok)) //...
+    ///     }
+    /// }
+    /// ```
+    pub fn redirect_see_other(location: impl AsRef<str>) -> Self {
+        Response::new(StatusCode::SeeOther).set_header("location".parse().unwrap(), location)
+    }
+
     /// Returns the statuscode.
     pub fn status(&self) -> crate::StatusCode {
         self.res.status()
