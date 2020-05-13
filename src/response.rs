@@ -218,6 +218,11 @@ impl Response {
     //     })
     // }
 
+    /// Take the request body, replacing it with an empty body.
+    pub fn take_body(&mut self) -> Body {
+        self.res.take_body()
+    }
+
     /// Add cookie to the cookie jar.
     pub fn set_cookie(&mut self, cookie: Cookie<'static>) {
         self.cookie_events.push(CookieEvent::Added(cookie));
