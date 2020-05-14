@@ -302,30 +302,30 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// # #[async_std::main]
     /// # async fn main() -> http_types::Result<()> {
     /// #
-    /// use tide::http::{self, Url, Method};
+    /// use tide::http::{Url, Method, Request, Response};
     ///
     /// // Initialize the application with state.
     /// let mut app = tide::new();
     /// app.at("/").get(|_| async move { Ok("hello world") });
     ///
-    /// let req = http::Request::new(Method::Get, Url::parse("https://example.com")?);
-    /// let res = app.respond(req).await?;
+    /// let req = Request::new(Method::Get, Url::parse("https://example.com")?);
+    /// let res: Response = app.respond(req).await?;
     /// assert_eq!(res.status(), 200);
     /// #
     /// # Ok(()) }
     /// ```
-    pub async fn respond(
-        &self,
-        req: impl Into<http_types::Request>,
-    ) -> http_types::Result<http_types::Response> {
+    pub async fn respond<R>(&self, req: impl Into<http_types::Request>) -> http_types::Result<R>
+    where
+        R: From<http_types::Response>,
+    {
         let req = Request::new(self.state.clone(), req.into(), Vec::new());
         match self.call(req).await {
             Ok(value) => {
-                let res = value.into();
+                let res: http_types::Response = value.into();
                 // We assume that if an error was manually cast to a
                 // Response that we actually want to send the body to the
                 // client. At this point we don't scrub the message.
-                Ok(res)
+                Ok(res.into())
             }
             Err(err) => {
                 let mut res = http_types::Response::new(err.status());
@@ -336,7 +336,7 @@ impl<State: Send + Sync + 'static> Server<State> {
                 if !res.status().is_server_error() {
                     res.set_body(err.to_string());
                 }
-                Ok(res)
+                Ok(res.into())
             }
         }
     }
