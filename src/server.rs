@@ -304,12 +304,12 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// #
     /// use tide::http::{Url, Method, Request, Response};
     ///
-    /// // Initialize the application with state.
     /// let mut app = tide::new();
     /// app.at("/").get(|_| async move { Ok("hello world") });
     ///
     /// let req = Request::new(Method::Get, Url::parse("https://example.com")?);
     /// let res: Response = app.respond(req).await?;
+    ///
     /// assert_eq!(res.status(), 200);
     /// #
     /// # Ok(()) }
