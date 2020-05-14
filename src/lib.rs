@@ -198,6 +198,7 @@ pub mod log;
 pub mod prelude;
 pub mod redirect;
 pub mod security;
+pub mod server_test;
 
 pub use endpoint::Endpoint;
 pub use request::Request;
