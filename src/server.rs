@@ -290,6 +290,56 @@ impl<State: Send + Sync + 'static> Server<State> {
 
         server.run().await
     }
+
+    /// Respond to a `Request` with a `Response`.
+    ///
+    /// This method is useful for testing endpoints directly,
+    /// or for creating servers over custom transports.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # #[async_std::main]
+    /// # async fn main() -> http_types::Result<()> {
+    /// #
+    /// use tide::http::{self, Url, Method};
+    ///
+    /// // Initialize the application with state.
+    /// let mut app = tide::new();
+    /// app.at("/").get(|_| async move { Ok("hello world") });
+    ///
+    /// let req = http::Request::new(Method::Get, Url::parse("https://example.com")?);
+    /// let res = app.respond(req).await?;
+    /// assert_eq!(res.status(), 200);
+    /// #
+    /// # Ok(()) }
+    /// ```
+    pub async fn respond(
+        &self,
+        req: impl Into<http_types::Request>,
+    ) -> http_types::Result<http_types::Response> {
+        let req = Request::new(self.state.clone(), req.into(), Vec::new());
+        match self.call(req).await {
+            Ok(value) => {
+                let res = value.into();
+                // We assume that if an error was manually cast to a
+                // Response that we actually want to send the body to the
+                // client. At this point we don't scrub the message.
+                Ok(res)
+            }
+            Err(err) => {
+                let mut res = http_types::Response::new(err.status());
+                res.set_content_type(http_types::mime::PLAIN);
+                // Only send the message if it is a non-500 range error. All
+                // errors default to 500 by default, so sending the error
+                // body is opt-in at the call site.
+                if !res.status().is_server_error() {
+                    res.set_body(err.to_string());
+                }
+                Ok(res)
+            }
+        }
+    }
 }
 
 impl<State> Clone for Server<State> {
