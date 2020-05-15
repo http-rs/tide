@@ -243,7 +243,6 @@ impl From<Vec<&str>> for Origin {
 #[cfg(test)]
 mod test {
     use super::*;
-    use http_service_mock::make_server;
     use http_types::headers::{self, HeaderValue};
 
     const ALLOW_ORIGIN: &str = "example.com";
@@ -272,8 +271,8 @@ mod test {
         req
     }
 
-    #[test]
-    fn preflight_request() {
+    #[async_std::test]
+    async fn preflight_request() {
         let mut app = app();
         app.middleware(
             CorsMiddleware::new()
@@ -283,13 +282,11 @@ mod test {
                 .allow_credentials(true),
         );
 
-        let mut server = make_server(app).unwrap();
-
         let mut req = http_types::Request::new(http_types::Method::Options, endpoint_url());
         req.insert_header(http_types::headers::ORIGIN, ALLOW_ORIGIN)
             .unwrap();
 
-        let res = server.simulate(req).unwrap();
+        let res: crate::http::Response = app.respond(req).await.unwrap();
 
         assert_eq!(res.status(), 200);
 
@@ -317,13 +314,11 @@ mod test {
             "true"
         );
     }
-    #[test]
-    fn default_cors_middleware() {
+    #[async_std::test]
+    async fn default_cors_middleware() {
         let mut app = app();
         app.middleware(CorsMiddleware::new());
-
-        let mut server = make_server(app).unwrap();
-        let res = server.simulate(request()).unwrap();
+        let res: crate::http::Response = app.respond(request()).await.unwrap();
 
         assert_eq!(res.status(), 200);
 
@@ -333,8 +328,8 @@ mod test {
         );
     }
 
-    #[test]
-    fn custom_cors_middleware() {
+    #[async_std::test]
+    async fn custom_cors_middleware() {
         let mut app = app();
         app.middleware(
             CorsMiddleware::new()
@@ -343,9 +338,7 @@ mod test {
                 .allow_methods(ALLOW_METHODS.parse::<HeaderValue>().unwrap())
                 .expose_headers(EXPOSE_HEADER.parse::<HeaderValue>().unwrap()),
         );
-
-        let mut server = make_server(app).unwrap();
-        let res = server.simulate(request()).unwrap();
+        let res: crate::http::Response = app.respond(request()).await.unwrap();
 
         assert_eq!(res.status(), 200);
         assert_eq!(
@@ -354,13 +347,11 @@ mod test {
         );
     }
 
-    #[test]
-    fn credentials_true() {
+    #[async_std::test]
+    async fn credentials_true() {
         let mut app = app();
         app.middleware(CorsMiddleware::new().allow_credentials(true));
-
-        let mut server = make_server(app).unwrap();
-        let res = server.simulate(request()).unwrap();
+        let res: crate::http::Response = app.respond(request()).await.unwrap();
 
         assert_eq!(res.status(), 200);
         assert_eq!(
@@ -371,20 +362,18 @@ mod test {
         );
     }
 
-    #[test]
-    fn set_allow_origin_list() {
+    #[async_std::test]
+    async fn set_allow_origin_list() {
         let mut app = app();
         let origins = vec![ALLOW_ORIGIN, "foo.com", "bar.com"];
         app.middleware(CorsMiddleware::new().allow_origin(origins.clone()));
-        let mut server = make_server(app).unwrap();
 
         for origin in origins {
-            let mut request = http_types::Request::new(http_types::Method::Get, endpoint_url());
-            request
-                .insert_header(http_types::headers::ORIGIN, origin)
+            let mut req = http_types::Request::new(http_types::Method::Get, endpoint_url());
+            req.insert_header(http_types::headers::ORIGIN, origin)
                 .unwrap();
 
-            let res = server.simulate(request).unwrap();
+            let res: crate::http::Response = app.respond(req).await.unwrap();
 
             assert_eq!(res.status(), 200);
             assert_eq!(
@@ -394,31 +383,26 @@ mod test {
         }
     }
 
-    #[test]
-    fn not_set_origin_header() {
+    #[async_std::test]
+    async fn not_set_origin_header() {
         let mut app = app();
         app.middleware(CorsMiddleware::new().allow_origin(ALLOW_ORIGIN));
 
-        let request = http_types::Request::new(http_types::Method::Get, endpoint_url());
-
-        let mut server = make_server(app).unwrap();
-        let res = server.simulate(request).unwrap();
+        let req = crate::http::Request::new(http_types::Method::Get, endpoint_url());
+        let res: crate::http::Response = app.respond(req).await.unwrap();
 
         assert_eq!(res.status(), 200);
     }
 
-    #[test]
-    fn unauthorized_origin() {
+    #[async_std::test]
+    async fn unauthorized_origin() {
         let mut app = app();
         app.middleware(CorsMiddleware::new().allow_origin(ALLOW_ORIGIN));
 
-        let mut request = http_types::Request::new(http_types::Method::Get, endpoint_url());
-        request
-            .insert_header(http_types::headers::ORIGIN, "unauthorize-origin.net")
+        let mut req = http_types::Request::new(http_types::Method::Get, endpoint_url());
+        req.insert_header(http_types::headers::ORIGIN, "unauthorize-origin.net")
             .unwrap();
-
-        let mut server = make_server(app).unwrap();
-        let res = server.simulate(request).unwrap();
+        let res: crate::http::Response = app.respond(req).await.unwrap();
 
         assert_eq!(res.status(), 401);
     }
