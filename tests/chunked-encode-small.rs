@@ -27,13 +27,13 @@ async fn chunked_large() -> Result<(), http_types::Error> {
                 .set_header(headers::CONTENT_TYPE, "text/plain; charset=utf-8");
             Ok(res)
         });
-        app.listen(&port).await?;
+        app.listen(("localhost", port)).await?;
         Result::<(), http_types::Error>::Ok(())
     });
 
     let client = task::spawn(async move {
         task::sleep(Duration::from_millis(100)).await;
-        let mut res = surf::get(format!("http://{}", port)).await?;
+        let mut res = surf::get(format!("http://localhost:{}", port)).await?;
         assert_eq!(res.status(), 200);
         assert_eq!(
             res.header(&"transfer-encoding".parse().unwrap()),
