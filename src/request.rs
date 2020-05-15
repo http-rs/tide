@@ -1,8 +1,4 @@
 use cookie::Cookie;
-use http_types::{
-    headers::{HeaderName, HeaderValue},
-    Method, StatusCode, Url, Version,
-};
 use route_recognizer::Params;
 use serde::Deserialize;
 
@@ -13,6 +9,8 @@ use std::pin::Pin;
 use std::{str::FromStr, sync::Arc};
 
 use crate::cookies::CookieData;
+use crate::http::headers::{HeaderName, HeaderValue};
+use crate::http::{self, Method, StatusCode, Url, Version};
 use crate::Response;
 
 /// An HTTP request.
@@ -25,7 +23,7 @@ use crate::Response;
 #[derive(Debug)]
 pub struct Request<State> {
     pub(crate) state: Arc<State>,
-    pub(crate) request: http_service::Request,
+    pub(crate) request: http::Request,
     pub(crate) route_params: Vec<Params>,
 }
 

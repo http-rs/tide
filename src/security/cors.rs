@@ -2,6 +2,7 @@ use crate::utils::BoxFuture;
 use http_types::headers::HeaderValue;
 use http_types::{headers, Method, StatusCode};
 
+use crate::http;
 use crate::middleware::{Middleware, Next};
 use crate::{Request, Result};
 
@@ -167,7 +168,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
                 return Ok(self.build_preflight_response(&origins).into());
             }
 
-            let mut response: http_service::Response = next.run(req).await?.into();
+            let mut response: http::Response = next.run(req).await?.into();
             response
                 .insert_header(
                     headers::ACCESS_CONTROL_ALLOW_ORIGIN,
