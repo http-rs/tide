@@ -3,8 +3,8 @@ use std::io;
 use std::path::Path;
 use std::sync::Arc;
 
-use super::serve_dir::ServeDir;
 use crate::endpoint::MiddlewareEndpoint;
+use crate::fs::ServeDir;
 use crate::log;
 use crate::utils::BoxFuture;
 use crate::{router::Router, Endpoint, Middleware};

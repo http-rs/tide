@@ -15,12 +15,7 @@ use crate::log;
 use crate::middleware::{Middleware, Next};
 use crate::router::{Router, Selection};
 use crate::utils::BoxFuture;
-use crate::{Endpoint, Request};
-
-mod route;
-mod serve_dir;
-
-pub use route::Route;
+use crate::{Endpoint, Request, Route};
 
 /// An HTTP server.
 ///
