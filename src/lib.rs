@@ -187,9 +187,11 @@
 
 mod cookies;
 mod endpoint;
+mod fs;
 mod middleware;
 mod request;
 mod response;
+mod route;
 mod router;
 mod server;
 mod utils;
@@ -198,23 +200,17 @@ pub mod log;
 pub mod prelude;
 pub mod redirect;
 pub mod security;
-
-pub use endpoint::Endpoint;
-pub use request::Request;
 pub mod sse;
 
-#[doc(inline)]
-pub use http_types::{Body, Error, Status, StatusCode};
-
-#[doc(inline)]
+pub use endpoint::Endpoint;
 pub use middleware::{Middleware, Next};
-#[doc(inline)]
+pub use request::Request;
 pub use response::Response;
-#[doc(inline)]
-pub use server::{Route, Server};
+pub use route::Route;
+pub use server::Server;
 
 #[doc(inline)]
-pub use http_types as http;
+pub use http_types::{self as http, Body, Error, Status, StatusCode};
 
 /// Create a new Tide server.
 ///
