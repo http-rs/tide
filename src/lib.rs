@@ -25,7 +25,7 @@
 //!
 //! __hello world__
 //! ```no_run
-//! # use futures::executor::block_on;
+//! # use async_std::task::block_on;
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
 //! #
 //! let mut app = tide::new();
@@ -37,7 +37,7 @@
 //!
 //! __echo server__
 //! ```no_run
-//! # use futures::executor::block_on;
+//! # use async_std::task::block_on;
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
 //! #
 //! let mut app = tide::new();
@@ -49,7 +49,7 @@
 //!
 //! __send and receive json__
 //! ```no_run
-//! # use futures::executor::block_on;
+//! # use async_std::task::block_on;
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
 //! # use tide::{Request, Response};
 //! #
@@ -217,7 +217,7 @@ pub use http_types::{self as http, Body, Error, Status, StatusCode};
 /// # Examples
 ///
 /// ```no_run
-/// # use futures::executor::block_on;
+/// # use async_std::task::block_on;
 /// # fn main() -> Result<(), std::io::Error> { block_on(async {
 /// #
 /// let mut app = tide::new();
@@ -237,7 +237,7 @@ pub fn new() -> server::Server<()> {
 /// # Examples
 ///
 /// ```no_run
-/// # use futures::executor::block_on;
+/// # use async_std::task::block_on;
 /// # fn main() -> Result<(), std::io::Error> { block_on(async {
 /// #
 /// use tide::Request;

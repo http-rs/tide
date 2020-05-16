@@ -1,10 +1,10 @@
 use async_std::io::prelude::*;
 use std::convert::TryFrom;
 
-use cookie::Cookie;
 use mime::Mime;
 use serde::Serialize;
 
+use crate::http::cookies::Cookie;
 use crate::http::headers::{HeaderName, HeaderValue};
 use crate::http::{self, Body, StatusCode};
 

@@ -1,4 +1,4 @@
-// use futures::executor::block_on;
+// use async_std::task::block_on;
 // use http_service::Body;
 // use http_service_mock::make_server;
 // use tide::{error::ResultExt, Request};

@@ -1,8 +1,10 @@
-use futures::future::BoxFuture;
-use http_types::headers::HeaderName;
+use http_types::{headers::HeaderName, Method, Request};
 use std::convert::TryInto;
 use tide::http::{self, Method};
 use tide::Middleware;
+use test_utils::BoxFuture;
+
+mod test_utils;
 
 #[derive(Debug)]
 struct TestMiddleware(HeaderName, &'static str);

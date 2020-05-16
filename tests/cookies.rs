@@ -1,6 +1,6 @@
-use cookie::Cookie;
-use futures::executor::block_on;
-use futures::AsyncReadExt;
+use tide::http::cookies::Cookie;
+use async_std::task::block_on;
+use async_std::prelude::*;
 
 use tide::{Request, Response, Server, StatusCode};
 

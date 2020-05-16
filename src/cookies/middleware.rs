@@ -2,8 +2,8 @@ use crate::response::CookieEvent;
 use crate::utils::BoxFuture;
 use crate::{Middleware, Next, Request};
 
-use cookie::{Cookie, CookieJar};
-use http_types::headers;
+use crate::http::cookies::{Cookie, CookieJar};
+use crate::http::headers;
 
 use std::sync::{Arc, RwLock};
 
