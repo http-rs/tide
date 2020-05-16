@@ -7,7 +7,8 @@ use async_std::task::{Context, Poll};
 use std::pin::Pin;
 use std::{str::FromStr, sync::Arc};
 
-use crate::cookies::{Cookie, CookieData};
+use crate::cookies::CookieData;
+use crate::http::cookies::Cookie;
 use crate::http::headers::{HeaderName, HeaderValue};
 use crate::http::{self, Method, StatusCode, Url, Version};
 use crate::Response;

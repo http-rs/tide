@@ -9,6 +9,7 @@ use std::pin::Pin;
 pub type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 
 /// Find an unused port.
+#[allow(dead_code)]
 pub async fn find_port() -> u16 {
     pick_unused_port().expect("No ports free")
 }

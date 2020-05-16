@@ -1,4 +1,4 @@
-use http_types::{headers::HeaderName, Method, Request};
+use http_types::headers::HeaderName;
 use std::convert::TryInto;
 use tide::http::{self, Method};
 use tide::Middleware;
