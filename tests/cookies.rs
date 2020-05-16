@@ -1,6 +1,6 @@
-use tide::http::cookies::Cookie;
-use async_std::task::block_on;
 use async_std::prelude::*;
+use async_std::task::block_on;
+use tide::http::cookies::Cookie;
 
 use tide::{Request, Response, Server, StatusCode};
 

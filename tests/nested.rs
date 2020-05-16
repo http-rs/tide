@@ -1,10 +1,8 @@
 use http_types::headers::{HeaderName, HeaderValue};
 use http_types::{Method, Request, Url};
 use std::str::FromStr;
-use tide::http::headers::{HeaderName, HeaderValue};
-use tide::http::{Method, Request, Response, Url};
-use tide::{Middleware, Next};
 use test_utils::BoxFuture;
+use tide::{Middleware, Next};
 
 mod test_utils;
 
