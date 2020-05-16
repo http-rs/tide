@@ -38,7 +38,7 @@ use crate::{Middleware, Request, Response};
 /// ```no_run
 /// # use core::future::Future;
 /// fn hello(_req: tide::Request<()>) -> impl Future<Output = tide::Result<String>> {
-///     futures::future::ready(Ok(String::from("hello")))
+///     async_std::future::ready(Ok(String::from("hello")))
 /// }
 ///
 /// fn main() {
