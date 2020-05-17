@@ -5,6 +5,7 @@ description = "Serve the web – HTTP server framework"
 authors = [
     "Aaron Turon <aturon@mozilla.com>",
     "Yoshua Wuyts <yoshuawuyts@gmail.com>",
+    "Wonwoo Choi <chwo9843@gmail.com>",
 ]
 documentation = "https://docs.rs/tide"
 keywords = ["tide", "http", "web", "framework", "async"]
