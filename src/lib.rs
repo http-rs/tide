@@ -200,6 +200,10 @@ pub mod log;
 pub mod prelude;
 pub mod redirect;
 pub mod security;
+
+pub use endpoint::Endpoint;
+pub use redirect::Redirect;
+pub use request::Request;
 pub mod sse;
 
 pub use endpoint::Endpoint;
