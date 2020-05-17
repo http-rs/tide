@@ -335,8 +335,8 @@ impl<State: Send + Sync + 'static> Server<State> {
     {
         let req = Request::new(self.state.clone(), req.into(), Vec::new());
         match self.call(req).await {
-            Ok(value) => {
-                let res: http_types::Response = value.into();
+            Ok(res) => {
+                let res: http_types::Response = res.into();
                 // We assume that if an error was manually cast to a
                 // Response that we actually want to send the body to the
                 // client. At this point we don't scrub the message.
