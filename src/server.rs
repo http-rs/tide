@@ -1,14 +1,12 @@
 //! An HTTP server
 
-use async_std::future::Future;
 use async_std::io;
 use async_std::net::ToSocketAddrs;
+use async_std::prelude::*;
 use async_std::sync::Arc;
-use async_std::task::{Context, Poll};
-use http_service::HttpService;
+use async_std::task;
 
 use std::fmt::Debug;
-use std::pin::Pin;
 
 use crate::cookies;
 use crate::log;
@@ -281,14 +279,81 @@ impl<State: Send + Sync + 'static> Server<State> {
 
     /// Asynchronously serve the app at the given address.
     #[cfg(feature = "h1-server")]
-    pub async fn listen(self, addr: impl ToSocketAddrs) -> std::io::Result<()> {
+    pub async fn listen(self, addr: impl ToSocketAddrs) -> io::Result<()> {
         let listener = async_std::net::TcpListener::bind(addr).await?;
 
         let addr = format!("http://{}", listener.local_addr()?);
         log::info!("Server is listening on: {}", addr);
-        let mut server = http_service_h1::Server::new(addr, listener.incoming(), self);
+        let mut incoming = listener.incoming();
 
-        server.run().await
+        while let Some(stream) = incoming.next().await {
+            let stream = stream?;
+            let addr = addr.clone();
+            let this = self.clone();
+            task::spawn(async move {
+                let res = async_h1::accept(&addr, stream, |req| async {
+                    let res = this.respond(req).await;
+                    let res = res.map_err(|_| io::Error::from(io::ErrorKind::Other))?;
+                    Ok(res)
+                })
+                .await;
+
+                if let Err(err) = res {
+                    log::error!("async-h1 error", { error: err.to_string() });
+                }
+            });
+        }
+        Ok(())
+    }
+
+    /// Respond to a `Request` with a `Response`.
+    ///
+    /// This method is useful for testing endpoints directly,
+    /// or for creating servers over custom transports.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # #[async_std::main]
+    /// # async fn main() -> http_types::Result<()> {
+    /// #
+    /// use tide::http::{Url, Method, Request, Response};
+    ///
+    /// let mut app = tide::new();
+    /// app.at("/").get(|_| async move { Ok("hello world") });
+    ///
+    /// let req = Request::new(Method::Get, Url::parse("https://example.com")?);
+    /// let res: Response = app.respond(req).await?;
+    ///
+    /// assert_eq!(res.status(), 200);
+    /// #
+    /// # Ok(()) }
+    /// ```
+    pub async fn respond<R>(&self, req: impl Into<http_types::Request>) -> http_types::Result<R>
+    where
+        R: From<http_types::Response>,
+    {
+        let req = Request::new(self.state.clone(), req.into(), Vec::new());
+        match self.call(req).await {
+            Ok(res) => {
+                let res: http_types::Response = res.into();
+                // We assume that if an error was manually cast to a
+                // Response that we actually want to send the body to the
+                // client. At this point we don't scrub the message.
+                Ok(res.into())
+            }
+            Err(err) => {
+                let mut res = http_types::Response::new(err.status());
+                res.set_content_type(http_types::mime::PLAIN);
+                // Only send the message if it is a non-500 range error. All
+                // errors default to 500 by default, so sending the error
+                // body is opt-in at the call site.
+                if !res.status().is_server_error() {
+                    res.set_body(err.to_string());
+                }
+                Ok(res.into())
+            }
+        }
     }
 }
 
@@ -299,56 +364,6 @@ impl<State> Clone for Server<State> {
             state: self.state.clone(),
             middleware: self.middleware.clone(),
         }
-    }
-}
-
-#[derive(Debug)]
-pub struct ReadyFuture;
-
-impl Future for ReadyFuture {
-    type Output = io::Result<()>;
-
-    fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
-        Poll::Ready(Ok(()))
-    }
-}
-
-impl<State: Sync + Send + 'static> HttpService for Server<State> {
-    type Connection = ();
-    type ConnectionFuture = ReadyFuture;
-    type ConnectionError = io::Error;
-    type ResponseFuture = BoxFuture<'static, Result<http_service::Response, http_types::Error>>;
-    type ResponseError = http_types::Error;
-
-    fn connect(&self) -> Self::ConnectionFuture {
-        ReadyFuture {}
-    }
-
-    fn respond(&self, _conn: (), req: http_service::Request) -> Self::ResponseFuture {
-        let req = Request::new(self.state.clone(), req, Vec::new());
-        let service = self.clone();
-        Box::pin(async move {
-            match service.call(req).await {
-                Ok(value) => {
-                    let res = value.into();
-                    // We assume that if an error was manually cast to a
-                    // Response that we actually want to send the body to the
-                    // client. At this point we don't scrub the message.
-                    Ok(res)
-                }
-                Err(err) => {
-                    let mut res = http_types::Response::new(err.status());
-                    res.set_content_type(http_types::mime::PLAIN);
-                    // Only send the message if it is a non-500 range error. All
-                    // errors default to 500 by default, so sending the error
-                    // body is opt-in at the call site.
-                    if !res.status().is_server_error() {
-                        res.set_body(err.to_string());
-                    }
-                    Ok(res)
-                }
-            }
-        })
     }
 }
 

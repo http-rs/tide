@@ -1,8 +1,7 @@
 use async_std::prelude::*;
 use futures::executor::block_on;
-use http_service_mock::{make_server, TestBackend};
 use serde::Deserialize;
-use tide::{Request, Response, Server, StatusCode};
+use tide::{http, Request, Response, Server, StatusCode};
 
 #[derive(Deserialize)]
 struct Params {
@@ -31,36 +30,36 @@ async fn optional_handler(cx: Request<()>) -> tide::Result {
     }
 }
 
-fn get_server() -> TestBackend<Server<()>> {
+fn get_server() -> Server<()> {
     let mut app = Server::new();
     app.at("/").get(handler);
     app.at("/optional").get(optional_handler);
-    make_server(app).unwrap()
+    app
 }
 
-#[test]
-fn successfully_deserialize_query() {
-    let mut server = get_server();
+#[async_std::test]
+async fn successfully_deserialize_query() {
+    let app = get_server();
     let req = http_types::Request::new(
         http_types::Method::Get,
         "http://example.com/?msg=Hello".parse().unwrap(),
     );
 
-    let mut res = server.simulate(req).unwrap();
+    let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     let mut body = String::new();
     block_on(res.read_to_string(&mut body)).unwrap();
     assert_eq!(body, "Hello");
 }
 
-#[test]
-fn unsuccessfully_deserialize_query() {
-    let mut server = get_server();
+#[async_std::test]
+async fn unsuccessfully_deserialize_query() {
+    let app = get_server();
     let req = http_types::Request::new(
         http_types::Method::Get,
         "http://example.com/".parse().unwrap(),
     );
-    let mut res = server.simulate(req).unwrap();
+    let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), 400);
 
     let mut body = String::new();
@@ -68,14 +67,14 @@ fn unsuccessfully_deserialize_query() {
     assert_eq!(body, "failed with reason: missing field `msg`");
 }
 
-#[test]
-fn malformatted_query() {
-    let mut server = get_server();
+#[async_std::test]
+async fn malformatted_query() {
+    let app = get_server();
     let req = http_types::Request::new(
         http_types::Method::Get,
         "http://example.com/?error=should_fail".parse().unwrap(),
     );
-    let mut res = server.simulate(req).unwrap();
+    let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), 400);
 
     let mut body = String::new();
@@ -83,14 +82,14 @@ fn malformatted_query() {
     assert_eq!(body, "failed with reason: missing field `msg`");
 }
 
-#[test]
-fn empty_query_string_for_struct_with_no_required_fields() {
-    let mut server = get_server();
+#[async_std::test]
+async fn empty_query_string_for_struct_with_no_required_fields() {
+    let app = get_server();
     let req = http_types::Request::new(
         http_types::Method::Get,
         "http://example.com/optional".parse().unwrap(),
     );
-    let res = server.simulate(req).unwrap();
+    let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
 }
 

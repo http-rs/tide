@@ -17,13 +17,13 @@ fn hello_world() -> Result<(), http_types::Error> {
                 let res = Response::new(StatusCode::Ok).body_string("says hello".to_string());
                 Ok(res)
             });
-            app.listen(&port).await?;
+            app.listen(("localhost", port)).await?;
             Result::<(), http_types::Error>::Ok(())
         });
 
         let client = task::spawn(async move {
             task::sleep(Duration::from_millis(100)).await;
-            let string = surf::get(format!("http://{}", port))
+            let string = surf::get(format!("http://localhost:{}", port))
                 .body_string("nori".to_string())
                 .recv_string()
                 .await?;
@@ -43,13 +43,13 @@ fn echo_server() -> Result<(), http_types::Error> {
             let mut app = tide::new();
             app.at("/").get(|req| async move { Ok(req) });
 
-            app.listen(&port).await?;
+            app.listen(("localhost", port)).await?;
             Result::<(), http_types::Error>::Ok(())
         });
 
         let client = task::spawn(async move {
             task::sleep(Duration::from_millis(100)).await;
-            let string = surf::get(format!("http://{}", port))
+            let string = surf::get(format!("http://localhost:{}", port))
                 .body_string("chashu".to_string())
                 .recv_string()
                 .await?;
@@ -79,13 +79,13 @@ fn json() -> Result<(), http_types::Error> {
                 let res = Response::new(StatusCode::Ok).body_json(&counter)?;
                 Ok(res)
             });
-            app.listen(&port).await?;
+            app.listen(("localhost", port)).await?;
             Result::<(), http_types::Error>::Ok(())
         });
 
         let client = task::spawn(async move {
             task::sleep(Duration::from_millis(100)).await;
-            let counter: Counter = surf::get(format!("http://{}", &port))
+            let counter: Counter = surf::get(format!("http://localhost:{}", &port))
                 .body_json(&Counter { count: 0 })?
                 .recv_json()
                 .await?;

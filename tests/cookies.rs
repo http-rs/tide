@@ -1,7 +1,6 @@
 use cookie::Cookie;
 use futures::executor::block_on;
 use futures::AsyncReadExt;
-use http_service_mock::make_server;
 
 use tide::{Request, Response, Server, StatusCode};
 
@@ -44,9 +43,8 @@ fn app() -> crate::Server<()> {
     app
 }
 
-fn make_request(endpoint: &str) -> http_types::Response {
+async fn make_request(endpoint: &str) -> http_types::Response {
     let app = app();
-    let mut server = make_server(app).unwrap();
     let mut req = http_types::Request::new(
         http_types::Method::Get,
         format!("http://example.com{}", endpoint).parse().unwrap(),
@@ -57,12 +55,13 @@ fn make_request(endpoint: &str) -> http_types::Response {
     )
     .unwrap();
 
-    server.simulate(req).unwrap()
+    let res: tide::http::Response = app.respond(req).await.unwrap();
+    res
 }
 
-#[test]
-fn successfully_retrieve_request_cookie() {
-    let mut res = make_request("/get");
+#[async_std::test]
+async fn successfully_retrieve_request_cookie() {
+    let mut res = make_request("/get").await;
     assert_eq!(res.status(), StatusCode::Ok);
 
     let body = block_on(async move {
@@ -74,17 +73,17 @@ fn successfully_retrieve_request_cookie() {
     assert_eq!(&body, "RequestCookieValue and also Other;Cookie Value");
 }
 
-#[test]
-fn successfully_set_cookie() {
-    let res = make_request("/set");
+#[async_std::test]
+async fn successfully_set_cookie() {
+    let res = make_request("/set").await;
     assert_eq!(res.status(), StatusCode::Ok);
     let test_cookie_header = res.header(&http_types::headers::SET_COOKIE).unwrap()[0].as_str();
     assert_eq!(test_cookie_header, "testCookie=NewCookieValue");
 }
 
-#[test]
-fn successfully_remove_cookie() {
-    let res = make_request("/remove");
+#[async_std::test]
+async fn successfully_remove_cookie() {
+    let res = make_request("/remove").await;
     assert_eq!(res.status(), StatusCode::Ok);
     let test_cookie_header = res.header(&http_types::headers::SET_COOKIE).unwrap()[0].as_str();
     assert!(test_cookie_header.starts_with("testCookie=;"));
@@ -95,9 +94,9 @@ fn successfully_remove_cookie() {
     assert_eq!(cookie.max_age().unwrap().num_nanoseconds(), Some(0));
 }
 
-#[test]
-fn successfully_set_multiple_cookies() {
-    let res = make_request("/multi");
+#[async_std::test]
+async fn successfully_set_multiple_cookies() {
+    let res = make_request("/multi").await;
     assert_eq!(res.status(), StatusCode::Ok);
     let cookie_header = res.header(&http_types::headers::SET_COOKIE);
     let cookies = cookie_header.unwrap().iter().collect::<Vec<_>>();

@@ -1,8 +1,7 @@
 use futures::future::BoxFuture;
-use http_service_mock::make_server;
-use http_types::headers::{HeaderName, HeaderValue};
-use http_types::{Method, Request, Url};
 use std::str::FromStr;
+use tide::http::headers::{HeaderName, HeaderValue};
+use tide::http::{Method, Request, Response, Url};
 use tide::{Middleware, Next};
 
 #[async_std::test]
@@ -15,13 +14,11 @@ async fn nested() {
     // Nest the inner app on /foo
     outer.at("/foo").nest(inner);
 
-    let mut server = make_server(outer).unwrap();
-
     let req = Request::new(
         Method::Get,
         Url::parse("http://example.com/foo/foo").unwrap(),
     );
-    let res = server.simulate(req).unwrap();
+    let res: Response = outer.respond(req).await.unwrap();
     assert_eq!(res.status(), 200);
     assert_eq!(res.body_string().await.unwrap(), "foo");
 
@@ -29,7 +26,7 @@ async fn nested() {
         Method::Get,
         Url::parse("http://example.com/foo/bar").unwrap(),
     );
-    let res = server.simulate(req).unwrap();
+    let res: Response = outer.respond(req).await.unwrap();
     assert_eq!(res.status(), 200);
     assert_eq!(res.body_string().await.unwrap(), "bar");
 }
@@ -74,13 +71,11 @@ async fn nested_middleware() {
 
     app.at("/bar").get(echo_path);
 
-    let mut server = make_server(app).unwrap();
-
     let req = Request::new(
         Method::Get,
         Url::parse("http://example.com/foo/echo").unwrap(),
     );
-    let res = server.simulate(req).unwrap();
+    let res: Response = app.respond(req).await.unwrap();
     assert_header(&res, "X-Tide-Test", Some("1"));
     assert_eq!(res.status(), 200);
     assert_eq!(res.body_string().await.unwrap(), "/echo");
@@ -89,13 +84,13 @@ async fn nested_middleware() {
         Method::Get,
         Url::parse("http://example.com/foo/x/bar").unwrap(),
     );
-    let res = server.simulate(req).unwrap();
+    let res: Response = app.respond(req).await.unwrap();
     assert_header(&res, "X-Tide-Test", Some("1"));
     assert_eq!(res.status(), 200);
     assert_eq!(res.body_string().await.unwrap(), "/");
 
     let req = Request::new(Method::Get, Url::parse("http://example.com/bar").unwrap());
-    let res = server.simulate(req).unwrap();
+    let res: Response = app.respond(req).await.unwrap();
     assert_header(&res, "X-Tide-Test", None);
     assert_eq!(res.status(), 200);
     assert_eq!(res.body_string().await.unwrap(), "/bar");
@@ -112,15 +107,13 @@ async fn nested_with_different_state() {
     outer.at("/").get(|_| async move { Ok("Hello, world!") });
     outer.at("/foo").nest(inner);
 
-    let mut server = make_server(outer).unwrap();
-
     let req = Request::new(Method::Get, Url::parse("http://example.com/foo").unwrap());
-    let res = server.simulate(req).unwrap();
+    let res: Response = outer.respond(req).await.unwrap();
     assert_eq!(res.status(), 200);
     assert_eq!(res.body_string().await.unwrap(), "the number is 42");
 
     let req = Request::new(Method::Get, Url::parse("http://example.com/").unwrap());
-    let res = server.simulate(req).unwrap();
+    let res: Response = outer.respond(req).await.unwrap();
     assert_eq!(res.status(), 200);
     assert_eq!(res.body_string().await.unwrap(), "Hello, world!");
 }

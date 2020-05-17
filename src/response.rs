@@ -2,13 +2,11 @@ use async_std::io::prelude::*;
 use std::convert::TryFrom;
 
 use cookie::Cookie;
-use http_service::Body;
-use http_types::{
-    headers::{HeaderName, HeaderValue},
-    StatusCode,
-};
 use mime::Mime;
 use serde::Serialize;
+
+use crate::http::headers::{HeaderName, HeaderValue};
+use crate::http::{self, Body, StatusCode};
 
 #[derive(Debug)]
 pub(crate) enum CookieEvent {
@@ -19,7 +17,7 @@ pub(crate) enum CookieEvent {
 /// An HTTP response
 #[derive(Debug)]
 pub struct Response {
-    pub(crate) res: http_service::Response,
+    pub(crate) res: http::Response,
     // tracking here
     pub(crate) cookie_events: Vec<CookieEvent>,
 }
@@ -251,14 +249,14 @@ impl Response {
     }
 }
 
-impl Into<http_service::Response> for Response {
-    fn into(self) -> http_service::Response {
+impl Into<http::Response> for Response {
+    fn into(self) -> http::Response {
         self.res
     }
 }
 
-impl From<http_service::Response> for Response {
-    fn from(res: http_service::Response) -> Self {
+impl From<http::Response> for Response {
+    fn from(res: http::Response) -> Self {
         Self {
             res,
             cookie_events: vec![],
