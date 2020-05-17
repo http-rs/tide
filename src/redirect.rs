@@ -21,6 +21,22 @@ use crate::StatusCode;
 use crate::{Endpoint, Request, Response};
 
 /// A redirection endpoint.
+///
+/// # Example
+///
+/// ```
+/// # use tide::{Response, Redirect, Request, StatusCode};
+/// # fn next_product() -> Option<String> { None }
+/// # #[allow(dead_code)]
+/// async fn route_handler(request: Request<()>) -> tide::Result {
+///     if let Some(product_url) = next_product() {
+///         Ok(Redirect::new(product_url).into())
+///     } else {
+///         //...
+/// #       Ok(Response::new(StatusCode::Ok)) //...
+///     }
+/// }
+/// ```
 #[derive(Debug, Clone)]
 pub struct Redirect<T: AsRef<str>> {
     status: StatusCode,
@@ -31,22 +47,6 @@ impl<T: AsRef<str>> Redirect<T> {
     /// Creates an endpoint that represents a redirect to `location`.
     ///
     /// Uses status code 302 Found.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use tide::{Response, Redirect, Request, StatusCode};
-    /// # fn next_product() -> Option<String> { None }
-    /// # #[allow(dead_code)]
-    /// async fn route_handler(request: Request<()>) -> tide::Result {
-    ///     if let Some(product_url) = next_product() {
-    ///         Ok(Redirect::new(product_url).into())
-    ///     } else {
-    ///         //...
-    /// #       Ok(Response::new(StatusCode::Ok)) //...
-    ///     }
-    /// }
-    /// ```
     pub fn new(location: T) -> Self {
         Self {
             status: StatusCode::SeeOther,
@@ -56,22 +56,7 @@ impl<T: AsRef<str>> Redirect<T> {
 
     /// Creates an endpoint that represents a permanent redirect to `location`.
     ///
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use tide::{Response, Redirect, Request, StatusCode};
-    /// # fn canonicalize(uri: &url::Url) -> Option<&url::Url> { None }
-    /// # #[allow(dead_code)]
-    /// async fn route_handler(request: Request<()>) -> tide::Result {
-    ///     if let Some(canonical_redirect) = canonicalize(request.uri()) {
-    ///         Ok(Redirect::permanent(canonical_redirect).into())
-    ///     } else {
-    ///          //...
-    /// #        Ok(Response::new(StatusCode::Ok)) // ...
-    ///     }
-    /// }
-    /// ```
+    /// Uses status code 301 Permanent Redirect.
     pub fn permanent(location: T) -> Self {
         Self {
             status: StatusCode::PermanentRedirect,
@@ -81,22 +66,7 @@ impl<T: AsRef<str>> Redirect<T> {
 
     /// Creates an endpoint that represents a temporary redirect to `location`.
     ///
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use tide::{Response, Redirect, Request, StatusCode};
-    /// # fn special_sale_today() -> Option<String> { None }
-    /// # #[allow(dead_code)]
-    /// async fn route_handler(request: Request<()>) -> tide::Result {
-    ///     if let Some(sale_url) = special_sale_today() {
-    ///         Ok(Redirect::temporary(sale_url).into())
-    ///     } else {
-    ///         //...
-    /// #       Ok(Response::new(StatusCode::Ok)) //...
-    ///     }
-    /// }
-    /// ```
+    /// Uses status code 307 Temporary Redirect.
     pub fn temporary(location: T) -> Self {
         Self {
             status: StatusCode::TemporaryRedirect,
@@ -106,24 +76,7 @@ impl<T: AsRef<str>> Redirect<T> {
 
     /// Creates an endpoint that represents a see other redirect to `location`.
     ///
-    /// GET methods are unchanged.
-    /// Other methods are changed to GET and their body lost.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use tide::{Response, Redirect, Request, StatusCode};
-    /// # fn next_product() -> Option<String> { None }
-    /// # #[allow(dead_code)]
-    /// async fn route_handler(request: Request<()>) -> tide::Result {
-    ///     if let Some(product_url) = next_product() {
-    ///         Ok(Redirect::see_other(product_url).into())
-    ///     } else {
-    ///         //...
-    /// #       Ok(Response::new(StatusCode::Ok)) //...
-    ///     }
-    /// }
-    /// ```
+    /// Uses status code 303 See Other.
     pub fn see_other(location: T) -> Self {
         Self {
             status: StatusCode::SeeOther,
