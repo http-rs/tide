@@ -308,6 +308,18 @@ impl<State> Request<State> {
     }
 }
 
+impl<State> AsMut<http::Request> for Request<State> {
+    fn as_mut(&mut self) -> &mut http::Request {
+        &mut self.request
+    }
+}
+
+impl<State> AsRef<http::Request> for Request<State> {
+    fn as_ref(&self) -> &http::Request {
+        &self.request
+    }
+}
+
 impl<State> Read for Request<State> {
     fn poll_read(
         mut self: Pin<&mut Self>,
@@ -315,6 +327,12 @@ impl<State> Read for Request<State> {
         buf: &mut [u8],
     ) -> Poll<io::Result<usize>> {
         Pin::new(&mut self.request).poll_read(cx, buf)
+    }
+}
+
+impl<State> Into<http::Request> for Request<State> {
+    fn into(self) -> http::Request {
+        self.request
     }
 }
 
