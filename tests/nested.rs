@@ -1,5 +1,5 @@
 use http_types::headers::{HeaderName, HeaderValue};
-use http_types::{Method, Request, Url};
+use http_types::{Method, Request, Response, Url};
 use std::str::FromStr;
 use test_utils::BoxFuture;
 use tide::{Middleware, Next};
