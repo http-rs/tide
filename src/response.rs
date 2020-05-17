@@ -67,7 +67,7 @@ impl Response {
     /// }
     /// ```
     pub fn redirect(location: impl AsRef<str>) -> Self {
-        Redirect::found(location).into()
+        Redirect::new(location).into()
     }
 
     /// Returns the statuscode.

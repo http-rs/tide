@@ -28,7 +28,9 @@ pub struct Redirect<T: AsRef<str>> {
 }
 
 impl<T: AsRef<str>> Redirect<T> {
-    /// Creates an endpoint that represents a found redirect to `location`.
+    /// Creates an endpoint that represents a redirect to `location`.
+    ///
+    /// Uses status code 302 Found.
     ///
     /// # Example
     ///
@@ -38,14 +40,14 @@ impl<T: AsRef<str>> Redirect<T> {
     /// # #[allow(dead_code)]
     /// async fn route_handler(request: Request<()>) -> tide::Result {
     ///     if let Some(product_url) = next_product() {
-    ///         Ok(Redirect::found(product_url).into())
+    ///         Ok(Redirect::new(product_url).into())
     ///     } else {
     ///         //...
     /// #       Ok(Response::new(StatusCode::Ok)) //...
     ///     }
     /// }
     /// ```
-    pub fn found(location: T) -> Self {
+    pub fn new(location: T) -> Self {
         Self {
             status: StatusCode::SeeOther,
             location,
