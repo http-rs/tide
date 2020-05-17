@@ -28,6 +28,30 @@ pub struct Redirect<T: AsRef<str>> {
 }
 
 impl<T: AsRef<str>> Redirect<T> {
+    /// Creates an endpoint that represents a found redirect to `location`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use tide::{Response, Redirect, Request, StatusCode};
+    /// # fn next_product() -> Option<String> { None }
+    /// # #[allow(dead_code)]
+    /// async fn route_handler(request: Request<()>) -> tide::Result {
+    ///     if let Some(product_url) = next_product() {
+    ///         Ok(Redirect::found(product_url).into())
+    ///     } else {
+    ///         //...
+    /// #       Ok(Response::new(StatusCode::Ok)) //...
+    ///     }
+    /// }
+    /// ```
+    pub fn found(location: T) -> Self {
+        Self {
+            status: StatusCode::SeeOther,
+            location,
+        }
+    }
+
     /// Creates an endpoint that represents a permanent redirect to `location`.
     ///
     ///
