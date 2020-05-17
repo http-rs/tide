@@ -47,6 +47,29 @@ impl Response {
         }
     }
 
+    /// Creates a response that represents a redirect to `location`.
+    ///
+    /// Uses status code 302 Found.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use tide::{Response, Request, StatusCode};
+    /// # fn special_sale_today() -> Option<String> { None }
+    /// # #[allow(dead_code)]
+    /// async fn route_handler(request: Request<()>) -> tide::Result {
+    ///     if let Some(sale_url) = special_sale_today() {
+    ///         Ok(Response::redirect(sale_url))
+    ///     } else {
+    ///         //...
+    /// #       Ok(Response::new(StatusCode::Ok)) //...
+    ///     }
+    /// }
+    /// ```
+    pub fn redirect(location: impl AsRef<str>) -> Self {
+        Redirect::found(location).into()
+    }
+
     /// Returns the statuscode.
     pub fn status(&self) -> crate::StatusCode {
         self.res.status()
