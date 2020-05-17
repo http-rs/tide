@@ -1,8 +1,10 @@
-use futures::future::BoxFuture;
+use http_types::headers::{HeaderName, HeaderValue};
+use http_types::{Method, Request, Response, Url};
 use std::str::FromStr;
-use tide::http::headers::{HeaderName, HeaderValue};
-use tide::http::{Method, Request, Response, Url};
+use test_utils::BoxFuture;
 use tide::{Middleware, Next};
+
+mod test_utils;
 
 #[async_std::test]
 async fn nested() {

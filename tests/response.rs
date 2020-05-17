@@ -1,4 +1,4 @@
-// use futures::executor::block_on;
+// use async_std::task::block_on;
 // use tide::*;
 
 // #[test]

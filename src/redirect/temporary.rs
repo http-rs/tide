@@ -8,7 +8,7 @@ use crate::{Endpoint, Request, Response};
 ///
 /// # Examples
 /// ```no_run
-/// # use futures::executor::block_on;
+/// # use async_std::task::block_on;
 /// # fn main() -> Result<(), std::io::Error> { block_on(async {
 /// #
 /// use tide::redirect;

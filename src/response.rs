@@ -1,10 +1,10 @@
 use async_std::io::prelude::*;
 use std::convert::TryFrom;
 
-use cookie::Cookie;
 use mime::Mime;
 use serde::Serialize;
 
+use crate::http::cookies::Cookie;
 use crate::http::headers::{HeaderName, HeaderValue};
 use crate::http::{self, Body, StatusCode};
 
@@ -54,7 +54,7 @@ impl Response {
     ///
     /// ```
     /// # use tide::{Response, Request, StatusCode};
-    /// # fn canonicalize(uri: &url::Url) -> Option<&url::Url> { None }
+    /// # fn canonicalize(uri: &tide::http::Url) -> Option<&tide::http::Url> { None }
     /// # #[allow(dead_code)]
     /// async fn route_handler(request: Request<()>) -> tide::Result {
     ///     if let Some(canonical_redirect) = canonicalize(request.uri()) {

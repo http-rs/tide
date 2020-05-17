@@ -1,4 +1,3 @@
-use cookie::Cookie;
 use route_recognizer::Params;
 use serde::Deserialize;
 
@@ -9,6 +8,7 @@ use std::pin::Pin;
 use std::{str::FromStr, sync::Arc};
 
 use crate::cookies::CookieData;
+use crate::http::cookies::Cookie;
 use crate::http::headers::{HeaderName, HeaderValue};
 use crate::http::{self, Method, StatusCode, Url, Version};
 use crate::Response;
@@ -45,7 +45,7 @@ impl<State> Request<State> {
     /// # Examples
     ///
     /// ```no_run
-    /// # use futures::executor::block_on;
+    /// # use async_std::task::block_on;
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
     /// use tide::Request;
@@ -68,7 +68,7 @@ impl<State> Request<State> {
     /// # Examples
     ///
     /// ```no_run
-    /// # use futures::executor::block_on;
+    /// # use async_std::task::block_on;
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
     /// use tide::Request;
@@ -91,7 +91,7 @@ impl<State> Request<State> {
     /// # Examples
     ///
     /// ```no_run
-    /// # use futures::executor::block_on;
+    /// # use async_std::task::block_on;
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
     /// use tide::Request;
@@ -114,7 +114,7 @@ impl<State> Request<State> {
     /// # Examples
     ///
     /// ```no_run
-    /// # use futures::executor::block_on;
+    /// # use async_std::task::block_on;
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
     /// use tide::Request;
@@ -196,7 +196,7 @@ impl<State> Request<State> {
     /// # Examples
     ///
     /// ```no_run
-    /// # use futures::executor::block_on;
+    /// # use async_std::task::block_on;
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
     /// use tide::Request;
@@ -231,7 +231,7 @@ impl<State> Request<State> {
     /// # Examples
     ///
     /// ```no_run
-    /// # use futures::executor::block_on;
+    /// # use async_std::task::block_on;
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
     /// use tide::Request;
