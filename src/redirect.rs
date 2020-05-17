@@ -83,11 +83,6 @@ impl<T: AsRef<str>> Redirect<T> {
             location,
         }
     }
-
-    /// Returns response with equivalent redirect.
-    pub fn response(&self) -> Response {
-        Response::new(self.status).set_header("location".parse().unwrap(), &self.location)
-    }
 }
 
 impl<State, T> Endpoint<State> for Redirect<T>
@@ -95,13 +90,19 @@ where
     T: AsRef<str> + Send + Sync + 'static,
 {
     fn call<'a>(&'a self, _req: Request<State>) -> BoxFuture<'a, crate::Result<Response>> {
-        let res = self.response();
+        let res = self.into();
         Box::pin(async move { Ok(res) })
     }
 }
 
 impl<T: AsRef<str>> Into<Response> for Redirect<T> {
     fn into(self) -> Response {
-        self.response()
+        (&self).into()
+    }
+}
+
+impl<T: AsRef<str>> Into<Response> for &Redirect<T> {
+    fn into(self) -> Response {
+        Response::new(self.status).set_header("location".parse().unwrap(), &self.location)
     }
 }
