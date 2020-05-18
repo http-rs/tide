@@ -109,6 +109,11 @@ impl Response {
         self.res.len()
     }
 
+    /// Get an HTTP header.
+    pub fn header(&self, name: &HeaderName) -> Option<&Vec<HeaderValue>> {
+        self.res.header(name)
+    }
+
     /// Remove a header.
     pub fn remove_header(&mut self, name: &HeaderName) -> Option<Vec<HeaderValue>> {
         self.res.remove_header(name)
