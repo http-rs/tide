@@ -5,9 +5,7 @@
 //! ```no_run
 //! use tide::log;
 //!
-//! // `tide::log` requires starting a third-party logger such as `femme`. We may
-//! // ship such a logger as part of Tide in the future.
-//! femme::start(log::Level::Info.to_level_filter()).unwrap();
+//! log::start();
 //!
 //! log::info!("Hello cats");
 //! log::debug!("{} wants tuna", "Nori");
