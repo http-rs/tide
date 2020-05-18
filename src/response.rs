@@ -7,6 +7,7 @@ use serde::Serialize;
 use crate::http::cookies::Cookie;
 use crate::http::headers::{HeaderName, HeaderValue};
 use crate::http::{self, Body, StatusCode};
+use crate::Redirect;
 
 #[derive(Debug)]
 pub(crate) enum CookieEvent {
