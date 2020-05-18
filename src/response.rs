@@ -262,6 +262,18 @@ impl Response {
     }
 }
 
+impl AsMut<http::Response> for Response {
+    fn as_mut(&mut self) -> &mut http::Response {
+        &mut self.res
+    }
+}
+
+impl AsRef<http::Response> for Response {
+    fn as_ref(&self) -> &http::Response {
+        &self.res
+    }
+}
+
 impl Into<http::Response> for Response {
     fn into(self) -> http_types::Response {
         self.res
