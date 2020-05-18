@@ -7,6 +7,7 @@ use serde::Serialize;
 use crate::http::cookies::Cookie;
 use crate::http::headers::{HeaderName, HeaderValue};
 use crate::http::{self, Body, StatusCode};
+use crate::Redirect;
 
 #[derive(Debug)]
 pub(crate) enum CookieEvent {
@@ -47,31 +48,9 @@ impl Response {
         }
     }
 
-    /// Creates a response that represents a permanent redirect to `location`.
+    /// Creates a response that represents a redirect to `location`.
     ///
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use tide::{Response, Request, StatusCode};
-    /// # fn canonicalize(uri: &tide::http::Url) -> Option<&tide::http::Url> { None }
-    /// # #[allow(dead_code)]
-    /// async fn route_handler(request: Request<()>) -> tide::Result {
-    ///     if let Some(canonical_redirect) = canonicalize(request.uri()) {
-    ///         Ok(Response::redirect_permanent(canonical_redirect))
-    ///     } else {
-    ///          //...
-    /// #        Ok(Response::new(StatusCode::Ok)) // ...
-    ///     }
-    /// }
-    /// ```
-    pub fn redirect_permanent(location: impl AsRef<str>) -> Self {
-        Response::new(StatusCode::PermanentRedirect)
-            .set_header("location".parse().unwrap(), location)
-    }
-
-    /// Creates a response that represents a temporary redirect to `location`.
-    ///
+    /// Uses status code 302 Found.
     ///
     /// # Example
     ///
@@ -81,16 +60,15 @@ impl Response {
     /// # #[allow(dead_code)]
     /// async fn route_handler(request: Request<()>) -> tide::Result {
     ///     if let Some(sale_url) = special_sale_today() {
-    ///         Ok(Response::redirect_temporary(sale_url))
+    ///         Ok(Response::redirect(sale_url))
     ///     } else {
     ///         //...
     /// #       Ok(Response::new(StatusCode::Ok)) //...
     ///     }
     /// }
     /// ```
-    pub fn redirect_temporary(location: impl AsRef<str>) -> Self {
-        Response::new(StatusCode::TemporaryRedirect)
-            .set_header("location".parse().unwrap(), location)
+    pub fn redirect(location: impl AsRef<str>) -> Self {
+        Redirect::new(location).into()
     }
 
     /// Returns the statuscode.

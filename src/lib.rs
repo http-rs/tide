@@ -189,6 +189,7 @@ mod cookies;
 mod endpoint;
 mod fs;
 mod middleware;
+mod redirect;
 mod request;
 mod response;
 mod route;
@@ -198,12 +199,12 @@ mod utils;
 
 pub mod log;
 pub mod prelude;
-pub mod redirect;
 pub mod security;
 pub mod sse;
 
 pub use endpoint::Endpoint;
 pub use middleware::{Middleware, Next};
+pub use redirect::Redirect;
 pub use request::Request;
 pub use response::Response;
 pub use route::Route;
