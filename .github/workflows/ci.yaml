@@ -34,6 +34,13 @@ jobs:
         command: check
         args: --all --bins --examples
 
+    - name: check avoid-dev-deps
+      uses: actions-rs/cargo@v1
+      if: matrix.rust == 'nightly'
+      with:
+        command: check
+        args: --all -Z avoid-dev-deps
+
     - name: check unstable
       uses: actions-rs/cargo@v1
       with:
