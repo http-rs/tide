@@ -31,29 +31,45 @@ impl LogMiddleware {
     ) -> crate::Result {
         let path = ctx.uri().path().to_owned();
         let method = ctx.method().to_string();
-        log::trace!("IN => {} {}", method, path);
+        log::info!("<-- Request received", {
+            method: method,
+            path: path,
+        });
         let start = std::time::Instant::now();
         match next.run(ctx).await {
             Ok(res) => {
                 let status = res.status();
-                log::info!(
-                    "{} {} {} {}ms",
-                    method,
-                    path,
-                    status,
-                    start.elapsed().as_millis()
-                );
+                if status.is_server_error() {
+                    log::error!("--> Response sent", {
+                        method: method,
+                        path: path,
+                        status: status as u16,
+                        duration: format!("{}ms", start.elapsed().as_millis()),
+                    });
+                } else if status.is_client_error() {
+                    log::warn!("--> Response sent", {
+                        method: method,
+                        path: path,
+                        status: status as u16,
+                        duration: format!("{}ms", start.elapsed().as_millis()),
+                    });
+                } else {
+                    log::info!("--> Response sent", {
+                        method: method,
+                        path: path,
+                        status: status as u16,
+                        duration: format!("{}ms", start.elapsed().as_millis()),
+                    });
+                }
                 Ok(res)
             }
             Err(err) => {
-                let msg = err.to_string();
-                log::error!(
-                    "{} {} {} {}ms",
-                    msg,
-                    method,
-                    path,
-                    start.elapsed().as_millis()
-                );
+                log::error!("{}", err.to_string(), {
+                    method: method,
+                    path: path,
+                    status: err.status() as u16,
+                    duration: format!("{}ms", start.elapsed().as_millis()),
+                });
                 Err(err)
             }
         }

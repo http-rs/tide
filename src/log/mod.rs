@@ -5,9 +5,7 @@
 //! ```no_run
 //! use tide::log;
 //!
-//! // `tide::log` requires starting a third-party logger such as `femme`. We may
-//! // ship such a logger as part of Tide in the future.
-//! femme::start(log::Level::Info.to_level_filter()).unwrap();
+//! log::start();
 //!
 //! log::info!("Hello cats");
 //! log::debug!("{} wants tuna", "Nori");
@@ -23,4 +21,17 @@ pub use kv_log_macro::{max_level, Level};
 
 mod middleware;
 
+pub use femme::LevelFilter;
 pub use middleware::LogMiddleware;
+
+/// Start logging.
+pub fn start() {
+    femme::start();
+    crate::log::info!("Logger started", { level: "Info" });
+}
+
+/// Start logging with a log level.
+pub fn with_level(level: LevelFilter) {
+    femme::with_level(level);
+    crate::log::info!("Logger started", { level: format!("{}", level) });
+}

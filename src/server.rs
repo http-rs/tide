@@ -283,9 +283,15 @@ impl<State: Send + Sync + 'static> Server<State> {
         let listener = async_std::net::TcpListener::bind(addr).await?;
 
         let addr = format!("http://{}", listener.local_addr()?);
-        log::info!("Server is listening on: {}", addr);
-        let mut incoming = listener.incoming();
+        let tls = false;
+        let target = if cfg!(debug_assertions) {
+            "dev"
+        } else {
+            "release"
+        };
+        log::info!("Server listening", { address: addr, target: target, tls: tls });
 
+        let mut incoming = listener.incoming();
         while let Some(stream) = incoming.next().await {
             let stream = stream?;
             let addr = addr.clone();
