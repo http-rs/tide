@@ -49,7 +49,7 @@ impl<T: AsRef<str>> Redirect<T> {
     /// Uses status code 302 Found.
     pub fn new(location: T) -> Self {
         Self {
-            status: StatusCode::SeeOther,
+            status: StatusCode::Found,
             location,
         }
     }
