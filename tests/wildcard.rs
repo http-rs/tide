@@ -33,7 +33,6 @@ async fn wildcard() {
     app.at("/add_one/:num").get(add_one);
 
     let mut req = http::Request::new(Method::Get, "http://localhost/add_one/3".parse().unwrap());
-    req.set_body(Body::empty());
 
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
@@ -41,7 +40,6 @@ async fn wildcard() {
     assert_eq!(body.as_bytes(), b"4");
 
     let mut req = http::Request::new(Method::Get, "http://localhost/add_one/-7".parse().unwrap());
-    req.set_body(Body::empty());
 
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
@@ -55,7 +53,7 @@ async fn invalid_segment_error() {
     app.at("/add_one/:num").get(add_one);
 
     let mut req = http::Request::new(Method::Get, "http://localhost/add_one/a".parse().unwrap());
-    req.set_body(Body::empty());
+
     let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::BadRequest);
 }
