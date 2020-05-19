@@ -124,7 +124,7 @@ impl<State> Request<State> {
     ///
     /// let mut app = tide::new();
     /// app.at("/").get(|req: Request<()>| async move {
-    ///     assert_eq!(req.header("X-Forwarded-For").unwrap().last().as_str(), "127.0.0.1");
+    ///     assert_eq!(req.header("X-Forwarded-For").unwrap(), "127.0.0.1");
     ///     Ok("")
     /// });
     /// app.listen("127.0.0.1:8080").await?;

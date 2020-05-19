@@ -282,27 +282,12 @@ mod test {
 
         assert_eq!(res.status(), 200);
 
-        assert_eq!(
-            res[headers::ACCESS_CONTROL_ALLOW_ORIGIN][0].as_str(),
-            ALLOW_ORIGIN
-        );
-        assert_eq!(
-            res[headers::ACCESS_CONTROL_ALLOW_METHODS][0].as_str(),
-            ALLOW_METHODS
-        );
-        assert_eq!(
-            res[headers::ACCESS_CONTROL_ALLOW_HEADERS][0].as_str(),
-            WILDCARD
-        );
-        assert_eq!(
-            res[headers::ACCESS_CONTROL_MAX_AGE][0].as_str(),
-            DEFAULT_MAX_AGE
-        );
+        assert_eq!(res[headers::ACCESS_CONTROL_ALLOW_ORIGIN], ALLOW_ORIGIN);
+        assert_eq!(res[headers::ACCESS_CONTROL_ALLOW_METHODS], ALLOW_METHODS);
+        assert_eq!(res[headers::ACCESS_CONTROL_ALLOW_HEADERS], WILDCARD);
+        assert_eq!(res[headers::ACCESS_CONTROL_MAX_AGE], DEFAULT_MAX_AGE);
 
-        assert_eq!(
-            res[headers::ACCESS_CONTROL_ALLOW_CREDENTIALS][0].as_str(),
-            "true"
-        );
+        assert_eq!(res[headers::ACCESS_CONTROL_ALLOW_CREDENTIALS], "true");
     }
     #[async_std::test]
     async fn default_cors_middleware() {
@@ -311,8 +296,7 @@ mod test {
         let res: crate::http::Response = app.respond(request()).await.unwrap();
 
         assert_eq!(res.status(), 200);
-
-        assert_eq!(res[headers::ACCESS_CONTROL_ALLOW_ORIGIN][0].as_str(), "*");
+        assert_eq!(res[headers::ACCESS_CONTROL_ALLOW_ORIGIN], "*");
     }
 
     #[async_std::test]
@@ -328,10 +312,7 @@ mod test {
         let res: crate::http::Response = app.respond(request()).await.unwrap();
 
         assert_eq!(res.status(), 200);
-        assert_eq!(
-            res[headers::ACCESS_CONTROL_ALLOW_ORIGIN][0].as_str(),
-            ALLOW_ORIGIN
-        );
+        assert_eq!(res[headers::ACCESS_CONTROL_ALLOW_ORIGIN], ALLOW_ORIGIN);
     }
 
     #[async_std::test]
@@ -341,12 +322,7 @@ mod test {
         let res: crate::http::Response = app.respond(request()).await.unwrap();
 
         assert_eq!(res.status(), 200);
-        assert_eq!(
-            res[headers::ACCESS_CONTROL_ALLOW_CREDENTIALS]
-                .last()
-                .as_str(),
-            "true"
-        );
+        assert_eq!(res[headers::ACCESS_CONTROL_ALLOW_CREDENTIALS], "true");
     }
 
     #[async_std::test]
