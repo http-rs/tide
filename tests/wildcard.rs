@@ -31,15 +31,13 @@ async fn wildcard() {
     let mut app = tide::Server::new();
     app.at("/add_one/:num").get(add_one);
 
-    let mut req = http::Request::new(Method::Get, "http://localhost/add_one/3".parse().unwrap());
-
+    let req = http::Request::new(Method::Get, "http://localhost/add_one/3".parse().unwrap());
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     let body = res.take_body().into_string().await.unwrap();
     assert_eq!(body.as_bytes(), b"4");
 
-    let mut req = http::Request::new(Method::Get, "http://localhost/add_one/-7".parse().unwrap());
-
+    let req = http::Request::new(Method::Get, "http://localhost/add_one/-7".parse().unwrap());
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     let body = res.take_body().into_string().await.unwrap();
@@ -51,8 +49,7 @@ async fn invalid_segment_error() {
     let mut app = tide::new();
     app.at("/add_one/:num").get(add_one);
 
-    let mut req = http::Request::new(Method::Get, "http://localhost/add_one/a".parse().unwrap());
-
+    let req = http::Request::new(Method::Get, "http://localhost/add_one/a".parse().unwrap());
     let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::BadRequest);
 }
