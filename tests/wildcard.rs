@@ -1,6 +1,3 @@
-use async_std::task::block_on;
-// use http_service::Body;
-// use http_service_mock::make_server;
 use http_types::{Body, Method, StatusCode};
 use tide::{http, Request, Response};
 
@@ -17,10 +14,12 @@ async fn add_one(cx: Request<()>) -> Result<String, tide::Error> {
 //     Ok((one + two).to_string())
 // }
 
-// async fn echo_path(cx: Request<()>) -> Result<String, tide::Error> {
-//     let path: String = cx.param("path").client_err()?;
-//     Ok(path)
-// }
+async fn echo_path(cx: Request<()>) -> Result<String, tide::Error> {
+    return match cx.param::<String>("path"){
+        Ok(path) => Ok(path),
+        Err(err) => Err(tide::Error::new(StatusCode::BadRequest, err))
+    }
+}
 
 // async fn echo_empty(cx: Request<()>) -> Result<String, tide::Error> {
 //     let path: String = cx.param("").client_err()?;
@@ -68,34 +67,29 @@ async fn not_found_error() {
     assert_eq!(res.status(), StatusCode::NotFound);
 }
 
-// #[test]
-// fn wildpath() {
-//     let mut app = tide::Server::new();
-//     app.at("/echo/*path").get(echo_path);
-//     let mut server = make_server(app.into_http_service()).unwrap();
+#[async_std::test]
+async fn wild_path() {
+    let mut app = tide::new();
+    app.at("/echo/*path").get(echo_path);
 
-//     let req = http::Request::get("/echo/some_path")
-//         .body(Body::empty())
-//         .unwrap();
-//     let res = server.simulate(req).unwrap();
-//     assert_eq!(res.status(), 200);
-//     let body = block_on(res.into_body().into_vec()).unwrap();
-//     assert_eq!(&*body, &*b"some_path");
+    let req = http::Request::new(Method::Get, "http://localhost/echo/some_path".parse().unwrap());
+    let mut res: http::Response = app.respond(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::Ok);
+    let body: String = res.take_body().into_string().await.unwrap();
+    assert_eq!(body.as_bytes(), b"some_path");
 
-//     let req = http::Request::get("/echo/multi/segment/path")
-//         .body(Body::empty())
-//         .unwrap();
-//     let res = server.simulate(req).unwrap();
-//     assert_eq!(res.status(), 200);
-//     let body = block_on(res.into_body().into_vec()).unwrap();
-//     assert_eq!(&*body, &*b"multi/segment/path");
+    let req = http::Request::new(Method::Get, "http://localhost/echo/multi/segment/path".parse().unwrap());
+    let mut res: http::Response = app.respond(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::Ok);
+    let body: String = res.take_body().into_string().await.unwrap();
+    assert_eq!(body.as_bytes(), b"multi/segment/path");
 
-//     let req = http::Request::get("/echo/").body(Body::empty()).unwrap();
-//     let res = server.simulate(req).unwrap();
-//     assert_eq!(res.status(), 404);
-//     let body = block_on(res.into_body().into_vec()).unwrap();
-//     assert_eq!(&*body, &*b"");
-// }
+    let req = http::Request::new(Method::Get, "http://localhost/echo/".parse().unwrap());
+    let mut res: http::Response = app.respond(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::NotFound);
+    let body: String = res.take_body().into_string().await.unwrap();
+    assert_eq!(body.as_bytes(), b"");
+}
 
 // #[test]
 // fn multi_wildcard() {
