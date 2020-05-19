@@ -2,10 +2,10 @@ use http_types::{Method, StatusCode};
 use tide::{http, Request};
 
 async fn add_one(cx: Request<()>) -> Result<String, tide::Error> {
-    return match cx.param::<i64>("num"){
+    return match cx.param::<i64>("num") {
         Ok(num) => Ok((num + 1).to_string()),
-        Err(err) => Err(tide::Error::new(StatusCode::BadRequest, err))
-    }
+        Err(err) => Err(tide::Error::new(StatusCode::BadRequest, err)),
+    };
 }
 
 async fn add_two(cx: Request<()>) -> Result<String, tide::Error> {
@@ -23,17 +23,17 @@ async fn add_two(cx: Request<()>) -> Result<String, tide::Error> {
 }
 
 async fn echo_path(cx: Request<()>) -> Result<String, tide::Error> {
-    return match cx.param::<String>("path"){
+    return match cx.param::<String>("path") {
         Ok(path) => Ok(path),
-        Err(err) => Err(tide::Error::new(StatusCode::BadRequest, err))
-    }
+        Err(err) => Err(tide::Error::new(StatusCode::BadRequest, err)),
+    };
 }
 
 async fn echo_empty(cx: Request<()>) -> Result<String, tide::Error> {
-    return match cx.param::<String>(""){
+    return match cx.param::<String>("") {
         Ok(path) => Ok(path),
-        Err(err) => Err(tide::Error::new(StatusCode::BadRequest, err))
-    }
+        Err(err) => Err(tide::Error::new(StatusCode::BadRequest, err)),
+    };
 }
 
 #[async_std::test]
@@ -79,13 +79,19 @@ async fn wild_path() {
     let mut app = tide::new();
     app.at("/echo/*path").get(echo_path);
 
-    let req = http::Request::new(Method::Get, "http://localhost/echo/some_path".parse().unwrap());
+    let req = http::Request::new(
+        Method::Get,
+        "http://localhost/echo/some_path".parse().unwrap(),
+    );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     let body: String = res.take_body().into_string().await.unwrap();
     assert_eq!(body.as_bytes(), b"some_path");
 
-    let req = http::Request::new(Method::Get, "http://localhost/echo/multi/segment/path".parse().unwrap());
+    let req = http::Request::new(
+        Method::Get,
+        "http://localhost/echo/multi/segment/path".parse().unwrap(),
+    );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     let body: String = res.take_body().into_string().await.unwrap();
@@ -103,13 +109,19 @@ async fn multi_wildcard() {
     let mut app = tide::new();
     app.at("/add_two/:one/:two/").get(add_two);
 
-    let req = http::Request::new(Method::Get, "http://localhost/add_two/1/2/".parse().unwrap());
+    let req = http::Request::new(
+        Method::Get,
+        "http://localhost/add_two/1/2/".parse().unwrap(),
+    );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     let body: String = res.take_body().into_string().await.unwrap();
     assert_eq!(body.as_bytes(), b"3");
 
-    let req = http::Request::new(Method::Get, "http://localhost/add_two/-1/2/".parse().unwrap());
+    let req = http::Request::new(
+        Method::Get,
+        "http://localhost/add_two/-1/2/".parse().unwrap(),
+    );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), 200);
     let body: String = res.take_body().into_string().await.unwrap();
@@ -125,13 +137,19 @@ async fn wild_last_segment() {
     let mut app = tide::new();
     app.at("/echo/:path/*").get(echo_path);
 
-    let req = http::Request::new(Method::Get, "http://localhost/echo/one/two".parse().unwrap());
+    let req = http::Request::new(
+        Method::Get,
+        "http://localhost/echo/one/two".parse().unwrap(),
+    );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     let body: String = res.take_body().into_string().await.unwrap();
     assert_eq!(body.as_bytes(), b"one");
 
-    let req = http::Request::new(Method::Get, "http://localhost/echo/one/two/three/four".parse().unwrap());
+    let req = http::Request::new(
+        Method::Get,
+        "http://localhost/echo/one/two/three/four".parse().unwrap(),
+    );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     let body: String = res.take_body().into_string().await.unwrap();
@@ -143,7 +161,10 @@ async fn invalid_wildcard() {
     let mut app = tide::new();
     app.at("/echo/*path/:one/").get(echo_path);
 
-    let req = http::Request::new(Method::Get, "http://localhost/echo/one/two".parse().unwrap());
+    let req = http::Request::new(
+        Method::Get,
+        "http://localhost/echo/one/two".parse().unwrap(),
+    );
     let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::NotFound);
 }
@@ -153,7 +174,10 @@ async fn nameless_wildcard() {
     let mut app = tide::Server::new();
     app.at("/echo/:").get(|_| async move { Ok("") });
 
-    let req = http::Request::new(Method::Get, "http://localhost/echo/one/two".parse().unwrap());
+    let req = http::Request::new(
+        Method::Get,
+        "http://localhost/echo/one/two".parse().unwrap(),
+    );
     let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::NotFound);
 
@@ -171,13 +195,19 @@ async fn nameless_internal_wildcard() {
     let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::NotFound);
 
-    let req = http::Request::new(Method::Get, "http://localhost/echo/one/two".parse().unwrap());
+    let req = http::Request::new(
+        Method::Get,
+        "http://localhost/echo/one/two".parse().unwrap(),
+    );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     let body: String = res.take_body().into_string().await.unwrap();
     assert_eq!(body.as_bytes(), b"two");
 
-    let req = http::Request::new(Method::Get, "http://localhost/echo/one/two".parse().unwrap());
+    let req = http::Request::new(
+        Method::Get,
+        "http://localhost/echo/one/two".parse().unwrap(),
+    );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     let body: String = res.take_body().into_string().await.unwrap();
@@ -189,7 +219,10 @@ async fn nameless_internal_wildcard2() {
     let mut app = tide::new();
     app.at("/echo/:/:path").get(echo_empty);
 
-    let req = http::Request::new(Method::Get, "http://localhost/echo/one/two".parse().unwrap());
+    let req = http::Request::new(
+        Method::Get,
+        "http://localhost/echo/one/two".parse().unwrap(),
+    );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     let body: String = res.take_body().into_string().await.unwrap();
