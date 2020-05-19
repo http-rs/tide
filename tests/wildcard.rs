@@ -146,23 +146,19 @@ async fn invalid_wildcard() {
     assert_eq!(res.status(), StatusCode::NotFound);
 }
 
-// #[test]
-// fn nameless_wildcard() {
-//     let mut app = tide::Server::new();
-//     app.at("/echo/:").get(|_| async move { "" });
+#[async_std::test]
+async fn nameless_wildcard() {
+    let mut app = tide::Server::new();
+    app.at("/echo/:").get(|_| async move { Ok("") });
 
-//     let mut server = make_server(app.into_http_service()).unwrap();
+    let req = http::Request::new(Method::Get, "http://localhost/echo/one/two".parse().unwrap());
+    let res: http::Response = app.respond(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::NotFound);
 
-//     let req = http::Request::get("/echo/one/two")
-//         .body(Body::empty())
-//         .unwrap();
-//     let res = server.simulate(req).unwrap();
-//     assert_eq!(res.status(), 404);
-
-//     let req = http::Request::get("/echo/one").body(Body::empty()).unwrap();
-//     let res = server.simulate(req).unwrap();
-//     assert_eq!(res.status(), 200);
-// }
+    let req = http::Request::new(Method::Get, "http://localhost/echo/one".parse().unwrap());
+    let res: http::Response = app.respond(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::Ok);
+}
 
 // #[test]
 // fn nameless_internal_wildcard() {
