@@ -29,10 +29,12 @@ async fn echo_path(cx: Request<()>) -> Result<String, tide::Error> {
     }
 }
 
-// async fn echo_empty(cx: Request<()>) -> Result<String, tide::Error> {
-//     let path: String = cx.param("").client_err()?;
-//     Ok(path)
-// }
+async fn echo_empty(cx: Request<()>) -> Result<String, tide::Error> {
+    return match cx.param::<String>(""){
+        Ok(path) => Ok(path),
+        Err(err) => Err(tide::Error::new(StatusCode::BadRequest, err))
+    }
+}
 
 #[async_std::test]
 async fn wildcard() {
@@ -182,17 +184,14 @@ async fn nameless_internal_wildcard() {
     assert_eq!(body.as_bytes(), b"two");
 }
 
-// #[test]
-// fn nameless_internal_wildcard2() {
-//     let mut app = tide::Server::new();
-//     app.at("/echo/:/:path").get(echo_empty);
-//     let mut server = make_server(app.into_http_service()).unwrap();
+#[async_std::test]
+async fn nameless_internal_wildcard2() {
+    let mut app = tide::new();
+    app.at("/echo/:/:path").get(echo_empty);
 
-//     let req = http::Request::get("/echo/one/two")
-//         .body(Body::empty())
-//         .unwrap();
-//     let res = server.simulate(req).unwrap();
-//     assert_eq!(res.status(), 200);
-//     let body = block_on(res.into_body().into_vec()).unwrap();
-//     assert_eq!(&*body, &*b"one");
-// }
+    let req = http::Request::new(Method::Get, "http://localhost/echo/one/two".parse().unwrap());
+    let mut res: http::Response = app.respond(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::Ok);
+    let body: String = res.take_body().into_string().await.unwrap();
+    assert_eq!(body.as_bytes(), b"one");
+}
