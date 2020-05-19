@@ -1,4 +1,3 @@
-use async_std::io::prelude::*;
 use tide::*;
 
 #[async_std::test]
@@ -6,8 +5,7 @@ async fn test_status() {
     let mut resp = Response::new(StatusCode::NotFound).body_string("foo".to_string());
     assert_eq!(resp.status(), StatusCode::NotFound);
 
-    let mut foo = String::new();
-    let _bytes = resp.take_body().read_to_string(&mut foo).await;
+    let foo = resp.take_body().into_string().await.unwrap();
     assert_eq!(foo.as_bytes(), b"foo");
 }
 
@@ -26,8 +24,7 @@ async fn byte_vec_content_type() {
     }
     assert_eq!(header_values[0], "application/octet-stream");
 
-    let mut foo = String::new();
-    let _bytes = resp.take_body().read_to_string(&mut foo).await;
+    let foo = resp.take_body().into_string().await.unwrap();
     assert_eq!(foo.as_bytes(), b"foo");
 }
 
@@ -45,8 +42,7 @@ async fn string_content_type() {
     }
     assert_eq!(header_values[0], "text/plain; charset=utf-8");
 
-    let mut foo = String::new();
-    let _bytes = resp.take_body().read_to_string(&mut foo).await;
+    let foo = resp.take_body().into_string().await.unwrap();
     assert_eq!(foo.as_bytes(), b"foo");
 }
 
@@ -74,8 +70,7 @@ async fn json_content_type() {
     let mut resp: http::Response = app.respond(req).await.unwrap();
     assert_eq!(resp.status(), StatusCode::InternalServerError);
 
-    let mut body = String::new();
-    let _bytes = resp.take_body().read_to_string(&mut body).await;
+    let body = resp.take_body().into_string().await.unwrap();
     assert_eq!(body.as_bytes(), b"");
 
     let mut map = BTreeMap::new();
@@ -86,7 +81,6 @@ async fn json_content_type() {
     let mut resp = Response::new(StatusCode::Ok).body_json(&map).unwrap();
     assert_eq!(resp.status(), StatusCode::Ok);
 
-    let mut body = String::new();
-    let _bytes = resp.take_body().read_to_string(&mut body).await;
+    let body = resp.take_body().into_string().await.unwrap();
     assert_eq!(body.as_bytes(), br##"{"a":2,"b":4,"c":6}"##);
 }
