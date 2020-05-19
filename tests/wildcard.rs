@@ -1,5 +1,5 @@
 use http_types::{Body, Method, StatusCode};
-use tide::{http, Request, Response};
+use tide::{http, Request};
 
 async fn add_one(cx: Request<()>) -> Result<String, tide::Error> {
     return match cx.param::<i64>("num"){
@@ -118,28 +118,23 @@ async fn multi_wildcard() {
     assert_eq!(res.status(), StatusCode::NotFound);
 }
 
-// #[test]
-// fn wild_last_segment() {
-//     let mut app = tide::Server::new();
-//     app.at("/echo/:path/*").get(echo_path);
-//     let mut server = make_server(app.into_http_service()).unwrap();
+#[async_std::test]
+async fn wild_last_segment() {
+    let mut app = tide::new();
+    app.at("/echo/:path/*").get(echo_path);
 
-//     let req = http::Request::get("/echo/one/two")
-//         .body(Body::empty())
-//         .unwrap();
-//     let res = server.simulate(req).unwrap();
-//     assert_eq!(res.status(), 200);
-//     let body = block_on(res.into_body().into_vec()).unwrap();
-//     assert_eq!(&*body, &*b"one");
+    let req = http::Request::new(Method::Get, "http://localhost/echo/one/two".parse().unwrap());
+    let mut res: http::Response = app.respond(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::Ok);
+    let body: String = res.take_body().into_string().await.unwrap();
+    assert_eq!(body.as_bytes(), b"one");
 
-//     let req = http::Request::get("/echo/one/two/three/four")
-//         .body(Body::empty())
-//         .unwrap();
-//     let res = server.simulate(req).unwrap();
-//     assert_eq!(res.status(), 200);
-//     let body = block_on(res.into_body().into_vec()).unwrap();
-//     assert_eq!(&*body, &*b"one");
-// }
+    let req = http::Request::new(Method::Get, "http://localhost/echo/one/two/three/four".parse().unwrap());
+    let mut res: http::Response = app.respond(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::Ok);
+    let body: String = res.take_body().into_string().await.unwrap();
+    assert_eq!(body.as_bytes(), b"one");
+}
 
 // #[test]
 // fn invalid_wildcard() {
