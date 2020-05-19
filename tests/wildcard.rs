@@ -8,11 +8,19 @@ async fn add_one(cx: Request<()>) -> Result<String, tide::Error> {
     }
 }
 
-// async fn add_two(cx: Request<()>) -> Result<String, tide::Error> {
-//     let one: i64 = cx.param("one").client_err()?;
-//     let two: i64 = cx.param("two").client_err()?;
-//     Ok((one + two).to_string())
-// }
+async fn add_two(cx: Request<()>) -> Result<String, tide::Error> {
+    let one;
+    match cx.param::<i64>("one") {
+        Ok(num) => one = num,
+        Err(err) => return Err(tide::Error::new(StatusCode::BadRequest, err)),
+    };
+    let two;
+    match cx.param::<i64>("two") {
+        Ok(num) => two = num,
+        Err(err) => return Err(tide::Error::new(StatusCode::BadRequest, err)),
+    };
+    Ok((one + two).to_string())
+}
 
 async fn echo_path(cx: Request<()>) -> Result<String, tide::Error> {
     return match cx.param::<String>("path"){
@@ -88,33 +96,27 @@ async fn wild_path() {
     assert_eq!(body.as_bytes(), b"");
 }
 
-// #[test]
-// fn multi_wildcard() {
-//     let mut app = tide::Server::new();
-//     app.at("/add_two/:one/:two/").get(add_two);
-//     let mut server = make_server(app.into_http_service()).unwrap();
+#[async_std::test]
+async fn multi_wildcard() {
+    let mut app = tide::new();
+    app.at("/add_two/:one/:two/").get(add_two);
 
-//     let req = http::Request::get("/add_two/1/2/")
-//         .body(Body::empty())
-//         .unwrap();
-//     let res = server.simulate(req).unwrap();
-//     assert_eq!(res.status(), 200);
-//     let body = block_on(res.into_body().into_vec()).unwrap();
-//     assert_eq!(&*body, &*b"3");
+    let req = http::Request::new(Method::Get, "http://localhost/add_two/1/2/".parse().unwrap());
+    let mut res: http::Response = app.respond(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::Ok);
+    let body: String = res.take_body().into_string().await.unwrap();
+    assert_eq!(body.as_bytes(), b"3");
 
-//     let req = http::Request::get("/add_two/-1/2/")
-//         .body(Body::empty())
-//         .unwrap();
-//     let res = server.simulate(req).unwrap();
-//     assert_eq!(res.status(), 200);
-//     let body = block_on(res.into_body().into_vec()).unwrap();
-//     assert_eq!(&*body, &*b"1");
-//     let req = http::Request::get("/add_two/1")
-//         .body(Body::empty())
-//         .unwrap();
-//     let res = server.simulate(req).unwrap();
-//     assert_eq!(res.status(), 404);
-// }
+    let req = http::Request::new(Method::Get, "http://localhost/add_two/-1/2/".parse().unwrap());
+    let mut res: http::Response = app.respond(req).await.unwrap();
+    assert_eq!(res.status(), 200);
+    let body: String = res.take_body().into_string().await.unwrap();
+    assert_eq!(body.as_bytes(), b"1");
+
+    let req = http::Request::new(Method::Get, "http://localhost/add_two/1".parse().unwrap());
+    let res: http::Response = app.respond(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::NotFound);
+}
 
 // #[test]
 // fn wild_last_segment() {
