@@ -60,16 +60,15 @@ async fn invalid_segment_error() {
     assert_eq!(res.status(), StatusCode::BadRequest);
 }
 
-// #[test]
-// fn not_found_error() {
-//     let mut app = tide::Server::new();
-//     app.at("/add_one/:num").get(add_one);
-//     let mut server = make_server(app.into_http_service()).unwrap();
+#[async_std::test]
+async fn not_found_error() {
+    let mut app = tide::new();
+    app.at("/add_one/:num").get(add_one);
 
-//     let req = http::Request::get("/add_one/").body(Body::empty()).unwrap();
-//     let res = server.simulate(req).unwrap();
-//     assert_eq!(res.status(), 404);
-// }
+    let req = http::Request::new(Method::Get, "http://localhost/add_one/".parse().unwrap());
+    let res: http::Response = app.respond(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::NotFound);
+}
 
 // #[test]
 // fn wildpath() {
