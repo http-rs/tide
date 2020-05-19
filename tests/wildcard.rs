@@ -1,4 +1,4 @@
-use http_types::{Body, Method, StatusCode};
+use http_types::{Method, StatusCode};
 use tide::{http, Request};
 
 async fn add_one(cx: Request<()>) -> Result<String, tide::Error> {
@@ -136,18 +136,15 @@ async fn wild_last_segment() {
     assert_eq!(body.as_bytes(), b"one");
 }
 
-// #[test]
-// fn invalid_wildcard() {
-//     let mut app = tide::Server::new();
-//     app.at("/echo/*path/:one/").get(echo_path);
-//     let mut server = make_server(app.into_http_service()).unwrap();
+#[async_std::test]
+async fn invalid_wildcard() {
+    let mut app = tide::new();
+    app.at("/echo/*path/:one/").get(echo_path);
 
-//     let req = http::Request::get("/echo/one/two")
-//         .body(Body::empty())
-//         .unwrap();
-//     let res = server.simulate(req).unwrap();
-//     assert_eq!(res.status(), 404);
-// }
+    let req = http::Request::new(Method::Get, "http://localhost/echo/one/two".parse().unwrap());
+    let res: http::Response = app.respond(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::NotFound);
+}
 
 // #[test]
 // fn nameless_wildcard() {
