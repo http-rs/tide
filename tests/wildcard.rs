@@ -160,32 +160,27 @@ async fn nameless_wildcard() {
     assert_eq!(res.status(), StatusCode::Ok);
 }
 
-// #[test]
-// fn nameless_internal_wildcard() {
-//     let mut app = tide::Server::new();
-//     app.at("/echo/:/:path").get(echo_path);
-//     let mut server = make_server(app.into_http_service()).unwrap();
+#[async_std::test]
+async fn nameless_internal_wildcard() {
+    let mut app = tide::new();
+    app.at("/echo/:/:path").get(echo_path);
 
-//     let req = http::Request::get("/echo/one").body(Body::empty()).unwrap();
-//     let res = server.simulate(req).unwrap();
-//     assert_eq!(res.status(), 404);
+    let req = http::Request::new(Method::Get, "http://localhost/echo/one".parse().unwrap());
+    let res: http::Response = app.respond(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::NotFound);
 
-//     let req = http::Request::get("/echo/one/two")
-//         .body(Body::empty())
-//         .unwrap();
-//     let res = server.simulate(req).unwrap();
-//     assert_eq!(res.status(), 200);
-//     let body = block_on(res.into_body().into_vec()).unwrap();
-//     assert_eq!(&*body, &*b"two");
+    let req = http::Request::new(Method::Get, "http://localhost/echo/one/two".parse().unwrap());
+    let mut res: http::Response = app.respond(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::Ok);
+    let body: String = res.take_body().into_string().await.unwrap();
+    assert_eq!(body.as_bytes(), b"two");
 
-//     let req = http::Request::get("/echo/one/two")
-//         .body(Body::empty())
-//         .unwrap();
-//     let res = server.simulate(req).unwrap();
-//     assert_eq!(res.status(), 200);
-//     let body = block_on(res.into_body().into_vec()).unwrap();
-//     assert_eq!(&*body, &*b"two");
-// }
+    let req = http::Request::new(Method::Get, "http://localhost/echo/one/two".parse().unwrap());
+    let mut res: http::Response = app.respond(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::Ok);
+    let body: String = res.take_body().into_string().await.unwrap();
+    assert_eq!(body.as_bytes(), b"two");
+}
 
 // #[test]
 // fn nameless_internal_wildcard2() {
