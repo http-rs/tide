@@ -1,12 +1,15 @@
-// use async_std::task::block_on;
+use async_std::task::block_on;
 // use http_service::Body;
 // use http_service_mock::make_server;
-// use tide::{error::ResultExt, Request};
+use http_types::{Body, Method, StatusCode};
+use tide::{http, Request, Response};
 
-// async fn add_one(cx: Request<()>) -> Result<String, tide::Error> {
-//     let num: i64 = cx.param("num").client_err()?;
-//     Ok((num + 1).to_string())
-// }
+async fn add_one(cx: Request<()>) -> Result<String, tide::Error> {
+    return match cx.param::<i64>("num"){
+        Ok(num) => Ok((num + 1).to_string()),
+        Err(err) => Err(tide::Error::new(StatusCode::BadRequest, err))
+    }
+}
 
 // async fn add_two(cx: Request<()>) -> Result<String, tide::Error> {
 //     let one: i64 = cx.param("one").client_err()?;
@@ -24,28 +27,27 @@
 //     Ok(path)
 // }
 
-// #[test]
-// fn wildcard() {
-//     let mut app = tide::Server::new();
-//     app.at("/add_one/:num").get(add_one);
-//     let mut server = make_server(app.into_http_service()).unwrap();
+#[async_std::test]
+async fn wildcard() {
+    let mut app = tide::Server::new();
+    app.at("/add_one/:num").get(add_one);
 
-//     let req = http::Request::get("/add_one/3")
-//         .body(Body::empty())
-//         .unwrap();
-//     let res = server.simulate(req).unwrap();
-//     assert_eq!(res.status(), 200);
-//     let body = block_on(res.into_body().into_vec()).unwrap();
-//     assert_eq!(&*body, &*b"4");
+    let mut req = http::Request::new(Method::Get, "http://localhost/add_one/3".parse().unwrap());
+    req.set_body(Body::empty());
 
-//     let req = http::Request::get("/add_one/-7")
-//         .body(Body::empty())
-//         .unwrap();
-//     let res = server.simulate(req).unwrap();
-//     assert_eq!(res.status(), 200);
-//     let body = block_on(res.into_body().into_vec()).unwrap();
-//     assert_eq!(&*body, &*b"-6");
-// }
+    let mut res: http::Response = app.respond(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::Ok);
+    let body = res.take_body().into_string().await.unwrap();
+    assert_eq!(body.as_bytes(), b"4");
+
+    let mut req = http::Request::new(Method::Get, "http://localhost/add_one/-7".parse().unwrap());
+    req.set_body(Body::empty());
+
+    let mut res: http::Response = app.respond(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::Ok);
+    let body = res.take_body().into_string().await.unwrap();
+    assert_eq!(body.as_bytes(), b"-6");
+}
 
 // #[test]
 // fn invalid_segment_error() {
