@@ -20,7 +20,7 @@ async fn byte_vec_content_type() {
     if let Some(x) = resp.remove_header(&content_type) {
         header_values = x;
     }
-    assert_eq!(header_values[0], "application/octet-stream");
+    assert_eq!(header_values[0], mime::APPLICATION_OCTET_STREAM.to_string());
     let foo = resp.take_body().into_string().await.unwrap();
     assert_eq!(foo.as_bytes(), b"foo");
 }
@@ -36,7 +36,7 @@ async fn string_content_type() {
     if let Some(x) = resp.remove_header(&content_type) {
         header_values = x;
     }
-    assert_eq!(header_values[0], "text/plain; charset=utf-8");
+    assert_eq!(header_values[0], mime::TEXT_PLAIN_UTF_8.to_string());
     let foo = resp.take_body().into_string().await.unwrap();
     assert_eq!(foo.as_bytes(), b"foo");
 }
