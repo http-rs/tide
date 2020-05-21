@@ -153,12 +153,11 @@ impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
             let origins = req.header(&headers::ORIGIN).cloned().unwrap_or_default();
 
             // TODO: how should multiple origin values be handled?
-            let origin = match origins.first() {
-                Some(origin) => origin,
-                None => {
-                    // This is not a CORS request if there is no Origin header
-                    return next.run(req).await;
-                }
+            let origin = if let Some(origin) = origins.first() {
+                origin
+            } else {
+                // This is not a CORS request if there is no Origin header
+                return next.run(req).await;
             };
 
             if !self.is_valid_origin(origin) {
