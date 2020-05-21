@@ -27,10 +27,8 @@ use crate::{Middleware, Request, Response};
 ///     Ok(String::from("hello"))
 /// }
 ///
-/// fn main() {
-///     let mut app = tide::Server::new();
-///     app.at("/hello").get(hello);
-/// }
+/// let mut app = tide::Server::new();
+/// app.at("/hello").get(hello);
 /// ```
 ///
 /// An endpoint with similar functionality that does not make use of the `async` keyword would look something like this:
@@ -41,10 +39,8 @@ use crate::{Middleware, Request, Response};
 ///     async_std::future::ready(Ok(String::from("hello")))
 /// }
 ///
-/// fn main() {
-///     let mut app = tide::Server::new();
-///     app.at("/hello").get(hello);
-/// }
+/// let mut app = tide::Server::new();
+/// app.at("/hello").get(hello);
 /// ```
 ///
 /// Tide routes will also accept endpoints with `Fn` signatures of this form, but using the `async` keyword has better ergonomics.
