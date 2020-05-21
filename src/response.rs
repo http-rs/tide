@@ -174,7 +174,7 @@ impl Response {
     pub async fn body_form<T: serde::Serialize>(
         mut self,
         form: T,
-    ) -> Result<Response, serde_qs::Error> {
+    ) -> Result<Self, serde_qs::Error> {
         // TODO: think about how to handle errors
         self.res.set_body(serde_qs::to_string(&form)?.into_bytes());
         Ok(self

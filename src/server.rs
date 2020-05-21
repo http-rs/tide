@@ -151,13 +151,13 @@ impl Server<()> {
     /// # Ok(()) }) }
     /// ```
     #[must_use]
-    pub fn new() -> Server<()> {
+    pub fn new() -> Self {
         Self::with_state(())
     }
 }
 
 impl Default for Server<()> {
-    fn default() -> Server<()> {
+    fn default() -> Self {
         Self::new()
     }
 }
@@ -194,8 +194,8 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// #
     /// # Ok(()) }) }
     /// ```
-    pub fn with_state(state: State) -> Server<State> {
-        let mut server = Server {
+    pub fn with_state(state: State) -> Self {
+        let mut server = Self {
             router: Arc::new(Router::new()),
             middleware: Arc::new(vec![]),
             state: Arc::new(state),

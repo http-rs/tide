@@ -32,8 +32,8 @@ impl<State> Request<State> {
         state: Arc<State>,
         request: http_types::Request,
         route_params: Vec<Params>,
-    ) -> Request<State> {
-        Request {
+    ) -> Self {
+        Self {
             state,
             request,
             route_params,

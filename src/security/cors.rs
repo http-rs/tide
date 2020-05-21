@@ -213,15 +213,15 @@ pub enum Origin {
 impl From<String> for Origin {
     fn from(s: String) -> Self {
         if s == "*" {
-            return Origin::Any;
+            return Self::Any;
         }
-        Origin::Exact(s)
+        Self::Exact(s)
     }
 }
 
 impl From<&str> for Origin {
     fn from(s: &str) -> Self {
-        Origin::from(s.to_string())
+        Self::from(s.to_string())
     }
 }
 
@@ -231,13 +231,13 @@ impl From<Vec<String>> for Origin {
             return Self::from(list[0].clone());
         }
 
-        Origin::List(list)
+        Self::List(list)
     }
 }
 
 impl From<Vec<&str>> for Origin {
     fn from(list: Vec<&str>) -> Self {
-        Origin::from(
+        Self::from(
             list.iter()
                 .map(|s| (*s).to_string())
                 .collect::<Vec<String>>(),

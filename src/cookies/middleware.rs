@@ -90,7 +90,7 @@ impl CookieData {
             }
         }
 
-        CookieData {
+        Self {
             content: Arc::new(RwLock::new(jar)),
         }
     }
