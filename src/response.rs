@@ -91,6 +91,12 @@ impl Response {
         self.res.len()
     }
 
+    /// Checks if the body is empty.
+    #[must_use]
+    pub fn is_empty(&self) -> Option<bool> {
+        Some(self.res.len()? == 0)
+    }
+
     /// Get an HTTP header.
     #[must_use]
     pub fn header(&self, name: &HeaderName) -> Option<&Vec<HeaderValue>> {

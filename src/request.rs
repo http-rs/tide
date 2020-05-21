@@ -313,6 +313,11 @@ impl<State> Request<State> {
     pub fn len(&self) -> Option<usize> {
         self.request.len()
     }
+    /// Checks if the body is empty.
+    #[must_use]
+    pub fn is_empty(&self) -> Option<bool> {
+        Some(self.request.len()? == 0)
+    }
 }
 
 impl<State> AsMut<http::Request> for Request<State> {
