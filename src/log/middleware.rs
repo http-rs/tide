@@ -44,21 +44,21 @@ impl LogMiddleware {
                         method: method,
                         path: path,
                         status: status as u16,
-                        duration: format!("{}ms", start.elapsed().as_millis()),
+                        duration: format!("{:?}", start.elapsed()),
                     });
                 } else if status.is_client_error() {
                     log::warn!("--> Response sent", {
                         method: method,
                         path: path,
                         status: status as u16,
-                        duration: format!("{}ms", start.elapsed().as_millis()),
+                        duration: format!("{:?}", start.elapsed()),
                     });
                 } else {
                     log::info!("--> Response sent", {
                         method: method,
                         path: path,
                         status: status as u16,
-                        duration: format!("{}ms", start.elapsed().as_millis()),
+                        duration: format!("{:?}", start.elapsed()),
                     });
                 }
                 Ok(res)
@@ -68,7 +68,7 @@ impl LogMiddleware {
                     method: method,
                     path: path,
                     status: err.status() as u16,
-                    duration: format!("{}ms", start.elapsed().as_millis()),
+                    duration: format!("{:?}", start.elapsed()),
                 });
                 Err(err)
             }
