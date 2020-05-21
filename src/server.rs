@@ -150,6 +150,7 @@ impl Server<()> {
     /// #
     /// # Ok(()) }) }
     /// ```
+    #[must_use]
     pub fn new() -> Server<()> {
         Self::with_state(())
     }

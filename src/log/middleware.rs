@@ -19,6 +19,7 @@ pub struct LogMiddleware {
 
 impl LogMiddleware {
     /// Create a new instance of `LogMiddleware`.
+    #[must_use]
     pub fn new() -> Self {
         Self { _priv: () }
     }

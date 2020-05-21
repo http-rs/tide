@@ -14,7 +14,7 @@ use crate::{Request, Result};
 /// use http_types::headers::HeaderValue;
 /// use tide::security::{CorsMiddleware, Origin};
 ///
-/// CorsMiddleware::new()
+/// let cors = CorsMiddleware::new()
 ///     .allow_methods("GET, POST, OPTIONS".parse::<HeaderValue>().unwrap())
 ///     .allow_origin(Origin::from("*"))
 ///     .allow_credentials(false);
@@ -35,6 +35,7 @@ pub const WILDCARD: &str = "*";
 
 impl CorsMiddleware {
     /// Creates a new Cors middleware.
+    #[must_use]
     pub fn new() -> Self {
         Self {
             allow_credentials: None,
@@ -47,6 +48,7 @@ impl CorsMiddleware {
     }
 
     /// Set allow_credentials and return new Cors
+    #[must_use]
     pub fn allow_credentials(mut self, allow_credentials: bool) -> Self {
         self.allow_credentials = match allow_credentials.to_string().parse() {
             Ok(header) => Some(header),

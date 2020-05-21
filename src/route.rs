@@ -60,6 +60,7 @@ impl<'a, State: 'static> Route<'a, State> {
     }
 
     /// Get the current path.
+    #[must_use]
     pub fn path(&self) -> &str {
         &self.path
     }

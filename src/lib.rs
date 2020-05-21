@@ -227,6 +227,7 @@ pub use http_types::{self as http, Body, Error, Status, StatusCode};
 /// #
 /// # Ok(()) }) }
 /// ```
+#[must_use]
 pub fn new() -> server::Server<()> {
     Server::new()
 }
