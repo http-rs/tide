@@ -25,7 +25,7 @@ use std::sync::{Arc, RwLock};
 pub(crate) struct CookiesMiddleware;
 
 impl CookiesMiddleware {
-    /// Creates a new CookiesMiddleware.
+    /// Creates a new `CookiesMiddleware`.
     pub fn new() -> Self {
         Self::default()
     }

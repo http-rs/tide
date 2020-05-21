@@ -47,7 +47,7 @@ impl CorsMiddleware {
         }
     }
 
-    /// Set allow_credentials and return new Cors
+    /// Set `allow_credentials` and return new Cors
     #[must_use]
     pub fn allow_credentials(mut self, allow_credentials: bool) -> Self {
         self.allow_credentials = match allow_credentials.to_string().parse() {
@@ -57,31 +57,31 @@ impl CorsMiddleware {
         self
     }
 
-    /// Set allow_headers and return new Cors
+    /// Set `allow_headers` and return new Cors
     pub fn allow_headers<T: Into<HeaderValue>>(mut self, headers: T) -> Self {
         self.allow_headers = headers.into();
         self
     }
 
-    /// Set max_age and return new Cors
+    /// Set `max_age` and return new Cors
     pub fn max_age<T: Into<HeaderValue>>(mut self, max_age: T) -> Self {
         self.max_age = max_age.into();
         self
     }
 
-    /// Set allow_methods and return new Cors
+    /// Set `allow_methods` and return new Cors
     pub fn allow_methods<T: Into<HeaderValue>>(mut self, methods: T) -> Self {
         self.allow_methods = methods.into();
         self
     }
 
-    /// Set allow_origin and return new Cors
+    /// Set `allow_origin` and return new Cors
     pub fn allow_origin<T: Into<Origin>>(mut self, origin: T) -> Self {
         self.allow_origin = origin.into();
         self
     }
 
-    /// Set expose_headers and return new Cors
+    /// Set `expose_headers` and return new Cors
     pub fn expose_headers<T: Into<HeaderValue>>(mut self, headers: T) -> Self {
         self.expose_headers = Some(headers.into());
         self
@@ -123,7 +123,7 @@ impl CorsMiddleware {
         response
     }
 
-    /// Look at origin of request and determine allow_origin
+    /// Look at origin of request and determine `allow_origin`
     fn response_origin(&self, origin: &HeaderValue) -> Option<HeaderValue> {
         if !self.is_valid_origin(origin) {
             return None;
@@ -199,7 +199,7 @@ impl Default for CorsMiddleware {
     }
 }
 
-/// allow_origin enum
+/// `allow_origin` enum
 #[derive(Clone, Debug, Hash, PartialEq)]
 pub enum Origin {
     /// Wildcard. Accept all origin requests
