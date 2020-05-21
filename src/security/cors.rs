@@ -173,7 +173,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
             response
                 .insert_header(
                     headers::ACCESS_CONTROL_ALLOW_ORIGIN,
-                    self.response_origin(&origin).unwrap(),
+                    self.response_origin(origin).unwrap(),
                 )
                 .unwrap();
 
