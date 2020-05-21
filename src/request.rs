@@ -177,8 +177,7 @@ impl<State> Request<State> {
         self.route_params
             .iter()
             .rev()
-            .filter_map(|params| params.find(key))
-            .next()
+            .find_map(|params| params.find(key))
             .unwrap()
             .parse()
     }
