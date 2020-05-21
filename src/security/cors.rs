@@ -236,7 +236,11 @@ impl From<Vec<String>> for Origin {
 
 impl From<Vec<&str>> for Origin {
     fn from(list: Vec<&str>) -> Self {
-        Origin::from(list.iter().map(|s| s.to_string()).collect::<Vec<String>>())
+        Origin::from(
+            list.iter()
+                .map(|s| (*s).to_string())
+                .collect::<Vec<String>>(),
+        )
     }
 }
 
