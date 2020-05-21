@@ -88,7 +88,7 @@ impl CorsMiddleware {
     fn build_preflight_response(&self, origin: &[HeaderValue]) -> http_types::Response {
         let mut response = http_types::Response::new(StatusCode::Ok);
         response
-            .insert_header(headers::ACCESS_CONTROL_ALLOW_ORIGIN, origin.clone())
+            .insert_header(headers::ACCESS_CONTROL_ALLOW_ORIGIN, origin)
             .unwrap();
         response
             .insert_header(
