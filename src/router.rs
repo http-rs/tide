@@ -22,8 +22,8 @@ pub(crate) struct Selection<'a, State> {
 }
 
 impl<State: 'static> Router<State> {
-    pub(crate) fn new() -> Router<State> {
-        Router {
+    pub(crate) fn new() -> Self {
+        Self {
             method_map: HashMap::default(),
             all_method_router: MethodRouter::new(),
         }

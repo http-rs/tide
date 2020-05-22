@@ -14,7 +14,7 @@ use crate::{Request, Result};
 /// use http_types::headers::HeaderValue;
 /// use tide::security::{CorsMiddleware, Origin};
 ///
-/// CorsMiddleware::new()
+/// let cors = CorsMiddleware::new()
 ///     .allow_methods("GET, POST, OPTIONS".parse::<HeaderValue>().unwrap())
 ///     .allow_origin(Origin::from("*"))
 ///     .allow_credentials(false);
@@ -35,6 +35,7 @@ pub const WILDCARD: &str = "*";
 
 impl CorsMiddleware {
     /// Creates a new Cors middleware.
+    #[must_use]
     pub fn new() -> Self {
         Self {
             allow_credentials: None,
@@ -46,7 +47,8 @@ impl CorsMiddleware {
         }
     }
 
-    /// Set allow_credentials and return new Cors
+    /// Set `allow_credentials` and return new Cors
+    #[must_use]
     pub fn allow_credentials(mut self, allow_credentials: bool) -> Self {
         self.allow_credentials = match allow_credentials.to_string().parse() {
             Ok(header) => Some(header),
@@ -55,31 +57,31 @@ impl CorsMiddleware {
         self
     }
 
-    /// Set allow_headers and return new Cors
+    /// Set `allow_headers` and return new Cors
     pub fn allow_headers<T: Into<HeaderValue>>(mut self, headers: T) -> Self {
         self.allow_headers = headers.into();
         self
     }
 
-    /// Set max_age and return new Cors
+    /// Set `max_age` and return new Cors
     pub fn max_age<T: Into<HeaderValue>>(mut self, max_age: T) -> Self {
         self.max_age = max_age.into();
         self
     }
 
-    /// Set allow_methods and return new Cors
+    /// Set `allow_methods` and return new Cors
     pub fn allow_methods<T: Into<HeaderValue>>(mut self, methods: T) -> Self {
         self.allow_methods = methods.into();
         self
     }
 
-    /// Set allow_origin and return new Cors
+    /// Set `allow_origin` and return new Cors
     pub fn allow_origin<T: Into<Origin>>(mut self, origin: T) -> Self {
         self.allow_origin = origin.into();
         self
     }
 
-    /// Set expose_headers and return new Cors
+    /// Set `expose_headers` and return new Cors
     pub fn expose_headers<T: Into<HeaderValue>>(mut self, headers: T) -> Self {
         self.expose_headers = Some(headers.into());
         self
@@ -88,7 +90,7 @@ impl CorsMiddleware {
     fn build_preflight_response(&self, origin: &[HeaderValue]) -> http_types::Response {
         let mut response = http_types::Response::new(StatusCode::Ok);
         response
-            .insert_header(headers::ACCESS_CONTROL_ALLOW_ORIGIN, origin.clone())
+            .insert_header(headers::ACCESS_CONTROL_ALLOW_ORIGIN, origin)
             .unwrap();
         response
             .insert_header(
@@ -121,7 +123,7 @@ impl CorsMiddleware {
         response
     }
 
-    /// Look at origin of request and determine allow_origin
+    /// Look at origin of request and determine `allow_origin`
     fn response_origin(&self, origin: &HeaderValue) -> Option<HeaderValue> {
         if !self.is_valid_origin(origin) {
             return None;
@@ -151,12 +153,11 @@ impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
             let origins = req.header(&headers::ORIGIN).cloned().unwrap_or_default();
 
             // TODO: how should multiple origin values be handled?
-            let origin = match origins.first() {
-                Some(origin) => origin,
-                None => {
-                    // This is not a CORS request if there is no Origin header
-                    return next.run(req).await;
-                }
+            let origin = if let Some(origin) = origins.first() {
+                origin
+            } else {
+                // This is not a CORS request if there is no Origin header
+                return next.run(req).await;
             };
 
             if !self.is_valid_origin(origin) {
@@ -172,7 +173,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
             response
                 .insert_header(
                     headers::ACCESS_CONTROL_ALLOW_ORIGIN,
-                    self.response_origin(&origin).unwrap(),
+                    self.response_origin(origin).unwrap(),
                 )
                 .unwrap();
 
@@ -198,7 +199,7 @@ impl Default for CorsMiddleware {
     }
 }
 
-/// allow_origin enum
+/// `allow_origin` enum
 #[derive(Clone, Debug, Hash, PartialEq)]
 pub enum Origin {
     /// Wildcard. Accept all origin requests
@@ -212,15 +213,15 @@ pub enum Origin {
 impl From<String> for Origin {
     fn from(s: String) -> Self {
         if s == "*" {
-            return Origin::Any;
+            return Self::Any;
         }
-        Origin::Exact(s)
+        Self::Exact(s)
     }
 }
 
 impl From<&str> for Origin {
     fn from(s: &str) -> Self {
-        Origin::from(s.to_string())
+        Self::from(s.to_string())
     }
 }
 
@@ -230,13 +231,17 @@ impl From<Vec<String>> for Origin {
             return Self::from(list[0].clone());
         }
 
-        Origin::List(list)
+        Self::List(list)
     }
 }
 
 impl From<Vec<&str>> for Origin {
     fn from(list: Vec<&str>) -> Self {
-        Origin::from(list.iter().map(|s| s.to_string()).collect::<Vec<String>>())
+        Self::from(
+            list.iter()
+                .map(|s| (*s).to_string())
+                .collect::<Vec<String>>(),
+        )
     }
 }
 

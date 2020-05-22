@@ -32,8 +32,8 @@ impl<State> Request<State> {
         state: Arc<State>,
         request: http_types::Request,
         route_params: Vec<Params>,
-    ) -> Request<State> {
-        Request {
+    ) -> Self {
+        Self {
             state,
             request,
             route_params,
@@ -59,6 +59,7 @@ impl<State> Request<State> {
     /// #
     /// # Ok(()) })}
     /// ```
+    #[must_use]
     pub fn method(&self) -> Method {
         self.request.method()
     }
@@ -82,6 +83,7 @@ impl<State> Request<State> {
     /// #
     /// # Ok(()) })}
     /// ```
+    #[must_use]
     pub fn uri(&self) -> &Url {
         self.request.url()
     }
@@ -105,6 +107,7 @@ impl<State> Request<State> {
     /// #
     /// # Ok(()) })}
     /// ```
+    #[must_use]
     pub fn version(&self) -> Option<Version> {
         self.request.version()
     }
@@ -128,6 +131,7 @@ impl<State> Request<State> {
     /// #
     /// # Ok(()) })}
     /// ```
+    #[must_use]
     pub fn header(
         &self,
         key: &http_types::headers::HeaderName,
@@ -136,6 +140,7 @@ impl<State> Request<State> {
     }
 
     /// Get a local value.
+    #[must_use]
     pub fn local<T: Send + Sync + 'static>(&self) -> Option<&T> {
         self.request.local().get()
     }
@@ -146,6 +151,7 @@ impl<State> Request<State> {
         self
     }
 
+    #[must_use]
     ///  Access app-global state.
     pub fn state(&self) -> &State {
         &self.state
@@ -171,8 +177,7 @@ impl<State> Request<State> {
         self.route_params
             .iter()
             .rev()
-            .filter_map(|params| params.find(key))
-            .next()
+            .find_map(|params| params.find(key))
             .unwrap()
             .parse()
     }
@@ -293,6 +298,7 @@ impl<State> Request<State> {
     }
 
     /// returns a `Cookie` by name of the cookie.
+    #[must_use]
     pub fn cookie(&self, name: &str) -> Option<Cookie<'static>> {
         let cookie_data = self
             .local::<CookieData>()
@@ -303,8 +309,14 @@ impl<State> Request<State> {
     }
 
     /// Get the length of the body.
+    #[must_use]
     pub fn len(&self) -> Option<usize> {
         self.request.len()
+    }
+    /// Checks if the body is empty.
+    #[must_use]
+    pub fn is_empty(&self) -> Option<bool> {
+        Some(self.request.len()? == 0)
     }
 }
 

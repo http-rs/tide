@@ -57,12 +57,11 @@ impl<State> Endpoint<State> for ServeDir {
                 Ok(file) => file,
             };
 
-            let len = match file.metadata().await {
-                Ok(metadata) => metadata.len() as usize,
-                Err(_) => {
-                    log::warn!("Could not retrieve metadata");
-                    return Ok(Response::new(StatusCode::InternalServerError));
-                }
+            let len = if let Ok(metadata) = file.metadata().await {
+                metadata.len() as usize
+            } else {
+                log::warn!("Could not retrieve metadata");
+                return Ok(Response::new(StatusCode::InternalServerError));
             };
 
             let body = Body::from_reader(BufReader::new(file), Some(len));

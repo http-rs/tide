@@ -25,6 +25,7 @@ pub struct Response {
 
 impl Response {
     /// Create a new instance.
+    #[must_use]
     pub fn new(status: StatusCode) -> Self {
         let res = http_types::Response::new(status);
         Self {
@@ -72,22 +73,32 @@ impl Response {
     }
 
     /// Returns the statuscode.
+    #[must_use]
     pub fn status(&self) -> crate::StatusCode {
         self.res.status()
     }
 
     /// Set the statuscode.
+    #[must_use]
     pub fn set_status(mut self, status: crate::StatusCode) -> Self {
         self.res.set_status(status);
         self
     }
 
     /// Get the length of the body.
+    #[must_use]
     pub fn len(&self) -> Option<usize> {
         self.res.len()
     }
 
+    /// Checks if the body is empty.
+    #[must_use]
+    pub fn is_empty(&self) -> Option<bool> {
+        Some(self.res.len()? == 0)
+    }
+
     /// Get an HTTP header.
+    #[must_use]
     pub fn header(&self, name: &HeaderName) -> Option<&Vec<HeaderValue>> {
         self.res.header(name)
     }
@@ -126,6 +137,7 @@ impl Response {
     /// Set the request MIME.
     ///
     /// [Read more on MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types)
+    #[must_use]
     pub fn set_mime(self, mime: Mime) -> Self {
         self.set_header(http_types::headers::CONTENT_TYPE, format!("{}", mime))
     }
@@ -135,6 +147,7 @@ impl Response {
     /// # Mime
     ///
     /// The encoding is set to `text/plain; charset=utf-8`.
+    #[must_use]
     pub fn body_string(mut self, string: String) -> Self {
         self.res.set_body(string);
         self.set_mime(mime::TEXT_PLAIN_UTF_8)
@@ -167,7 +180,7 @@ impl Response {
     pub async fn body_form<T: serde::Serialize>(
         mut self,
         form: T,
-    ) -> Result<Response, serde_qs::Error> {
+    ) -> Result<Self, serde_qs::Error> {
         // TODO: think about how to handle errors
         self.res.set_body(serde_qs::to_string(&form)?.into_bytes());
         Ok(self
@@ -221,6 +234,7 @@ impl Response {
     }
 
     /// Get a local value.
+    #[must_use]
     pub fn local<T: Send + Sync + 'static>(&self) -> Option<&T> {
         self.res.local().get()
     }

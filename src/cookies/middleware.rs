@@ -25,7 +25,7 @@ use std::sync::{Arc, RwLock};
 pub(crate) struct CookiesMiddleware;
 
 impl CookiesMiddleware {
-    /// Creates a new CookiesMiddleware.
+    /// Creates a new `CookiesMiddleware`.
     pub fn new() -> Self {
         Self::default()
     }
@@ -82,7 +82,7 @@ impl CookieData {
         if let Some(cookie_headers) = req.header(&headers::COOKIE) {
             for cookie_header in cookie_headers {
                 // spec says there should be only one, so this is permissive
-                for pair in cookie_header.as_str().split(";") {
+                for pair in cookie_header.as_str().split(';') {
                     if let Ok(cookie) = Cookie::parse_encoded(String::from(pair)) {
                         jar.add_original(cookie);
                     }
@@ -90,7 +90,7 @@ impl CookieData {
             }
         }
 
-        CookieData {
+        Self {
             content: Arc::new(RwLock::new(jar)),
         }
     }
