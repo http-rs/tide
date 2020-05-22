@@ -340,7 +340,24 @@ impl<State: Send + Sync + 'static> Server<State> {
     where
         R: From<http_types::Response>,
     {
-        match self.clone().handle_request(req.into()).await {
+        let req = req.into();
+        let Self {
+            router,
+            state,
+            middleware,
+        } = self.clone();
+
+        let method = req.method().to_owned();
+        let Selection { endpoint, params } = router.route(&req.url().path(), method);
+        let route_params = vec![params];
+        let req = Request::new(state, req, route_params);
+
+        let next = Next {
+            endpoint,
+            next_middleware: &middleware,
+        };
+
+        match next.run(req).await {
             Ok(value) => {
                 let res: http_types::Response = value.into();
                 // We assume that if an error was manually cast to a
@@ -358,48 +375,6 @@ impl<State: Send + Sync + 'static> Server<State> {
                     res.set_body(err.to_string());
                 }
                 Ok(res.into())
-            }
-        }
-    }
-
-    async fn handle_request(
-        self,
-        req: http_types::Request,
-    ) -> Result<http_types::Response, http_types::Error> {
-        let Self {
-            router,
-            state,
-            middleware,
-        } = self;
-
-        let method = req.method().to_owned();
-        let Selection { endpoint, params } = router.route(&req.url().path(), method);
-        let route_params = vec![params];
-        let req = Request::new(state, req, route_params);
-
-        let next = Next {
-            endpoint,
-            next_middleware: &middleware,
-        };
-
-        match next.run(req).await {
-            Ok(value) => {
-                let res = value.into();
-                // We assume that if an error was manually cast to a
-                // Response that we actually want to send the body to the
-                // client. At this point we don't scrub the message.
-                Ok(res)
-            }
-            Err(err) => {
-                let mut res = http_types::Response::new(err.status());
-                res.set_content_type(http_types::mime::PLAIN);
-                // Only send the message if it is a non-500 range error. All
-                // errors default to 500 by default, so sending the error
-                // body is opt-in at the call site.
-                if !res.status().is_server_error() {
-                    res.set_body(err.to_string());
-                }
-                Ok(res)
             }
         }
     }
