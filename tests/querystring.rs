@@ -1,4 +1,5 @@
 use async_std::prelude::*;
+use http_types::{url::Url, Method};
 use serde::Deserialize;
 use tide::{http, Request, Response, Server, StatusCode};
 
@@ -40,8 +41,8 @@ fn get_server() -> Server<()> {
 async fn successfully_deserialize_query() {
     let app = get_server();
     let req = http_types::Request::new(
-        http_types::Method::Get,
-        "http://example.com/?msg=Hello".parse().unwrap(),
+        Method::Get,
+        Url::parse("http://example.com/?msg=Hello").unwrap(),
     );
 
     let mut res: http::Response = app.respond(req).await.unwrap();
@@ -54,10 +55,7 @@ async fn successfully_deserialize_query() {
 #[async_std::test]
 async fn unsuccessfully_deserialize_query() {
     let app = get_server();
-    let req = http_types::Request::new(
-        http_types::Method::Get,
-        "http://example.com/".parse().unwrap(),
-    );
+    let req = http_types::Request::new(Method::Get, Url::parse("http://example.com/").unwrap());
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), 400);
 
@@ -70,8 +68,8 @@ async fn unsuccessfully_deserialize_query() {
 async fn malformatted_query() {
     let app = get_server();
     let req = http_types::Request::new(
-        http_types::Method::Get,
-        "http://example.com/?error=should_fail".parse().unwrap(),
+        Method::Get,
+        Url::parse("http://example.com/?error=should_fail").unwrap(),
     );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), 400);
@@ -85,8 +83,8 @@ async fn malformatted_query() {
 async fn empty_query_string_for_struct_with_no_required_fields() {
     let app = get_server();
     let req = http_types::Request::new(
-        http_types::Method::Get,
-        "http://example.com/optional".parse().unwrap(),
+        Method::Get,
+        Url::parse("http://example.com/optional").unwrap(),
     );
     let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);

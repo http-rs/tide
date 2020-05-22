@@ -13,11 +13,12 @@ use std::sync::{Arc, RwLock};
 ///
 /// ```
 /// # use tide::{Request, Response, StatusCode};
+/// # use tide::http::cookies::Cookie;
 /// let mut app = tide::Server::new();
 /// app.at("/get").get(|cx: Request<()>| async move { Ok(cx.cookie("testCookie").unwrap().value().to_string()) });
 /// app.at("/set").get(|_| async {
 ///     let mut res = Response::new(StatusCode::Ok);
-///     res.set_cookie(cookie::Cookie::new("testCookie", "NewCookieValue"));
+///     res.set_cookie(Cookie::new("testCookie", "NewCookieValue"));
 ///     Ok(res)
 /// });
 /// ```
@@ -38,13 +39,13 @@ impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
         next: Next<'a, State>,
     ) -> BoxFuture<'a, crate::Result> {
         Box::pin(async move {
-            let cookie_jar = if let Some(cookie_data) = ctx.local::<CookieData>() {
+            let cookie_jar = if let Some(cookie_data) = ctx.ext::<CookieData>() {
                 cookie_data.content.clone()
             } else {
                 let cookie_data = CookieData::from_request(&ctx);
-                // no cookie data in local context, so we try to create it
+                // no cookie data in ext context, so we try to create it
                 let content = cookie_data.content.clone();
-                ctx = ctx.set_local(cookie_data);
+                ctx = ctx.set_ext(cookie_data);
                 content
             };
 

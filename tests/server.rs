@@ -26,7 +26,8 @@ fn hello_world() -> Result<(), http_types::Error> {
             let string = surf::get(format!("http://localhost:{}", port))
                 .body_string("nori".to_string())
                 .recv_string()
-                .await?;
+                .await
+                .unwrap();
             assert_eq!(string, "says hello".to_string());
             Ok(())
         });
@@ -52,7 +53,8 @@ fn echo_server() -> Result<(), http_types::Error> {
             let string = surf::get(format!("http://localhost:{}", port))
                 .body_string("chashu".to_string())
                 .recv_string()
-                .await?;
+                .await
+                .unwrap();
             assert_eq!(string, "chashu".to_string());
             Ok(())
         });
@@ -88,7 +90,8 @@ fn json() -> Result<(), http_types::Error> {
             let counter: Counter = surf::get(format!("http://localhost:{}", &port))
                 .body_json(&Counter { count: 0 })?
                 .recv_json()
-                .await?;
+                .await
+                .unwrap();
             assert_eq!(counter.count, 1);
             Ok(())
         });

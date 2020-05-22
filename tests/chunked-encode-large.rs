@@ -2,7 +2,7 @@ mod test_utils;
 use async_std::io::Cursor;
 use async_std::prelude::*;
 use async_std::task;
-use http_types::{headers, StatusCode};
+use http_types::StatusCode;
 use std::time::Duration;
 
 use tide::Response;
@@ -75,7 +75,7 @@ async fn chunked_large() -> Result<(), http_types::Error> {
             let body = Cursor::new(TEXT.to_owned());
             let res = Response::new(StatusCode::Ok)
                 .body(body)
-                .set_header(headers::CONTENT_TYPE, "text/plain; charset=utf-8");
+                .set_mime(mime::TEXT_PLAIN_UTF_8);
             Ok(res)
         });
         app.listen(("localhost", port)).await?;
@@ -84,17 +84,21 @@ async fn chunked_large() -> Result<(), http_types::Error> {
 
     let client = task::spawn(async move {
         task::sleep(Duration::from_millis(100)).await;
-        let mut res = surf::get(format!("http://localhost:{}", port)).await?;
+        let mut res = surf::get(format!("http://localhost:{}", port))
+            .await
+            .unwrap();
         assert_eq!(res.status(), 200);
         assert_eq!(
-            res.header(&"transfer-encoding".parse().unwrap()),
-            Some(&vec![http_types::headers::HeaderValue::from_ascii(
-                b"chunked"
-            )
-            .unwrap()])
+            // this is awkward and should be revisited when surf is on newer http-types
+            res.header(&"transfer-encoding".parse().unwrap())
+                .unwrap()
+                .last()
+                .unwrap()
+                .as_str(),
+            "chunked"
         );
         assert_eq!(res.header(&"content-length".parse().unwrap()), None);
-        let string = res.body_string().await?;
+        let string = res.body_string().await.unwrap();
         assert_eq!(string, TEXT.to_string());
         Ok(())
     });

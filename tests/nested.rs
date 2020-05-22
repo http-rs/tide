@@ -1,6 +1,5 @@
-use http_types::headers::{HeaderName, HeaderValue};
+use http_types::headers::HeaderName;
 use http_types::{Method, Request, Response, Url};
-use std::str::FromStr;
 use test_utils::BoxFuture;
 use tide::{Middleware, Next};
 
@@ -55,7 +54,7 @@ async fn nested_middleware() {
             Box::pin(async move {
                 let res = next.run(req).await?;
                 let res = res.set_header(
-                    HeaderName::from_ascii("X-Tide-Test".to_owned().into_bytes()).unwrap(),
+                    HeaderName::from_bytes("X-Tide-Test".to_owned().into_bytes()).unwrap(),
                     "1",
                 );
                 Ok(res)
@@ -78,7 +77,7 @@ async fn nested_middleware() {
         Url::parse("http://example.com/foo/echo").unwrap(),
     );
     let res: Response = app.respond(req).await.unwrap();
-    assert_header(&res, "X-Tide-Test", Some("1"));
+    assert_eq!(res["X-Tide-Test"], "1");
     assert_eq!(res.status(), 200);
     assert_eq!(res.body_string().await.unwrap(), "/echo");
 
@@ -87,13 +86,13 @@ async fn nested_middleware() {
         Url::parse("http://example.com/foo/x/bar").unwrap(),
     );
     let res: Response = app.respond(req).await.unwrap();
-    assert_header(&res, "X-Tide-Test", Some("1"));
+    assert_eq!(res["X-Tide-Test"], "1");
     assert_eq!(res.status(), 200);
     assert_eq!(res.body_string().await.unwrap(), "/");
 
     let req = Request::new(Method::Get, Url::parse("http://example.com/bar").unwrap());
     let res: Response = app.respond(req).await.unwrap();
-    assert_header(&res, "X-Tide-Test", None);
+    assert!(res.header("X-Tide-Test").is_none());
     assert_eq!(res.status(), 200);
     assert_eq!(res.body_string().await.unwrap(), "/bar");
 }
@@ -118,28 +117,4 @@ async fn nested_with_different_state() {
     let res: Response = outer.respond(req).await.unwrap();
     assert_eq!(res.status(), 200);
     assert_eq!(res.body_string().await.unwrap(), "Hello, world!");
-}
-
-// See https://github.com/http-rs/http-types/issues/89 for a proposed fix to this boilerplate.
-fn assert_header(headers: impl AsRef<http_types::Headers>, lhs: &str, rhs: Option<&str>) {
-    match rhs {
-        Some(s) => {
-            let header = headers
-                .as_ref()
-                .get(
-                    &http_types::headers::HeaderName::from_ascii(lhs.to_owned().into_bytes())
-                        .unwrap(),
-                )
-                .unwrap()
-                .iter()
-                .next();
-            assert_eq!(header, Some(&HeaderValue::from_str(s).unwrap()));
-        }
-        None => {
-            let header = headers.as_ref().get(
-                &http_types::headers::HeaderName::from_ascii(lhs.to_owned().into_bytes()).unwrap(),
-            );
-            assert_eq!(header, None);
-        }
-    }
 }

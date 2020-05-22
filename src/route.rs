@@ -153,7 +153,7 @@ impl<'a, State: 'static> Route<'a, State> {
                     ));
                     (ep.clone(), ep)
                 };
-            self.router.add(&self.path, method.clone(), ep1);
+            self.router.add(&self.path, method, ep1);
             let wildcard = self.at("*--tide-path-rest");
             wildcard.router.add(&wildcard.path, method, ep2);
         } else {

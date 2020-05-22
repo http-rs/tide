@@ -16,6 +16,7 @@
 //! # Ok(()) }) }
 //! ```
 
+use crate::http::headers::LOCATION;
 use crate::utils::BoxFuture;
 use crate::StatusCode;
 use crate::{Endpoint, Request, Response};
@@ -103,6 +104,6 @@ impl<T: AsRef<str>> Into<Response> for Redirect<T> {
 
 impl<T: AsRef<str>> Into<Response> for &Redirect<T> {
     fn into(self) -> Response {
-        Response::new(self.status).set_header("location".parse().unwrap(), &self.location)
+        Response::new(self.status).set_header(LOCATION, self.location.as_ref())
     }
 }
