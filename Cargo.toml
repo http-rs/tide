@@ -28,6 +28,8 @@ default = ["h1-server"]
 h1-server = ["async-h1"]
 docs = ["unstable"]
 unstable = []
+# DO NOT USE. Only exists to expose internals so they can be benchmarked.
+__internal__bench = []
 
 [dependencies]
 async-h1 = { version = "1.1.2", optional = true }
@@ -50,8 +52,14 @@ juniper = "0.14.1"
 portpicker = "0.1.0"
 serde = { version = "1.0.102", features = ["derive"] }
 surf = "2.0.0-alpha.1"
+criterion = "0.3.1"
 
 [[test]]
 name = "nested"
 path = "tests/nested.rs"
 required-features = ["unstable"]
+
+[[bench]]
+name = "router"
+harness = false
+

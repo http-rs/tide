@@ -182,12 +182,6 @@ impl<State> Request<State> {
             .parse()
     }
 
-    pub(crate) fn rest(&self) -> Option<&str> {
-        self.route_params
-            .last()
-            .and_then(|params| params.find("--tide-path-rest"))
-    }
-
     /// Reads the entire request body into a byte buffer.
     ///
     /// This method can be called after the body has already been read, but will
@@ -300,12 +294,10 @@ impl<State> Request<State> {
     /// returns a `Cookie` by name of the cookie.
     #[must_use]
     pub fn cookie(&self, name: &str) -> Option<Cookie<'static>> {
-        let cookie_data = self
-            .local::<CookieData>()
-            .expect("should always be set by the cookies middleware");
-
-        let locked_jar = cookie_data.content.read().unwrap();
-        locked_jar.get(name).cloned()
+        if let Some(cookie_data) = self.local::<CookieData>() {
+            return cookie_data.content.read().unwrap().get(name).cloned();
+        }
+        None
     }
 
     /// Get the length of the body.
@@ -385,4 +377,10 @@ impl<'a, State> IntoIterator for &'a mut Request<State> {
     fn into_iter(self) -> Self::IntoIter {
         self.request.iter_mut()
     }
+}
+
+pub(crate) fn rest(route_params: &[Params]) -> Option<&str> {
+    route_params
+        .last()
+        .and_then(|params| params.find("--tide-path-rest"))
 }

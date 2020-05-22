@@ -1,5 +1,4 @@
 use async_std::prelude::*;
-use async_std::task::block_on;
 use tide::http::cookies::Cookie;
 
 use tide::{Request, Response, Server, StatusCode};
@@ -64,11 +63,9 @@ async fn successfully_retrieve_request_cookie() {
     let mut res = make_request("/get").await;
     assert_eq!(res.status(), StatusCode::Ok);
 
-    let body = block_on(async move {
-        let mut buffer = Vec::new();
-        res.read_to_end(&mut buffer).await.unwrap();
-        String::from_utf8(buffer).unwrap()
-    });
+    let mut buffer = Vec::new();
+    res.read_to_end(&mut buffer).await.unwrap();
+    let body = String::from_utf8(buffer).unwrap();
 
     assert_eq!(&body, "RequestCookieValue and also Other;Cookie Value");
 }

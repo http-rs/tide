@@ -193,7 +193,11 @@ mod redirect;
 mod request;
 mod response;
 mod route;
+
+#[cfg(not(feature = "__internal__bench"))]
 mod router;
+#[cfg(feature = "__internal__bench")]
+pub mod router;
 mod server;
 mod utils;
 
