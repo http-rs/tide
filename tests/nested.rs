@@ -54,7 +54,7 @@ async fn nested_middleware() {
             Box::pin(async move {
                 let res = next.run(req).await?;
                 let res = res.set_header(
-                    HeaderName::from_ascii("X-Tide-Test".to_owned().into_bytes()).unwrap(),
+                    HeaderName::from_bytes("X-Tide-Test".to_owned().into_bytes()).unwrap(),
                     "1",
                 );
                 Ok(res)
