@@ -294,11 +294,8 @@ impl<State> Request<State> {
     /// returns a `Cookie` by name of the cookie.
     #[must_use]
     pub fn cookie(&self, name: &str) -> Option<Cookie<'static>> {
-        if let Some(cookie_data) = self.local::<CookieData>() {
-            cookie_data.content.read().unwrap().get(name).cloned()
-        } else {
-            None
-        }
+        self.ext::<CookieData>()
+            .and_then(|cookie_data| cookie_data.content.read().unwrap().get(name).cloned())
     }
 
     /// Get the length of the body.
