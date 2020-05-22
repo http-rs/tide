@@ -1,5 +1,4 @@
 use async_std::prelude::*;
-use async_std::task::block_on;
 use serde::Deserialize;
 use tide::{http, Request, Response, Server, StatusCode};
 
@@ -48,7 +47,7 @@ async fn successfully_deserialize_query() {
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     let mut body = String::new();
-    block_on(res.read_to_string(&mut body)).unwrap();
+    res.read_to_string(&mut body).await.unwrap();
     assert_eq!(body, "Hello");
 }
 
@@ -63,7 +62,7 @@ async fn unsuccessfully_deserialize_query() {
     assert_eq!(res.status(), 400);
 
     let mut body = String::new();
-    block_on(res.read_to_string(&mut body)).unwrap();
+    res.read_to_string(&mut body).await.unwrap();
     assert_eq!(body, "failed with reason: missing field `msg`");
 }
 
@@ -78,7 +77,7 @@ async fn malformatted_query() {
     assert_eq!(res.status(), 400);
 
     let mut body = String::new();
-    block_on(res.read_to_string(&mut body)).unwrap();
+    res.read_to_string(&mut body).await.unwrap();
     assert_eq!(body, "failed with reason: missing field `msg`");
 }
 
