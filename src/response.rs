@@ -1,5 +1,6 @@
 use async_std::io::prelude::*;
 use std::convert::TryFrom;
+use std::ops::Index;
 
 use mime::Mime;
 use serde::Serialize;
@@ -322,5 +323,33 @@ impl<'a> IntoIterator for &'a mut Response {
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.res.iter_mut()
+    }
+}
+
+impl Index<HeaderName> for Response {
+    type Output = HeaderValues;
+
+    /// Returns a reference to the value corresponding to the supplied name.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the name is not present in `Response`.
+    #[inline]
+    fn index(&self, name: HeaderName) -> &HeaderValues {
+        &self.res[name]
+    }
+}
+
+impl Index<&str> for Response {
+    type Output = HeaderValues;
+
+    /// Returns a reference to the value corresponding to the supplied name.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the name is not present in `Response`.
+    #[inline]
+    fn index(&self, name: &str) -> &HeaderValues {
+        &self.res[name]
     }
 }

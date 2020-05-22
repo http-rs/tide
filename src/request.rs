@@ -4,6 +4,7 @@ use serde::Deserialize;
 use async_std::io::{self, prelude::*, BufReader};
 use async_std::task::{Context, Poll};
 
+use std::ops::Index;
 use std::pin::Pin;
 use std::{str::FromStr, sync::Arc};
 
@@ -374,6 +375,34 @@ impl<'a, State> IntoIterator for &'a mut Request<State> {
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.request.iter_mut()
+    }
+}
+
+impl<State> Index<HeaderName> for Request<State> {
+    type Output = HeaderValues;
+
+    /// Returns a reference to the value corresponding to the supplied name.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the name is not present in `Request`.
+    #[inline]
+    fn index(&self, name: HeaderName) -> &HeaderValues {
+        &self.request[name]
+    }
+}
+
+impl<State> Index<&str> for Request<State> {
+    type Output = HeaderValues;
+
+    /// Returns a reference to the value corresponding to the supplied name.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the name is not present in `Request`.
+    #[inline]
+    fn index(&self, name: &str) -> &HeaderValues {
+        &self.request[name]
     }
 }
 
