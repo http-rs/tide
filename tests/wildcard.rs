@@ -1,4 +1,4 @@
-use http_types::{Method, StatusCode};
+use http_types::{Method, StatusCode, Url};
 use tide::{http, Request};
 
 async fn add_one(cx: Request<()>) -> Result<String, tide::Error> {
@@ -41,13 +41,19 @@ async fn wildcard() {
     let mut app = tide::Server::new();
     app.at("/add_one/:num").get(add_one);
 
-    let req = http::Request::new(Method::Get, "http://localhost/add_one/3".parse().unwrap());
+    let req = http::Request::new(
+        Method::Get,
+        Url::parse("http://localhost/add_one/3").unwrap(),
+    );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     let body = res.take_body().into_string().await.unwrap();
     assert_eq!(body.as_bytes(), b"4");
 
-    let req = http::Request::new(Method::Get, "http://localhost/add_one/-7".parse().unwrap());
+    let req = http::Request::new(
+        Method::Get,
+        Url::parse("http://localhost/add_one/-7").unwrap(),
+    );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     let body = res.take_body().into_string().await.unwrap();
@@ -59,7 +65,10 @@ async fn invalid_segment_error() {
     let mut app = tide::new();
     app.at("/add_one/:num").get(add_one);
 
-    let req = http::Request::new(Method::Get, "http://localhost/add_one/a".parse().unwrap());
+    let req = http::Request::new(
+        Method::Get,
+        Url::parse("http://localhost/add_one/a").unwrap(),
+    );
     let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::BadRequest);
 }
@@ -69,7 +78,10 @@ async fn not_found_error() {
     let mut app = tide::new();
     app.at("/add_one/:num").get(add_one);
 
-    let req = http::Request::new(Method::Get, "http://localhost/add_one/".parse().unwrap());
+    let req = http::Request::new(
+        Method::Get,
+        Url::parse("http://localhost/add_one/").unwrap(),
+    );
     let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::NotFound);
 }
@@ -81,7 +93,7 @@ async fn wild_path() {
 
     let req = http::Request::new(
         Method::Get,
-        "http://localhost/echo/some_path".parse().unwrap(),
+        Url::parse("http://localhost/echo/some_path").unwrap(),
     );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
@@ -90,14 +102,14 @@ async fn wild_path() {
 
     let req = http::Request::new(
         Method::Get,
-        "http://localhost/echo/multi/segment/path".parse().unwrap(),
+        Url::parse("http://localhost/echo/multi/segment/path").unwrap(),
     );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     let body: String = res.take_body().into_string().await.unwrap();
     assert_eq!(body.as_bytes(), b"multi/segment/path");
 
-    let req = http::Request::new(Method::Get, "http://localhost/echo/".parse().unwrap());
+    let req = http::Request::new(Method::Get, Url::parse("http://localhost/echo/").unwrap());
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::NotFound);
     let body: String = res.take_body().into_string().await.unwrap();
@@ -111,7 +123,7 @@ async fn multi_wildcard() {
 
     let req = http::Request::new(
         Method::Get,
-        "http://localhost/add_two/1/2/".parse().unwrap(),
+        Url::parse("http://localhost/add_two/1/2/").unwrap(),
     );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
@@ -120,14 +132,17 @@ async fn multi_wildcard() {
 
     let req = http::Request::new(
         Method::Get,
-        "http://localhost/add_two/-1/2/".parse().unwrap(),
+        Url::parse("http://localhost/add_two/-1/2/").unwrap(),
     );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), 200);
     let body: String = res.take_body().into_string().await.unwrap();
     assert_eq!(body.as_bytes(), b"1");
 
-    let req = http::Request::new(Method::Get, "http://localhost/add_two/1".parse().unwrap());
+    let req = http::Request::new(
+        Method::Get,
+        Url::parse("http://localhost/add_two/1").unwrap(),
+    );
     let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::NotFound);
 }
@@ -139,7 +154,7 @@ async fn wild_last_segment() {
 
     let req = http::Request::new(
         Method::Get,
-        "http://localhost/echo/one/two".parse().unwrap(),
+        Url::parse("http://localhost/echo/one/two").unwrap(),
     );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
@@ -148,7 +163,7 @@ async fn wild_last_segment() {
 
     let req = http::Request::new(
         Method::Get,
-        "http://localhost/echo/one/two/three/four".parse().unwrap(),
+        Url::parse("http://localhost/echo/one/two/three/four").unwrap(),
     );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
@@ -163,7 +178,7 @@ async fn invalid_wildcard() {
 
     let req = http::Request::new(
         Method::Get,
-        "http://localhost/echo/one/two".parse().unwrap(),
+        Url::parse("http://localhost/echo/one/two").unwrap(),
     );
     let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::NotFound);
@@ -176,12 +191,15 @@ async fn nameless_wildcard() {
 
     let req = http::Request::new(
         Method::Get,
-        "http://localhost/echo/one/two".parse().unwrap(),
+        Url::parse("http://localhost/echo/one/two").unwrap(),
     );
     let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::NotFound);
 
-    let req = http::Request::new(Method::Get, "http://localhost/echo/one".parse().unwrap());
+    let req = http::Request::new(
+        Method::Get,
+        Url::parse("http://localhost/echo/one").unwrap(),
+    );
     let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
 }
@@ -191,13 +209,16 @@ async fn nameless_internal_wildcard() {
     let mut app = tide::new();
     app.at("/echo/:/:path").get(echo_path);
 
-    let req = http::Request::new(Method::Get, "http://localhost/echo/one".parse().unwrap());
+    let req = http::Request::new(
+        Method::Get,
+        Url::parse("http://localhost/echo/one").unwrap(),
+    );
     let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::NotFound);
 
     let req = http::Request::new(
         Method::Get,
-        "http://localhost/echo/one/two".parse().unwrap(),
+        Url::parse("http://localhost/echo/one/two").unwrap(),
     );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
@@ -206,7 +227,7 @@ async fn nameless_internal_wildcard() {
 
     let req = http::Request::new(
         Method::Get,
-        "http://localhost/echo/one/two".parse().unwrap(),
+        Url::parse("http://localhost/echo/one/two").unwrap(),
     );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
@@ -221,7 +242,7 @@ async fn nameless_internal_wildcard2() {
 
     let req = http::Request::new(
         Method::Get,
-        "http://localhost/echo/one/two".parse().unwrap(),
+        Url::parse("http://localhost/echo/one/two").unwrap(),
     );
     let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
