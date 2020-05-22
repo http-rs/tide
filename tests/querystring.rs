@@ -1,5 +1,4 @@
 use async_std::prelude::*;
-use async_std::task::block_on;
 use http_types::{url::Url, Method};
 use serde::Deserialize;
 use tide::{http, Request, Response, Server, StatusCode};
