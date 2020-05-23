@@ -9,8 +9,12 @@ async fn add_one(cx: Request<()>) -> Result<String, tide::Error> {
 }
 
 async fn add_two(cx: Request<()>) -> Result<String, tide::Error> {
-    let one= cx.param::<i64>("one").map_err(|err| tide::Error::new(StatusCode::BadRequest, err))?;
-    let two= cx.param::<i64>("two").map_err(|err| tide::Error::new(StatusCode::BadRequest, err))?;
+    let one = cx
+        .param::<i64>("one")
+        .map_err(|err| tide::Error::new(StatusCode::BadRequest, err))?;
+    let two = cx
+        .param::<i64>("two")
+        .map_err(|err| tide::Error::new(StatusCode::BadRequest, err))?;
     Ok((one + two).to_string())
 }
 
