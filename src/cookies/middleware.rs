@@ -2,6 +2,8 @@ use crate::response::CookieEvent;
 use crate::utils::BoxFuture;
 use crate::{Middleware, Next, Request};
 
+#[cfg(feature = "secure-cookies")]
+use crate::http::cookies::Key;
 use crate::http::cookies::{Cookie, CookieJar, Delta};
 use crate::http::headers;
 
@@ -64,6 +66,14 @@ impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
             for cookie in res.cookie_events.drain(..) {
                 match cookie {
                     CookieEvent::Added(cookie) => jar.add(cookie.clone()),
+                    #[cfg(feature = "secure-cookies")]
+                    CookieEvent::AddedSigned(key, cookie) => {
+                        jar.get_jar().signed(&key).add(cookie.clone())
+                    }
+                    #[cfg(feature = "secure-cookies")]
+                    CookieEvent::AddedPrivate(key, cookie) => {
+                        jar.get_jar().private(&key).add(cookie.clone())
+                    }
                     CookieEvent::Removed(cookie) => jar.remove(cookie.clone()),
                 }
             }
@@ -103,6 +113,26 @@ impl LazyJar {
     pub(crate) fn get(&self, name: &str) -> Option<&Cookie<'static>> {
         if let Some(jar) = &self.0 {
             return jar.get(name);
+        }
+        None
+    }
+
+    /// Get a cookie from the signed cookie jar.
+    #[cfg(feature = "secure-cookies")]
+    #[cfg_attr(feature = "docs", doc(cfg(feature = "secure-cookies")))]
+    pub(crate) fn get_signed(&mut self, key: &Key, name: &str) -> Option<Cookie<'static>> {
+        if let Some(jar) = &mut self.0 {
+            return jar.signed(key).get(name);
+        }
+        None
+    }
+
+    /// Get a cookie from the authenticated and encrypted cookie jar.
+    #[cfg(feature = "secure-cookies")]
+    #[cfg_attr(feature = "docs", doc(cfg(feature = "secure-cookies")))]
+    pub(crate) fn get_private(&mut self, key: &Key, name: &str) -> Option<Cookie<'static>> {
+        if let Some(jar) = &mut self.0 {
+            return jar.private(key).get(name);
         }
         None
     }

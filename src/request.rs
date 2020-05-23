@@ -8,6 +8,8 @@ use std::{str::FromStr, sync::Arc};
 
 use crate::cookies::CookieData;
 use crate::http::cookies::Cookie;
+#[cfg(feature = "secure-cookies")]
+use crate::http::cookies::Key;
 use crate::http::headers::{self, HeaderName, HeaderValues, ToHeaderValues};
 use crate::http::{self, Body, Method, Mime, StatusCode, Url, Version};
 use crate::Response;
@@ -386,11 +388,30 @@ impl<State> Request<State> {
         Ok(res)
     }
 
-    /// returns a `Cookie` by name of the cookie.
+    /// Returns a `Cookie` by name of the cookie.
     #[must_use]
     pub fn cookie(&self, name: &str) -> Option<Cookie<'static>> {
         self.ext::<CookieData>()
             .and_then(|cookie_data| cookie_data.content.read().unwrap().get(name).cloned())
+    }
+
+    /// Returns a signed `Cookie` by name of the cookie if it verified successfully.
+    #[cfg(feature = "secure-cookies")]
+    #[cfg_attr(feature = "docs", doc(cfg(feature = "secure-cookies")))]
+    #[must_use]
+    pub fn signed_cookie(&self, key: &Key, name: &str) -> Option<Cookie<'static>> {
+        self.ext::<CookieData>()
+            .and_then(|cookie_data| cookie_data.content.write().unwrap().get_signed(key, name))
+    }
+
+    /// Returns a decrypted `Cookie` by name of the cookie if it authenticated and decrypted
+    /// successfully.
+    #[cfg(feature = "secure-cookies")]
+    #[cfg_attr(feature = "docs", doc(cfg(feature = "secure-cookies")))]
+    #[must_use]
+    pub fn private_cookie(&self, key: &Key, name: &str) -> Option<Cookie<'static>> {
+        self.ext::<CookieData>()
+            .and_then(|cookie_data| cookie_data.content.write().unwrap().get_private(key, name))
     }
 
     /// Get the length of the body stream, if it has been set.
