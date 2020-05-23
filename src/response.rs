@@ -216,6 +216,24 @@ impl Response {
 
     /// Removes the cookie. This instructs the `CookiesMiddleware` to send a cookie with empty value
     /// in the response.
+    ///
+    /// ## Warning
+    /// Take care when calling this function with a cookie that was returned by
+    /// [`Request::cookie`](Request::cookie).  As per [section 5.3 step 11 of RFC 6265], a new
+    /// cookie is only treated as the same as an old one if it has a matching name, domain and
+    /// path.
+    ///
+    /// The domain and path are not sent to the server on subsequent HTTP requests, so if a cookie
+    /// was originally set with a domain and/or path, calling this function on a cookie with the
+    /// same name but with either a different, or no, domain and/or path will lead to us sending an
+    /// empty cookie that the user agent will treat as unrelated to the original one, and will thus
+    /// not remove the old one.
+    ///
+    /// To avoid this you can manually set the [domain](Cookie::set_domain) and
+    /// [path](Cookie::set_path) as necessary after retrieving the cookie using
+    /// [`Request::cookie`](Request::cookie).
+    ///
+    /// [section 5.3 step 11 of RFC 6265]: https://tools.ietf.org/html/rfc6265#section-5.3
     pub fn remove_cookie(&mut self, cookie: Cookie<'static>) {
         self.cookie_events.push(CookieEvent::Removed(cookie));
     }
