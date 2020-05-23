@@ -140,6 +140,17 @@ impl Response {
         self.set_mime(mime::TEXT_PLAIN_UTF_8)
     }
 
+    /// Pass an HTML string as the request body.
+    ///
+    /// # Mime
+    ///
+    /// The encoding is set to `text/html; charset=utf-8`.
+    #[must_use]
+    pub fn body_html_string(mut self, string: String) -> Self {
+        self.res.set_body(string);
+        self.set_mime(mime::TEXT_HTML_UTF_8)
+    }
+
     /// Pass raw bytes as the request body.
     ///
     /// # Mime
