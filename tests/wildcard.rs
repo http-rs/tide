@@ -37,19 +37,17 @@ async fn wildcard() {
         Method::Get,
         Url::parse("http://localhost/add_one/3").unwrap(),
     );
-    let mut res: http::Response = app.respond(req).await.unwrap();
+    let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
-    let body = res.take_body().into_string().await.unwrap();
-    assert_eq!(body.as_bytes(), b"4");
+    assert_eq!(&res.body_string().await.unwrap(), "4");
 
     let req = http::Request::new(
         Method::Get,
         Url::parse("http://localhost/add_one/-7").unwrap(),
     );
-    let mut res: http::Response = app.respond(req).await.unwrap();
+    let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
-    let body = res.take_body().into_string().await.unwrap();
-    assert_eq!(body.as_bytes(), b"-6");
+    assert_eq!(&res.body_string().await.unwrap(), "-6");
 }
 
 #[async_std::test]
@@ -87,25 +85,22 @@ async fn wild_path() {
         Method::Get,
         Url::parse("http://localhost/echo/some_path").unwrap(),
     );
-    let mut res: http::Response = app.respond(req).await.unwrap();
+    let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
-    let body: String = res.take_body().into_string().await.unwrap();
-    assert_eq!(body.as_bytes(), b"some_path");
+    assert_eq!(&res.body_string().await.unwrap(), "some_path");
 
     let req = http::Request::new(
         Method::Get,
         Url::parse("http://localhost/echo/multi/segment/path").unwrap(),
     );
-    let mut res: http::Response = app.respond(req).await.unwrap();
+    let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
-    let body: String = res.take_body().into_string().await.unwrap();
-    assert_eq!(body.as_bytes(), b"multi/segment/path");
+    assert_eq!(&res.body_string().await.unwrap(), "multi/segment/path");
 
     let req = http::Request::new(Method::Get, Url::parse("http://localhost/echo/").unwrap());
-    let mut res: http::Response = app.respond(req).await.unwrap();
+    let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::NotFound);
-    let body: String = res.take_body().into_string().await.unwrap();
-    assert_eq!(body.as_bytes(), b"");
+    assert_eq!(&res.body_string().await.unwrap(), "");
 }
 
 #[async_std::test]
@@ -117,19 +112,17 @@ async fn multi_wildcard() {
         Method::Get,
         Url::parse("http://localhost/add_two/1/2/").unwrap(),
     );
-    let mut res: http::Response = app.respond(req).await.unwrap();
+    let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
-    let body: String = res.take_body().into_string().await.unwrap();
-    assert_eq!(body.as_bytes(), b"3");
+    assert_eq!(&res.body_string().await.unwrap(), "3");
 
     let req = http::Request::new(
         Method::Get,
         Url::parse("http://localhost/add_two/-1/2/").unwrap(),
     );
-    let mut res: http::Response = app.respond(req).await.unwrap();
+    let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), 200);
-    let body: String = res.take_body().into_string().await.unwrap();
-    assert_eq!(body.as_bytes(), b"1");
+    assert_eq!(&res.body_string().await.unwrap(), "1");
 
     let req = http::Request::new(
         Method::Get,
@@ -148,19 +141,17 @@ async fn wild_last_segment() {
         Method::Get,
         Url::parse("http://localhost/echo/one/two").unwrap(),
     );
-    let mut res: http::Response = app.respond(req).await.unwrap();
+    let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
-    let body: String = res.take_body().into_string().await.unwrap();
-    assert_eq!(body.as_bytes(), b"one");
+    assert_eq!(&res.body_string().await.unwrap(), "one");
 
     let req = http::Request::new(
         Method::Get,
         Url::parse("http://localhost/echo/one/two/three/four").unwrap(),
     );
-    let mut res: http::Response = app.respond(req).await.unwrap();
+    let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
-    let body: String = res.take_body().into_string().await.unwrap();
-    assert_eq!(body.as_bytes(), b"one");
+    assert_eq!(&res.body_string().await.unwrap(), "one");
 }
 
 #[async_std::test]
@@ -212,19 +203,17 @@ async fn nameless_internal_wildcard() {
         Method::Get,
         Url::parse("http://localhost/echo/one/two").unwrap(),
     );
-    let mut res: http::Response = app.respond(req).await.unwrap();
+    let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
-    let body: String = res.take_body().into_string().await.unwrap();
-    assert_eq!(body.as_bytes(), b"two");
+    assert_eq!(&res.body_string().await.unwrap(), "two");
 
     let req = http::Request::new(
         Method::Get,
         Url::parse("http://localhost/echo/one/two").unwrap(),
     );
-    let mut res: http::Response = app.respond(req).await.unwrap();
+    let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
-    let body: String = res.take_body().into_string().await.unwrap();
-    assert_eq!(body.as_bytes(), b"two");
+    assert_eq!(&res.body_string().await.unwrap(), "two");
 }
 
 #[async_std::test]
@@ -236,8 +225,7 @@ async fn nameless_internal_wildcard2() {
         Method::Get,
         Url::parse("http://localhost/echo/one/two").unwrap(),
     );
-    let mut res: http::Response = app.respond(req).await.unwrap();
+    let res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
-    let body: String = res.take_body().into_string().await.unwrap();
-    assert_eq!(body.as_bytes(), b"one");
+    assert_eq!(&res.body_string().await.unwrap(), "one");
 }
