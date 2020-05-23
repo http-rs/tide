@@ -309,6 +309,18 @@ impl<State> Request<State> {
     pub fn is_empty(&self) -> Option<bool> {
         Some(self.request.len()? == 0)
     }
+
+    /// Peer address of the underlying transport
+    #[must_use]
+    pub fn peer_addr(&self) -> Option<&str> {
+        self.request.peer_addr()
+    }
+
+    /// Local address of the underlying transport
+    #[must_use]
+    pub fn local_addr(&self) -> Option<&str> {
+        self.request.local_addr()
+    }
 }
 
 impl<State> AsMut<http::Request> for Request<State> {
