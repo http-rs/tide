@@ -39,7 +39,7 @@ async fn string_content_type() {
 
 #[async_std::test]
 async fn json_content_type() {
-    use http_types::Method;
+    use http_types::{Method, Url};
     use std::collections::BTreeMap;
 
     let mut app = tide::new();
@@ -53,18 +53,21 @@ async fn json_content_type() {
     });
     let req = http::Request::new(
         Method::Get,
-        "http://localhost/json_content_type".parse().unwrap(),
+        Url::parse("http://localhost/json_content_type").unwrap(),
     );
     let mut resp: http::Response = app.respond(req).await.unwrap();
     assert_eq!(resp.status(), StatusCode::InternalServerError);
     let body = resp.take_body().into_string().await.unwrap();
     assert_eq!(body.as_bytes(), b"");
 
-    let mut map = BTreeMap::new();
-    map.insert("a", 2);
-    map.insert("b", 4);
-    map.insert("c", 6);
-    let mut resp = Response::new(StatusCode::Ok).body_json(&map).unwrap();
+    let mut resp = async move {
+        let mut map = BTreeMap::new();
+        map.insert("a", 2);
+        map.insert("b", 4);
+        map.insert("c", 6);
+        Response::new(StatusCode::Ok).body_json(&map).unwrap()
+    }
+    .await;
     assert_eq!(resp.status(), StatusCode::Ok);
     let body = resp.take_body().into_string().await.unwrap();
     assert_eq!(body.as_bytes(), br##"{"a":2,"b":4,"c":6}"##);
