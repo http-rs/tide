@@ -316,6 +316,48 @@ impl<State: Send + Sync + 'static> Server<State> {
         Ok(())
     }
 
+    /// Asynchronously serve the app at the given address.
+    #[cfg(all(feature = "h1-server", unix))]
+    pub async fn listen_unix(self, addr: impl AsRef<async_std::path::Path>) -> io::Result<()> {
+        let listener = async_std::os::unix::net::UnixListener::bind(addr).await?;
+        let tls = false;
+        let target = if cfg!(debug_assertions) {
+            "dev"
+        } else {
+            "release"
+        };
+
+        let address = listener
+            .local_addr()
+            .ok()
+            .map(|addr| format!("unix://{:?}", addr));
+
+        log::info!("Server listening", { address: address, target: target, tls: tls });
+
+        let mut incoming = listener.incoming();
+        while let Some(stream) = incoming.next().await {
+            let stream = stream?;
+            let this = self.clone();
+            let local_addr = stream.local_addr().ok().map(|addr| format!("{:?}", addr));
+            let peer_addr = stream.peer_addr().ok().map(|addr| format!("{:?}", addr));
+            task::spawn(async move {
+                let res = async_h1::accept(stream, |mut req| async {
+                    req.set_local_addr(local_addr.as_ref());
+                    req.set_peer_addr(peer_addr.as_ref());
+                    let res = this.respond(req).await;
+                    let res = res.map_err(|_| io::Error::from(io::ErrorKind::Other))?;
+                    Ok(res)
+                })
+                .await;
+
+                if let Err(err) = res {
+                    log::error!("async-h1 error", { error: err.to_string() });
+                }
+            });
+        }
+        Ok(())
+    }
+
     /// Respond to a `Request` with a `Response`.
     ///
     /// This method is useful for testing endpoints directly,
