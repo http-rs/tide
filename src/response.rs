@@ -1,13 +1,14 @@
 use async_std::io::prelude::*;
 use std::convert::TryFrom;
+use std::ops::Index;
 
 use mime::Mime;
 use serde::Serialize;
 
 use crate::http::cookies::Cookie;
-use crate::http::headers::{HeaderName, HeaderValue};
+use crate::http::headers::{HeaderName, HeaderValues, ToHeaderValues, CONTENT_TYPE};
 use crate::http::{self, Body, StatusCode};
-use crate::Redirect;
+use crate::redirect::Redirect;
 
 #[derive(Debug)]
 pub(crate) enum CookieEvent {
@@ -25,6 +26,7 @@ pub struct Response {
 
 impl Response {
     /// Create a new instance.
+    #[must_use]
     pub fn new(status: StatusCode) -> Self {
         let res = http_types::Response::new(status);
         Self {
@@ -72,62 +74,59 @@ impl Response {
     }
 
     /// Returns the statuscode.
+    #[must_use]
     pub fn status(&self) -> crate::StatusCode {
         self.res.status()
     }
 
     /// Set the statuscode.
+    #[must_use]
     pub fn set_status(mut self, status: crate::StatusCode) -> Self {
         self.res.set_status(status);
         self
     }
 
     /// Get the length of the body.
+    #[must_use]
     pub fn len(&self) -> Option<usize> {
         self.res.len()
     }
 
+    /// Checks if the body is empty.
+    #[must_use]
+    pub fn is_empty(&self) -> Option<bool> {
+        Some(self.res.len()? == 0)
+    }
+
     /// Get an HTTP header.
-    pub fn header(&self, name: &HeaderName) -> Option<&Vec<HeaderValue>> {
+    #[must_use]
+    pub fn header(&self, name: impl Into<HeaderName>) -> Option<&HeaderValues> {
         self.res.header(name)
     }
 
     /// Remove a header.
-    pub fn remove_header(&mut self, name: &HeaderName) -> Option<Vec<HeaderValue>> {
+    pub fn remove_header(&mut self, name: impl Into<HeaderName>) -> Option<HeaderValues> {
         self.res.remove_header(name)
     }
 
     /// Insert an HTTP header.
-    pub fn set_header(
-        mut self,
-        key: http_types::headers::HeaderName,
-        value: impl AsRef<str>,
-    ) -> Self {
-        let value = value.as_ref().to_owned();
-        self.res
-            .insert_header(key, &[value.parse().unwrap()][..])
-            .expect("invalid header");
+    pub fn set_header(mut self, key: impl Into<HeaderName>, value: impl ToHeaderValues) -> Self {
+        self.res.insert_header(key, value);
         self
     }
 
     /// Append an HTTP header.
-    pub fn append_header(
-        mut self,
-        key: http_types::headers::HeaderName,
-        value: impl AsRef<str>,
-    ) -> Self {
-        let value = value.as_ref().to_owned();
-        self.res
-            .append_header(key, &[value.parse().unwrap()][..])
-            .expect("invalid header");
+    pub fn append_header(mut self, key: impl Into<HeaderName>, value: impl ToHeaderValues) -> Self {
+        self.res.append_header(key, value);
         self
     }
 
     /// Set the request MIME.
     ///
     /// [Read more on MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types)
+    #[must_use]
     pub fn set_mime(self, mime: Mime) -> Self {
-        self.set_header(http_types::headers::CONTENT_TYPE, format!("{}", mime))
+        self.set_header(CONTENT_TYPE, mime.to_string())
     }
 
     /// Pass a string as the request body.
@@ -135,6 +134,7 @@ impl Response {
     /// # Mime
     ///
     /// The encoding is set to `text/plain; charset=utf-8`.
+    #[must_use]
     pub fn body_string(mut self, string: String) -> Self {
         self.res.set_body(string);
         self.set_mime(mime::TEXT_PLAIN_UTF_8)
@@ -167,7 +167,7 @@ impl Response {
     pub async fn body_form<T: serde::Serialize>(
         mut self,
         form: T,
-    ) -> Result<Response, serde_qs::Error> {
+    ) -> Result<Self, serde_qs::Error> {
         // TODO: think about how to handle errors
         self.res.set_body(serde_qs::to_string(&form)?.into_bytes());
         Ok(self
@@ -220,14 +220,15 @@ impl Response {
         self.cookie_events.push(CookieEvent::Removed(cookie));
     }
 
-    /// Get a local value.
-    pub fn local<T: Send + Sync + 'static>(&self) -> Option<&T> {
-        self.res.local().get()
+    /// Get a response extension value.
+    #[must_use]
+    pub fn ext<T: Send + Sync + 'static>(&self) -> Option<&T> {
+        self.res.ext().get()
     }
 
     /// Set a local value.
-    pub fn set_local<T: Send + Sync + 'static>(mut self, val: T) -> Self {
-        self.res.local_mut().insert(val);
+    pub fn set_ext<T: Send + Sync + 'static>(mut self, val: T) -> Self {
+        self.res.ext_mut().insert(val);
         self
     }
 
@@ -275,7 +276,6 @@ impl From<http::Response> for Response {
 impl From<String> for Response {
     fn from(s: String) -> Self {
         let mut res = http_types::Response::new(StatusCode::Ok);
-        res.set_content_type(http_types::mime::PLAIN);
         res.set_body(s);
         Self {
             res,
@@ -287,7 +287,6 @@ impl From<String> for Response {
 impl<'a> From<&'a str> for Response {
     fn from(s: &'a str) -> Self {
         let mut res = http_types::Response::new(StatusCode::Ok);
-        res.set_content_type(http_types::mime::PLAIN);
         res.set_body(String::from(s));
         Self {
             res,
@@ -297,7 +296,7 @@ impl<'a> From<&'a str> for Response {
 }
 
 impl IntoIterator for Response {
-    type Item = (HeaderName, Vec<HeaderValue>);
+    type Item = (HeaderName, HeaderValues);
     type IntoIter = http_types::headers::IntoIter;
 
     /// Returns a iterator of references over the remaining items.
@@ -308,7 +307,7 @@ impl IntoIterator for Response {
 }
 
 impl<'a> IntoIterator for &'a Response {
-    type Item = (&'a HeaderName, &'a Vec<HeaderValue>);
+    type Item = (&'a HeaderName, &'a HeaderValues);
     type IntoIter = http_types::headers::Iter<'a>;
 
     #[inline]
@@ -318,11 +317,39 @@ impl<'a> IntoIterator for &'a Response {
 }
 
 impl<'a> IntoIterator for &'a mut Response {
-    type Item = (&'a HeaderName, &'a mut Vec<HeaderValue>);
+    type Item = (&'a HeaderName, &'a mut HeaderValues);
     type IntoIter = http_types::headers::IterMut<'a>;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.res.iter_mut()
+    }
+}
+
+impl Index<HeaderName> for Response {
+    type Output = HeaderValues;
+
+    /// Returns a reference to the value corresponding to the supplied name.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the name is not present in `Response`.
+    #[inline]
+    fn index(&self, name: HeaderName) -> &HeaderValues {
+        &self.res[name]
+    }
+}
+
+impl Index<&str> for Response {
+    type Output = HeaderValues;
+
+    /// Returns a reference to the value corresponding to the supplied name.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the name is not present in `Response`.
+    #[inline]
+    fn index(&self, name: &str) -> &HeaderValues {
+        &self.res[name]
     }
 }

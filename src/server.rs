@@ -150,13 +150,14 @@ impl Server<()> {
     /// #
     /// # Ok(()) }) }
     /// ```
-    pub fn new() -> Server<()> {
+    #[must_use]
+    pub fn new() -> Self {
         Self::with_state(())
     }
 }
 
 impl Default for Server<()> {
-    fn default() -> Server<()> {
+    fn default() -> Self {
         Self::new()
     }
 }
@@ -193,8 +194,8 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// #
     /// # Ok(()) }) }
     /// ```
-    pub fn with_state(state: State) -> Server<State> {
-        let mut server = Server {
+    pub fn with_state(state: State) -> Self {
+        let mut server = Self {
             router: Arc::new(Router::new()),
             middleware: Arc::new(vec![]),
             state: Arc::new(state),
@@ -294,10 +295,9 @@ impl<State: Send + Sync + 'static> Server<State> {
         let mut incoming = listener.incoming();
         while let Some(stream) = incoming.next().await {
             let stream = stream?;
-            let addr = addr.clone();
             let this = self.clone();
             task::spawn(async move {
-                let res = async_h1::accept(&addr, stream, |req| async {
+                let res = async_h1::accept(stream, |req| async {
                     let res = this.respond(req).await;
                     let res = res.map_err(|_| io::Error::from(io::ErrorKind::Other))?;
                     Ok(res)
@@ -339,10 +339,26 @@ impl<State: Send + Sync + 'static> Server<State> {
     where
         R: From<http_types::Response>,
     {
-        let req = Request::new(self.state.clone(), req.into(), Vec::new());
-        match self.call(req).await {
-            Ok(res) => {
-                let res: http_types::Response = res.into();
+        let req = req.into();
+        let Self {
+            router,
+            state,
+            middleware,
+        } = self.clone();
+
+        let method = req.method().to_owned();
+        let Selection { endpoint, params } = router.route(&req.url().path(), method);
+        let route_params = vec![params];
+        let req = Request::new(state, req, route_params);
+
+        let next = Next {
+            endpoint,
+            next_middleware: &middleware,
+        };
+
+        match next.run(req).await {
+            Ok(value) => {
+                let res: http_types::Response = value.into();
                 // We assume that if an error was manually cast to a
                 // Response that we actually want to send the body to the
                 // client. At this point we don't scrub the message.

@@ -47,6 +47,7 @@ pub struct Next<'a, State> {
 
 impl<'a, State: 'static> Next<'a, State> {
     /// Asynchronously execute the remaining middleware chain.
+    #[must_use]
     pub fn run(mut self, req: Request<State>) -> BoxFuture<'a, crate::Result> {
         if let Some((current, next)) = self.next_middleware.split_first() {
             self.next_middleware = next;

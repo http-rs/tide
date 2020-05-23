@@ -17,7 +17,7 @@ async fn fibsum(req: Request<()>) -> tide::Result<String> {
     // Compute the nth number in the fibonacci sequence
     let fib_n = fib(n);
     // Stop the stopwatch
-    let duration = Instant::now().duration_since(start).as_secs();
+    let duration = start.elapsed().as_secs();
     // Return the answer
     let res = format!(
         "The fib of {} is {}.\nIt was computed in {} secs.\n",

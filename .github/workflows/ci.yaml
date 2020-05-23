@@ -45,7 +45,13 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: check
-        args: --all --benches --bins --examples --tests --features unstable
+        args: --all --bins --examples --tests --features unstable
+
+    - name: check benches
+      uses: actions-rs/cargo@v1
+      with:
+        command: check
+        args: --benches --features __internal__bench
 
     - name: tests
       uses: actions-rs/cargo@v1

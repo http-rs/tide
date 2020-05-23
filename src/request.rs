@@ -4,12 +4,13 @@ use serde::Deserialize;
 use async_std::io::{self, prelude::*, BufReader};
 use async_std::task::{Context, Poll};
 
+use std::ops::Index;
 use std::pin::Pin;
 use std::{str::FromStr, sync::Arc};
 
 use crate::cookies::CookieData;
 use crate::http::cookies::Cookie;
-use crate::http::headers::{HeaderName, HeaderValue};
+use crate::http::headers::{HeaderName, HeaderValues};
 use crate::http::{self, Method, StatusCode, Url, Version};
 use crate::Response;
 
@@ -32,8 +33,8 @@ impl<State> Request<State> {
         state: Arc<State>,
         request: http_types::Request,
         route_params: Vec<Params>,
-    ) -> Request<State> {
-        Request {
+    ) -> Self {
+        Self {
             state,
             request,
             route_params,
@@ -59,6 +60,7 @@ impl<State> Request<State> {
     /// #
     /// # Ok(()) })}
     /// ```
+    #[must_use]
     pub fn method(&self) -> Method {
         self.request.method()
     }
@@ -82,6 +84,7 @@ impl<State> Request<State> {
     /// #
     /// # Ok(()) })}
     /// ```
+    #[must_use]
     pub fn uri(&self) -> &Url {
         self.request.url()
     }
@@ -105,6 +108,7 @@ impl<State> Request<State> {
     /// #
     /// # Ok(()) })}
     /// ```
+    #[must_use]
     pub fn version(&self) -> Option<Version> {
         self.request.version()
     }
@@ -121,31 +125,34 @@ impl<State> Request<State> {
     ///
     /// let mut app = tide::new();
     /// app.at("/").get(|req: Request<()>| async move {
-    ///     assert_eq!(req.header(&"X-Forwarded-For".parse().unwrap()), Some(&vec!["127.0.0.1".parse().unwrap()]));
+    ///     assert_eq!(req.header("X-Forwarded-For").unwrap(), "127.0.0.1");
     ///     Ok("")
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
     /// # Ok(()) })}
     /// ```
+    #[must_use]
     pub fn header(
         &self,
-        key: &http_types::headers::HeaderName,
-    ) -> Option<&Vec<http_types::headers::HeaderValue>> {
+        key: impl Into<http_types::headers::HeaderName>,
+    ) -> Option<&http_types::headers::HeaderValues> {
         self.request.header(key)
     }
 
-    /// Get a local value.
-    pub fn local<T: Send + Sync + 'static>(&self) -> Option<&T> {
-        self.request.local().get()
+    /// Get a request extension value.
+    #[must_use]
+    pub fn ext<T: Send + Sync + 'static>(&self) -> Option<&T> {
+        self.request.ext().get()
     }
 
-    /// Set a local value.
-    pub fn set_local<T: Send + Sync + 'static>(mut self, val: T) -> Self {
-        self.request.local_mut().insert(val);
+    /// Set a request extension value.
+    pub fn set_ext<T: Send + Sync + 'static>(mut self, val: T) -> Self {
+        self.request.ext_mut().insert(val);
         self
     }
 
+    #[must_use]
     ///  Access app-global state.
     pub fn state(&self) -> &State {
         &self.state
@@ -171,16 +178,9 @@ impl<State> Request<State> {
         self.route_params
             .iter()
             .rev()
-            .filter_map(|params| params.find(key))
-            .next()
+            .find_map(|params| params.find(key))
             .unwrap()
             .parse()
-    }
-
-    pub(crate) fn rest(&self) -> Option<&str> {
-        self.route_params
-            .last()
-            .and_then(|params| params.find("--tide-path-rest"))
     }
 
     /// Reads the entire request body into a byte buffer.
@@ -293,18 +293,21 @@ impl<State> Request<State> {
     }
 
     /// returns a `Cookie` by name of the cookie.
+    #[must_use]
     pub fn cookie(&self, name: &str) -> Option<Cookie<'static>> {
-        let cookie_data = self
-            .local::<CookieData>()
-            .expect("should always be set by the cookies middleware");
-
-        let locked_jar = cookie_data.content.read().unwrap();
-        locked_jar.get(name).cloned()
+        self.ext::<CookieData>()
+            .and_then(|cookie_data| cookie_data.content.read().unwrap().get(name).cloned())
     }
 
     /// Get the length of the body.
+    #[must_use]
     pub fn len(&self) -> Option<usize> {
         self.request.len()
+    }
+    /// Checks if the body is empty.
+    #[must_use]
+    pub fn is_empty(&self) -> Option<bool> {
+        Some(self.request.len()? == 0)
     }
 }
 
@@ -345,7 +348,7 @@ impl<State: Send + Sync + 'static> Into<Response> for Request<State> {
 }
 
 impl<State> IntoIterator for Request<State> {
-    type Item = (HeaderName, Vec<HeaderValue>);
+    type Item = (HeaderName, HeaderValues);
     type IntoIter = http_types::headers::IntoIter;
 
     /// Returns a iterator of references over the remaining items.
@@ -356,7 +359,7 @@ impl<State> IntoIterator for Request<State> {
 }
 
 impl<'a, State> IntoIterator for &'a Request<State> {
-    type Item = (&'a HeaderName, &'a Vec<HeaderValue>);
+    type Item = (&'a HeaderName, &'a HeaderValues);
     type IntoIter = http_types::headers::Iter<'a>;
 
     #[inline]
@@ -366,11 +369,45 @@ impl<'a, State> IntoIterator for &'a Request<State> {
 }
 
 impl<'a, State> IntoIterator for &'a mut Request<State> {
-    type Item = (&'a HeaderName, &'a mut Vec<HeaderValue>);
+    type Item = (&'a HeaderName, &'a mut HeaderValues);
     type IntoIter = http_types::headers::IterMut<'a>;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.request.iter_mut()
     }
+}
+
+impl<State> Index<HeaderName> for Request<State> {
+    type Output = HeaderValues;
+
+    /// Returns a reference to the value corresponding to the supplied name.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the name is not present in `Request`.
+    #[inline]
+    fn index(&self, name: HeaderName) -> &HeaderValues {
+        &self.request[name]
+    }
+}
+
+impl<State> Index<&str> for Request<State> {
+    type Output = HeaderValues;
+
+    /// Returns a reference to the value corresponding to the supplied name.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the name is not present in `Request`.
+    #[inline]
+    fn index(&self, name: &str) -> &HeaderValues {
+        &self.request[name]
+    }
+}
+
+pub(crate) fn rest(route_params: &[Params]) -> Option<&str> {
+    route_params
+        .last()
+        .and_then(|params| params.find("--tide-path-rest"))
 }

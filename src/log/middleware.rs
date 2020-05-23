@@ -12,13 +12,14 @@ use crate::{Middleware, Next, Request};
 /// let mut app = tide::Server::new();
 /// app.middleware(tide::log::LogMiddleware::new());
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct LogMiddleware {
     _priv: (),
 }
 
 impl LogMiddleware {
     /// Create a new instance of `LogMiddleware`.
+    #[must_use]
     pub fn new() -> Self {
         Self { _priv: () }
     }
@@ -44,21 +45,21 @@ impl LogMiddleware {
                         method: method,
                         path: path,
                         status: status as u16,
-                        duration: format!("{}ms", start.elapsed().as_millis()),
+                        duration: format!("{:?}", start.elapsed()),
                     });
                 } else if status.is_client_error() {
                     log::warn!("--> Response sent", {
                         method: method,
                         path: path,
                         status: status as u16,
-                        duration: format!("{}ms", start.elapsed().as_millis()),
+                        duration: format!("{:?}", start.elapsed()),
                     });
                 } else {
                     log::info!("--> Response sent", {
                         method: method,
                         path: path,
                         status: status as u16,
-                        duration: format!("{}ms", start.elapsed().as_millis()),
+                        duration: format!("{:?}", start.elapsed()),
                     });
                 }
                 Ok(res)
@@ -68,7 +69,7 @@ impl LogMiddleware {
                     method: method,
                     path: path,
                     status: err.status() as u16,
-                    duration: format!("{}ms", start.elapsed().as_millis()),
+                    duration: format!("{:?}", start.elapsed()),
                 });
                 Err(err)
             }

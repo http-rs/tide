@@ -60,6 +60,7 @@ impl<'a, State: 'static> Route<'a, State> {
     }
 
     /// Get the current path.
+    #[must_use]
     pub fn path(&self) -> &str {
         &self.path
     }
@@ -152,7 +153,7 @@ impl<'a, State: 'static> Route<'a, State> {
                     ));
                     (ep.clone(), ep)
                 };
-            self.router.add(&self.path, method.clone(), ep1);
+            self.router.add(&self.path, method, ep1);
             let wildcard = self.at("*--tide-path-rest");
             wildcard.router.add(&wildcard.path, method, ep2);
         } else {
@@ -274,14 +275,20 @@ impl<E> Clone for StripPrefixEndpoint<E> {
 }
 
 impl<State, E: Endpoint<State>> Endpoint<State> for StripPrefixEndpoint<E> {
-    fn call<'a>(&'a self, mut req: crate::Request<State>) -> BoxFuture<'a, crate::Result> {
-        let rest = req.rest().unwrap_or("");
-        let uri = req.uri();
-        let mut new_uri = uri.clone();
-        new_uri.set_path(rest);
+    fn call<'a>(&'a self, req: crate::Request<State>) -> BoxFuture<'a, crate::Result> {
+        let crate::Request {
+            state,
+            mut request,
+            route_params,
+        } = req;
 
-        *req.request.url_mut() = new_uri;
+        let rest = crate::request::rest(&route_params).unwrap_or_else(|| "");
+        request.url_mut().set_path(&rest);
 
-        self.0.call(req)
+        self.0.call(crate::Request {
+            state,
+            request,
+            route_params,
+        })
     }
 }
