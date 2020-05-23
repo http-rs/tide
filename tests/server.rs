@@ -12,8 +12,10 @@ fn hello_world() -> Result<(), http_types::Error> {
         let port = test_utils::find_port().await;
         let server = task::spawn(async move {
             let mut app = tide::new();
-            app.at("/").get(|mut req: Request<()>| async move {
+            app.at("/").get(move |mut req: Request<()>| async move {
                 assert_eq!(req.body_string().await.unwrap(), "nori".to_string());
+                assert!(req.local_addr().unwrap().contains(&port.to_string()));
+                assert!(req.peer_addr().is_some());
                 let res = Response::new(StatusCode::Ok).body_string("says hello".to_string());
                 Ok(res)
             });

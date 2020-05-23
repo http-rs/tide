@@ -296,8 +296,12 @@ impl<State: Send + Sync + 'static> Server<State> {
         while let Some(stream) = incoming.next().await {
             let stream = stream?;
             let this = self.clone();
+            let local_addr = stream.local_addr().ok();
+            let peer_addr = stream.peer_addr().ok();
             task::spawn(async move {
-                let res = async_h1::accept(stream, |req| async {
+                let res = async_h1::accept(stream, |mut req| async {
+                    req.set_local_addr(local_addr);
+                    req.set_peer_addr(peer_addr);
                     let res = this.respond(req).await;
                     let res = res.map_err(|_| io::Error::from(io::ErrorKind::Other))?;
                     Ok(res)
