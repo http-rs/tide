@@ -1,6 +1,6 @@
+use crate::http::Mime;
 use crate::log;
 use crate::{Body, Endpoint, Request, Response, Result, StatusCode};
-use crate::http::Mime;
 
 use async_std::fs::File;
 use async_std::io::BufReader;

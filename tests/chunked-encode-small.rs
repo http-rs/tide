@@ -2,9 +2,9 @@ mod test_utils;
 use async_std::io::Cursor;
 use async_std::prelude::*;
 use async_std::task;
+use http_types::mime;
 use http_types::StatusCode;
 use std::time::Duration;
-use http_types::mime;
 
 use tide::Response;
 

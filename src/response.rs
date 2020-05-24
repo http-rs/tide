@@ -4,10 +4,10 @@ use std::ops::Index;
 
 use serde::Serialize;
 
-use crate::http::{Mime, mime};
 use crate::http::cookies::Cookie;
 use crate::http::headers::{HeaderName, HeaderValues, ToHeaderValues};
 use crate::http::{self, Body, StatusCode};
+use crate::http::{mime, Mime};
 use crate::redirect::Redirect;
 
 #[derive(Debug)]
