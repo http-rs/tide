@@ -171,9 +171,7 @@ impl Response {
     ) -> Result<Self, serde_qs::Error> {
         // TODO: think about how to handle errors
         self.res.set_body(serde_qs::to_string(&form)?.into_bytes());
-        Ok(self
-            .set_status(StatusCode::Ok)
-            .set_mime(mime::MULTIPART_FORM))
+        Ok(self.set_status(StatusCode::Ok).set_mime(mime::FORM))
     }
 
     /// Encode a struct as a form and set as the response body.
