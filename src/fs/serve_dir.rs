@@ -70,7 +70,7 @@ impl<State> Endpoint<State> for ServeDir {
             res.set_body(body);
 
             if let Some(content_type) = mime_guess::from_path(&file_path).first() {
-                res = res.set_mime(content_type);
+                res = res.set_mime(content_type.to_string().parse().unwrap());
             }
 
             Ok(res)
