@@ -6,7 +6,7 @@ use serde::Serialize;
 
 use crate::http::{Mime, mime};
 use crate::http::cookies::Cookie;
-use crate::http::headers::{HeaderName, HeaderValues, ToHeaderValues, CONTENT_TYPE};
+use crate::http::headers::{HeaderName, HeaderValues, ToHeaderValues};
 use crate::http::{self, Body, StatusCode};
 use crate::redirect::Redirect;
 
@@ -125,8 +125,9 @@ impl Response {
     ///
     /// [Read more on MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types)
     #[must_use]
-    pub fn set_mime(self, mime: Mime) -> Self {
-        self.set_header(CONTENT_TYPE, mime.to_string())
+    pub fn set_mime(mut self, mime: impl Into<Mime>) -> Self {
+        self.res.set_content_type(mime.into());
+        self
     }
 
     /// Pass a string as the request body.

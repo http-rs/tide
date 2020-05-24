@@ -1,5 +1,6 @@
 use crate::log;
 use crate::{Body, Endpoint, Request, Response, Result, StatusCode};
+use crate::http::Mime;
 
 use async_std::fs::File;
 use async_std::io::BufReader;
@@ -70,7 +71,7 @@ impl<State> Endpoint<State> for ServeDir {
             res.set_body(body);
 
             if let Some(content_type) = mime_guess::from_path(&file_path).first() {
-                res = res.set_mime(content_type.to_string().parse().unwrap());
+                res = res.set_mime(content_type.to_string().parse::<Mime>().unwrap());
             }
 
             Ok(res)
