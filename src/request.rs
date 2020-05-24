@@ -1,8 +1,6 @@
-use route_recognizer::Params;
-use serde::Deserialize;
-
 use async_std::io::{self, prelude::*, BufReader};
 use async_std::task::{Context, Poll};
+use route_recognizer::Params;
 
 use std::ops::Index;
 use std::pin::Pin;
@@ -10,7 +8,7 @@ use std::{str::FromStr, sync::Arc};
 
 use crate::cookies::CookieData;
 use crate::http::cookies::Cookie;
-use crate::http::headers::{HeaderName, HeaderValues};
+use crate::http::headers::{self, HeaderName, HeaderValues, ToHeaderValues};
 use crate::http::{self, Method, StatusCode, Url, Version};
 use crate::Response;
 
@@ -24,19 +22,20 @@ use crate::Response;
 #[derive(Debug)]
 pub struct Request<State> {
     pub(crate) state: Arc<State>,
-    pub(crate) request: http::Request,
+    pub(crate) req: http::Request,
     pub(crate) route_params: Vec<Params>,
 }
 
 impl<State> Request<State> {
+    /// Create a new `Request`.
     pub(crate) fn new(
         state: Arc<State>,
-        request: http_types::Request,
+        req: http_types::Request,
         route_params: Vec<Params>,
     ) -> Self {
         Self {
             state,
-            request,
+            req,
             route_params,
         }
     }
@@ -62,7 +61,7 @@ impl<State> Request<State> {
     /// ```
     #[must_use]
     pub fn method(&self) -> Method {
-        self.request.method()
+        self.req.method()
     }
 
     /// Access the request's full URI method.
@@ -77,7 +76,7 @@ impl<State> Request<State> {
     ///
     /// let mut app = tide::new();
     /// app.at("/").get(|req: Request<()>| async move {
-    ///     assert_eq!(req.uri(), &"/".parse::<tide::http::Url>().unwrap());
+    ///     assert_eq!(req.url(), &"/".parse::<tide::http::Url>().unwrap());
     ///     Ok("")
     /// });
     /// app.listen("127.0.0.1:8080").await?;
@@ -85,8 +84,8 @@ impl<State> Request<State> {
     /// # Ok(()) })}
     /// ```
     #[must_use]
-    pub fn uri(&self) -> &Url {
-        self.request.url()
+    pub fn url(&self) -> &Url {
+        self.req.url()
     }
 
     /// Access the request's HTTP version.
@@ -110,7 +109,44 @@ impl<State> Request<State> {
     /// ```
     #[must_use]
     pub fn version(&self) -> Option<Version> {
-        self.request.version()
+        self.req.version()
+    }
+
+    /// Get the peer socket address for the underlying transport, if
+    /// that information is available for this request.
+    #[must_use]
+    pub fn peer_addr(&self) -> Option<&str> {
+        self.req.peer_addr()
+    }
+
+    /// Get the local socket address for the underlying transport, if
+    /// that information is available for this request.
+    #[must_use]
+    pub fn local_addr(&self) -> Option<&str> {
+        self.req.local_addr()
+    }
+
+    /// Get the remote address for this request.
+    ///
+    /// This is determined in the following priority:
+    /// 1. `Forwarded` header `for` key
+    /// 2. The first `X-Forwarded-For` header
+    /// 3. Peer address of the transport
+    #[must_use]
+    pub fn remote(&self) -> Option<&str> {
+        self.req.remote()
+    }
+
+    /// Get the destination host for this request.
+    ///
+    /// This is determined in the following priority:
+    /// 1. `Forwarded` header `host` key
+    /// 2. The first `X-Forwarded-Host` header
+    /// 3. `Host` header
+    /// 4. URL domain, if any
+    #[must_use]
+    pub fn host(&self) -> Option<&str> {
+        self.req.host()
     }
 
     /// Get an HTTP header.
@@ -137,19 +173,70 @@ impl<State> Request<State> {
         &self,
         key: impl Into<http_types::headers::HeaderName>,
     ) -> Option<&http_types::headers::HeaderValues> {
-        self.request.header(key)
+        self.req.header(key)
+    }
+
+    /// Get a mutable reference to a header.
+    pub fn header_mut(&mut self, name: impl Into<HeaderName>) -> Option<&mut HeaderValues> {
+        self.req.header_mut(name)
+    }
+
+    /// Set an HTTP header.
+    pub fn insert_header(
+        &mut self,
+        name: impl Into<HeaderName>,
+        values: impl ToHeaderValues,
+    ) -> Option<HeaderValues> {
+        self.req.insert_header(name, values)
+    }
+
+    /// Append a header to the headers.
+    ///
+    /// Unlike `insert` this function will not override the contents of a header, but insert a
+    /// header if there aren't any. Or else append to the existing list of headers.
+    pub fn append_header(&mut self, name: impl Into<HeaderName>, values: impl ToHeaderValues) {
+        self.req.append_header(name, values)
+    }
+
+    /// Remove a header.
+    pub fn remove_header(&mut self, name: impl Into<HeaderName>) -> Option<HeaderValues> {
+        self.req.remove_header(name)
+    }
+
+    /// An iterator visiting all header pairs in arbitrary order.
+    #[must_use]
+    pub fn iter(&self) -> headers::Iter<'_> {
+        self.req.iter()
+    }
+
+    /// An iterator visiting all header pairs in arbitrary order, with mutable references to the
+    /// values.
+    #[must_use]
+    pub fn iter_mut(&mut self) -> headers::IterMut<'_> {
+        self.req.iter_mut()
+    }
+
+    /// An iterator visiting all header names in arbitrary order.
+    #[must_use]
+    pub fn header_names(&self) -> headers::Names<'_> {
+        self.req.header_names()
+    }
+
+    /// An iterator visiting all header values in arbitrary order.
+    #[must_use]
+    pub fn header_values(&self) -> headers::Values<'_> {
+        self.req.header_values()
     }
 
     /// Get a request extension value.
     #[must_use]
     pub fn ext<T: Send + Sync + 'static>(&self) -> Option<&T> {
-        self.request.ext().get()
+        self.req.ext().get()
     }
 
     /// Set a request extension value.
-    pub fn set_ext<T: Send + Sync + 'static>(mut self, val: T) -> Self {
-        self.request.ext_mut().insert(val);
-        self
+    pub fn set_ext<T: Send + Sync + 'static>(&mut self, val: T) -> Option<T> {
+        self.req.ext_mut().insert(val)
     }
 
     #[must_use]
@@ -183,6 +270,19 @@ impl<State> Request<State> {
             .parse()
     }
 
+    /// Get the URL querystring.
+    pub fn query<T: serde::de::DeserializeOwned>(&self) -> crate::Result<T> {
+        // Default to an empty query string if no query parameter has been specified.
+        // This allows successful deserialisation of structs where all fields are optional
+        // when none of those fields has actually been passed by the caller.
+        let query = self.url().query().unwrap_or("");
+        serde_qs::from_str(query).map_err(|e| {
+            // Return the displayable version of the deserialisation error to the caller
+            // for easier debugging.
+            crate::Error::from_str(StatusCode::BadRequest, format!("{}", e))
+        })
+    }
+
     /// Reads the entire request body into a byte buffer.
     ///
     /// This method can be called after the body has already been read, but will
@@ -210,10 +310,9 @@ impl<State> Request<State> {
     /// #
     /// # Ok(()) })}
     /// ```
-    pub async fn body_bytes(&mut self) -> std::io::Result<Vec<u8>> {
-        let mut buf = Vec::with_capacity(1024);
-        self.request.read_to_end(&mut buf).await?;
-        Ok(buf)
+    pub async fn body_bytes(&mut self) -> crate::Result<Vec<u8>> {
+        let res = self.req.body_bytes().await?;
+        Ok(res)
     }
 
     /// Reads the entire request body into a string.
@@ -245,9 +344,9 @@ impl<State> Request<State> {
     /// #
     /// # Ok(()) })}
     /// ```
-    pub async fn body_string(&mut self) -> std::io::Result<String> {
-        let body_bytes = self.body_bytes().await?;
-        Ok(String::from_utf8(body_bytes).map_err(|_| std::io::ErrorKind::InvalidData)?)
+    pub async fn body_string(&mut self) -> crate::Result<String> {
+        let res = self.req.body_string().await?;
+        Ok(res)
     }
 
     /// Reads and deserialized the entire request body via json.
@@ -259,36 +358,14 @@ impl<State> Request<State> {
     ///
     /// If the body cannot be interpreted as valid json for the target type `T`,
     /// an `Err` is returned.
-    pub async fn body_json<T: serde::de::DeserializeOwned>(&mut self) -> std::io::Result<T> {
-        let body_bytes = self.body_bytes().await?;
-        Ok(serde_json::from_slice(&body_bytes).map_err(|_| std::io::ErrorKind::InvalidData)?)
-    }
-
-    /// Get the URL querystring.
-    pub fn query<'de, T: Deserialize<'de>>(&'de self) -> Result<T, crate::Error> {
-        // Default to an empty query string if no query parameter has been specified.
-        // This allows successful deserialisation of structs where all fields are optional
-        // when none of those fields has actually been passed by the caller.
-        let query = self.uri().query().unwrap_or("");
-        serde_qs::from_str(query).map_err(|e| {
-            // Return the displayable version of the deserialisation error to the caller
-            // for easier debugging.
-            crate::Error::from_str(StatusCode::BadRequest, format!("{}", e))
-        })
+    pub async fn body_json<T: serde::de::DeserializeOwned>(&mut self) -> crate::Result<T> {
+        let res = self.req.body_json().await?;
+        Ok(res)
     }
 
     /// Parse the request body as a form.
-    pub async fn body_form<T: serde::de::DeserializeOwned>(&mut self) -> io::Result<T> {
-        let body = self
-            .body_bytes()
-            .await
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
-        let res = serde_qs::from_bytes(&body).map_err(|e| {
-            std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("could not decode form: {}", e),
-            )
-        })?;
+    pub async fn body_form<T: serde::de::DeserializeOwned>(&mut self) -> crate::Result<T> {
+        let res = self.req.body_form().await?;
         Ok(res)
     }
 
@@ -299,39 +376,38 @@ impl<State> Request<State> {
             .and_then(|cookie_data| cookie_data.content.read().unwrap().get(name).cloned())
     }
 
-    /// Get the length of the body.
+    /// Get the current content type
+    #[must_use]
+    pub fn content_type(&self) -> Option<http_types::Mime> {
+        self.req.content_type()
+    }
+
+    /// Get the length of the body stream, if it has been set.
+    ///
+    /// This value is set when passing a fixed-size object into as the body. E.g. a string, or a
+    /// buffer. Consumers of this API should check this value to decide whether to use `Chunked`
+    /// encoding, or set the response length.
     #[must_use]
     pub fn len(&self) -> Option<usize> {
-        self.request.len()
+        self.req.len()
     }
-    /// Checks if the body is empty.
+
+    /// Returns `true` if the request has a set body stream length of zero, `false` otherwise.
     #[must_use]
     pub fn is_empty(&self) -> Option<bool> {
-        Some(self.request.len()? == 0)
-    }
-
-    /// Peer address of the underlying transport
-    #[must_use]
-    pub fn peer_addr(&self) -> Option<&str> {
-        self.request.peer_addr()
-    }
-
-    /// Local address of the underlying transport
-    #[must_use]
-    pub fn local_addr(&self) -> Option<&str> {
-        self.request.local_addr()
+        Some(self.req.len()? == 0)
     }
 }
 
 impl<State> AsMut<http::Request> for Request<State> {
     fn as_mut(&mut self) -> &mut http::Request {
-        &mut self.request
+        &mut self.req
     }
 }
 
 impl<State> AsRef<http::Request> for Request<State> {
     fn as_ref(&self) -> &http::Request {
-        &self.request
+        &self.req
     }
 }
 
@@ -341,13 +417,13 @@ impl<State> Read for Request<State> {
         cx: &mut Context<'_>,
         buf: &mut [u8],
     ) -> Poll<io::Result<usize>> {
-        Pin::new(&mut self.request).poll_read(cx, buf)
+        Pin::new(&mut self.req).poll_read(cx, buf)
     }
 }
 
 impl<State> Into<http::Request> for Request<State> {
     fn into(self) -> http::Request {
-        self.request
+        self.req
     }
 }
 
@@ -366,7 +442,7 @@ impl<State> IntoIterator for Request<State> {
     /// Returns a iterator of references over the remaining items.
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
-        self.request.into_iter()
+        self.req.into_iter()
     }
 }
 
@@ -376,7 +452,7 @@ impl<'a, State> IntoIterator for &'a Request<State> {
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
-        self.request.iter()
+        self.req.iter()
     }
 }
 
@@ -386,7 +462,7 @@ impl<'a, State> IntoIterator for &'a mut Request<State> {
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
-        self.request.iter_mut()
+        self.req.iter_mut()
     }
 }
 
@@ -400,7 +476,7 @@ impl<State> Index<HeaderName> for Request<State> {
     /// Panics if the name is not present in `Request`.
     #[inline]
     fn index(&self, name: HeaderName) -> &HeaderValues {
-        &self.request[name]
+        &self.req[name]
     }
 }
 
@@ -414,7 +490,7 @@ impl<State> Index<&str> for Request<State> {
     /// Panics if the name is not present in `Request`.
     #[inline]
     fn index(&self, name: &str) -> &HeaderValues {
-        &self.request[name]
+        &self.req[name]
     }
 }
 

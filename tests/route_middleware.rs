@@ -30,7 +30,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for TestMiddleware {
 }
 
 async fn echo_path<State>(req: tide::Request<State>) -> tide::Result<String> {
-    Ok(req.uri().path().to_string())
+    Ok(req.url().path().to_string())
 }
 
 #[async_std::test]

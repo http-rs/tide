@@ -57,7 +57,7 @@ async fn unsuccessfully_deserialize_query() {
     let app = get_server();
     let req = http_types::Request::new(Method::Get, Url::parse("http://example.com/").unwrap());
     let mut res: http::Response = app.respond(req).await.unwrap();
-    assert_eq!(res.status(), 400);
+    assert_eq!(res.status(), 400_u16);
 
     let mut body = String::new();
     res.read_to_string(&mut body).await.unwrap();
