@@ -29,6 +29,7 @@ pub struct Request<State> {
 }
 
 impl<State> Request<State> {
+    /// Create a new `Request`.
     pub(crate) fn new(
         state: Arc<State>,
         req: http_types::Request,
@@ -77,7 +78,7 @@ impl<State> Request<State> {
     ///
     /// let mut app = tide::new();
     /// app.at("/").get(|req: Request<()>| async move {
-    ///     assert_eq!(req.uri(), &"/".parse::<tide::http::Url>().unwrap());
+    ///     assert_eq!(req.url(), &"/".parse::<tide::http::Url>().unwrap());
     ///     Ok("")
     /// });
     /// app.listen("127.0.0.1:8080").await?;
@@ -85,7 +86,7 @@ impl<State> Request<State> {
     /// # Ok(()) })}
     /// ```
     #[must_use]
-    pub fn uri(&self) -> &Url {
+    pub fn url(&self) -> &Url {
         self.req.url()
     }
 
@@ -269,7 +270,7 @@ impl<State> Request<State> {
         // Default to an empty query string if no query parameter has been specified.
         // This allows successful deserialisation of structs where all fields are optional
         // when none of those fields has actually been passed by the caller.
-        let query = self.uri().query().unwrap_or("");
+        let query = self.url().query().unwrap_or("");
         serde_qs::from_str(query).map_err(|e| {
             // Return the displayable version of the deserialisation error to the caller
             // for easier debugging.

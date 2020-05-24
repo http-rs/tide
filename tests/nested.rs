@@ -34,7 +34,7 @@ async fn nested() {
 
 #[async_std::test]
 async fn nested_middleware() {
-    let echo_path = |req: tide::Request<()>| async move { Ok(req.uri().path().to_string()) };
+    let echo_path = |req: tide::Request<()>| async move { Ok(req.url().path().to_string()) };
 
     #[derive(Debug, Clone, Default)]
     pub struct TestMiddleware;

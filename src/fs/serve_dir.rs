@@ -22,7 +22,7 @@ impl ServeDir {
 
 impl<State> Endpoint<State> for ServeDir {
     fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, Result> {
-        let path = req.uri().path();
+        let path = req.url().path();
         let path = path.trim_start_matches(&self.prefix);
         let path = path.trim_start_matches('/');
         let mut file_path = self.dir.clone();
