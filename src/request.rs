@@ -235,7 +235,7 @@ impl<State> Request<State> {
     }
 
     /// Set a request extension value.
-    pub fn set_ext<T: Send + Sync + 'static>(mut self, val: T) {
+    pub fn set_ext<T: Send + Sync + 'static>(&mut self, val: T) -> Option<T> {
         self.req.ext_mut().insert(val)
     }
 
@@ -272,7 +272,15 @@ impl<State> Request<State> {
 
     /// Get the URL querystring.
     pub fn query<T: serde::de::DeserializeOwned>(&self) -> crate::Result<T> {
-        self.req.query()
+        // Default to an empty query string if no query parameter has been specified.
+        // This allows successful deserialisation of structs where all fields are optional
+        // when none of those fields has actually been passed by the caller.
+        let query = self.url().query().unwrap_or("");
+        serde_qs::from_str(query).map_err(|e| {
+            // Return the displayable version of the deserialisation error to the caller
+            // for easier debugging.
+            crate::Error::from_str(StatusCode::BadRequest, format!("{}", e))
+        })
     }
 
     /// Reads the entire request body into a byte buffer.

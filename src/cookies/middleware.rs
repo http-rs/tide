@@ -45,7 +45,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
                 let cookie_data = CookieData::from_request(&ctx);
                 // no cookie data in ext context, so we try to create it
                 let content = cookie_data.content.clone();
-                ctx = ctx.set_ext(cookie_data);
+                ctx.set_ext(cookie_data);
                 content
             };
 
