@@ -24,19 +24,19 @@ use crate::Response;
 #[derive(Debug)]
 pub struct Request<State> {
     pub(crate) state: Arc<State>,
-    pub(crate) request: http::Request,
+    pub(crate) req: http::Request,
     pub(crate) route_params: Vec<Params>,
 }
 
 impl<State> Request<State> {
     pub(crate) fn new(
         state: Arc<State>,
-        request: http_types::Request,
+        req: http_types::Request,
         route_params: Vec<Params>,
     ) -> Self {
         Self {
             state,
-            request,
+            req,
             route_params,
         }
     }
@@ -62,7 +62,7 @@ impl<State> Request<State> {
     /// ```
     #[must_use]
     pub fn method(&self) -> Method {
-        self.request.method()
+        self.req.method()
     }
 
     /// Access the request's full URI method.
@@ -86,7 +86,7 @@ impl<State> Request<State> {
     /// ```
     #[must_use]
     pub fn uri(&self) -> &Url {
-        self.request.url()
+        self.req.url()
     }
 
     /// Access the request's HTTP version.
@@ -110,7 +110,7 @@ impl<State> Request<State> {
     /// ```
     #[must_use]
     pub fn version(&self) -> Option<Version> {
-        self.request.version()
+        self.req.version()
     }
 
     /// Get an HTTP header.
@@ -137,18 +137,18 @@ impl<State> Request<State> {
         &self,
         key: impl Into<http_types::headers::HeaderName>,
     ) -> Option<&http_types::headers::HeaderValues> {
-        self.request.header(key)
+        self.req.header(key)
     }
 
     /// Get a request extension value.
     #[must_use]
     pub fn ext<T: Send + Sync + 'static>(&self) -> Option<&T> {
-        self.request.ext().get()
+        self.req.ext().get()
     }
 
     /// Set a request extension value.
     pub fn set_ext<T: Send + Sync + 'static>(mut self, val: T) -> Self {
-        self.request.ext_mut().insert(val);
+        self.req.ext_mut().insert(val);
         self
     }
 
@@ -212,7 +212,7 @@ impl<State> Request<State> {
     /// ```
     pub async fn body_bytes(&mut self) -> std::io::Result<Vec<u8>> {
         let mut buf = Vec::with_capacity(1024);
-        self.request.read_to_end(&mut buf).await?;
+        self.req.read_to_end(&mut buf).await?;
         Ok(buf)
     }
 
@@ -302,36 +302,36 @@ impl<State> Request<State> {
     /// Get the length of the body.
     #[must_use]
     pub fn len(&self) -> Option<usize> {
-        self.request.len()
+        self.req.len()
     }
     /// Checks if the body is empty.
     #[must_use]
     pub fn is_empty(&self) -> Option<bool> {
-        Some(self.request.len()? == 0)
+        Some(self.req.len()? == 0)
     }
 
     /// Peer address of the underlying transport
     #[must_use]
     pub fn peer_addr(&self) -> Option<&str> {
-        self.request.peer_addr()
+        self.req.peer_addr()
     }
 
     /// Local address of the underlying transport
     #[must_use]
     pub fn local_addr(&self) -> Option<&str> {
-        self.request.local_addr()
+        self.req.local_addr()
     }
 }
 
 impl<State> AsMut<http::Request> for Request<State> {
     fn as_mut(&mut self) -> &mut http::Request {
-        &mut self.request
+        &mut self.req
     }
 }
 
 impl<State> AsRef<http::Request> for Request<State> {
     fn as_ref(&self) -> &http::Request {
-        &self.request
+        &self.req
     }
 }
 
@@ -341,13 +341,13 @@ impl<State> Read for Request<State> {
         cx: &mut Context<'_>,
         buf: &mut [u8],
     ) -> Poll<io::Result<usize>> {
-        Pin::new(&mut self.request).poll_read(cx, buf)
+        Pin::new(&mut self.req).poll_read(cx, buf)
     }
 }
 
 impl<State> Into<http::Request> for Request<State> {
     fn into(self) -> http::Request {
-        self.request
+        self.req
     }
 }
 
@@ -366,7 +366,7 @@ impl<State> IntoIterator for Request<State> {
     /// Returns a iterator of references over the remaining items.
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
-        self.request.into_iter()
+        self.req.into_iter()
     }
 }
 
@@ -376,7 +376,7 @@ impl<'a, State> IntoIterator for &'a Request<State> {
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
-        self.request.iter()
+        self.req.iter()
     }
 }
 
@@ -386,7 +386,7 @@ impl<'a, State> IntoIterator for &'a mut Request<State> {
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
-        self.request.iter_mut()
+        self.req.iter_mut()
     }
 }
 
@@ -400,7 +400,7 @@ impl<State> Index<HeaderName> for Request<State> {
     /// Panics if the name is not present in `Request`.
     #[inline]
     fn index(&self, name: HeaderName) -> &HeaderValues {
-        &self.request[name]
+        &self.req[name]
     }
 }
 
@@ -414,7 +414,7 @@ impl<State> Index<&str> for Request<State> {
     /// Panics if the name is not present in `Request`.
     #[inline]
     fn index(&self, name: &str) -> &HeaderValues {
-        &self.request[name]
+        &self.req[name]
     }
 }
 

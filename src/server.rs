@@ -398,7 +398,7 @@ impl<State: Sync + Send + 'static, InnerState: Sync + Send + 'static> Endpoint<S
 {
     fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, crate::Result> {
         let Request {
-            request: req,
+            req,
             mut route_params,
             ..
         } = req;
