@@ -240,7 +240,7 @@ impl<State> Request<State> {
     }
 
     #[must_use]
-    ///  Access app-global state.
+    ///  Access application scoped state.
     pub fn state(&self) -> &State {
         &self.state
     }
