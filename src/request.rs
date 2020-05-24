@@ -1,8 +1,6 @@
-use route_recognizer::Params;
-use serde::Deserialize;
-
 use async_std::io::{self, prelude::*, BufReader};
 use async_std::task::{Context, Poll};
+use route_recognizer::Params;
 
 use std::ops::Index;
 use std::pin::Pin;
@@ -10,7 +8,7 @@ use std::{str::FromStr, sync::Arc};
 
 use crate::cookies::CookieData;
 use crate::http::cookies::Cookie;
-use crate::http::headers::{HeaderName, HeaderValues};
+use crate::http::headers::{self, HeaderName, HeaderValues, ToHeaderValues};
 use crate::http::{self, Method, StatusCode, Url, Version};
 use crate::Response;
 
@@ -114,6 +112,43 @@ impl<State> Request<State> {
         self.req.version()
     }
 
+    /// Get the peer socket address for the underlying transport, if
+    /// that information is available for this request.
+    #[must_use]
+    pub fn peer_addr(&self) -> Option<&str> {
+        self.req.peer_addr()
+    }
+
+    /// Get the local socket address for the underlying transport, if
+    /// that information is available for this request.
+    #[must_use]
+    pub fn local_addr(&self) -> Option<&str> {
+        self.req.local_addr()
+    }
+
+    /// Get the remote address for this request.
+    ///
+    /// This is determined in the following priority:
+    /// 1. `Forwarded` header `for` key
+    /// 2. The first `X-Forwarded-For` header
+    /// 3. Peer address of the transport
+    #[must_use]
+    pub fn remote(&self) -> Option<&str> {
+        self.req.remote()
+    }
+
+    /// Get the destination host for this request.
+    ///
+    /// This is determined in the following priority:
+    /// 1. `Forwarded` header `host` key
+    /// 2. The first `X-Forwarded-Host` header
+    /// 3. `Host` header
+    /// 4. URL domain, if any
+    #[must_use]
+    pub fn host(&self) -> Option<&str> {
+        self.req.host()
+    }
+
     /// Get an HTTP header.
     ///
     /// # Examples
@@ -141,6 +176,58 @@ impl<State> Request<State> {
         self.req.header(key)
     }
 
+    /// Get a mutable reference to a header.
+    pub fn header_mut(&mut self, name: impl Into<HeaderName>) -> Option<&mut HeaderValues> {
+        self.req.header_mut(name)
+    }
+
+    /// Set an HTTP header.
+    pub fn insert_header(
+        &mut self,
+        name: impl Into<HeaderName>,
+        values: impl ToHeaderValues,
+    ) -> Option<HeaderValues> {
+        self.req.insert_header(name, values)
+    }
+
+    /// Append a header to the headers.
+    ///
+    /// Unlike `insert` this function will not override the contents of a header, but insert a
+    /// header if there aren't any. Or else append to the existing list of headers.
+    pub fn append_header(&mut self, name: impl Into<HeaderName>, values: impl ToHeaderValues) {
+        self.req.append_header(name, values)
+    }
+
+    /// Remove a header.
+    pub fn remove_header(&mut self, name: impl Into<HeaderName>) -> Option<HeaderValues> {
+        self.req.remove_header(name)
+    }
+
+    /// An iterator visiting all header pairs in arbitrary order.
+    #[must_use]
+    pub fn iter(&self) -> headers::Iter<'_> {
+        self.req.iter()
+    }
+
+    /// An iterator visiting all header pairs in arbitrary order, with mutable references to the
+    /// values.
+    #[must_use]
+    pub fn iter_mut(&mut self) -> headers::IterMut<'_> {
+        self.req.iter_mut()
+    }
+
+    /// An iterator visiting all header names in arbitrary order.
+    #[must_use]
+    pub fn header_names(&self) -> headers::Names<'_> {
+        self.req.header_names()
+    }
+
+    /// An iterator visiting all header values in arbitrary order.
+    #[must_use]
+    pub fn header_values(&self) -> headers::Values<'_> {
+        self.req.header_values()
+    }
+
     /// Get a request extension value.
     #[must_use]
     pub fn ext<T: Send + Sync + 'static>(&self) -> Option<&T> {
@@ -148,9 +235,8 @@ impl<State> Request<State> {
     }
 
     /// Set a request extension value.
-    pub fn set_ext<T: Send + Sync + 'static>(mut self, val: T) -> Self {
-        self.req.ext_mut().insert(val);
-        self
+    pub fn set_ext<T: Send + Sync + 'static>(mut self, val: T) {
+        self.req.ext_mut().insert(val)
     }
 
     #[must_use]
@@ -184,6 +270,11 @@ impl<State> Request<State> {
             .parse()
     }
 
+    /// Get the URL querystring.
+    pub fn query<T: serde::de::DeserializeOwned>(&self) -> crate::Result<T> {
+        self.req.query()
+    }
+
     /// Reads the entire request body into a byte buffer.
     ///
     /// This method can be called after the body has already been read, but will
@@ -211,10 +302,9 @@ impl<State> Request<State> {
     /// #
     /// # Ok(()) })}
     /// ```
-    pub async fn body_bytes(&mut self) -> std::io::Result<Vec<u8>> {
-        let mut buf = Vec::with_capacity(1024);
-        self.req.read_to_end(&mut buf).await?;
-        Ok(buf)
+    pub async fn body_bytes(&mut self) -> crate::Result<Vec<u8>> {
+        let res = self.req.body_bytes().await?;
+        Ok(res)
     }
 
     /// Reads the entire request body into a string.
@@ -246,9 +336,9 @@ impl<State> Request<State> {
     /// #
     /// # Ok(()) })}
     /// ```
-    pub async fn body_string(&mut self) -> std::io::Result<String> {
-        let body_bytes = self.body_bytes().await?;
-        Ok(String::from_utf8(body_bytes).map_err(|_| std::io::ErrorKind::InvalidData)?)
+    pub async fn body_string(&mut self) -> crate::Result<String> {
+        let res = self.req.body_string().await?;
+        Ok(res)
     }
 
     /// Reads and deserialized the entire request body via json.
@@ -260,36 +350,14 @@ impl<State> Request<State> {
     ///
     /// If the body cannot be interpreted as valid json for the target type `T`,
     /// an `Err` is returned.
-    pub async fn body_json<T: serde::de::DeserializeOwned>(&mut self) -> std::io::Result<T> {
-        let body_bytes = self.body_bytes().await?;
-        Ok(serde_json::from_slice(&body_bytes).map_err(|_| std::io::ErrorKind::InvalidData)?)
-    }
-
-    /// Get the URL querystring.
-    pub fn query<'de, T: Deserialize<'de>>(&'de self) -> Result<T, crate::Error> {
-        // Default to an empty query string if no query parameter has been specified.
-        // This allows successful deserialisation of structs where all fields are optional
-        // when none of those fields has actually been passed by the caller.
-        let query = self.url().query().unwrap_or("");
-        serde_qs::from_str(query).map_err(|e| {
-            // Return the displayable version of the deserialisation error to the caller
-            // for easier debugging.
-            crate::Error::from_str(StatusCode::BadRequest, format!("{}", e))
-        })
+    pub async fn body_json<T: serde::de::DeserializeOwned>(&mut self) -> crate::Result<T> {
+        let res = self.req.body_json().await?;
+        Ok(res)
     }
 
     /// Parse the request body as a form.
-    pub async fn body_form<T: serde::de::DeserializeOwned>(&mut self) -> io::Result<T> {
-        let body = self
-            .body_bytes()
-            .await
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
-        let res = serde_qs::from_bytes(&body).map_err(|e| {
-            std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("could not decode form: {}", e),
-            )
-        })?;
+    pub async fn body_form<T: serde::de::DeserializeOwned>(&mut self) -> crate::Result<T> {
+        let res = self.req.body_form().await?;
         Ok(res)
     }
 
@@ -300,27 +368,26 @@ impl<State> Request<State> {
             .and_then(|cookie_data| cookie_data.content.read().unwrap().get(name).cloned())
     }
 
-    /// Get the length of the body.
+    /// Get the current content type
+    #[must_use]
+    pub fn content_type(&self) -> Option<http_types::Mime> {
+        self.req.content_type()
+    }
+
+    /// Get the length of the body stream, if it has been set.
+    ///
+    /// This value is set when passing a fixed-size object into as the body. E.g. a string, or a
+    /// buffer. Consumers of this API should check this value to decide whether to use `Chunked`
+    /// encoding, or set the response length.
     #[must_use]
     pub fn len(&self) -> Option<usize> {
         self.req.len()
     }
-    /// Checks if the body is empty.
+
+    /// Returns `true` if the request has a set body stream length of zero, `false` otherwise.
     #[must_use]
     pub fn is_empty(&self) -> Option<bool> {
         Some(self.req.len()? == 0)
-    }
-
-    /// Peer address of the underlying transport
-    #[must_use]
-    pub fn peer_addr(&self) -> Option<&str> {
-        self.req.peer_addr()
-    }
-
-    /// Local address of the underlying transport
-    #[must_use]
-    pub fn local_addr(&self) -> Option<&str> {
-        self.req.local_addr()
     }
 }
 

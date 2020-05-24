@@ -19,7 +19,7 @@ async fn nested() {
         Method::Get,
         Url::parse("http://example.com/foo/foo").unwrap(),
     );
-    let res: Response = outer.respond(req).await.unwrap();
+    let mut res: Response = outer.respond(req).await.unwrap();
     assert_eq!(res.status(), 200);
     assert_eq!(res.body_string().await.unwrap(), "foo");
 
@@ -27,7 +27,7 @@ async fn nested() {
         Method::Get,
         Url::parse("http://example.com/foo/bar").unwrap(),
     );
-    let res: Response = outer.respond(req).await.unwrap();
+    let mut res: Response = outer.respond(req).await.unwrap();
     assert_eq!(res.status(), 200);
     assert_eq!(res.body_string().await.unwrap(), "bar");
 }
@@ -76,7 +76,7 @@ async fn nested_middleware() {
         Method::Get,
         Url::parse("http://example.com/foo/echo").unwrap(),
     );
-    let res: Response = app.respond(req).await.unwrap();
+    let mut res: Response = app.respond(req).await.unwrap();
     assert_eq!(res["X-Tide-Test"], "1");
     assert_eq!(res.status(), 200);
     assert_eq!(res.body_string().await.unwrap(), "/echo");
@@ -85,13 +85,13 @@ async fn nested_middleware() {
         Method::Get,
         Url::parse("http://example.com/foo/x/bar").unwrap(),
     );
-    let res: Response = app.respond(req).await.unwrap();
+    let mut res: Response = app.respond(req).await.unwrap();
     assert_eq!(res["X-Tide-Test"], "1");
     assert_eq!(res.status(), 200);
     assert_eq!(res.body_string().await.unwrap(), "/");
 
     let req = Request::new(Method::Get, Url::parse("http://example.com/bar").unwrap());
-    let res: Response = app.respond(req).await.unwrap();
+    let mut res: Response = app.respond(req).await.unwrap();
     assert!(res.header("X-Tide-Test").is_none());
     assert_eq!(res.status(), 200);
     assert_eq!(res.body_string().await.unwrap(), "/bar");
@@ -109,12 +109,12 @@ async fn nested_with_different_state() {
     outer.at("/foo").nest(inner);
 
     let req = Request::new(Method::Get, Url::parse("http://example.com/foo").unwrap());
-    let res: Response = outer.respond(req).await.unwrap();
+    let mut res: Response = outer.respond(req).await.unwrap();
     assert_eq!(res.status(), 200);
     assert_eq!(res.body_string().await.unwrap(), "the number is 42");
 
     let req = Request::new(Method::Get, Url::parse("http://example.com/").unwrap());
-    let res: Response = outer.respond(req).await.unwrap();
+    let mut res: Response = outer.respond(req).await.unwrap();
     assert_eq!(res.status(), 200);
     assert_eq!(res.body_string().await.unwrap(), "Hello, world!");
 }
