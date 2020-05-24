@@ -188,6 +188,7 @@
 mod cookies;
 mod endpoint;
 mod fs;
+mod job;
 mod middleware;
 mod redirect;
 mod request;
@@ -207,6 +208,7 @@ pub mod security;
 pub mod sse;
 
 pub use endpoint::Endpoint;
+pub use job::{Job, JobContext};
 pub use middleware::{Middleware, Next};
 pub use redirect::Redirect;
 pub use request::Request;

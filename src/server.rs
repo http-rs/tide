@@ -10,6 +10,7 @@ use std::fmt::Debug;
 
 use crate::cookies;
 use crate::log;
+use crate::job::{Job, JobContext};
 use crate::middleware::{Middleware, Next};
 use crate::router::{Router, Selection};
 use crate::utils::BoxFuture;
@@ -133,6 +134,7 @@ pub struct Server<State> {
     router: Arc<Router<State>>,
     state: Arc<State>,
     middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
+    jobs: Arc<Vec<Box<dyn Job<State>>>>
 }
 
 impl Server<()> {
@@ -199,6 +201,7 @@ impl<State: Send + Sync + 'static> Server<State> {
             router: Arc::new(Router::new()),
             middleware: Arc::new(vec![]),
             state: Arc::new(state),
+            jobs: Arc::new(vec![])
         };
         server.middleware(cookies::CookiesMiddleware::new());
         server.middleware(log::LogMiddleware::new());
@@ -292,6 +295,12 @@ impl<State: Send + Sync + 'static> Server<State> {
         };
         log::info!("Server listening", { address: addr, target: target, tls: tls });
 
+        self.jobs
+            .iter()
+            .for_each(|job| {
+                job.handle(JobContext::new(self.state.clone()));
+            });
+
         let mut incoming = listener.incoming();
         while let Some(stream) = incoming.next().await {
             let stream = stream?;
@@ -348,6 +357,7 @@ impl<State: Send + Sync + 'static> Server<State> {
             router,
             state,
             middleware,
+            jobs: _
         } = self.clone();
 
         let method = req.method().to_owned();
@@ -381,6 +391,32 @@ impl<State: Send + Sync + 'static> Server<State> {
             }
         }
     }
+
+    /// Register asynchronous job. Jobs are launched after `listen` call.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # #[async_std::main]
+    /// # async fn main() -> http_types::Result<()> {
+    /// #
+    /// let mut app = tide::new();
+    ///
+    /// app.spawn(|_| async move {
+    ///     println!("Hello, world");
+    /// });
+    ///
+    /// app.listen("127.0.0.1:8080").await?;
+    /// #
+    /// # Ok(()) }
+    /// ```
+    pub fn spawn(&mut self, job: impl Job<State>) -> &mut Self
+    {
+        let jobs = Arc::get_mut(&mut self.jobs)
+            .expect("Registering jobs is not possible after the Server has started");
+        jobs.push(Box::new(job));
+        self
+    }
 }
 
 impl<State> Clone for Server<State> {
@@ -389,6 +425,7 @@ impl<State> Clone for Server<State> {
             router: self.router.clone(),
             state: self.state.clone(),
             middleware: self.middleware.clone(),
+            jobs: self.jobs.clone()
         }
     }
 }
