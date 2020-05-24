@@ -17,9 +17,13 @@ pub trait Middleware<State>: 'static + Send + Sync {
     /// Asynchronously handle the request, and return a response.
     fn handle<'a>(
         &'a self,
-        cx: Request<State>,
+        request: Request<State>,
         next: Next<'a, State>,
     ) -> BoxFuture<'a, crate::Result>;
+
+    fn name(&self) -> &str {
+        std::any::type_name::<Self>()
+    }
 }
 
 impl<State, F> Middleware<State> for F

@@ -6,8 +6,6 @@ use async_std::prelude::*;
 use async_std::sync::Arc;
 use async_std::task;
 
-use std::fmt::Debug;
-
 use crate::cookies;
 use crate::log;
 use crate::middleware::{Middleware, Next};
@@ -269,9 +267,9 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// and is processed in the order in which it is applied.
     pub fn middleware<M>(&mut self, middleware: M) -> &mut Self
     where
-        M: Middleware<State> + Debug,
+        M: Middleware<State>,
     {
-        log::trace!("Adding middleware {:?}", middleware);
+        log::trace!("Adding middleware {}", middleware.name());
         let m = Arc::get_mut(&mut self.middleware)
             .expect("Registering middleware is not possible after the Server has started");
         m.push(Arc::new(middleware));
