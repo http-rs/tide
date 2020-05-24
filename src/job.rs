@@ -7,14 +7,12 @@ use async_std::task;
 /// Job context, that handles state
 #[derive(Debug)]
 pub struct JobContext<State> {
-    state: Arc<State>
+    state: Arc<State>,
 }
 
 impl<State> JobContext<State> {
     pub(crate) fn new(state: Arc<State>) -> Self {
-        Self {
-            state
-        }
+        Self { state }
     }
 
     /// Access app-global state
@@ -26,24 +24,15 @@ impl<State> JobContext<State> {
 /// Job trait for handling background tasks.
 pub trait Job<State>: 'static + Send + Sync {
     /// Asynchronously execute job.
-    fn handle(
-        &self,
-        ctx: JobContext<State>,
-    );
+    fn handle(&self, ctx: JobContext<State>);
 }
 
 impl<State, F, Fut> Job<State> for F
 where
-    F: Fn(JobContext<State>) -> Fut
-        + Send
-        + Sync
-        + 'static,
-    Fut: Future<Output = ()> + Send + 'static
+    F: Fn(JobContext<State>) -> Fut + Send + Sync + 'static,
+    Fut: Future<Output = ()> + Send + 'static,
 {
-    fn handle(
-        &self,
-        ctx: JobContext<State>,
-    ) {
+    fn handle(&self, ctx: JobContext<State>) {
         let fut = (self)(ctx);
         task::spawn(async move {
             fut.await;

@@ -1,23 +1,25 @@
 mod test_utils;
 use async_std::prelude::*;
-use async_std::task;
 use async_std::sync;
+use async_std::task;
 use std::time::Duration;
 
-use tide::{Request, JobContext};
+use tide::{JobContext, Request};
 
 #[test]
 fn jobs() -> Result<(), http_types::Error> {
     #[derive(Default)]
     struct Counter {
-        count: sync::Mutex<i32>
+        count: sync::Mutex<i32>,
     }
 
     task::block_on(async {
         let port = test_utils::find_port().await;
         let server = task::spawn(async move {
             let mut app = tide::with_state(Counter::default());
-            app.at("/").get(|req: Request<Counter>| async move { Ok(req.state().count.lock().await.to_string()) });
+            app.at("/").get(|req: Request<Counter>| async move {
+                Ok(req.state().count.lock().await.to_string())
+            });
 
             app.spawn(|ctx: JobContext<Counter>| async move {
                 *ctx.state().count.lock().await += 1;
