@@ -276,3 +276,9 @@ where
 
 /// A specialized Result type for Tide.
 pub type Result<T = Response> = std::result::Result<T, Error>;
+
+impl From<Response> for Result<Response> {
+    fn from(res: Response) -> Self {
+        Ok(res)
+    }
+}

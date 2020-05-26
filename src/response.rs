@@ -313,6 +313,19 @@ impl<'a> From<&'a str> for Response {
     }
 }
 
+impl<T, E> From<Result<T, E>> for Response
+where
+    T: Into<Response>,
+    E: Into<Response>,
+{
+    fn from(result: Result<T, E>) -> Self {
+        match result {
+            Ok(ok) => ok.into(),
+            Err(err) => err.into(),
+        }
+    }
+}
+
 impl IntoIterator for Response {
     type Item = (HeaderName, HeaderValues);
     type IntoIter = http_types::headers::IntoIter;
