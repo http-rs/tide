@@ -379,4 +379,20 @@ mod test {
 
         assert_eq!(res[http_types::headers::SET_COOKIE][0], "foo=bar");
     }
+
+    #[async_std::test]
+    async fn set_cors_headers_to_error_responses() {
+        let mut app = crate::Server::new();
+        app.at(ENDPOINT).get(|_| async {
+            Err::<&str, _>(crate::Error::from_str(
+                StatusCode::BadRequest,
+                "bad request",
+            ))
+        });
+        app.middleware(CorsMiddleware::new().allow_origin(Origin::from(ALLOW_ORIGIN)));
+
+        let res: crate::http::Response = app.respond(request()).await.unwrap();
+        assert_eq!(res.status(), 400);
+        assert_eq!(res[headers::ACCESS_CONTROL_ALLOW_ORIGIN], ALLOW_ORIGIN);
+    }
 }
