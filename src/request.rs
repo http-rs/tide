@@ -19,7 +19,7 @@ use crate::Response;
 ///
 /// Requests also provide *extensions*, a type map primarily used for low-level
 /// communication between middleware and endpoints.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Request<State> {
     pub(crate) state: Arc<State>,
     pub(crate) req: http::Request,

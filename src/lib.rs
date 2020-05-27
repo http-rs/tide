@@ -208,6 +208,7 @@ mod server;
 mod utils;
 
 pub mod convert;
+pub mod error;
 pub mod log;
 pub mod prelude;
 pub mod security;

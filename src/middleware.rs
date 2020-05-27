@@ -22,8 +22,8 @@ pub trait Middleware<State>: 'static + Send + Sync {
     ) -> BoxFuture<'a, crate::Result>;
 
     /// Set the middleware's name. By default it uses the type signature.
-    fn name(&self) -> &str {
-        std::any::type_name::<Self>()
+    fn name(&self) -> String {
+        std::any::type_name::<Self>().into()
     }
 }
 
