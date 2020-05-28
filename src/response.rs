@@ -2,12 +2,12 @@ use async_std::io::prelude::*;
 use std::convert::TryFrom;
 use std::ops::Index;
 
-use mime::Mime;
 use serde::Serialize;
 
 use crate::http::cookies::Cookie;
-use crate::http::headers::{HeaderName, HeaderValues, ToHeaderValues, CONTENT_TYPE};
+use crate::http::headers::{HeaderName, HeaderValues, ToHeaderValues};
 use crate::http::{self, Body, StatusCode};
+use crate::http::{mime, Mime};
 use crate::redirect::Redirect;
 
 #[derive(Debug)]
@@ -125,8 +125,9 @@ impl Response {
     ///
     /// [Read more on MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types)
     #[must_use]
-    pub fn set_mime(self, mime: Mime) -> Self {
-        self.set_header(CONTENT_TYPE, mime.to_string())
+    pub fn set_mime(mut self, mime: impl Into<Mime>) -> Self {
+        self.res.set_content_type(mime.into());
+        self
     }
 
     /// Pass a string as the request body.
@@ -137,7 +138,7 @@ impl Response {
     #[must_use]
     pub fn body_string(mut self, string: String) -> Self {
         self.res.set_body(string);
-        self.set_mime(mime::TEXT_PLAIN_UTF_8)
+        self.set_mime(mime::PLAIN)
     }
 
     /// Pass raw bytes as the request body.
@@ -151,7 +152,7 @@ impl Response {
     {
         self.res
             .set_body(http_types::Body::from_reader(reader, None));
-        self.set_mime(mime::APPLICATION_OCTET_STREAM)
+        self.set_mime(mime::BYTE_STREAM)
     }
 
     /// Set the body reader.
@@ -170,9 +171,7 @@ impl Response {
     ) -> Result<Self, serde_qs::Error> {
         // TODO: think about how to handle errors
         self.res.set_body(serde_qs::to_string(&form)?.into_bytes());
-        Ok(self
-            .set_status(StatusCode::Ok)
-            .set_mime(mime::APPLICATION_WWW_FORM_URLENCODED))
+        Ok(self.set_status(StatusCode::Ok).set_mime(mime::FORM))
     }
 
     /// Encode a struct as a form and set as the response body.
@@ -182,7 +181,7 @@ impl Response {
     /// The encoding is set to `application/json`.
     pub fn body_json(mut self, json: &impl Serialize) -> serde_json::Result<Self> {
         self.res.set_body(serde_json::to_vec(json)?);
-        Ok(self.set_mime(mime::APPLICATION_JSON))
+        Ok(self.set_mime(mime::JSON))
     }
 
     // fn body_multipart(&mut self) -> BoxTryFuture<Multipart<Cursor<Vec<u8>>>> {
