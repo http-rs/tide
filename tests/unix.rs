@@ -17,12 +17,12 @@ mod unix_tests {
             let server = task::spawn(async move {
                 let mut app = tide::new();
                 app.at("/").get(|req: tide::Request<()>| async move {
-                    let mut response = Response::new(StatusCode::Ok);
-                    response.set_body(serde_json::json!({
+                    let mut res = Response::new(StatusCode::Ok);
+                    res.set_body(serde_json::json!({
                         "peer_addr": req.peer_addr().unwrap(),
                         "local_addr": req.local_addr().unwrap()
                     }));
-                    Ok(response)
+                    Ok(res)
                 });
                 app.listen_unix(sock_path).await?;
                 http_types::Result::Ok(())
@@ -31,9 +31,9 @@ mod unix_tests {
             let client = task::spawn(async move {
                 task::sleep(Duration::from_millis(100)).await;
                 let listener = UnixStream::connect(&sock_path_for_client).await?;
-                let request = Request::new(Method::Get, Url::parse("http://_/").unwrap());
-                let response = async_h1::connect(listener, request).await?;
-                let body: serde_json::Value = response.body_json().await.unwrap();
+                let req = Request::new(Method::Get, Url::parse("unix://local.socket/").unwrap());
+                let mut res = async_h1::connect(listener, req).await?;
+                let body: serde_json::Value = res.body_json().await.unwrap();
                 assert!(body.get("peer_addr").unwrap().is_string());
                 assert!(body
                     .get("local_addr")
