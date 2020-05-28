@@ -27,6 +27,58 @@ pub trait Middleware<State>: 'static + Send + Sync {
     }
 }
 
+#[derive(Debug)]
+pub struct Before<F>(F);
+impl<F> Before<F> {
+    pub fn new(f: F) -> Self {
+        Self(f)
+    }
+}
+
+impl<State, F, Fut> Middleware<State> for Before<F>
+where
+    State: Send + Sync + 'static,
+    F: Fn(Request<State>) -> Fut + Send + Sync + 'static,
+    Fut: std::future::Future<Output = Request<State>> + Send + Sync,
+{
+    fn handle<'a>(
+        &'a self,
+        request: Request<State>,
+        next: Next<'a, State>,
+    ) -> BoxFuture<'a, crate::Result> {
+        Box::pin(async move {
+            let request = (self.0)(request).await;
+            next.run(request).await
+        })
+    }
+}
+
+#[derive(Debug)]
+pub struct After<F>(F);
+impl<F> After<F> {
+    pub fn new(f: F) -> Self {
+        Self(f)
+    }
+}
+
+impl<State, F, Fut> Middleware<State> for After<F>
+where
+    State: Send + Sync + 'static,
+    F: Fn(crate::Result) -> Fut + Send + Sync + 'static,
+    Fut: std::future::Future<Output = crate::Result> + Send + Sync,
+{
+    fn handle<'a>(
+        &'a self,
+        request: Request<State>,
+        next: Next<'a, State>,
+    ) -> BoxFuture<'a, crate::Result> {
+        Box::pin(async move {
+            let result = next.run(request).await;
+            (self.0)(result).await
+        })
+    }
+}
+
 impl<State, F> Middleware<State> for F
 where
     F: Send

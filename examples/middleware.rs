@@ -2,14 +2,14 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
-use tide::{Middleware, Next, Request, Response, Result, StatusCode};
+use tide::{After, Before, Middleware, Next, Request, Response, Result, StatusCode};
 
 #[derive(Debug)]
 struct User {
     name: String,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 struct UserDatabase;
 impl UserDatabase {
     async fn find_user(&self) -> Option<User> {
@@ -78,13 +78,49 @@ impl<State: Send + Sync + 'static> Middleware<State> for RequestCounterMiddlewar
     }
 }
 
+const NOT_FOUND_HTML_PAGE: &str = "<html><body>
+  <h1>uh oh, we couldn't find that document</h1>
+  <p>
+    probably, this would be served from the file system or
+    included with `include_bytes!`
+  </p>
+</body></html>";
+
+const INTERNAL_SERVER_ERROR_HTML_PAGE: &str = "<html><body>
+  <h1>whoops! it's not you, it's us</h1>
+  <p>
+    we're very sorry, but something seems to have gone wrong on our end
+  </p>
+</body></html>";
+
 #[async_std::main]
 async fn main() -> Result<()> {
     tide::log::start();
     let mut app = tide::with_state(UserDatabase::default());
 
+    app.middleware(After::new(|result: Result| async move {
+        let response = result.unwrap_or_else(|e| Response::new(e.status()));
+        match response.status() {
+            StatusCode::NotFound => Ok(response
+                .set_content_type(tide::http::mime::HTML)
+                .body_string(NOT_FOUND_HTML_PAGE.into())),
+
+            StatusCode::InternalServerError => Ok(response
+                .set_content_type(tide::http::mime::HTML)
+                .body_string(INTERNAL_SERVER_ERROR_HTML_PAGE.into())),
+
+            _ => Ok(response),
+        }
+    }));
+
     app.middleware(user_loader);
     app.middleware(RequestCounterMiddleware::new(0));
+    app.middleware(Before::new(
+        |mut request: Request<UserDatabase>| async move {
+            request.set_ext(std::time::Instant::now());
+            request
+        },
+    ));
 
     app.at("/").get(|req: Request<_>| async move {
         let count: &RequestCount = req.ext().unwrap();
