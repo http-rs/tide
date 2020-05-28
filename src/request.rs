@@ -399,15 +399,27 @@ impl<State> Request<State> {
     }
 }
 
+impl<State> AsRef<http::Request> for Request<State> {
+    fn as_ref(&self) -> &http::Request {
+        &self.req
+    }
+}
+
 impl<State> AsMut<http::Request> for Request<State> {
     fn as_mut(&mut self) -> &mut http::Request {
         &mut self.req
     }
 }
 
-impl<State> AsRef<http::Request> for Request<State> {
-    fn as_ref(&self) -> &http::Request {
-        &self.req
+impl<State> AsRef<http::Headers> for Request<State> {
+    fn as_ref(&self) -> &http::Headers {
+        self.req.as_ref()
+    }
+}
+
+impl<State> AsMut<http::Headers> for Request<State> {
+    fn as_mut(&mut self) -> &mut http::Headers {
+        self.req.as_mut()
     }
 }
 
