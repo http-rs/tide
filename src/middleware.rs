@@ -17,9 +17,14 @@ pub trait Middleware<State>: 'static + Send + Sync {
     /// Asynchronously handle the request, and return a response.
     fn handle<'a>(
         &'a self,
-        cx: Request<State>,
+        request: Request<State>,
         next: Next<'a, State>,
     ) -> BoxFuture<'a, crate::Result>;
+
+    /// Set the middleware's name. By default it uses the type signature.
+    fn name(&self) -> &str {
+        std::any::type_name::<Self>()
+    }
 }
 
 impl<State, F> Middleware<State> for F
