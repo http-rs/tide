@@ -238,13 +238,13 @@ impl Response {
         self.cookie_events.push(CookieEvent::Removed(cookie));
     }
 
-    /// Get a response extension value.
+    /// Get a response scoped extension value.
     #[must_use]
     pub fn ext<T: Send + Sync + 'static>(&self) -> Option<&T> {
         self.res.ext().get()
     }
 
-    /// Set a local value.
+    /// Set a response scoped extension value.
     pub fn set_ext<T: Send + Sync + 'static>(mut self, val: T) -> Self {
         self.res.ext_mut().insert(val);
         self

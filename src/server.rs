@@ -163,9 +163,9 @@ impl Default for Server<()> {
 }
 
 impl<State: Send + Sync + 'static> Server<State> {
-    /// Create a new Tide server with shared global state.
+    /// Create a new Tide server with shared application scoped state.
     ///
-    /// Global state is useful for storing items
+    /// Application scoped state is useful for storing items
     ///
     /// # Examples
     ///
@@ -259,14 +259,13 @@ impl<State: Send + Sync + 'static> Server<State> {
 
     /// Add middleware to an application.
     ///
-    /// Middleware provides application-global customization of the
-    /// request/response cycle, such as compression, logging, or header
-    /// modification. Middleware is invoked when processing a request, and can
-    /// either continue processing (possibly modifying the response) or
-    /// immediately return a response. See the [`Middleware`] trait for details.
+    /// Middleware provides customization of the request/response cycle, such as compression,
+    /// logging, or header modification. Middleware is invoked when processing a request, and can
+    /// either continue processing (possibly modifying the response) or immediately return a
+    /// response. See the [`Middleware`] trait for details.
     ///
-    /// Middleware can only be added at the "top level" of an application,
-    /// and is processed in the order in which it is applied.
+    /// Middleware can only be added at the "top level" of an application, and is processed in the
+    /// order in which it is applied.
     pub fn middleware<M>(&mut self, middleware: M) -> &mut Self
     where
         M: Middleware<State> + Debug,
