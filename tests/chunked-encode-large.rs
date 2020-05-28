@@ -75,7 +75,7 @@ async fn chunked_large() -> Result<(), http_types::Error> {
             let body = Cursor::new(TEXT.to_owned());
             let res = Response::new(StatusCode::Ok)
                 .body(body)
-                .set_mime(mime::PLAIN);
+                .set_content_type(mime::PLAIN);
             Ok(res)
         });
         app.listen(("localhost", port)).await?;

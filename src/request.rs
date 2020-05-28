@@ -9,7 +9,7 @@ use std::{str::FromStr, sync::Arc};
 use crate::cookies::CookieData;
 use crate::http::cookies::Cookie;
 use crate::http::headers::{self, HeaderName, HeaderValues, ToHeaderValues};
-use crate::http::{self, Method, StatusCode, Url, Version};
+use crate::http::{self, Body, Method, Mime, StatusCode, Url, Version};
 use crate::Response;
 
 /// An HTTP request.
@@ -149,6 +149,16 @@ impl<State> Request<State> {
         self.req.host()
     }
 
+    /// Get the request content type as a `Mime`.
+    ///
+    /// This gets the request `Content-Type` header.
+    ///
+    /// [Read more on MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types)
+    #[must_use]
+    pub fn content_type(&self) -> Option<Mime> {
+        self.req.content_type()
+    }
+
     /// Get an HTTP header.
     ///
     /// # Examples
@@ -283,6 +293,16 @@ impl<State> Request<State> {
         })
     }
 
+    /// Take the request body as a `Body`.
+    //
+    // This method can be called after the body has already been taken or read,
+    // but will return an empty `Body`.
+    //
+    // This is useful for consuming the body via an AsyncReader or AsyncBufReader.
+    pub fn take_body(&mut self) -> Body {
+        self.req.take_body()
+    }
+
     /// Reads the entire request body into a byte buffer.
     ///
     /// This method can be called after the body has already been read, but will
@@ -374,12 +394,6 @@ impl<State> Request<State> {
     pub fn cookie(&self, name: &str) -> Option<Cookie<'static>> {
         self.ext::<CookieData>()
             .and_then(|cookie_data| cookie_data.content.read().unwrap().get(name).cloned())
-    }
-
-    /// Get the current content type
-    #[must_use]
-    pub fn content_type(&self) -> Option<http_types::Mime> {
-        self.req.content_type()
     }
 
     /// Get the length of the body stream, if it has been set.
