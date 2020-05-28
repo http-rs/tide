@@ -264,15 +264,27 @@ impl Response {
     }
 }
 
+impl AsRef<http::Response> for Response {
+    fn as_ref(&self) -> &http::Response {
+        &self.res
+    }
+}
+
 impl AsMut<http::Response> for Response {
     fn as_mut(&mut self) -> &mut http::Response {
         &mut self.res
     }
 }
 
-impl AsRef<http::Response> for Response {
-    fn as_ref(&self) -> &http::Response {
-        &self.res
+impl AsRef<http::Headers> for Response {
+    fn as_ref(&self) -> &http::Headers {
+        self.res.as_ref()
+    }
+}
+
+impl AsMut<http::Headers> for Response {
+    fn as_mut(&mut self) -> &mut http::Headers {
+        self.res.as_mut()
     }
 }
 
