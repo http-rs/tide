@@ -1,5 +1,4 @@
 mod test_utils;
-use async_std::io::Cursor;
 use async_std::prelude::*;
 use async_std::task;
 use http_types::mime;
@@ -22,10 +21,9 @@ async fn chunked_large() -> Result<(), http_types::Error> {
     let server = task::spawn(async move {
         let mut app = tide::new();
         app.at("/").get(|_| async move {
-            let body = Cursor::new(TEXT.to_owned());
-            let res = Response::new(StatusCode::Ok)
-                .body(body)
-                .set_content_type(mime::PLAIN);
+            let mut res = Response::new(StatusCode::Ok);
+            res.set_content_type(mime::PLAIN);
+            res.set_body(TEXT);
             Ok(res)
         });
         app.listen(("localhost", port)).await?;

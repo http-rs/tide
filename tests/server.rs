@@ -4,7 +4,7 @@ use async_std::task;
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
-use tide::{Request, Response, StatusCode};
+use tide::{Body, Request, Response, StatusCode};
 
 #[test]
 fn hello_world() -> Result<(), http_types::Error> {
@@ -16,7 +16,8 @@ fn hello_world() -> Result<(), http_types::Error> {
                 assert_eq!(req.body_string().await.unwrap(), "nori".to_string());
                 assert!(req.local_addr().unwrap().contains(&port.to_string()));
                 assert!(req.peer_addr().is_some());
-                let res = Response::new(StatusCode::Ok).body_string("says hello".to_string());
+                let mut res = Response::new(StatusCode::Ok);
+                res.set_body("says hello");
                 Ok(res)
             });
             app.listen(("localhost", port)).await?;
@@ -80,7 +81,8 @@ fn json() -> Result<(), http_types::Error> {
                 let mut counter: Counter = req.body_json().await.unwrap();
                 assert_eq!(counter.count, 0);
                 counter.count = 1;
-                let res = Response::new(StatusCode::Ok).body_json(&counter)?;
+                let mut res = Response::new(StatusCode::Ok);
+                res.set_body(Body::from_json(&counter)?);
                 Ok(res)
             });
             app.listen(("localhost", port)).await?;

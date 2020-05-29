@@ -1,4 +1,4 @@
-use async_std::io::{self, prelude::*, BufReader};
+use async_std::io::{self, prelude::*};
 use async_std::task::{Context, Poll};
 use route_recognizer::Params;
 
@@ -448,8 +448,10 @@ impl<State> Into<http::Request> for Request<State> {
 // NOTE: From cannot be implemented for this conversion because `State` needs to
 // be constrained by a type.
 impl<State: Send + Sync + 'static> Into<Response> for Request<State> {
-    fn into(self) -> Response {
-        Response::new(StatusCode::Ok).body(BufReader::new(self))
+    fn into(mut self) -> Response {
+        let mut res = Response::new(StatusCode::Ok);
+        res.set_body(self.take_body());
+        res
     }
 }
 

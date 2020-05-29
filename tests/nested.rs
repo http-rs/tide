@@ -53,10 +53,7 @@ async fn nested_middleware() {
         ) -> BoxFuture<'a, tide::Result<tide::Response>> {
             Box::pin(async move {
                 let res = next.run(req).await?;
-                let res = res.set_header(
-                    HeaderName::from_bytes("X-Tide-Test".to_owned().into_bytes()).unwrap(),
-                    "1",
-                );
+                res.insert_header("X-Tide-Test", "1");
                 Ok(res)
             })
         }

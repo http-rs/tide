@@ -1,7 +1,7 @@
 use async_std::task;
 use juniper::RootNode;
 use std::sync::RwLock;
-use tide::{Redirect, Request, Response, Server, StatusCode};
+use tide::{Body, Redirect, Request, Response, Server, StatusCode};
 
 #[derive(Clone)]
 struct User {
@@ -86,16 +86,15 @@ async fn handle_graphql(mut cx: Request<State>) -> tide::Result {
         StatusCode::BadRequest
     };
 
-    let res = Response::new(status)
-        .body_json(&response)
-        .expect("be able to serialize the graphql response");
+    let mut res = Response::new(status);
+    res.set_body(Body::from_json(&response)?);
     Ok(res)
 }
 
 async fn handle_graphiql(_: Request<State>) -> tide::Result {
-    let res = Response::new(StatusCode::Ok)
-        .body_string(juniper::http::graphiql::graphiql_source("/graphql"))
-        .set_content_type(tide::http::mime::HTML);
+    let mut res = Response::new(StatusCode::Ok);
+    res.set_body(juniper::http::graphiql::graphiql_source("/graphql"));
+    res.set_content_type(tide::http::mime::HTML);
     Ok(res)
 }
 
