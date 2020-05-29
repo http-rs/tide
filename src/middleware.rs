@@ -27,6 +27,23 @@ pub trait Middleware<State>: 'static + Send + Sync {
     }
 }
 
+/// Define a middleware that operates on incoming requests.
+///
+/// This middleware is useful because it is not possible in Rust yet to use
+/// closures to define inline middleware.
+///
+/// # Examples
+///
+/// ```rust
+/// use tide::{Before, Request};
+/// use std::time::Instant;
+///
+/// let mut app = tide::new();
+/// app.middleware(Before(|mut request: Request<()>| async move {
+///     request.set_ext(Instant::now());
+///     request
+/// }));
+/// ```
 #[derive(Debug)]
 pub struct Before<F>(pub F);
 impl<State, F, Fut> Middleware<State> for Before<F>
@@ -47,6 +64,26 @@ where
     }
 }
 
+/// Define a middleware that operates on outgoing responses.
+///
+/// This middleware is useful because it is not possible in Rust yet to use
+/// closures to define inline middleware.
+///
+/// # Examples
+///
+/// ```rust
+/// use tide::{After, Response, http};
+///
+/// let mut app = tide::new();
+/// app.middleware(After(|res: tide::Result| async move {
+///     let res = res.unwrap_or_else(|e| Response::new(e.status()));
+///     match res.status() {
+///         http::StatusCode::NotFound => Ok("Page not found".into()),
+///         http::StatusCode::InternalServerError => Ok("Something went wrong".into()),
+///         _ => Ok(res),
+///     }
+/// }));
+/// ```
 #[derive(Debug)]
 pub struct After<F>(pub F);
 impl<State, F, Fut> Middleware<State> for After<F>
