@@ -28,13 +28,7 @@ pub trait Middleware<State>: 'static + Send + Sync {
 }
 
 #[derive(Debug)]
-pub struct Before<F>(F);
-impl<F> Before<F> {
-    pub fn new(f: F) -> Self {
-        Self(f)
-    }
-}
-
+pub struct Before<F>(pub F);
 impl<State, F, Fut> Middleware<State> for Before<F>
 where
     State: Send + Sync + 'static,
@@ -54,13 +48,7 @@ where
 }
 
 #[derive(Debug)]
-pub struct After<F>(F);
-impl<F> After<F> {
-    pub fn new(f: F) -> Self {
-        Self(f)
-    }
-}
-
+pub struct After<F>(pub F);
 impl<State, F, Fut> Middleware<State> for After<F>
 where
     State: Send + Sync + 'static,

@@ -98,7 +98,7 @@ async fn main() -> Result<()> {
     tide::log::start();
     let mut app = tide::with_state(UserDatabase::default());
 
-    app.middleware(After::new(|result: Result| async move {
+    app.middleware(After(|result: Result| async move {
         let response = result.unwrap_or_else(|e| Response::new(e.status()));
         match response.status() {
             StatusCode::NotFound => Ok(response
@@ -115,12 +115,10 @@ async fn main() -> Result<()> {
 
     app.middleware(user_loader);
     app.middleware(RequestCounterMiddleware::new(0));
-    app.middleware(Before::new(
-        |mut request: Request<UserDatabase>| async move {
-            request.set_ext(std::time::Instant::now());
-            request
-        },
-    ));
+    app.middleware(Before(|mut request: Request<UserDatabase>| async move {
+        request.set_ext(std::time::Instant::now());
+        request
+    }));
 
     app.at("/").get(|req: Request<_>| async move {
         let count: &RequestCount = req.ext().unwrap();
