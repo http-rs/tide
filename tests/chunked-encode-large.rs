@@ -88,16 +88,8 @@ async fn chunked_large() -> Result<(), http_types::Error> {
             .await
             .unwrap();
         assert_eq!(res.status(), 200);
-        assert_eq!(
-            // this is awkward and should be revisited when surf is on newer http-types
-            res.header(&"transfer-encoding".parse().unwrap())
-                .unwrap()
-                .last()
-                .unwrap()
-                .as_str(),
-            "chunked"
-        );
-        assert_eq!(res.header(&"content-length".parse().unwrap()), None);
+        assert_eq!(res.header("transfer-encoding").unwrap(), "chunked");
+        assert!(res.header("content-length").is_none());
         let string = res.body_string().await.unwrap();
         assert_eq!(string, TEXT.to_string());
         Ok(())

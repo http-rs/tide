@@ -41,7 +41,7 @@ async fn wildcard() {
         Method::Get,
         Url::parse("http://localhost/add_one/3").unwrap(),
     );
-    let res: http::Response = app.respond(req).await.unwrap();
+    let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     assert_eq!(&res.body_string().await.unwrap(), "4");
 
@@ -49,7 +49,7 @@ async fn wildcard() {
         Method::Get,
         Url::parse("http://localhost/add_one/-7").unwrap(),
     );
-    let res: http::Response = app.respond(req).await.unwrap();
+    let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     assert_eq!(&res.body_string().await.unwrap(), "-6");
 }
@@ -89,7 +89,7 @@ async fn wild_path() {
         Method::Get,
         Url::parse("http://localhost/echo/some_path").unwrap(),
     );
-    let res: http::Response = app.respond(req).await.unwrap();
+    let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     assert_eq!(&res.body_string().await.unwrap(), "some_path");
 
@@ -97,12 +97,12 @@ async fn wild_path() {
         Method::Get,
         Url::parse("http://localhost/echo/multi/segment/path").unwrap(),
     );
-    let res: http::Response = app.respond(req).await.unwrap();
+    let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     assert_eq!(&res.body_string().await.unwrap(), "multi/segment/path");
 
     let req = http::Request::new(Method::Get, Url::parse("http://localhost/echo/").unwrap());
-    let res: http::Response = app.respond(req).await.unwrap();
+    let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::NotFound);
     assert_eq!(&res.body_string().await.unwrap(), "");
 }
@@ -116,7 +116,7 @@ async fn multi_wildcard() {
         Method::Get,
         Url::parse("http://localhost/add_two/1/2/").unwrap(),
     );
-    let res: http::Response = app.respond(req).await.unwrap();
+    let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     assert_eq!(&res.body_string().await.unwrap(), "3");
 
@@ -124,7 +124,7 @@ async fn multi_wildcard() {
         Method::Get,
         Url::parse("http://localhost/add_two/-1/2/").unwrap(),
     );
-    let res: http::Response = app.respond(req).await.unwrap();
+    let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), 200);
     assert_eq!(&res.body_string().await.unwrap(), "1");
 
@@ -145,7 +145,7 @@ async fn wild_last_segment() {
         Method::Get,
         Url::parse("http://localhost/echo/one/two").unwrap(),
     );
-    let res: http::Response = app.respond(req).await.unwrap();
+    let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     assert_eq!(&res.body_string().await.unwrap(), "one");
 
@@ -153,7 +153,7 @@ async fn wild_last_segment() {
         Method::Get,
         Url::parse("http://localhost/echo/one/two/three/four").unwrap(),
     );
-    let res: http::Response = app.respond(req).await.unwrap();
+    let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     assert_eq!(&res.body_string().await.unwrap(), "one");
 }
@@ -207,7 +207,7 @@ async fn nameless_internal_wildcard() {
         Method::Get,
         Url::parse("http://localhost/echo/one/two").unwrap(),
     );
-    let res: http::Response = app.respond(req).await.unwrap();
+    let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     assert_eq!(&res.body_string().await.unwrap(), "two");
 
@@ -215,7 +215,7 @@ async fn nameless_internal_wildcard() {
         Method::Get,
         Url::parse("http://localhost/echo/one/two").unwrap(),
     );
-    let res: http::Response = app.respond(req).await.unwrap();
+    let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     assert_eq!(&res.body_string().await.unwrap(), "two");
 }
@@ -229,7 +229,7 @@ async fn nameless_internal_wildcard2() {
         Method::Get,
         Url::parse("http://localhost/echo/one/two").unwrap(),
     );
-    let res: http::Response = app.respond(req).await.unwrap();
+    let mut res: http::Response = app.respond(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::Ok);
     assert_eq!(&res.body_string().await.unwrap(), "one");
 }
