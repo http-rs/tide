@@ -157,7 +157,7 @@ impl Response {
     /// # fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
     /// # async_std::task::block_on(async {
     /// #
-    /// use tide::{Body, Response};
+    /// use tide::Response;
     ///
     /// let mut req = Response::new(200);
     /// req.set_body("Hello, Nori!");
