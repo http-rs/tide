@@ -211,7 +211,7 @@ pub mod security;
 pub mod sse;
 
 pub use endpoint::Endpoint;
-pub use middleware::{Middleware, Next};
+pub use middleware::{After, Before, Middleware, Next};
 pub use redirect::Redirect;
 pub use request::Request;
 pub use response::Response;
