@@ -176,7 +176,7 @@ impl Response {
     }
 
     /// Insert cookie in the cookie jar.
-    pub fn insert_cookie(&mut self, cookie: Cookie<'static>) {
+    pub fn append_cookie(&mut self, cookie: Cookie<'static>) {
         self.cookie_events.push(CookieEvent::Added(cookie));
     }
 

@@ -18,7 +18,7 @@ use std::sync::{Arc, RwLock};
 /// app.at("/get").get(|cx: Request<()>| async move { Ok(cx.cookie("testCookie").unwrap().value().to_string()) });
 /// app.at("/set").get(|_| async {
 ///     let mut res = Response::new(StatusCode::Ok);
-///     res.insert_cookie(Cookie::new("testCookie", "NewCookieValue"));
+///     res.append_cookie(Cookie::new("testCookie", "NewCookieValue"));
 ///     Ok(res)
 /// });
 /// ```
