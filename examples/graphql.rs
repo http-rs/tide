@@ -95,7 +95,7 @@ async fn handle_graphql(mut cx: Request<State>) -> tide::Result {
 async fn handle_graphiql(_: Request<State>) -> tide::Result {
     let res = Response::new(StatusCode::Ok)
         .body_string(juniper::http::graphiql::graphiql_source("/graphql"))
-        .set_mime(mime::TEXT_HTML_UTF_8);
+        .set_content_type(tide::http::mime::HTML);
     Ok(res)
 }
 

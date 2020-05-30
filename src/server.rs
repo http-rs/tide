@@ -6,8 +6,6 @@ use async_std::prelude::*;
 use async_std::sync::Arc;
 use async_std::task;
 
-use std::fmt::Debug;
-
 use crate::cookies;
 use crate::job::{Job, JobContext};
 use crate::log;
@@ -165,9 +163,9 @@ impl Default for Server<()> {
 }
 
 impl<State: Send + Sync + 'static> Server<State> {
-    /// Create a new Tide server with shared global state.
+    /// Create a new Tide server with shared application scoped state.
     ///
-    /// Global state is useful for storing items
+    /// Application scoped state is useful for storing items
     ///
     /// # Examples
     ///
@@ -262,19 +260,18 @@ impl<State: Send + Sync + 'static> Server<State> {
 
     /// Add middleware to an application.
     ///
-    /// Middleware provides application-global customization of the
-    /// request/response cycle, such as compression, logging, or header
-    /// modification. Middleware is invoked when processing a request, and can
-    /// either continue processing (possibly modifying the response) or
-    /// immediately return a response. See the [`Middleware`] trait for details.
+    /// Middleware provides customization of the request/response cycle, such as compression,
+    /// logging, or header modification. Middleware is invoked when processing a request, and can
+    /// either continue processing (possibly modifying the response) or immediately return a
+    /// response. See the [`Middleware`] trait for details.
     ///
-    /// Middleware can only be added at the "top level" of an application,
-    /// and is processed in the order in which it is applied.
+    /// Middleware can only be added at the "top level" of an application, and is processed in the
+    /// order in which it is applied.
     pub fn middleware<M>(&mut self, middleware: M) -> &mut Self
     where
-        M: Middleware<State> + Debug,
+        M: Middleware<State>,
     {
-        log::trace!("Adding middleware {:?}", middleware);
+        log::trace!("Adding middleware {}", middleware.name());
         let m = Arc::get_mut(&mut self.middleware)
             .expect("Registering middleware is not possible after the Server has started");
         m.push(Arc::new(middleware));
@@ -309,6 +306,48 @@ impl<State: Send + Sync + 'static> Server<State> {
                 let res = async_h1::accept(stream, |mut req| async {
                     req.set_local_addr(local_addr);
                     req.set_peer_addr(peer_addr);
+                    let res = this.respond(req).await;
+                    let res = res.map_err(|_| io::Error::from(io::ErrorKind::Other))?;
+                    Ok(res)
+                })
+                .await;
+
+                if let Err(err) = res {
+                    log::error!("async-h1 error", { error: err.to_string() });
+                }
+            });
+        }
+        Ok(())
+    }
+
+    /// Asynchronously serve the app at the given address.
+    #[cfg(all(feature = "h1-server", unix))]
+    pub async fn listen_unix(self, addr: impl AsRef<async_std::path::Path>) -> io::Result<()> {
+        let listener = async_std::os::unix::net::UnixListener::bind(addr).await?;
+        let tls = false;
+        let target = if cfg!(debug_assertions) {
+            "dev"
+        } else {
+            "release"
+        };
+
+        let address = listener
+            .local_addr()
+            .ok()
+            .map(|addr| format!("unix://{:?}", addr));
+
+        log::info!("Server listening", { address: address, target: target, tls: tls });
+
+        let mut incoming = listener.incoming();
+        while let Some(stream) = incoming.next().await {
+            let stream = stream?;
+            let this = self.clone();
+            let local_addr = stream.local_addr().ok().map(|addr| format!("{:?}", addr));
+            let peer_addr = stream.peer_addr().ok().map(|addr| format!("{:?}", addr));
+            task::spawn(async move {
+                let res = async_h1::accept(stream, |mut req| async {
+                    req.set_local_addr(local_addr.as_ref());
+                    req.set_peer_addr(peer_addr.as_ref());
                     let res = this.respond(req).await;
                     let res = res.map_err(|_| io::Error::from(io::ErrorKind::Other))?;
                     Ok(res)
@@ -432,7 +471,7 @@ impl<State: Sync + Send + 'static, InnerState: Sync + Send + 'static> Endpoint<S
 {
     fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, crate::Result> {
         let Request {
-            request: req,
+            req,
             mut route_params,
             ..
         } = req;

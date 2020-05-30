@@ -2,12 +2,12 @@ use async_std::io::prelude::*;
 use std::convert::TryFrom;
 use std::ops::Index;
 
-use mime::Mime;
 use serde::Serialize;
 
 use crate::http::cookies::Cookie;
-use crate::http::headers::{HeaderName, HeaderValues, ToHeaderValues, CONTENT_TYPE};
+use crate::http::headers::{self, HeaderName, HeaderValues, ToHeaderValues};
 use crate::http::{self, Body, StatusCode};
+use crate::http::{mime, Mime};
 use crate::redirect::Redirect;
 
 #[derive(Debug)]
@@ -121,37 +121,75 @@ impl Response {
         self
     }
 
-    /// Set the request MIME.
+    /// An iterator visiting all header pairs in arbitrary order.
+    #[must_use]
+    pub fn iter(&self) -> headers::Iter<'_> {
+        self.res.iter()
+    }
+
+    /// An iterator visiting all header pairs in arbitrary order, with mutable references to the
+    /// values.
+    #[must_use]
+    pub fn iter_mut(&mut self) -> headers::IterMut<'_> {
+        self.res.iter_mut()
+    }
+
+    /// An iterator visiting all header names in arbitrary order.
+    #[must_use]
+    pub fn header_names(&self) -> headers::Names<'_> {
+        self.res.header_names()
+    }
+
+    /// An iterator visiting all header values in arbitrary order.
+    #[must_use]
+    pub fn header_values(&self) -> headers::Values<'_> {
+        self.res.header_values()
+    }
+
+    /// Get the response content type as a `Mime`.
+    ///
+    /// This gets the request `Content-Type` header.
     ///
     /// [Read more on MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types)
     #[must_use]
-    pub fn set_mime(self, mime: Mime) -> Self {
-        self.set_header(CONTENT_TYPE, mime.to_string())
+    pub fn content_type(&self) -> Option<Mime> {
+        self.res.content_type()
     }
 
-    /// Pass a string as the request body.
+    /// Set the response content type from a `MIME`.
+    ///
+    /// This sets the response `Content-Type` header.
+    ///
+    /// [Read more on MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types)
+    #[must_use]
+    pub fn set_content_type(mut self, mime: impl Into<Mime>) -> Self {
+        self.res.set_content_type(mime.into());
+        self
+    }
+
+    /// Pass a string as the response body.
     ///
     /// # Mime
     ///
-    /// The encoding is set to `text/plain; charset=utf-8`.
+    /// The content type is set to `text/plain; charset=utf-8`.
     #[must_use]
     pub fn body_string(mut self, string: String) -> Self {
         self.res.set_body(string);
-        self.set_mime(mime::TEXT_PLAIN_UTF_8)
+        self.set_content_type(mime::PLAIN)
     }
 
-    /// Pass raw bytes as the request body.
+    /// Pass raw bytes as the response body.
     ///
     /// # Mime
     ///
-    /// The encoding is set to `application/octet-stream`.
+    /// The content type is set to `application/octet-stream`.
     pub fn body<R>(mut self, reader: R) -> Self
     where
         R: BufRead + Unpin + Send + Sync + 'static,
     {
         self.res
             .set_body(http_types::Body::from_reader(reader, None));
-        self.set_mime(mime::APPLICATION_OCTET_STREAM)
+        self.set_content_type(mime::BYTE_STREAM)
     }
 
     /// Set the body reader.
@@ -163,26 +201,24 @@ impl Response {
     ///
     /// # Mime
     ///
-    /// The encoding is set to `application/x-www-form-urlencoded`.
+    /// The content type is set to `application/x-www-form-urlencoded`.
     pub async fn body_form<T: serde::Serialize>(
         mut self,
         form: T,
     ) -> Result<Self, serde_qs::Error> {
         // TODO: think about how to handle errors
         self.res.set_body(serde_qs::to_string(&form)?.into_bytes());
-        Ok(self
-            .set_status(StatusCode::Ok)
-            .set_mime(mime::APPLICATION_WWW_FORM_URLENCODED))
+        Ok(self.set_status(StatusCode::Ok).set_content_type(mime::FORM))
     }
 
     /// Encode a struct as a form and set as the response body.
     ///
     /// # Mime
     ///
-    /// The encoding is set to `application/json`.
+    /// The content type is set to `application/json`.
     pub fn body_json(mut self, json: &impl Serialize) -> serde_json::Result<Self> {
         self.res.set_body(serde_json::to_vec(json)?);
-        Ok(self.set_mime(mime::APPLICATION_JSON))
+        Ok(self.set_content_type(mime::JSON))
     }
 
     // fn body_multipart(&mut self) -> BoxTryFuture<Multipart<Cursor<Vec<u8>>>> {
@@ -204,7 +240,12 @@ impl Response {
     //     })
     // }
 
-    /// Take the request body, replacing it with an empty body.
+    /// Take the response body as a `Body`.
+    //
+    // This method can be called after the body has already been taken or read,
+    // but will return an empty `Body`.
+    //
+    // Useful for adjusting the whole body, such as in middleware.
     pub fn take_body(&mut self) -> Body {
         self.res.take_body()
     }
@@ -238,13 +279,13 @@ impl Response {
         self.cookie_events.push(CookieEvent::Removed(cookie));
     }
 
-    /// Get a response extension value.
+    /// Get a response scoped extension value.
     #[must_use]
     pub fn ext<T: Send + Sync + 'static>(&self) -> Option<&T> {
         self.res.ext().get()
     }
 
-    /// Set a local value.
+    /// Set a response scoped extension value.
     pub fn set_ext<T: Send + Sync + 'static>(mut self, val: T) -> Self {
         self.res.ext_mut().insert(val);
         self
@@ -264,15 +305,27 @@ impl Response {
     }
 }
 
+impl AsRef<http::Response> for Response {
+    fn as_ref(&self) -> &http::Response {
+        &self.res
+    }
+}
+
 impl AsMut<http::Response> for Response {
     fn as_mut(&mut self) -> &mut http::Response {
         &mut self.res
     }
 }
 
-impl AsRef<http::Response> for Response {
-    fn as_ref(&self) -> &http::Response {
-        &self.res
+impl AsRef<http::Headers> for Response {
+    fn as_ref(&self) -> &http::Headers {
+        self.res.as_ref()
+    }
+}
+
+impl AsMut<http::Headers> for Response {
+    fn as_mut(&mut self) -> &mut http::Headers {
+        self.res.as_mut()
     }
 }
 

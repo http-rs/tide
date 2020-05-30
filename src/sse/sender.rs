@@ -14,6 +14,6 @@ impl Sender {
     ///
     /// Each message constists of a "name" and "data".
     pub async fn send(&self, name: &str, data: impl AsRef<str>, id: Option<&str>) {
-        self.sender.send(name, data.as_ref().as_bytes(), id).await;
+        self.sender.send(name, data.as_ref(), id).await;
     }
 }

@@ -91,7 +91,7 @@ async fn successfully_remove_cookie() {
     assert_eq!(cookie.name(), COOKIE_NAME);
     assert_eq!(cookie.value(), "");
     assert_eq!(cookie.http_only(), None);
-    assert_eq!(cookie.max_age().unwrap().num_nanoseconds(), Some(0));
+    assert_eq!(cookie.max_age().unwrap().whole_nanoseconds(), 0);
 }
 
 #[async_std::test]

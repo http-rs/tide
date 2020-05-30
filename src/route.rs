@@ -278,16 +278,16 @@ impl<State, E: Endpoint<State>> Endpoint<State> for StripPrefixEndpoint<E> {
     fn call<'a>(&'a self, req: crate::Request<State>) -> BoxFuture<'a, crate::Result> {
         let crate::Request {
             state,
-            mut request,
+            mut req,
             route_params,
         } = req;
 
         let rest = crate::request::rest(&route_params).unwrap_or_else(|| "");
-        request.url_mut().set_path(&rest);
+        req.url_mut().set_path(&rest);
 
         self.0.call(crate::Request {
             state,
-            request,
+            req,
             route_params,
         })
     }

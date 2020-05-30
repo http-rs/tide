@@ -104,10 +104,14 @@
 //!
 //! ## State
 //!
-//! Middleware often needs to share values with the endpoint. This is done through "local state".
-//! Local state is built using a typemap that's available through [`Request::local`].
+//! Middleware often needs to share values with the endpoint. This is done through "request scoped
+//! state".  Request scoped state is built using a typemap that's available through
+//! [`Request::ext`].
 //!
-//! Global state is used when a complete application needs access to a particular
+//! If the endpoint needs to share values with middleware, response scoped state can be set via
+//! [`Response::set_ext`] and is available through [`Response::ext`].
+//!
+//! Application scoped state is used when a complete application needs access to a particular
 //! value. Examples of this include: database connections, websocket connections, or
 //! network-enabled config. Every `Request<State>` has an inner value that must
 //! implement `Send + Sync + Clone`, and can thus freely be shared between requests.
@@ -117,7 +121,7 @@
 //!
 //! ## Extension Traits
 //!
-//! Sometimes having global and local context can require a bit of setup. There are
+//! Sometimes having application and request scoped context can require a bit of setup. There are
 //! cases where it'd be nice if things were a little easier. This is why Tide
 //! encourages people to write _extension traits_.
 //!
@@ -209,7 +213,7 @@ pub mod sse;
 
 pub use endpoint::Endpoint;
 pub use job::{Job, JobContext};
-pub use middleware::{Middleware, Next};
+pub use middleware::{After, Before, Middleware, Next};
 pub use redirect::Redirect;
 pub use request::Request;
 pub use response::Response;
@@ -238,9 +242,9 @@ pub fn new() -> server::Server<()> {
     Server::new()
 }
 
-/// Create a new Tide server with shared global state.
+/// Create a new Tide server with shared application scoped state.
 ///
-/// Global state is useful for storing items
+/// Application scoped state is useful for storing items
 ///
 /// # Examples
 ///

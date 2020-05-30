@@ -2,9 +2,9 @@ mod test_utils;
 use async_std::io::Cursor;
 use async_std::prelude::*;
 use async_std::task;
+use http_types::mime;
 use http_types::StatusCode;
 use std::time::Duration;
-
 use tide::Response;
 
 const TEXT: &'static str = concat![
@@ -75,7 +75,7 @@ async fn chunked_large() -> Result<(), http_types::Error> {
             let body = Cursor::new(TEXT.to_owned());
             let res = Response::new(StatusCode::Ok)
                 .body(body)
-                .set_mime(mime::TEXT_PLAIN_UTF_8);
+                .set_content_type(mime::PLAIN);
             Ok(res)
         });
         app.listen(("localhost", port)).await?;
@@ -88,16 +88,8 @@ async fn chunked_large() -> Result<(), http_types::Error> {
             .await
             .unwrap();
         assert_eq!(res.status(), 200);
-        assert_eq!(
-            // this is awkward and should be revisited when surf is on newer http-types
-            res.header(&"transfer-encoding".parse().unwrap())
-                .unwrap()
-                .last()
-                .unwrap()
-                .as_str(),
-            "chunked"
-        );
-        assert_eq!(res.header(&"content-length".parse().unwrap()), None);
+        assert_eq!(res.header("transfer-encoding").unwrap(), "chunked");
+        assert!(res.header("content-length").is_none());
         let string = res.body_string().await.unwrap();
         assert_eq!(string, TEXT.to_string());
         Ok(())

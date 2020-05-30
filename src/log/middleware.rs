@@ -30,7 +30,7 @@ impl LogMiddleware {
         ctx: Request<State>,
         next: Next<'a, State>,
     ) -> crate::Result {
-        let path = ctx.uri().path().to_owned();
+        let path = ctx.url().path().to_owned();
         let method = ctx.method().to_string();
         log::info!("<-- Request received", {
             method: method,
