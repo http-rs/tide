@@ -8,9 +8,9 @@ async fn retrieve_cookie(cx: Request<()>) -> tide::Result<String> {
     Ok(format!("hello cookies: {:?}", cx.cookie("hello").unwrap()))
 }
 
-async fn append_cookie(_req: Request<()>) -> tide::Result {
+async fn insert_cookie(_req: Request<()>) -> tide::Result {
     let mut res = tide::Response::new(StatusCode::Ok);
-    res.append_cookie(Cookie::new("hello", "world"));
+    res.insert_cookie(Cookie::new("hello", "world"));
     Ok(res)
 }
 
@@ -25,7 +25,7 @@ fn main() -> Result<(), std::io::Error> {
         let mut app = tide::new();
 
         app.at("/").get(retrieve_cookie);
-        app.at("/set").get(append_cookie);
+        app.at("/set").get(insert_cookie);
         app.at("/remove").get(remove_cookie);
         app.listen("127.0.0.1:8080").await?;
 

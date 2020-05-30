@@ -14,9 +14,9 @@ async fn retrieve_cookie(cx: Request<()>) -> tide::Result<String> {
     ))
 }
 
-async fn append_cookie(_req: Request<()>) -> tide::Result {
+async fn insert_cookie(_req: Request<()>) -> tide::Result {
     let mut res = Response::new(StatusCode::Ok);
-    res.append_cookie(Cookie::new(COOKIE_NAME, "NewCookieValue"));
+    res.insert_cookie(Cookie::new(COOKIE_NAME, "NewCookieValue"));
     Ok(res)
 }
 
@@ -28,8 +28,8 @@ async fn remove_cookie(_req: Request<()>) -> tide::Result {
 
 async fn set_multiple_cookie(_req: Request<()>) -> tide::Result {
     let mut res = Response::new(StatusCode::Ok);
-    res.append_cookie(Cookie::new("C1", "V1"));
-    res.append_cookie(Cookie::new("C2", "V2"));
+    res.insert_cookie(Cookie::new("C1", "V1"));
+    res.insert_cookie(Cookie::new("C2", "V2"));
     Ok(res)
 }
 
@@ -37,7 +37,7 @@ fn app() -> crate::Server<()> {
     let mut app = tide::new();
 
     app.at("/get").get(retrieve_cookie);
-    app.at("/set").get(append_cookie);
+    app.at("/set").get(insert_cookie);
     app.at("/remove").get(remove_cookie);
     app.at("/multi").get(set_multiple_cookie);
     app
@@ -75,7 +75,7 @@ async fn successfully_retrieve_request_cookie() {
 }
 
 #[async_std::test]
-async fn successfully_append_cookie() {
+async fn successfully_insert_cookie() {
     let res = make_request("/set").await;
     assert_eq!(res.status(), StatusCode::Ok);
     assert_eq!(res[SET_COOKIE], "testCookie=NewCookieValue");
