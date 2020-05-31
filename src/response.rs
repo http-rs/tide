@@ -29,7 +29,7 @@ impl Response {
         S: TryInto<StatusCode>,
         S::Error: Debug,
     {
-        let res = http_types::Response::new(status);
+        let res = http::Response::new(status);
         Self {
             res,
             cookie_events: vec![],
