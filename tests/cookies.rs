@@ -34,7 +34,7 @@ async fn set_multiple_cookie(_req: Request<()>) -> tide::Result {
 }
 
 fn app() -> crate::Server<()> {
-    let mut app = tide::new();
+    let mut app = tide::new().with_cookies();
 
     app.at("/get").get(retrieve_cookie);
     app.at("/set").get(insert_cookie);

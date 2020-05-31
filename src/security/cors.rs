@@ -367,7 +367,7 @@ mod test {
 
     #[async_std::test]
     async fn retain_cookies() {
-        let mut app = crate::Server::new();
+        let mut app = crate::Server::new().with_cookies();
         app.middleware(CorsMiddleware::new().allow_origin(ALLOW_ORIGIN));
         app.at(ENDPOINT).get(|_| async {
             let mut res = crate::Response::new(http_types::StatusCode::Ok);

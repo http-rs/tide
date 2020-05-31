@@ -199,14 +199,31 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// # Ok(()) }) }
     /// ```
     pub fn with_state(state: State) -> Self {
-        let mut server = Self {
+        Self {
             router: Arc::new(Router::new()),
             middleware: Arc::new(vec![]),
             state: Arc::new(state),
-        };
-        server.middleware(cookies::CookiesMiddleware::new());
-        server.middleware(log::LogMiddleware::new());
-        server
+        }
+    }
+
+    /// Add the logging middleware to an application.
+    ///
+    /// ```rust,no_run
+    /// # let app = tide::Server::new().with_logging();
+    /// ```
+    pub fn with_logging(mut self) -> Self {
+        self.middleware(log::LogMiddleware::new());
+        self
+    }
+
+    /// Add the cookies middleware to an application.
+    ///
+    /// ```rust,no_run
+    /// # let app = tide::Server::new().with_cookies();
+    /// ```
+    pub fn with_cookies(mut self) -> Self {
+        self.middleware(cookies::CookiesMiddleware::new());
+        self
     }
 
     /// Add a new route at the given `path`, relative to root.
