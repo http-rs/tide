@@ -335,6 +335,14 @@ impl Into<http::Response> for Response {
     }
 }
 
+impl From<serde_json::Value> for Response {
+    fn from(json_value: serde_json::Value) -> Self {
+        Response::new(StatusCode::Ok)
+            .body_json(&json_value)
+            .unwrap_or_else(|_| Response::new(StatusCode::InternalServerError))
+    }
+}
+
 impl From<http::Response> for Response {
     fn from(res: http::Response) -> Self {
         Self {
