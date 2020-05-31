@@ -51,6 +51,7 @@ surf = { version = "2.0.0-alpha.3", default-features = false, features = ["h1-cl
 serde = { version = "1.0.102", features = ["derive"] }
 criterion = "0.3.1"
 tempdir = "0.3.7"
+html-index = "0.3.2"
 
 [[test]]
 name = "nested"
