@@ -104,6 +104,8 @@ impl<T: AsRef<str>> Into<Response> for Redirect<T> {
 
 impl<T: AsRef<str>> Into<Response> for &Redirect<T> {
     fn into(self) -> Response {
-        Response::new(self.status).set_header(LOCATION, self.location.as_ref())
+        let mut res = Response::new(self.status);
+        res.insert_header(LOCATION, self.location.as_ref());
+        res
     }
 }

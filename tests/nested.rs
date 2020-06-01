@@ -1,4 +1,3 @@
-use http_types::headers::HeaderName;
 use http_types::{Method, Request, Response, Url};
 use test_utils::BoxFuture;
 use tide::{Middleware, Next};
@@ -52,11 +51,8 @@ async fn nested_middleware() {
             next: Next<'a, State>,
         ) -> BoxFuture<'a, tide::Result<tide::Response>> {
             Box::pin(async move {
-                let res = next.run(req).await?;
-                let res = res.set_header(
-                    HeaderName::from_bytes("X-Tide-Test".to_owned().into_bytes()).unwrap(),
-                    "1",
-                );
+                let mut res = next.run(req).await?;
+                res.insert_header("X-Tide-Test", "1");
                 Ok(res)
             })
         }

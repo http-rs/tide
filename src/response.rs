@@ -1,14 +1,11 @@
-use async_std::io::prelude::*;
-use std::convert::TryFrom;
+use std::convert::TryInto;
+use std::fmt::Debug;
 use std::ops::Index;
-
-use serde::Serialize;
 
 use crate::http::cookies::Cookie;
 use crate::http::headers::{self, HeaderName, HeaderValues, ToHeaderValues};
+use crate::http::Mime;
 use crate::http::{self, Body, StatusCode};
-use crate::http::{mime, Mime};
-use crate::redirect::Redirect;
 
 #[derive(Debug)]
 pub(crate) enum CookieEvent {
@@ -27,50 +24,16 @@ pub struct Response {
 impl Response {
     /// Create a new instance.
     #[must_use]
-    pub fn new(status: StatusCode) -> Self {
-        let res = http_types::Response::new(status);
-        Self {
-            res,
-            cookie_events: vec![],
-        }
-    }
-
-    /// Create a new instance from a reader.
-    pub fn with_reader<R>(status: u16, reader: R) -> Self
+    pub fn new<S>(status: S) -> Self
     where
-        R: BufRead + Unpin + Send + Sync + 'static,
+        S: TryInto<StatusCode>,
+        S::Error: Debug,
     {
-        let status = crate::StatusCode::try_from(status).expect("invalid status code");
-        let mut res = http_types::Response::new(status);
-        res.set_body(Body::from_reader(reader, None));
-
+        let res = http::Response::new(status);
         Self {
             res,
             cookie_events: vec![],
         }
-    }
-
-    /// Creates a response that represents a redirect to `location`.
-    ///
-    /// Uses status code 302 Found.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use tide::{Response, Request, StatusCode};
-    /// # fn special_sale_today() -> Option<String> { None }
-    /// # #[allow(dead_code)]
-    /// async fn route_handler(request: Request<()>) -> tide::Result {
-    ///     if let Some(sale_url) = special_sale_today() {
-    ///         Ok(Response::redirect(sale_url))
-    ///     } else {
-    ///         //...
-    /// #       Ok(Response::new(StatusCode::Ok)) //...
-    ///     }
-    /// }
-    /// ```
-    pub fn redirect(location: impl AsRef<str>) -> Self {
-        Redirect::new(location).into()
     }
 
     /// Returns the statuscode.
@@ -104,21 +67,25 @@ impl Response {
         self.res.header(name)
     }
 
+    /// Get an HTTP header mutably.
+    #[must_use]
+    pub fn header_mut(&mut self, name: impl Into<HeaderName>) -> Option<&mut HeaderValues> {
+        self.res.header_mut(name)
+    }
+
     /// Remove a header.
     pub fn remove_header(&mut self, name: impl Into<HeaderName>) -> Option<HeaderValues> {
         self.res.remove_header(name)
     }
 
     /// Insert an HTTP header.
-    pub fn set_header(mut self, key: impl Into<HeaderName>, value: impl ToHeaderValues) -> Self {
+    pub fn insert_header(&mut self, key: impl Into<HeaderName>, value: impl ToHeaderValues) {
         self.res.insert_header(key, value);
-        self
     }
 
     /// Append an HTTP header.
-    pub fn append_header(mut self, key: impl Into<HeaderName>, value: impl ToHeaderValues) -> Self {
+    pub fn append_header(&mut self, key: impl Into<HeaderName>, value: impl ToHeaderValues) {
         self.res.append_header(key, value);
-        self
     }
 
     /// An iterator visiting all header pairs in arbitrary order.
@@ -161,84 +128,14 @@ impl Response {
     /// This sets the response `Content-Type` header.
     ///
     /// [Read more on MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types)
-    #[must_use]
-    pub fn set_content_type(mut self, mime: impl Into<Mime>) -> Self {
+    pub fn set_content_type(&mut self, mime: impl Into<Mime>) {
         self.res.set_content_type(mime.into());
-        self
-    }
-
-    /// Pass a string as the response body.
-    ///
-    /// # Mime
-    ///
-    /// The content type is set to `text/plain; charset=utf-8`.
-    #[must_use]
-    pub fn body_string(mut self, string: String) -> Self {
-        self.res.set_body(string);
-        self.set_content_type(mime::PLAIN)
-    }
-
-    /// Pass raw bytes as the response body.
-    ///
-    /// # Mime
-    ///
-    /// The content type is set to `application/octet-stream`.
-    pub fn body<R>(mut self, reader: R) -> Self
-    where
-        R: BufRead + Unpin + Send + Sync + 'static,
-    {
-        self.res
-            .set_body(http_types::Body::from_reader(reader, None));
-        self.set_content_type(mime::BYTE_STREAM)
     }
 
     /// Set the body reader.
     pub fn set_body(&mut self, body: impl Into<Body>) {
         self.res.set_body(body);
     }
-
-    /// Encode a struct as a form and set as the response body.
-    ///
-    /// # Mime
-    ///
-    /// The content type is set to `application/x-www-form-urlencoded`.
-    pub async fn body_form<T: serde::Serialize>(
-        mut self,
-        form: T,
-    ) -> Result<Self, serde_qs::Error> {
-        // TODO: think about how to handle errors
-        self.res.set_body(serde_qs::to_string(&form)?.into_bytes());
-        Ok(self.set_status(StatusCode::Ok).set_content_type(mime::FORM))
-    }
-
-    /// Encode a struct as a form and set as the response body.
-    ///
-    /// # Mime
-    ///
-    /// The content type is set to `application/json`.
-    pub fn body_json(mut self, json: &impl Serialize) -> serde_json::Result<Self> {
-        self.res.set_body(serde_json::to_vec(json)?);
-        Ok(self.set_content_type(mime::JSON))
-    }
-
-    // fn body_multipart(&mut self) -> BoxTryFuture<Multipart<Cursor<Vec<u8>>>> {
-    //     const BOUNDARY: &str = "boundary=";
-    //     let boundary = self.headers().get("content-type").and_then(|ct| {
-    //         let ct = ct.to_str().ok()?;
-    //         let idx = ct.find(BOUNDARY)?;
-    //         Some(ct[idx + BOUNDARY.len()..].to_string())
-    //     });
-
-    //     let body = self.take_body();
-
-    //     Box::pin(async move {
-    //         let body = body.into_vec().await.client_err()?;
-    //         let boundary = boundary
-    //             .ok_or_else(|| StringError(format!("no boundary found")))
-    //             .client_err()?;
-    //         Ok(Multipart::with_body(Cursor::new(body), boundary))
-    //     })
-    // }
 
     /// Take the response body as a `Body`.
     //
@@ -250,8 +147,36 @@ impl Response {
         self.res.take_body()
     }
 
-    /// Add cookie to the cookie jar.
-    pub fn set_cookie(&mut self, cookie: Cookie<'static>) {
+    /// Swaps the value of the body with another body, without deinitializing
+    /// either one.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use async_std::io::prelude::*;
+    /// # fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+    /// # async_std::task::block_on(async {
+    /// #
+    /// use tide::Response;
+    ///
+    /// let mut req = Response::new(200);
+    /// req.set_body("Hello, Nori!");
+    ///
+    /// let mut body = "Hello, Chashu!".into();
+    /// req.swap_body(&mut body);
+    ///
+    /// let mut string = String::new();
+    /// body.read_to_string(&mut string).await?;
+    /// assert_eq!(&string, "Hello, Nori!");
+    /// #
+    /// # Ok(()) }) }
+    /// ```
+    pub fn swap_body(&mut self, body: &mut Body) {
+        self.res.swap_body(body)
+    }
+
+    /// Insert cookie in the cookie jar.
+    pub fn insert_cookie(&mut self, cookie: Cookie<'static>) {
         self.cookie_events.push(CookieEvent::Added(cookie));
     }
 
@@ -286,9 +211,8 @@ impl Response {
     }
 
     /// Set a response scoped extension value.
-    pub fn set_ext<T: Send + Sync + 'static>(mut self, val: T) -> Self {
+    pub fn insert_ext<T: Send + Sync + 'static>(mut self, val: T) {
         self.res.ext_mut().insert(val);
-        self
     }
 
     /// Create a `tide::Response` from a type that can be converted into an
@@ -337,8 +261,12 @@ impl Into<http::Response> for Response {
 
 impl From<serde_json::Value> for Response {
     fn from(json_value: serde_json::Value) -> Self {
-        Response::new(StatusCode::Ok)
-            .body_json(&json_value)
+        Body::from_json(&json_value)
+            .map(|body| {
+                let mut res = Response::new(200);
+                res.set_body(body);
+                res
+            })
             .unwrap_or_else(|_| Response::new(StatusCode::InternalServerError))
     }
 }

@@ -1,7 +1,7 @@
 use async_std::task;
 use serde::{Deserialize, Serialize};
 use tide::prelude::*;
-use tide::{Request, Response, StatusCode};
+use tide::{Body, Request, Response};
 
 #[derive(Deserialize, Serialize)]
 struct Cat {
@@ -20,7 +20,9 @@ fn main() -> tide::Result<()> {
                 name: "chashu".into(),
             };
 
-            Ok(Response::new(StatusCode::Ok).body_json(&cat)?)
+            let mut res = Response::new(200);
+            res.set_body(Body::from_json(&cat)?);
+            Ok(res)
         });
 
         app.at("/animals").get(|_| async {

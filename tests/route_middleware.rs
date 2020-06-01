@@ -23,8 +23,9 @@ impl<State: Send + Sync + 'static> Middleware<State> for TestMiddleware {
         next: tide::Next<'a, State>,
     ) -> BoxFuture<'a, tide::Result<tide::Response>> {
         Box::pin(async move {
-            let res = next.run(req).await?;
-            Ok(res.set_header(self.0.clone(), self.1))
+            let mut res = next.run(req).await?;
+            res.insert_header(self.0.clone(), self.1);
+            Ok(res)
         })
     }
 }
