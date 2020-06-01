@@ -24,7 +24,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for TestMiddleware {
         Box::pin(async move {
             let res = next.run(req).await?;
             let res = res.set_header(
-                HeaderName::from_ascii("X-Tide-Test".to_owned().into_bytes()).unwrap(),
+                HeaderName::from_ascii(b"X-Tide-Test").unwrap(),
                 "1",
             );
             Ok(res)
