@@ -1,5 +1,6 @@
 use route_recognizer::{Match, Params, Router as MethodRouter};
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 use crate::endpoint::DynEndpoint;
 use crate::utils::BoxFuture;
@@ -14,10 +15,22 @@ pub struct Router<State> {
     all_method_router: MethodRouter<Box<DynEndpoint<State>>>,
 }
 
+impl<State> Debug for Router<State> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Router").finish()
+    }
+}
+
 /// The result of routing a URL
 pub struct Selection<'a, State> {
     pub(crate) endpoint: &'a DynEndpoint<State>,
     pub(crate) params: Params,
+}
+
+impl<State> Debug for Selection<'_, State> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Selection").finish()
+    }
 }
 
 impl<State: 'static> Router<State> {
