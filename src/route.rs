@@ -17,7 +17,6 @@ use crate::{router::Router, Endpoint, Middleware};
 /// `nest`, it can be used to set up a subrouter.
 ///
 /// [`Server::at`]: ./struct.Server.html#method.at
-#[allow(missing_debug_implementations)]
 pub struct Route<'a, State> {
     router: &'a mut Router<State>,
     path: String,
@@ -256,6 +255,12 @@ impl<'a, State: 'static> Route<'a, State> {
     pub fn trace(&mut self, ep: impl Endpoint<State>) -> &mut Self {
         self.method(http_types::Method::Trace, ep);
         self
+    }
+}
+
+impl<State> Debug for Route<'_, State> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Route").finish()
     }
 }
 

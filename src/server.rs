@@ -5,6 +5,7 @@ use async_std::net::ToSocketAddrs;
 use async_std::prelude::*;
 use async_std::sync::Arc;
 use async_std::task;
+use std::fmt::Debug;
 
 use crate::cookies;
 use crate::log;
@@ -126,7 +127,6 @@ use crate::{Endpoint, Request, Route};
 /////     // app.run("127.0.0.1:8000").unwrap();
 ///// }
 ///// ```
-#[allow(missing_debug_implementations)]
 pub struct Server<State> {
     router: Arc<Router<State>>,
     state: Arc<State>,
@@ -429,6 +429,12 @@ impl<State> Clone for Server<State> {
             state: self.state.clone(),
             middleware: self.middleware.clone(),
         }
+    }
+}
+
+impl<State> Debug for Server<State> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Server").finish()
     }
 }
 
