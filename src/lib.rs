@@ -205,15 +205,15 @@ mod router;
 #[cfg(feature = "__internal__bench")]
 pub mod router;
 mod server;
-mod utils;
 
 pub mod log;
 pub mod prelude;
 pub mod security;
 pub mod sse;
+pub mod utils;
 
 pub use endpoint::Endpoint;
-pub use middleware::{After, Before, Middleware, Next};
+pub use middleware::{Middleware, Next};
 pub use redirect::Redirect;
 pub use request::Request;
 pub use response::Response;
