@@ -66,6 +66,7 @@ async fn nested_root() {
     let mut app = tide::new();
     app.middleware(TestMiddleware::new());
     app.at("/").nest(inner);
+
     let req = Request::new(Method::Get, Url::parse("http://example.com").unwrap());
     let mut res: Response = app.respond(req).await.unwrap();
     assert_eq!(res["X-Tide-Test"], "1");
