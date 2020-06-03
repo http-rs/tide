@@ -207,6 +207,7 @@ pub mod router;
 mod server;
 mod utils;
 
+pub mod convert;
 pub mod log;
 pub mod prelude;
 pub mod security;
@@ -218,7 +219,6 @@ pub use redirect::Redirect;
 pub use request::Request;
 pub use response::Response;
 pub use route::Route;
-pub use serde_json;
 pub use server::Server;
 
 #[doc(inline)]
