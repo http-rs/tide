@@ -1,11 +1,10 @@
 use std::convert::TryInto;
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 use std::ops::Index;
 
 use crate::http::cookies::Cookie;
 use crate::http::headers::{self, HeaderName, HeaderValues, ToHeaderValues};
-use crate::http::Mime;
-use crate::http::{self, Body, StatusCode};
+use crate::http::{self, Body, Error, Mime, StatusCode};
 
 #[derive(Debug)]
 pub(crate) enum CookieEvent {
@@ -203,6 +202,23 @@ impl Response {
         self.cookie_events.push(CookieEvent::Removed(cookie));
     }
 
+    /// Returns an optional reference to the `Error` if the response was created from one, or else `None`.
+    pub fn error(&self) -> Option<&Error> {
+        self.res.error()
+    }
+
+    pub fn downcast_error<E>(&self) -> Option<&E>
+    where
+        E: Display + Debug + Send + Sync + 'static,
+    {
+        self.res.error()?.downcast_ref()
+    }
+
+    /// Takes the `Error` from the response if one exists, replacing it with `None`.
+    pub fn take_error(&mut self) -> Option<Error> {
+        self.res.take_error()
+    }
+
     /// Get a response scoped extension value.
     #[must_use]
     pub fn ext<T: Send + Sync + 'static>(&self) -> Option<&T> {
@@ -271,6 +287,22 @@ impl From<serde_json::Value> for Response {
         Body::from_json(&json_value)
             .map(|body| body.into())
             .unwrap_or_else(|_| Response::new(StatusCode::InternalServerError))
+    }
+}
+
+impl From<Error> for Response {
+    fn from(err: Error) -> Self {
+        let res: http::Response = err.into();
+        res.into()
+    }
+}
+
+impl From<crate::Result> for Response {
+    fn from(result: crate::Result) -> Self {
+        match result {
+            Ok(res) => res,
+            Err(err) => err.into(),
+        }
     }
 }
 

@@ -141,7 +141,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
 
             if origins.is_none() {
                 // This is not a CORS request if there is no Origin header
-                return next.run(req).await;
+                return Ok(next.run(req).await);
             }
 
             let origins = origins.unwrap();
@@ -156,7 +156,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
                 return Ok(self.build_preflight_response(&origins).into());
             }
 
-            let mut response: http_types::Response = next.run(req).await?.into();
+            let mut response: http_types::Response = next.run(req).await.into();
 
             response.insert_header(
                 headers::ACCESS_CONTROL_ALLOW_ORIGIN,

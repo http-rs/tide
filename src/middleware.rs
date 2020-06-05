@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use crate::endpoint::DynEndpoint;
 use crate::utils::BoxFuture;
-use crate::Request;
+use crate::{Request, Response};
 
 // mod compression;
 // mod default_headers;
@@ -59,7 +59,7 @@ where
     ) -> BoxFuture<'a, crate::Result> {
         Box::pin(async move {
             let request = (self.0)(request).await;
-            next.run(request).await
+            Ok(next.run(request).await)
         })
     }
 }
@@ -75,8 +75,7 @@ where
 /// use tide::{After, Response, http};
 ///
 /// let mut app = tide::new();
-/// app.middleware(After(|res: tide::Result| async move {
-///     let res = res.unwrap_or_else(|e| Response::new(e.status()));
+/// app.middleware(After(|res: Response| async move {
 ///     match res.status() {
 ///         http::StatusCode::NotFound => Ok("Page not found".into()),
 ///         http::StatusCode::InternalServerError => Ok("Something went wrong".into()),
@@ -89,7 +88,7 @@ pub struct After<F>(pub F);
 impl<State, F, Fut> Middleware<State> for After<F>
 where
     State: Send + Sync + 'static,
-    F: Fn(crate::Result) -> Fut + Send + Sync + 'static,
+    F: Fn(Response) -> Fut + Send + Sync + 'static,
     Fut: std::future::Future<Output = crate::Result> + Send + Sync,
 {
     fn handle<'a>(
@@ -98,8 +97,8 @@ where
         next: Next<'a, State>,
     ) -> BoxFuture<'a, crate::Result> {
         Box::pin(async move {
-            let result = next.run(request).await;
-            (self.0)(result).await
+            let response = next.run(request).await;
+            (self.0)(response).await
         })
     }
 }
@@ -127,15 +126,17 @@ pub struct Next<'a, State> {
     pub(crate) next_middleware: &'a [Arc<dyn Middleware<State>>],
 }
 
-impl<'a, State: 'static> Next<'a, State> {
+impl<'a, State: 'static + Send + Sync> Next<'a, State> {
     /// Asynchronously execute the remaining middleware chain.
     #[must_use]
-    pub fn run(mut self, req: Request<State>) -> BoxFuture<'a, crate::Result> {
-        if let Some((current, next)) = self.next_middleware.split_first() {
-            self.next_middleware = next;
-            current.handle(req, self)
-        } else {
-            self.endpoint.call(req)
-        }
+    pub fn run(mut self, req: Request<State>) -> BoxFuture<'a, Response> {
+        Box::pin(async move {
+            if let Some((current, next)) = self.next_middleware.split_first() {
+                self.next_middleware = next;
+                current.handle(req, self).await.into()
+            } else {
+                self.endpoint.call(req).await.into()
+            }
+        })
     }
 }

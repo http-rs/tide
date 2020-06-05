@@ -22,7 +22,7 @@ pub struct Selection<'a, State> {
     pub(crate) params: Params,
 }
 
-impl<State: 'static> Router<State> {
+impl<State: 'static + Send + Sync> Router<State> {
     pub fn new() -> Self {
         Router {
             method_map: HashMap::default(),

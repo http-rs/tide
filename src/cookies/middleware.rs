@@ -51,7 +51,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
                 content
             };
 
-            let mut res = next.run(ctx).await?;
+            let mut res = next.run(ctx).await;
 
             // Don't do anything if there are no cookies.
             if res.cookie_events.is_empty() {
