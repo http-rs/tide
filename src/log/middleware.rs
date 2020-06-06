@@ -40,12 +40,22 @@ impl LogMiddleware {
         let response = next.run(ctx).await;
         let status = response.status();
         if status.is_server_error() {
-            log::error!("--> Response sent", {
-                method: method,
-                path: path,
-                status: status as u16,
-                duration: format!("{:?}", start.elapsed()),
-            });
+            if let Some(error) = response.error() {
+                log::error!("Internal error --> Response sent", {
+                    message: error.to_string(),
+                    method: method,
+                    path: path,
+                    status: status as u16,
+                    duration: format!("{:?}", start.elapsed()),
+                });
+            } else {
+                log::error!("Internal error --> Response sent", {
+                    method: method,
+                    path: path,
+                    status: status as u16,
+                    duration: format!("{:?}", start.elapsed()),
+                });
+            }
         } else if status.is_client_error() {
             log::warn!("--> Response sent", {
                 method: method,
