@@ -209,7 +209,7 @@ impl Response {
     }
 
     /// Set a response scoped extension value.
-    pub fn insert_ext<T: Send + Sync + 'static>(mut self, val: T) {
+    pub fn insert_ext<T: Send + Sync + 'static>(&mut self, val: T) {
         self.res.ext_mut().insert(val);
     }
 
