@@ -253,7 +253,7 @@ mod test {
 
     fn app() -> crate::Server<()> {
         let mut app = crate::Server::new();
-        app.at(ENDPOINT).get(|_| async move { Ok("Hello World") });
+        app.at(ENDPOINT).get(|_| async { Ok("Hello World") });
 
         app
     }

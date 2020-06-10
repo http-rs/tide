@@ -29,7 +29,7 @@
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
 //! #
 //! let mut app = tide::new();
-//! app.at("/").get(|_| async move { Ok("Hello, world!") });
+//! app.at("/").get(|_| async { Ok("Hello, world!") });
 //! app.listen("127.0.0.1:8080").await?;
 //! #
 //! # Ok(()) }) }
@@ -41,7 +41,7 @@
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
 //! #
 //! let mut app = tide::new();
-//! app.at("/").get(|req| async move { Ok(req) });
+//! app.at("/").get(|req| async { Ok(req) });
 //! app.listen("127.0.0.1:8080").await?;
 //! #
 //! # Ok(()) }) }
@@ -233,7 +233,7 @@ pub use http_types::{self as http, Body, Error, Status, StatusCode};
 /// # fn main() -> Result<(), std::io::Error> { block_on(async {
 /// #
 /// let mut app = tide::new();
-/// app.at("/").get(|_| async move { Ok("Hello, world!") });
+/// app.at("/").get(|_| async { Ok("Hello, world!") });
 /// app.listen("127.0.0.1:8080").await?;
 /// #
 /// # Ok(()) }) }

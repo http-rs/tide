@@ -101,7 +101,7 @@ async fn nested_with_different_state() {
         let num = req.state();
         Ok(format!("the number is {}", num))
     });
-    outer.at("/").get(|_| async move { Ok("Hello, world!") });
+    outer.at("/").get(|_| async { Ok("Hello, world!") });
     outer.at("/foo").nest(inner);
 
     let req = Request::new(Method::Get, Url::parse("http://example.com/foo").unwrap());
