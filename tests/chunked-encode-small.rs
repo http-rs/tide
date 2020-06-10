@@ -2,11 +2,9 @@ mod test_utils;
 use async_std::io::Cursor;
 use async_std::prelude::*;
 use async_std::task;
-use http_types::mime;
-use http_types::StatusCode;
 use std::time::Duration;
 
-use tide::{Body, Response};
+use tide::Body;
 
 const TEXT: &'static str = concat![
     "Eveniet delectus voluptatem in placeat modi. Qui nulla sunt aut non voluptas temporibus accusamus rem. Qui soluta nisi qui accusantium excepturi voluptatem. Ab rerum maiores neque ut expedita rem.",
@@ -21,13 +19,8 @@ async fn chunked_large() -> Result<(), http_types::Error> {
     let port = test_utils::find_port().await;
     let server = task::spawn(async move {
         let mut app = tide::new();
-        app.at("/").get(|_| async {
-            let mut res = Response::new(StatusCode::Ok);
-            let body = Cursor::new(TEXT.to_owned());
-            res.set_body(Body::from_reader(body, None));
-            res.set_content_type(mime::PLAIN);
-            Ok(res)
-        });
+        app.at("/")
+            .get(|_| async { Ok(Body::from_reader(Cursor::new(TEXT), None)) });
         app.listen(("localhost", port)).await?;
         Result::<(), http_types::Error>::Ok(())
     });
