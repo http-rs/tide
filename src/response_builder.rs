@@ -73,7 +73,7 @@ impl ResponseBuilder {
         self
     }
 
-    /// Sets a header on the response.
+    /// Sets the Content-Type header on the response.
     /// ```
     /// # use tide::{http::mime, ResponseBuilder};
     /// let response = ResponseBuilder::new().content_type(mime::HTML).unwrap();
