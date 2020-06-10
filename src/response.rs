@@ -43,7 +43,15 @@ impl Response {
     }
 
     /// Set the statuscode.
-    pub fn set_status(&mut self, status: crate::StatusCode) {
+    pub fn set_status<S>(&mut self, status: S)
+    where
+        S: TryInto<StatusCode>,
+        S::Error: Debug,
+    {
+        let status = status
+            .try_into()
+            .expect("Could not convert into a valid `StatusCode`");
+
         self.res.set_status(status);
     }
 
