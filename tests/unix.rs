@@ -3,9 +3,10 @@ mod unix_tests {
     use async_std::os::unix::net::UnixStream;
     use async_std::prelude::*;
     use async_std::task;
-    use http_types::{url::Url, Method, Request, Response, StatusCode};
+    use http_types::{url::Url, Method, Request};
     use std::time::Duration;
     use tempfile::tempdir;
+    use tide::prelude::*;
 
     #[test]
     fn hello_unix_world() -> Result<(), http_types::Error> {
@@ -17,12 +18,7 @@ mod unix_tests {
             let server = task::spawn(async move {
                 let mut app = tide::new();
                 app.at("/").get(|req: tide::Request<()>| async move {
-                    let mut res = Response::new(StatusCode::Ok);
-                    res.set_body(serde_json::json!({
-                        "peer_addr": req.peer_addr().unwrap(),
-                        "local_addr": req.local_addr().unwrap()
-                    }));
-                    Ok(res)
+                    Ok(json!({ "peer_addr": req.peer_addr().unwrap(), "local_addr": req.local_addr().unwrap() }))
                 });
                 app.listen_unix(sock_path).await?;
                 http_types::Result::Ok(())

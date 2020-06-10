@@ -1,7 +1,7 @@
 use async_std::task;
-use juniper::RootNode;
+use juniper::{http::graphiql, http::GraphQLRequest, RootNode};
 use std::sync::RwLock;
-use tide::{Body, Redirect, Request, Response, Server, StatusCode};
+use tide::{http::mime, Body, Redirect, Request, Response, Server, StatusCode};
 
 #[derive(Clone)]
 struct User {
@@ -72,30 +72,27 @@ fn create_schema() -> Schema {
     Schema::new(QueryRoot {}, MutationRoot {})
 }
 
-async fn handle_graphql(mut req: Request<State>) -> tide::Result {
-    let query: juniper::http::GraphQLRequest = req
-        .body_json()
-        .await
-        .expect("be able to deserialize the graphql request");
-
+async fn handle_graphql(mut request: Request<State>) -> tide::Result {
+    let query: GraphQLRequest = request.body_json().await?;
     let schema = create_schema(); // probably worth making the schema a singleton using lazy_static library
-    let response = query.execute(&schema, req.state());
+    let response = query.execute(&schema, request.state());
     let status = if response.is_ok() {
         StatusCode::Ok
     } else {
         StatusCode::BadRequest
     };
 
-    let mut res = Response::new(status);
-    res.set_body(Body::from_json(&response)?);
-    Ok(res)
+    Response::build()
+        .status(status)
+        .body(Body::from_json(&response)?)
+        .into()
 }
 
 async fn handle_graphiql(_: Request<State>) -> tide::Result {
-    let mut res = Response::new(StatusCode::Ok);
-    res.set_body(juniper::http::graphiql::graphiql_source("/graphql"));
-    res.set_content_type(tide::http::mime::HTML);
-    Ok(res)
+    Response::build()
+        .body(graphiql::graphiql_source("/graphql"))
+        .content_type(mime::HTML)
+        .into()
 }
 
 fn main() -> std::io::Result<()> {

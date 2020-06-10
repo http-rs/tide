@@ -103,18 +103,18 @@ async fn main() -> Result<()> {
     app.middleware(After(|result: Result| async move {
         let response = result.unwrap_or_else(|e| Response::new(e.status()));
         match response.status() {
-            StatusCode::NotFound => {
-                let mut res = Response::new(404);
-                res.set_content_type(mime::HTML);
-                res.set_body(NOT_FOUND_HTML_PAGE);
-                Ok(res)
-            }
-            StatusCode::InternalServerError => {
-                let mut res = Response::new(500);
-                res.set_content_type(mime::HTML);
-                res.set_body(INTERNAL_SERVER_ERROR_HTML_PAGE);
-                Ok(res)
-            }
+            StatusCode::NotFound => Response::build()
+                .status(404)
+                .content_type(mime::HTML)
+                .body(NOT_FOUND_HTML_PAGE)
+                .into(),
+
+            StatusCode::InternalServerError => Response::build()
+                .status(500)
+                .content_type(mime::HTML)
+                .body(INTERNAL_SERVER_ERROR_HTML_PAGE)
+                .into(),
+
             _ => Ok(response),
         }
     }));
