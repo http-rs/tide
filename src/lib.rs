@@ -111,7 +111,7 @@
 //! [`Request::ext`].
 //!
 //! If the endpoint needs to share values with middleware, response scoped state can be set via
-//! [`Response::set_ext`] and is available through [`Response::ext`].
+//! [`Response::insert_ext`] and is available through [`Response::ext`].
 //!
 //! Application scoped state is used when a complete application needs access to a particular
 //! value. Examples of this include: database connections, websocket connections, or

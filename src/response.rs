@@ -37,17 +37,54 @@ impl Response {
         }
     }
 
+    /// Begin a chained response builder. For more details, see [ResponseBuilder](crate::ResponseBuilder)
+    ///
+    /// # Example:
+    /// ```rust
+    /// # use tide::{StatusCode, Response};
+    /// # async_std::task::block_on(async move {
+    /// let mut response = Response::build()
+    ///     .body("body")
+    ///     .status(203)
+    ///     .header("custom-header", "value")
+    ///     .unwrap();
+    ///
+    /// assert_eq!(response.take_body().into_string().await.unwrap(), "body");
+    /// assert_eq!(response.status(), StatusCode::NonAuthoritativeInformation);
+    /// assert_eq!(response["custom-header"], "value");
+    /// # });
+    /// ```
+    #[must_use]
     pub fn build() -> ResponseBuilder {
         ResponseBuilder::new()
     }
 
-    /// Returns the statuscode.
+    /// Returns the http status code.
     #[must_use]
     pub fn status(&self) -> crate::StatusCode {
         self.res.status()
     }
 
-    /// Set the statuscode.
+    /// Set the http status code.
+    ///
+    /// # Example:
+    /// ```rust
+    /// # use tide::{StatusCode, Response};
+    /// let mut response = Response::new(StatusCode::Ok);
+    ///
+    /// response.set_status(418); // the status can be a valid u16 http status code
+    /// assert_eq!(response.status(), StatusCode::ImATeapot);
+    ///
+    /// response.set_status(StatusCode::NonAuthoritativeInformation); // or a tide::StatusCode
+    /// assert_eq!(response.status(), StatusCode::NonAuthoritativeInformation);
+    /// ```
+    /// # Panics
+    /// `set_status` will panic if the status argument cannot be successfully converted into a StatusCode.
+    ///
+    /// ```should_panic
+    /// # use tide::Response;
+    /// Response::new(200).set_status(210); // this is not an established status code and will panic
+    /// ```
     pub fn set_status<S>(&mut self, status: S)
     where
         S: TryInto<StatusCode>,
@@ -196,7 +233,7 @@ impl Response {
     ///
     /// ## Warning
     /// Take care when calling this function with a cookie that was returned by
-    /// [`Request::cookie`](Request::cookie).  As per [section 5.3 step 11 of RFC 6265], a new
+    /// [`Request::cookie`](crate::Request::cookie).  As per [section 5.3 step 11 of RFC 6265], a new
     /// cookie is only treated as the same as an old one if it has a matching name, domain and
     /// path.
     ///
@@ -208,7 +245,7 @@ impl Response {
     ///
     /// To avoid this you can manually set the [domain](Cookie::set_domain) and
     /// [path](Cookie::set_path) as necessary after retrieving the cookie using
-    /// [`Request::cookie`](Request::cookie).
+    /// [`Request::cookie`](crate::Request::cookie).
     ///
     /// [section 5.3 step 11 of RFC 6265]: https://tools.ietf.org/html/rfc6265#section-5.3
     pub fn remove_cookie(&mut self, cookie: Cookie<'static>) {
