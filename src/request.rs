@@ -285,6 +285,11 @@ impl<State> Request<State> {
         self.req.query()
     }
 
+    /// Set the body reader.
+    pub fn set_body(&mut self, body: impl Into<Body>) {
+        self.req.set_body(body)
+    }
+
     /// Take the request body as a `Body`.
     //
     // This method can be called after the body has already been taken or read,
