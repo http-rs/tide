@@ -5,18 +5,22 @@ use tide::{Request, StatusCode};
 /// Tide will use the the `Cookies`'s `Extract` implementation to build this parameter.
 ///
 async fn retrieve_cookie(cx: Request<()>) -> tide::Result<String> {
-    Ok(format!("hello cookies: {:?}", cx.cookie("hello").unwrap()))
+    if let Some(cookie) = cx.cookie("hello") {
+        Ok(format!("hello cookies: {:?}", cookie))
+    } else {
+        Ok("cookies not found. navigate to /set or /remove".to_owned())
+    }
 }
 
 async fn insert_cookie(_req: Request<()>) -> tide::Result {
     let mut res = tide::Response::new(StatusCode::Ok);
-    res.insert_cookie(Cookie::new("hello", "world"));
+    res.insert_cookie(Cookie::build("hello", "world").path("/").finish());
     Ok(res)
 }
 
 async fn remove_cookie(_req: Request<()>) -> tide::Result {
     let mut res = tide::Response::new(StatusCode::Ok);
-    res.remove_cookie(Cookie::named("hello"));
+    res.remove_cookie(Cookie::build("hello", "").path("/").finish());
     Ok(res)
 }
 
