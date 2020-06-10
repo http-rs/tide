@@ -6,6 +6,7 @@ use crate::http::cookies::Cookie;
 use crate::http::headers::{self, HeaderName, HeaderValues, ToHeaderValues};
 use crate::http::Mime;
 use crate::http::{self, Body, StatusCode};
+use crate::ResponseBuilder;
 
 #[derive(Debug)]
 pub(crate) enum CookieEvent {
@@ -34,6 +35,10 @@ impl Response {
             res,
             cookie_events: vec![],
         }
+    }
+
+    pub fn build() -> ResponseBuilder {
+        ResponseBuilder::new()
     }
 
     /// Returns the statuscode.

@@ -198,6 +198,7 @@ mod middleware;
 mod redirect;
 mod request;
 mod response;
+mod response_builder;
 mod route;
 
 #[cfg(not(feature = "__internal__bench"))]
@@ -218,6 +219,7 @@ pub use middleware::{Middleware, Next};
 pub use redirect::Redirect;
 pub use request::Request;
 pub use response::Response;
+pub use response_builder::ResponseBuilder;
 pub use route::Route;
 pub use server::Server;
 
