@@ -6,11 +6,11 @@ use tide::{Request, Response, Server, StatusCode};
 
 static COOKIE_NAME: &str = "testCookie";
 
-async fn retrieve_cookie(cx: Request<()>) -> tide::Result<String> {
+async fn retrieve_cookie(req: Request<()>) -> tide::Result<String> {
     Ok(format!(
         "{} and also {}",
-        cx.cookie(COOKIE_NAME).unwrap().value(),
-        cx.cookie("secondTestCookie").unwrap().value()
+        req.cookie(COOKIE_NAME).unwrap().value(),
+        req.cookie("secondTestCookie").unwrap().value()
     ))
 }
 

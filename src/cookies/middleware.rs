@@ -15,7 +15,9 @@ use std::sync::{Arc, RwLock};
 /// # use tide::{Request, Response, StatusCode};
 /// # use tide::http::cookies::Cookie;
 /// let mut app = tide::Server::new();
-/// app.at("/get").get(|cx: Request<()>| async move { Ok(cx.cookie("testCookie").unwrap().value().to_string()) });
+/// app.at("/get").get(|req: Request<()>| async move {
+///     Ok(req.cookie("testCookie").unwrap().value().to_string())
+/// });
 /// app.at("/set").get(|_| async {
 ///     let mut res = Response::new(StatusCode::Ok);
 ///     res.insert_cookie(Cookie::new("testCookie", "NewCookieValue"));
