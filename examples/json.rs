@@ -1,14 +1,14 @@
-use async_std::io;
 use async_std::task;
 use serde::{Deserialize, Serialize};
-use tide::{Request, Response, StatusCode};
+use tide::prelude::*;
+use tide::{Body, Request, Response};
 
 #[derive(Deserialize, Serialize)]
 struct Cat {
     name: String,
 }
 
-fn main() -> io::Result<()> {
+fn main() -> tide::Result<()> {
     task::block_on(async {
         let mut app = tide::new();
 
@@ -20,7 +20,19 @@ fn main() -> io::Result<()> {
                 name: "chashu".into(),
             };
 
-            Ok(Response::new(StatusCode::Ok).body_json(&cat)?)
+            let mut res = Response::new(200);
+            res.set_body(Body::from_json(&cat)?);
+            Ok(res)
+        });
+
+        app.at("/animals").get(|_| async {
+            Ok(json!({
+                "meta": { "count": 2 },
+                "animals": [
+                    { "type": "cat", "name": "chashu" },
+                    { "type": "cat", "name": "nori" }
+                ]
+            }))
         });
 
         app.listen("127.0.0.1:8080").await?;

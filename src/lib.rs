@@ -51,7 +51,7 @@
 //! ```no_run
 //! # use async_std::task::block_on;
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
-//! # use tide::{Request, Response};
+//! # use tide::{Body, Request, Response};
 //! #
 //! #[derive(Debug, serde::Deserialize, serde::Serialize)]
 //! struct Counter { count: usize }
@@ -61,7 +61,9 @@
 //!    let mut counter: Counter = req.body_json().await?;
 //!    println!("count is {}", counter.count);
 //!    counter.count += 1;
-//!    Ok(Response::new(tide::http::StatusCode::Ok).body_json(&counter)?)
+//!    let mut res = Response::new(200);
+//!    res.set_body(Body::from_json(&counter)?);
+//!    Ok(res)
 //! });
 //! app.listen("127.0.0.1:8080").await?;
 //! #
@@ -206,6 +208,7 @@ pub mod router;
 mod server;
 mod utils;
 
+pub mod convert;
 pub mod log;
 pub mod prelude;
 pub mod security;

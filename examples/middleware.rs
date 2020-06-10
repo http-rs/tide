@@ -2,6 +2,7 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use tide::http::mime;
 use tide::{After, Before, Middleware, Next, Request, Response, Result, StatusCode};
 
 #[derive(Debug)]
@@ -70,10 +71,10 @@ impl<State: Send + Sync + 'static> Middleware<State> for RequestCounterMiddlewar
             tide::log::trace!("request counter", { count: count });
             req.set_ext(RequestCount(count));
 
-            let mut response = next.run(req).await?;
+            let mut res = next.run(req).await?;
 
-            response = response.set_header("request-number", count.to_string());
-            Ok(response)
+            res.insert_header("request-number", count.to_string());
+            Ok(res)
         })
     }
 }
@@ -101,14 +102,18 @@ async fn main() -> Result<()> {
     app.middleware(After(|result: Result| async move {
         let response = result.unwrap_or_else(|e| Response::new(e.status()));
         match response.status() {
-            StatusCode::NotFound => Ok(response
-                .set_content_type(tide::http::mime::HTML)
-                .body_string(NOT_FOUND_HTML_PAGE.into())),
-
-            StatusCode::InternalServerError => Ok(response
-                .set_content_type(tide::http::mime::HTML)
-                .body_string(INTERNAL_SERVER_ERROR_HTML_PAGE.into())),
-
+            StatusCode::NotFound => {
+                let mut res = Response::new(404);
+                res.set_content_type(mime::HTML);
+                res.set_body(NOT_FOUND_HTML_PAGE);
+                Ok(res)
+            }
+            StatusCode::InternalServerError => {
+                let mut res = Response::new(500);
+                res.set_content_type(mime::HTML);
+                res.set_body(INTERNAL_SERVER_ERROR_HTML_PAGE);
+                Ok(res)
+            }
             _ => Ok(response),
         }
     }));

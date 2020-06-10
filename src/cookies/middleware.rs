@@ -18,7 +18,7 @@ use std::sync::{Arc, RwLock};
 /// app.at("/get").get(|cx: Request<()>| async move { Ok(cx.cookie("testCookie").unwrap().value().to_string()) });
 /// app.at("/set").get(|_| async {
 ///     let mut res = Response::new(StatusCode::Ok);
-///     res.set_cookie(Cookie::new("testCookie", "NewCookieValue"));
+///     res.insert_cookie(Cookie::new("testCookie", "NewCookieValue"));
 ///     Ok(res)
 /// });
 /// ```
@@ -69,7 +69,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
             // iterate over added and removed cookies
             for cookie in jar.delta() {
                 let encoded_cookie = cookie.encoded().to_string();
-                res = res.append_header(headers::SET_COOKIE, encoded_cookie);
+                res.append_header(headers::SET_COOKIE, encoded_cookie);
             }
             Ok(res)
         })

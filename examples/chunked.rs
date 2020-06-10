@@ -1,14 +1,12 @@
-use async_std::fs;
-use async_std::io::BufReader;
 use async_std::task;
-use tide::{Response, StatusCode};
+use tide::{Body, Response, StatusCode};
 
 fn main() -> Result<(), std::io::Error> {
     task::block_on(async {
         let mut app = tide::new();
         app.at("/").get(|_| async move {
-            let file = fs::File::open(file!()).await.unwrap();
-            let res = Response::new(StatusCode::Ok).body(BufReader::new(file));
+            let mut res = Response::new(StatusCode::Ok);
+            res.set_body(Body::from_file(file!()).await.unwrap());
             Ok(res)
         });
         app.listen("127.0.0.1:8080").await?;
