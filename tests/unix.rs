@@ -1,7 +1,6 @@
 #[cfg(unix)]
 mod unix_tests {
     use async_std::os::unix::net::UnixStream;
-    use async_std::prelude::*;
     use async_std::task;
     use http_types::{url::Url, Method, Request};
     use std::time::Duration;
@@ -18,25 +17,25 @@ mod unix_tests {
             let server = task::spawn(async move {
                 let mut app = tide::new();
                 app.at("/").get(|req: tide::Request<()>| async move {
-                    Ok(json!({ "peer_addr": req.peer_addr().unwrap(), "local_addr": req.local_addr().unwrap() }))
+                    Ok(req.local_addr().unwrap().to_string())
                 });
-                app.listen_unix(sock_path).await?;
+                app.listen(sock_path).await?;
                 http_types::Result::Ok(())
             });
 
             let client = task::spawn(async move {
                 task::sleep(Duration::from_millis(100)).await;
                 let listener = UnixStream::connect(&sock_path_for_client).await?;
-                let req = Request::new(Method::Get, Url::parse("unix://local.socket/").unwrap());
+                let req = Request::new(Method::Get, Url::parse("http://local.socket/").unwrap());
                 let mut res = async_h1::connect(listener, req).await?;
-                let body: serde_json::Value = res.body_json().await.unwrap();
-                assert!(body.get("peer_addr").unwrap().is_string());
-                assert!(body
-                    .get("local_addr")
-                    .unwrap()
-                    .as_str()
-                    .unwrap()
-                    .contains(sock_path_for_client.to_str().unwrap()));
+                let local_addr = res.body_string().await?;
+                assert_eq!(
+                    local_addr,
+                    format!(
+                        "unix://{}",
+                        sock_path_for_client.canonicalize()?.to_str().unwrap()
+                    )
+                );
                 Ok(())
             });
 
