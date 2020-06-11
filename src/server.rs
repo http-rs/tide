@@ -1,17 +1,14 @@
 //! An HTTP server
 
 use async_std::io;
-use async_std::net::ToSocketAddrs;
-use async_std::prelude::*;
 use async_std::sync::Arc;
-use async_std::task;
 
 use crate::cookies;
+use crate::listener::{Listener, ToListener};
 use crate::log;
 use crate::middleware::{Middleware, Next};
 use crate::router::{Router, Selection};
 use crate::{Endpoint, Request, Route};
-
 /// An HTTP server.
 ///
 /// Servers are built up as a combination of *state*, *endpoints* and *middleware*:
@@ -27,115 +24,11 @@ use crate::{Endpoint, Request, Route};
 /// - Middleware extends the base Tide framework with additional request or
 /// response processing, such as compression, default headers, or logging. To
 /// add middleware to an app, use the [`Server::middleware`] method.
-/////
-///// # Hello, world!
-/////
-///// You can start a simple Tide application that listens for `GET` requests at path `/hello`
-///// on `127.0.0.1:8000` with:
-/////
-///// ```rust, no_run
-/////
-///// let mut app = tide::Server::new();
-///// app.at("/hello").get(|_| async move {"Hello, world!"});
-///// // app.run("127.0.0.1:8000").unwrap();
-///// ```
-/////
-///// # Routing and parameters
-/////
-///// Tide's routing system is simple and similar to many other frameworks. It
-///// uses `:foo` for "wildcard" URL segments, and `*foo` to match the rest of a
-///// URL (which may include multiple segments). Here's an example using wildcard
-///// segments as parameters to endpoints:
-/////
-///// ```no_run
-///// use tide::error::ResultExt;
-/////
-///// async fn hello(cx: tide::Request<()>) -> tide::Result<String> {
-/////     let user: String = cx.param("user")?;
-/////     Ok(format!("Hello, {}!", user))
-///// }
-/////
-///// async fn goodbye(cx: tide::Request<()>) -> tide::Result<String> {
-/////     let user: String = cx.param("user")?;
-/////     Ok(format!("Goodbye, {}.", user))
-///// }
-/////
-///// let mut app = tide::Server::new();
-/////
-///// app.at("/hello/:user").get(hello);
-///// app.at("/goodbye/:user").get(goodbye);
-///// app.at("/").get(|_| async move {
-/////     "Use /hello/{your name} or /goodbye/{your name}"
-///// });
-/////
-///// // app.run("127.0.0.1:8000").unwrap();
-///// ```
-/////
-///// You can learn more about routing in the [`Server::at`] documentation.
-/////
-///// # Serverlication state
-/////
-///// ```rust,no_run
-///// use http_types::status::StatusCode;
-///// use serde::{Deserialize, Serialize};
-///// use std::sync::Mutex;
-///// use tide::{error::ResultExt, Server, Request, Result};
-/////
-///// #[derive(Default)]
-///// struct Database {
-/////     contents: Mutex<Vec<Message>>,
-///// }
-/////
-///// #[derive(Serialize, Deserialize, Clone)]
-///// struct Message {
-/////     author: Option<String>,
-/////     contents: String,
-///// }
-/////
-///// impl Database {
-/////     fn insert(&self, msg: Message) -> usize {
-/////         let mut table = self.contents.lock().unwrap();
-/////         table.push(msg);
-/////         table.len() - 1
-/////     }
-/////
-/////     fn get(&self, id: usize) -> Option<Message> {
-/////         self.contents.lock().unwrap().get(id).cloned()
-/////     }
-///// }
-/////
-///// async fn new_message(mut cx: Request<Database>) -> Result<String> {
-/////     let msg = cx.body_json().await?;
-/////     Ok(cx.state().insert(msg).to_string())
-///// }
-/////
-///// async fn get_message(cx: Request<Database>) -> Result {
-/////     let id = cx.param("id").unwrap();
-/////     if let Some(msg) = cx.state().get(id) {
-/////         Ok(response::json(msg))
-/////     } else {
-/////         Err(StatusCode::NOT_FOUND)?
-/////     }
-///// }
-/////
-///// fn main() {
-/////     let mut app = Server::with_state(Database::default());
-/////     app.at("/message").post(new_message);
-/////     app.at("/message/:id").get(get_message);
-/////     // app.run("127.0.0.1:8000").unwrap();
-///// }
-///// ```
 #[allow(missing_debug_implementations)]
 pub struct Server<State> {
     router: Arc<Router<State>>,
     state: Arc<State>,
     middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
-}
-
-fn is_transient_error(e: &io::Error) -> bool {
-    e.kind() == io::ErrorKind::ConnectionRefused
-        || e.kind() == io::ErrorKind::ConnectionAborted
-        || e.kind() == io::ErrorKind::ConnectionReset
 }
 
 impl Server<()> {
@@ -280,102 +173,12 @@ impl<State: Send + Sync + 'static> Server<State> {
         self
     }
 
-    #[cfg(feature = "h1-server")]
-    fn handle_tcp(self, stream: async_std::net::TcpStream) {
-        let local_addr = stream.local_addr().ok();
-        let peer_addr = stream.peer_addr().ok();
-        task::spawn(async move {
-            let result = async_h1::accept(stream, |mut req| async {
-                req.set_local_addr(local_addr);
-                req.set_peer_addr(peer_addr);
-                self.respond(req).await
-            })
-            .await;
-
-            if let Err(error) = result {
-                log::error!("async-h1 error", { error: error.to_string() });
-            }
-        });
-    }
-
-    /// Asynchronously serve the app at the given address.
-    #[cfg(feature = "h1-server")]
-    pub async fn listen(self, addr: impl ToSocketAddrs) -> io::Result<()> {
-        let listener = async_std::net::TcpListener::bind(addr).await?;
-
-        let addr = format!("http://{}", listener.local_addr()?);
-        let tls = false;
-        let target = if cfg!(debug_assertions) {
-            "dev"
-        } else {
-            "release"
-        };
-        log::info!("Server listening on {}", addr, { address: addr, target: target, tls: tls });
-
-        let mut incoming = listener.incoming();
-        while let Some(stream) = incoming.next().await {
-            match stream {
-                Err(ref e) if is_transient_error(e) => continue,
-                Err(error) => {
-                    let delay = std::time::Duration::from_millis(500);
-                    crate::log::error!("Error: {}. Pausing for {:?}.", error, delay);
-                    task::sleep(delay).await;
-                    continue;
-                }
-                Ok(stream) => self.clone().handle_tcp(stream),
-            };
-        }
-
-        Ok(())
-    }
-
-    /// Asynchronously serve the app at the given address.
-    #[cfg(all(feature = "h1-server", unix))]
-    pub async fn listen_unix(self, addr: impl AsRef<async_std::path::Path>) -> io::Result<()> {
-        let listener = async_std::os::unix::net::UnixListener::bind(addr).await?;
-        let tls = false;
-        let target = if cfg!(debug_assertions) {
-            "dev"
-        } else {
-            "release"
-        };
-
-        let addr = format!("unix://{:?}", listener.local_addr()?);
-        log::info!("Server listening on {}", addr, { address: addr, target: target, tls: tls });
-
-        let mut incoming = listener.incoming();
-        while let Some(stream) = incoming.next().await {
-            match stream {
-                Err(ref e) if is_transient_error(e) => continue,
-                Err(error) => {
-                    let delay = std::time::Duration::from_millis(500);
-                    crate::log::error!("Error: {}. Pausing for {:?}.", error, delay);
-                    task::sleep(delay).await;
-                    continue;
-                }
-                Ok(stream) => self.clone().handle_unix(stream),
-            };
-        }
-        Ok(())
-    }
-
-    #[cfg(all(feature = "h1-server", unix))]
-    fn handle_unix(self, stream: async_std::os::unix::net::UnixStream) {
-        task::spawn(async move {
-            let local_addr = stream.local_addr().ok().map(|addr| format!("{:?}", addr));
-            let peer_addr = stream.peer_addr().ok().map(|addr| format!("{:?}", addr));
-
-            let result = async_h1::accept(stream, |mut req| async {
-                req.set_local_addr(local_addr.as_ref());
-                req.set_peer_addr(peer_addr.as_ref());
-                self.respond(req).await
-            })
-            .await;
-
-            if let Err(error) = result {
-                log::error!("async-h1 error", { error: error.to_string() });
-            }
-        });
+    /// Asynchronously serve the app with the supplied listener. For more details, see [Listener] and [ToListener]
+    pub async fn listen<TL: ToListener<State>>(self, listener: TL) -> io::Result<()> {
+        let mut listener = listener.to_listener()?;
+        listener.connect().await?;
+        log::info!("Server listening on {}", listener);
+        listener.listen(self).await
     }
 
     /// Respond to a `Request` with a `Response`.
