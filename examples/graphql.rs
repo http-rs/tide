@@ -72,14 +72,14 @@ fn create_schema() -> Schema {
     Schema::new(QueryRoot {}, MutationRoot {})
 }
 
-async fn handle_graphql(mut cx: Request<State>) -> tide::Result {
-    let query: juniper::http::GraphQLRequest = cx
+async fn handle_graphql(mut req: Request<State>) -> tide::Result {
+    let query: juniper::http::GraphQLRequest = req
         .body_json()
         .await
         .expect("be able to deserialize the graphql request");
 
     let schema = create_schema(); // probably worth making the schema a singleton using lazy_static library
-    let response = query.execute(&schema, cx.state());
+    let response = query.execute(&schema, req.state());
     let status = if response.is_ok() {
         StatusCode::Ok
     } else {
