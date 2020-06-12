@@ -82,14 +82,13 @@ async fn handle_graphql(mut request: Request<State>) -> tide::Result {
         StatusCode::BadRequest
     };
 
-    Response::build()
-        .status(status)
+    Response::builder(status)
         .body(Body::from_json(&response)?)
         .into()
 }
 
 async fn handle_graphiql(_: Request<State>) -> tide::Result {
-    Response::build()
+    Response::builder(200)
         .body(graphiql::graphiql_source("/graphql"))
         .content_type(mime::HTML)
         .into()
