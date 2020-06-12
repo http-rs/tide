@@ -41,22 +41,27 @@ impl Response {
     ///
     /// # Example:
     /// ```rust
-    /// # use tide::{StatusCode, Response};
+    /// # use tide::{StatusCode, Response, http::mime};
     /// # async_std::task::block_on(async move {
-    /// let mut response = Response::build()
-    ///     .body("body")
-    ///     .status(203)
+    /// let mut response = Response::builder(203)
+    ///     .body("<html>hi</html>")
     ///     .header("custom-header", "value")
-    ///     .unwrap();
+    ///     .content_type(mime::HTML)
+    ///     .build();
     ///
-    /// assert_eq!(response.take_body().into_string().await.unwrap(), "body");
+    /// assert_eq!(response.take_body().into_string().await.unwrap(), "<html>hi</html>");
     /// assert_eq!(response.status(), StatusCode::NonAuthoritativeInformation);
     /// assert_eq!(response["custom-header"], "value");
+    /// assert_eq!(response["content-type"], "text/html;charset=utf-8");
     /// # });
     /// ```
     #[must_use]
-    pub fn build() -> ResponseBuilder {
-        ResponseBuilder::new()
+    pub fn builder<S>(status: S) -> ResponseBuilder
+    where
+        S: TryInto<StatusCode>,
+        S::Error: Debug,
+    {
+        ResponseBuilder::new(status)
     }
 
     /// Returns the http status code.

@@ -7,65 +7,44 @@ use std::convert::TryInto;
 
 /// Response Builder
 ///
-/// Provides an ergonomic way to chain the creation of a response. This is generally accessed through [`Response::build`](crate::Response::build)
+/// Provides an ergonomic way to chain the creation of a response. This is generally accessed through [`Response::builder`](crate::Response::builder)
 ///
 /// # Example
 /// ```rust
-/// # use tide::{StatusCode, ResponseBuilder};
+/// # use tide::{StatusCode, Response, http::mime};
 /// # async_std::task::block_on(async move {
-/// let mut response = ResponseBuilder::new()
+/// let mut response = Response::builder(203)
 ///     .body("body")
-///     .status(203)
+///     .content_type(mime::HTML)
 ///     .header("custom-header", "value")
-///     .unwrap();
+///     .build();
 ///
 /// assert_eq!(response.take_body().into_string().await.unwrap(), "body");
 /// assert_eq!(response.status(), StatusCode::NonAuthoritativeInformation);
 /// assert_eq!(response["custom-header"], "value");
+/// assert_eq!(response.content_type(), Some(mime::HTML));
 /// # });
 
 pub struct ResponseBuilder(Response);
 
 impl ResponseBuilder {
-    /// Creates a new ResponseBuilder. This will default to an 200 OK status code.
-    /// ```rust
-    /// # use tide::{StatusCode, ResponseBuilder};
-    /// assert_eq!(ResponseBuilder::new().unwrap().status(), StatusCode::Ok)
-    /// ```
-    pub fn new() -> Self {
-        Self(Response::new(StatusCode::Ok))
-    }
-
-    /// Returns the inner Response
-    pub fn unwrap(self) -> Response {
-        self.0
-    }
-
-    /// Sets the http status on the response.
-    /// ```
-    /// # use tide::{ResponseBuilder, StatusCode};
-    /// let response = ResponseBuilder::new().status(418).unwrap();
-    /// assert_eq!(response.status(), StatusCode::ImATeapot);
-    /// ```
-    /// # Panics:
-    /// `status` will panic if the status argument cannot be successfully converted into a StatusCode.
-    /// ```should_panic
-    /// # use tide::ResponseBuilder;
-    /// ResponseBuilder::new().status(210); // this is not an established status code and will panic
-    /// ```
-    pub fn status<S>(mut self, status: S) -> Self
+    pub(crate) fn new<S>(status: S) -> Self
     where
         S: TryInto<StatusCode>,
         S::Error: std::fmt::Debug,
     {
-        self.0.set_status(status);
-        self
+        Self(Response::new(status))
+    }
+
+    /// Returns the inner Response
+    pub fn build(self) -> Response {
+        self.0
     }
 
     /// Sets a header on the response.
     /// ```
-    /// # use tide::ResponseBuilder;
-    /// let response = ResponseBuilder::new().header("header-name", "header-value").unwrap();
+    /// # use tide::Response;
+    /// let response = Response::builder(200).header("header-name", "header-value").build();
     /// assert_eq!(response["header-name"], "header-value");
     /// ```
     pub fn header(mut self, key: impl Into<HeaderName>, value: impl ToHeaderValues) -> Self {
@@ -75,8 +54,8 @@ impl ResponseBuilder {
 
     /// Sets the Content-Type header on the response.
     /// ```
-    /// # use tide::{http::mime, ResponseBuilder};
-    /// let response = ResponseBuilder::new().content_type(mime::HTML).unwrap();
+    /// # use tide::{http::mime, Response};
+    /// let response = Response::builder(200).content_type(mime::HTML).build();
     /// assert_eq!(response["content-type"], "text/html;charset=utf-8");
     /// ```
     pub fn content_type(mut self, content_type: impl Into<Mime>) -> Self {
@@ -87,8 +66,8 @@ impl ResponseBuilder {
     /// Sets the body of the response.
     /// ```
     /// # async_std::task::block_on(async move {
-    /// # use tide::{ResponseBuilder, convert::json};
-    /// let mut response = ResponseBuilder::new().body(json!({ "any": "Into<Body>"})).unwrap();
+    /// # use tide::{Response, convert::json};
+    /// let mut response = Response::builder(200).body(json!({ "any": "Into<Body>"})).build();
     /// assert_eq!(response.take_body().into_string().await.unwrap(), "{\"any\":\"Into<Body>\"}");
     /// # });
     /// ```
@@ -100,12 +79,12 @@ impl ResponseBuilder {
 
 impl Into<Response> for ResponseBuilder {
     fn into(self) -> Response {
-        self.unwrap()
+        self.build()
     }
 }
 
 impl Into<crate::Result> for ResponseBuilder {
     fn into(self) -> crate::Result {
-        Ok(self.unwrap())
+        Ok(self.build())
     }
 }
