@@ -1,32 +1,32 @@
 use http_types::{Method, StatusCode, Url};
 use tide::{http, Request};
 
-async fn add_one(cx: Request<()>) -> Result<String, tide::Error> {
-    match cx.param::<i64>("num") {
+async fn add_one(req: Request<()>) -> Result<String, tide::Error> {
+    match req.param::<i64>("num") {
         Ok(num) => Ok((num + 1).to_string()),
         Err(err) => Err(tide::Error::new(StatusCode::BadRequest, err)),
     }
 }
 
-async fn add_two(cx: Request<()>) -> Result<String, tide::Error> {
-    let one = cx
+async fn add_two(req: Request<()>) -> Result<String, tide::Error> {
+    let one = req
         .param::<i64>("one")
         .map_err(|err| tide::Error::new(StatusCode::BadRequest, err))?;
-    let two = cx
+    let two = req
         .param::<i64>("two")
         .map_err(|err| tide::Error::new(StatusCode::BadRequest, err))?;
     Ok((one + two).to_string())
 }
 
-async fn echo_path(cx: Request<()>) -> Result<String, tide::Error> {
-    match cx.param::<String>("path") {
+async fn echo_path(req: Request<()>) -> Result<String, tide::Error> {
+    match req.param::<String>("path") {
         Ok(path) => Ok(path),
         Err(err) => Err(tide::Error::new(StatusCode::BadRequest, err)),
     }
 }
 
-async fn echo_empty(cx: Request<()>) -> Result<String, tide::Error> {
-    match cx.param::<String>("") {
+async fn echo_empty(req: Request<()>) -> Result<String, tide::Error> {
+    match req.param::<String>("") {
         Ok(path) => Ok(path),
         Err(err) => Err(tide::Error::new(StatusCode::BadRequest, err)),
     }

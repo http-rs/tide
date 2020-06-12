@@ -4,8 +4,8 @@ use tide::{Request, StatusCode};
 
 /// Tide will use the the `Cookies`'s `Extract` implementation to build this parameter.
 ///
-async fn retrieve_cookie(cx: Request<()>) -> tide::Result<String> {
-    Ok(format!("hello cookies: {:?}", cx.cookie("hello").unwrap()))
+async fn retrieve_cookie(req: Request<()>) -> tide::Result<String> {
+    Ok(format!("hello cookies: {:?}", req.cookie("hello").unwrap()))
 }
 
 async fn insert_cookie(_req: Request<()>) -> tide::Result {
