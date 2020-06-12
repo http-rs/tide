@@ -5,12 +5,12 @@ mod unix_tests {
     use async_std::task;
     use http_types::{url::Url, Method, Request, Response, StatusCode};
     use std::time::Duration;
-    use tempdir::TempDir;
+    use tempfile::tempdir;
 
     #[test]
     fn hello_unix_world() -> Result<(), http_types::Error> {
         task::block_on(async {
-            let tmp_dir = TempDir::new("tide").expect("Temp dir not created");
+            let tmp_dir = tempdir("tide").expect("Temp dir not created");
             let sock_path = tmp_dir.path().join("sock");
             let sock_path_for_client = sock_path.clone();
 
