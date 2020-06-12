@@ -26,8 +26,8 @@ where
     // Perform the handshake as described here:
     // https://html.spec.whatwg.org/multipage/server-sent-events.html#sse-processing-model
     let mut res = Response::new(StatusCode::Ok);
-    res.res.insert_header("Cache-Control", "no-cache");
-    res.res.set_content_type(mime::SSE);
+    res.insert_header("Cache-Control", "no-cache");
+    res.set_content_type(mime::SSE);
 
     let body = Body::from_reader(BufReader::new(encoder), None);
     res.set_body(body);
