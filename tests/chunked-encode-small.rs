@@ -21,7 +21,7 @@ async fn chunked_large() -> Result<(), http_types::Error> {
     let port = test_utils::find_port().await;
     let server = task::spawn(async move {
         let mut app = tide::new();
-        app.at("/").get(|_| async move {
+        app.at("/").get(|_| async {
             let mut res = Response::new(StatusCode::Ok);
             let body = Cursor::new(TEXT.to_owned());
             res.set_body(Body::from_reader(body, None));

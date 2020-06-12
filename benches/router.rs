@@ -7,7 +7,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     router.add(
         "hello",
         Method::Get,
-        Box::new(|_| async move { Ok("hello world") }),
+        Box::new(|_| async { Ok("hello world") }),
     );
 
     c.bench_function("route-match", |b| {
