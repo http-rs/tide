@@ -87,11 +87,10 @@ async fn handle_graphql(mut request: Request<State>) -> tide::Result {
         .into()
 }
 
-async fn handle_graphiql(_: Request<State>) -> tide::Result {
-    Response::builder(200)
+async fn handle_graphiql(_: Request<State>) -> tide::Result<impl Into<Response>> {
+    Ok(Response::builder(200)
         .body(graphiql::graphiql_source("/graphql"))
-        .content_type(mime::HTML)
-        .into()
+        .content_type(mime::HTML))
 }
 
 fn main() -> std::io::Result<()> {
