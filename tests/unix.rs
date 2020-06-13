@@ -10,7 +10,7 @@ mod unix_tests {
     #[test]
     fn hello_unix_world() -> Result<(), http_types::Error> {
         task::block_on(async {
-            let tmp_dir = tempdir("tide").expect("Temp dir not created");
+            let tmp_dir = tempdir()?;
             let sock_path = tmp_dir.path().join("sock");
             let sock_path_for_client = sock_path.clone();
 
