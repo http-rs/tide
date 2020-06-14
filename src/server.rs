@@ -255,7 +255,7 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// There is no fallback route matching, i.e. either a resource is a full
     /// match or not, which means that the order of adding resources has no
     /// effect.
-    pub fn at<'a>(&'a mut self, path: &'a str) -> Route<'a, State> {
+    pub fn at<'a>(&'a mut self, path: &str) -> Route<'a, State> {
         let router = Arc::get_mut(&mut self.router)
             .expect("Registering routes is not possible after the Server has started");
         Route::new(router, path.to_owned())
