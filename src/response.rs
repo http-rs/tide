@@ -42,7 +42,6 @@ impl Response {
     }
 
     /// Set the statuscode.
-    #[must_use]
     pub fn set_status(&mut self, status: crate::StatusCode) {
         self.res.set_status(status);
     }
@@ -297,20 +296,27 @@ impl From<Error> for Response {
     }
 }
 
-impl From<crate::Result> for Response {
-    fn from(result: crate::Result) -> Self {
-        match result {
-            Ok(res) => res,
-            Err(err) => err.into(),
-        }
-    }
-}
-
 impl From<http::Response> for Response {
     fn from(res: http::Response) -> Self {
         Self {
             res,
             cookie_events: vec![],
+        }
+    }
+}
+
+impl<T, E> From<std::result::Result<T, E>> for Response
+where
+    T: Into<Response>,
+    E: Into<Error> + Send + Sync + 'static,
+{
+    fn from(result: Result<T, E>) -> Self {
+        match result {
+            Ok(into_response) => into_response.into(),
+            Err(error) => {
+                let error: Error = error.into();
+                error.into()
+            }
         }
     }
 }

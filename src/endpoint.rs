@@ -1,6 +1,5 @@
 use async_std::future::Future;
 use async_std::sync::Arc;
-use http_types::Result;
 
 use crate::middleware::Next;
 use crate::utils::BoxFuture;
@@ -55,15 +54,12 @@ impl<State, F, Fut, Res> Endpoint<State> for F
 where
     State: Send + Sync + 'static,
     F: Send + Sync + 'static + Fn(Request<State>) -> Fut,
-    Fut: Future<Output = Result<Res>> + Send + 'static,
+    Fut: Future<Output = Res> + Send + 'static,
     Res: Into<Response>,
 {
     fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, crate::Result> {
         let fut = (self)(req);
-        Box::pin(async move {
-            let res = fut.await?;
-            Ok(res.into())
-        })
+        Box::pin(async move { Ok(fut.await.into()) })
     }
 }
 
@@ -113,6 +109,7 @@ where
             endpoint: &self.endpoint,
             next_middleware: &self.middleware,
         };
-        Box::pin(async move { Ok(next.run(req).await) })
+        let fut = next.run(req);
+        Box::pin(async move { Ok(fut.await) })
     }
 }

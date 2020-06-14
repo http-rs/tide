@@ -26,7 +26,7 @@ async fn chunked_large() -> Result<(), http_types::Error> {
             let body = Cursor::new(TEXT.to_owned());
             res.set_body(Body::from_reader(body, None));
             res.set_content_type(mime::PLAIN);
-            Ok(res)
+            res
         });
         app.listen(("localhost", port)).await?;
         Result::<(), http_types::Error>::Ok(())

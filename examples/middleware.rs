@@ -105,15 +105,15 @@ async fn main() -> Result<()> {
                 let mut res = Response::new(404);
                 res.set_content_type(mime::HTML);
                 res.set_body(NOT_FOUND_HTML_PAGE);
-                Ok(res)
+                res
             }
             StatusCode::InternalServerError => {
                 let mut res = Response::new(500);
                 res.set_content_type(mime::HTML);
                 res.set_body(INTERNAL_SERVER_ERROR_HTML_PAGE);
-                Ok(res)
+                res
             }
-            _ => Ok(response),
+            _ => response,
         }
     }));
 
@@ -128,10 +128,7 @@ async fn main() -> Result<()> {
         let count: &RequestCount = req.ext().unwrap();
         let user: &User = req.ext().unwrap();
 
-        Ok(format!(
-            "Hello {}, this was request number {}!",
-            user.name, count.0
-        ))
+        format!("Hello {}, this was request number {}!", user.name, count.0)
     });
 
     app.listen("127.0.0.1:8080").await?;

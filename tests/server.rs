@@ -4,10 +4,10 @@ use async_std::task;
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
-use tide::{Body, Request, Response, StatusCode};
+use tide::{Body, Request, Response, Result, StatusCode};
 
 #[test]
-fn hello_world() -> Result<(), http_types::Error> {
+fn hello_world() -> Result<()> {
     task::block_on(async {
         let port = test_utils::find_port().await;
         let server = task::spawn(async move {
@@ -18,10 +18,10 @@ fn hello_world() -> Result<(), http_types::Error> {
                 assert!(req.peer_addr().is_some());
                 let mut res = Response::new(StatusCode::Ok);
                 res.set_body("says hello");
-                Ok(res)
+                res
             });
             app.listen(("localhost", port)).await?;
-            Result::<(), http_types::Error>::Ok(())
+            Result::Ok(())
         });
 
         let client = task::spawn(async move {
@@ -40,15 +40,15 @@ fn hello_world() -> Result<(), http_types::Error> {
 }
 
 #[test]
-fn echo_server() -> Result<(), http_types::Error> {
+fn echo_server() -> Result<()> {
     task::block_on(async {
         let port = test_utils::find_port().await;
         let server = task::spawn(async move {
             let mut app = tide::new();
-            app.at("/").get(|req| async move { Ok(req) });
+            app.at("/").get(|req| async move { req });
 
             app.listen(("localhost", port)).await?;
-            Result::<(), http_types::Error>::Ok(())
+            Result::Ok(())
         });
 
         let client = task::spawn(async move {
@@ -67,7 +67,7 @@ fn echo_server() -> Result<(), http_types::Error> {
 }
 
 #[test]
-fn json() -> Result<(), http_types::Error> {
+fn json() -> Result<()> {
     #[derive(Deserialize, Serialize)]
     struct Counter {
         count: usize,
@@ -83,10 +83,10 @@ fn json() -> Result<(), http_types::Error> {
                 counter.count = 1;
                 let mut res = Response::new(StatusCode::Ok);
                 res.set_body(Body::from_json(&counter)?);
-                Ok(res)
+                Result::Ok(res)
             });
             app.listen(("localhost", port)).await?;
-            Result::<(), http_types::Error>::Ok(())
+            tide::Result::Ok(())
         });
 
         let client = task::spawn(async move {

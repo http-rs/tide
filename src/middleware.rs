@@ -77,19 +77,20 @@ where
 /// let mut app = tide::new();
 /// app.middleware(After(|res: Response| async move {
 ///     match res.status() {
-///         http::StatusCode::NotFound => Ok("Page not found".into()),
-///         http::StatusCode::InternalServerError => Ok("Something went wrong".into()),
-///         _ => Ok(res),
+///         http::StatusCode::NotFound => "Page not found".into(),
+///         http::StatusCode::InternalServerError => "Something went wrong".into(),
+///         _ => res,
 ///     }
 /// }));
 /// ```
 #[derive(Debug)]
 pub struct After<F>(pub F);
-impl<State, F, Fut> Middleware<State> for After<F>
+impl<State, F, Fut, I> Middleware<State> for After<F>
 where
     State: Send + Sync + 'static,
     F: Fn(Response) -> Fut + Send + Sync + 'static,
-    Fut: std::future::Future<Output = crate::Result> + Send + Sync,
+    Fut: std::future::Future<Output = I> + Send + Sync,
+    I: Into<Response>,
 {
     fn handle<'a>(
         &'a self,
@@ -98,7 +99,7 @@ where
     ) -> BoxFuture<'a, crate::Result> {
         Box::pin(async move {
             let response = next.run(request).await;
-            (self.0)(response).await
+            Ok((self.0)(response).await.into())
         })
     }
 }

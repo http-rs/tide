@@ -143,7 +143,7 @@ impl Server<()> {
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
     /// let mut app = tide::new();
-    /// app.at("/").get(|_| async { Ok("Hello, world!") });
+    /// app.at("/").get(|_| async { "Hello, world!" });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
     /// # Ok(()) }) }
@@ -186,7 +186,7 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// // Initialize the application with state.
     /// let mut app = tide::with_state(state);
     /// app.at("/").get(|req: Request<State>| async move {
-    ///     Ok(format!("Hello, {}!", &req.state().name))
+    ///     format!("Hello, {}!", &req.state().name)
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
@@ -213,7 +213,7 @@ impl<State: Send + Sync + 'static> Server<State> {
     ///
     /// ```rust,no_run
     /// # let mut app = tide::Server::new();
-    /// app.at("/").get(|_| async { Ok("Hello, world!") });
+    /// app.at("/").get(|_| async { "Hello, world!" });
     /// ```
     ///
     /// A path is comprised of zero or many segments, i.e. non-empty strings
@@ -369,7 +369,7 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// use tide::http::{Url, Method, Request, Response};
     ///
     /// let mut app = tide::new();
-    /// app.at("/").get(|_| async { Ok("hello world") });
+    /// app.at("/").get(|_| async { "hello world" });
     ///
     /// let req = Request::new(Method::Get, Url::parse("https://example.com")?);
     /// let res: Response = app.respond(req).await?;

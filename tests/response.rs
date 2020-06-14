@@ -49,8 +49,9 @@ async fn json_content_type() {
         map.insert(None, 6);
         let mut resp = Response::new(StatusCode::Ok);
         resp.set_body(Body::from_json(&map)?);
-        Ok(resp)
+        tide::Result::Ok(resp)
     });
+
     let req = http::Request::new(
         Method::Get,
         Url::parse("http://localhost/json_content_type").unwrap(),

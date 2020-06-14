@@ -50,7 +50,7 @@ portpicker = "0.1.0"
 surf = { git = "https://github.com/Fishrock123/surf", branch = "deps-http-types-response-optional-error", default-features = false, features = ["h1-client"] }
 serde = { version = "1.0.102", features = ["derive"] }
 criterion = "0.3.1"
-tempdir = "0.3.7"
+tempfile = "3.1.0"
 
 [[test]]
 name = "nested"

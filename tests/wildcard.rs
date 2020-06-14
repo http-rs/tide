@@ -174,7 +174,7 @@ async fn invalid_wildcard() {
 #[async_std::test]
 async fn nameless_wildcard() {
     let mut app = tide::Server::new();
-    app.at("/echo/:").get(|_| async { Ok("") });
+    app.at("/echo/:").get(|_| async { "" });
 
     let req = http::Request::new(
         Method::Get,

@@ -29,7 +29,7 @@
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
 //! #
 //! let mut app = tide::new();
-//! app.at("/").get(|_| async { Ok("Hello, world!") });
+//! app.at("/").get(|_| async { "Hello, world!" });
 //! app.listen("127.0.0.1:8080").await?;
 //! #
 //! # Ok(()) }) }
@@ -41,7 +41,7 @@
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
 //! #
 //! let mut app = tide::new();
-//! app.at("/").get(|req| async { Ok(req) });
+//! app.at("/").get(|req| async { req });
 //! app.listen("127.0.0.1:8080").await?;
 //! #
 //! # Ok(()) }) }
@@ -63,7 +63,7 @@
 //!    counter.count += 1;
 //!    let mut res = Response::new(200);
 //!    res.set_body(Body::from_json(&counter)?);
-//!    Ok(res)
+//!    tide::Result::Ok(res)
 //! });
 //! app.listen("127.0.0.1:8080").await?;
 //! #
@@ -166,7 +166,7 @@
 //! #[async_std::main]
 //! async fn main() -> Result<(), std::io::Error> {
 //!     let mut app = tide::new();
-//!     app.at("/").get(|req: Request<()>| async move { Ok(req.bark()) });
+//!     app.at("/").get(|req: Request<()>| async move { req.bark() });
 //!     app.listen("127.0.0.1:8080").await
 //! }
 //! ```
@@ -233,7 +233,7 @@ pub use http_types::{self as http, Body, Error, Status, StatusCode};
 /// # fn main() -> Result<(), std::io::Error> { block_on(async {
 /// #
 /// let mut app = tide::new();
-/// app.at("/").get(|_| async { Ok("Hello, world!") });
+/// app.at("/").get(|_| async { "Hello, world!" });
 /// app.listen("127.0.0.1:8080").await?;
 /// #
 /// # Ok(()) }) }
@@ -268,7 +268,7 @@ pub fn new() -> server::Server<()> {
 /// // Initialize the application with state.
 /// let mut app = tide::with_state(state);
 /// app.at("/").get(|req: Request<State>| async move {
-///     Ok(format!("Hello, {}!", &req.state().name))
+///     format!("Hello, {}!", &req.state().name)
 /// });
 /// app.listen("127.0.0.1:8080").await?;
 /// #

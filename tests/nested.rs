@@ -7,8 +7,8 @@ mod test_utils;
 #[async_std::test]
 async fn nested() {
     let mut inner = tide::new();
-    inner.at("/foo").get(|_| async { Ok("foo") });
-    inner.at("/bar").get(|_| async { Ok("bar") });
+    inner.at("/foo").get(|_| async { "foo" });
+    inner.at("/bar").get(|_| async { "bar" });
 
     let mut outer = tide::new();
     // Nest the inner app on /foo
@@ -33,7 +33,7 @@ async fn nested() {
 
 #[async_std::test]
 async fn nested_middleware() {
-    let echo_path = |req: tide::Request<()>| async move { Ok(req.url().path().to_string()) };
+    let echo_path = |req: tide::Request<()>| async move { req.url().path().to_string() };
 
     #[derive(Debug, Clone, Default)]
     pub struct TestMiddleware;
@@ -97,11 +97,10 @@ async fn nested_middleware() {
 async fn nested_with_different_state() {
     let mut outer = tide::new();
     let mut inner = tide::with_state(42);
-    inner.at("/").get(|req: tide::Request<i32>| async move {
-        let num = req.state();
-        Ok(format!("the number is {}", num))
-    });
-    outer.at("/").get(|_| async { Ok("Hello, world!") });
+    inner
+        .at("/")
+        .get(|req: tide::Request<i32>| async move { format!("the number is {}", req.state()) });
+    outer.at("/").get(|_| async { "Hello, world!" });
     outer.at("/foo").nest(inner);
 
     let req = Request::new(Method::Get, Url::parse("http://example.com/foo").unwrap());

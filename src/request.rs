@@ -48,12 +48,12 @@ impl<State> Request<State> {
     /// # use async_std::task::block_on;
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
-    /// use tide::Request;
+    /// use tide::{Request, Response};
     ///
     /// let mut app = tide::new();
     /// app.at("/").get(|req: Request<()>| async move {
     ///     assert_eq!(req.method(), http_types::Method::Get);
-    ///     Ok("")
+    ///     Response::new(200)
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
@@ -72,12 +72,12 @@ impl<State> Request<State> {
     /// # use async_std::task::block_on;
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
-    /// use tide::Request;
+    /// use tide::{Request, Response};
     ///
     /// let mut app = tide::new();
     /// app.at("/").get(|req: Request<()>| async move {
     ///     assert_eq!(req.url(), &"/".parse::<tide::http::Url>().unwrap());
-    ///     Ok("")
+    ///     Response::new(200)
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
@@ -96,12 +96,12 @@ impl<State> Request<State> {
     /// # use async_std::task::block_on;
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
-    /// use tide::Request;
+    /// use tide::{Request, Response};
     ///
     /// let mut app = tide::new();
     /// app.at("/").get(|req: Request<()>| async move {
     ///     assert_eq!(req.version(), Some(http_types::Version::Http1_1));
-    ///     Ok("")
+    ///     Response::new(200)
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
@@ -167,12 +167,12 @@ impl<State> Request<State> {
     /// # use async_std::task::block_on;
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
-    /// use tide::Request;
+    /// use tide::{Request, Response};
     ///
     /// let mut app = tide::new();
     /// app.at("/").get(|req: Request<()>| async move {
     ///     assert_eq!(req.header("X-Forwarded-For").unwrap(), "127.0.0.1");
-    ///     Ok("")
+    ///     Response::new(200)
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
@@ -316,12 +316,12 @@ impl<State> Request<State> {
     /// # use async_std::task::block_on;
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
-    /// use tide::Request;
+    /// use tide::{Request, Response};
     ///
     /// let mut app = tide::new();
     /// app.at("/").get(|mut req: Request<()>| async move {
     ///     let _body: Vec<u8> = req.body_bytes().await.unwrap();
-    ///     Ok("")
+    ///     Response::new(200)
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
@@ -350,12 +350,12 @@ impl<State> Request<State> {
     /// # use async_std::task::block_on;
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
-    /// use tide::Request;
+    /// use tide::{Request, Response};
     ///
     /// let mut app = tide::new();
     /// app.at("/").get(|mut req: Request<()>| async move {
     ///     let _body: String = req.body_string().await.unwrap();
-    ///     Ok("")
+    ///     Response::new(200)
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #

@@ -4,11 +4,7 @@ use tide::router::Router;
 
 fn criterion_benchmark(c: &mut Criterion) {
     let mut router = Router::<()>::new();
-    router.add(
-        "hello",
-        Method::Get,
-        Box::new(|_| async { Ok("hello world") }),
-    );
+    router.add("hello", Method::Get, Box::new(|_| async { "hello world" }));
 
     c.bench_function("route-match", |b| {
         b.iter(|| black_box(router.route("/hello", Method::Get)))

@@ -22,10 +22,10 @@ mod unix_tests {
                         "peer_addr": req.peer_addr().unwrap(),
                         "local_addr": req.local_addr().unwrap()
                     }));
-                    Ok(res)
+                    res
                 });
                 app.listen_unix(sock_path).await?;
-                http_types::Result::Ok(())
+                tide::Result::Ok(())
             });
 
             let client = task::spawn(async move {
