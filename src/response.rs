@@ -258,14 +258,18 @@ impl Into<http::Response> for Response {
     }
 }
 
+impl From<http::Body> for Response {
+    fn from(body: http::Body) -> Self {
+        let mut res = Response::new(200);
+        res.set_body(body);
+        res
+    }
+}
+
 impl From<serde_json::Value> for Response {
     fn from(json_value: serde_json::Value) -> Self {
         Body::from_json(&json_value)
-            .map(|body| {
-                let mut res = Response::new(200);
-                res.set_body(body);
-                res
-            })
+            .map(|body| body.into())
             .unwrap_or_else(|_| Response::new(StatusCode::InternalServerError))
     }
 }
@@ -281,23 +285,13 @@ impl From<http::Response> for Response {
 
 impl From<String> for Response {
     fn from(s: String) -> Self {
-        let mut res = http_types::Response::new(StatusCode::Ok);
-        res.set_body(s);
-        Self {
-            res,
-            cookie_events: vec![],
-        }
+        Body::from_string(s).into()
     }
 }
 
 impl<'a> From<&'a str> for Response {
     fn from(s: &'a str) -> Self {
-        let mut res = http_types::Response::new(StatusCode::Ok);
-        res.set_body(String::from(s));
-        Self {
-            res,
-            cookie_events: vec![],
-        }
+        Body::from_string(String::from(s)).into()
     }
 }
 

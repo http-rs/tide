@@ -4,7 +4,7 @@ use tide::{Body, Response, StatusCode};
 fn main() -> Result<(), std::io::Error> {
     task::block_on(async {
         let mut app = tide::new();
-        app.at("/").get(|_| async move {
+        app.at("/").get(|_| async {
             let mut res = Response::new(StatusCode::Ok);
             res.set_body(Body::from_file(file!()).await.unwrap());
             Ok(res)
