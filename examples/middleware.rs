@@ -3,7 +3,8 @@ use std::pin::Pin;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use tide::http::mime;
-use tide::{After, Before, Middleware, Next, Request, Response, Result, StatusCode};
+use tide::utils::{After, Before};
+use tide::{Middleware, Next, Request, Response, Result, StatusCode};
 
 #[derive(Debug)]
 struct User {
