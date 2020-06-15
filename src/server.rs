@@ -133,6 +133,12 @@ pub struct Server<State> {
     middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
 }
 
+fn is_transient_error(e: &io::Error) -> bool {
+    e.kind() == io::ErrorKind::ConnectionRefused
+        || e.kind() == io::ErrorKind::ConnectionAborted
+        || e.kind() == io::ErrorKind::ConnectionReset
+}
+
 impl Server<()> {
     /// Create a new Tide server.
     ///
@@ -276,8 +282,7 @@ impl<State: Send + Sync + 'static> Server<State> {
     }
 
     #[cfg(feature = "h1-server")]
-    async fn handle_tcp(&self, stream: io::Result<async_std::net::TcpStream>) -> crate::Result<()> {
-        let stream = stream?;
+    async fn handle_tcp(&self, stream: async_std::net::TcpStream) -> crate::Result<()> {
         let this = self.clone();
         let local_addr = stream.local_addr().ok();
         let peer_addr = stream.peer_addr().ok();
@@ -308,6 +313,17 @@ impl<State: Send + Sync + 'static> Server<State> {
 
         let mut incoming = listener.incoming();
         while let Some(stream) = incoming.next().await {
+            let stream = match stream {
+                Err(ref e) if is_transient_error(e) => continue,
+                Err(error) => {
+                    let delay = std::time::Duration::from_millis(500);
+                    crate::log::error!("Error: {}. Pausing for {:?}.", error, delay);
+                    task::sleep(delay).await;
+                    continue;
+                }
+                Ok(s) => s,
+            };
+
             if let Err(error) = self.handle_tcp(stream).await {
                 log::error!("async-h1 error", { error: error.to_string() });
             }
@@ -336,6 +352,17 @@ impl<State: Send + Sync + 'static> Server<State> {
 
         let mut incoming = listener.incoming();
         while let Some(stream) = incoming.next().await {
+            let stream = match stream {
+                Err(ref e) if is_transient_error(e) => continue,
+                Err(error) => {
+                    let delay = std::time::Duration::from_millis(500);
+                    crate::log::error!("Error: {}. Pausing for {:?}.", error, delay);
+                    task::sleep(delay).await;
+                    continue;
+                }
+                Ok(s) => s,
+            };
+
             if let Err(error) = self.handle_unix(stream).await {
                 log::error!("async-h1 error", { error: error.to_string() });
             }
@@ -344,11 +371,7 @@ impl<State: Send + Sync + 'static> Server<State> {
     }
 
     #[cfg(all(feature = "h1-server", unix))]
-    async fn handle_unix(
-        &self,
-        stream: io::Result<async_std::os::unix::net::UnixStream>,
-    ) -> crate::Result<()> {
-        let stream = stream?;
+    async fn handle_unix(&self, stream: async_std::os::unix::net::UnixStream) -> crate::Result<()> {
         let this = self.clone();
         let local_addr = stream.local_addr().ok().map(|addr| format!("{:?}", addr));
         let peer_addr = stream.peer_addr().ok().map(|addr| format!("{:?}", addr));
