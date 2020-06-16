@@ -1,11 +1,8 @@
+mod test_utils;
 use http_types::headers::HeaderName;
 use std::convert::TryInto;
-use tide::http::{self, url::Url, Method};
+use test_utils::{BoxFuture, ServerTestingExt};
 use tide::Middleware;
-
-use test_utils::BoxFuture;
-
-mod test_utils;
 
 #[derive(Debug)]
 struct TestMiddleware(HeaderName, &'static str);
@@ -50,20 +47,11 @@ async fn route_middleware() {
         .reset_middleware()
         .put(echo_path);
 
-    let req = http::Request::new(Method::Get, Url::parse("http://localhost/foo").unwrap());
-    let res: http::Response = app.respond(req).await.unwrap();
-    assert_eq!(res["X-Foo"], "foo");
+    assert_eq!(app.get("/foo").await["X-Foo"], "foo");
+    assert_eq!(app.post("/foo").await["X-Foo"], "foo");
+    assert!(app.put("/foo").await.header("X-Foo").is_none());
 
-    let req = http::Request::new(Method::Post, Url::parse("http://localhost/foo").unwrap());
-    let res: http::Response = app.respond(req).await.unwrap();
-    assert_eq!(res["X-Foo"], "foo");
-
-    let req = http::Request::new(Method::Put, Url::parse("http://localhost/foo").unwrap());
-    let res: http::Response = app.respond(req).await.unwrap();
-    assert!(res.header("X-Foo").is_none());
-
-    let req = http::Request::new(Method::Get, Url::parse("http://localhost/foo/bar").unwrap());
-    let res: http::Response = app.respond(req).await.unwrap();
+    let res = app.get("/foo/bar").await;
     assert_eq!(res["X-Foo"], "foo");
     assert_eq!(res["x-bar"], "bar");
 }
@@ -79,15 +67,12 @@ async fn app_and_route_middleware() {
         .middleware(TestMiddleware::with_header_name("X-Bar", "bar"))
         .get(echo_path);
 
-    let req = http::Request::new(Method::Get, Url::parse("http://localhost/foo").unwrap());
-    let res: http::Response = app.respond(req).await.unwrap();
+    let res = app.get("/foo").await;
     assert_eq!(res["X-Root"], "root");
     assert_eq!(res["x-foo"], "foo");
-
     assert!(res.header("x-bar").is_none());
 
-    let req = http::Request::new(Method::Get, Url::parse("http://localhost/bar").unwrap());
-    let res: http::Response = app.respond(req).await.unwrap();
+    let res = app.get("/bar").await;
     assert_eq!(res["X-Root"], "root");
     assert!(res.header("x-foo").is_none());
     assert_eq!(res["X-Bar"], "bar");
@@ -111,16 +96,14 @@ async fn nested_app_with_route_middleware() {
         .middleware(TestMiddleware::with_header_name("X-Bar", "bar"))
         .nest(inner);
 
-    let req = http::Request::new(Method::Get, Url::parse("http://localhost/foo").unwrap());
-    let res: http::Response = app.respond(req).await.unwrap();
+    let res = app.get("/foo").await;
     assert_eq!(res["X-Root"], "root");
     assert!(res.header("X-Inner").is_none());
     assert_eq!(res["X-Foo"], "foo");
     assert!(res.header("X-Bar").is_none());
     assert!(res.header("X-Baz").is_none());
 
-    let req = http::Request::new(Method::Get, Url::parse("http://localhost/bar/baz").unwrap());
-    let res: http::Response = app.respond(req).await.unwrap();
+    let res = app.get("/bar/baz").await;
     assert_eq!(res["X-Root"], "root");
     assert_eq!(res["X-Inner"], "inner");
     assert!(res.header("X-Foo").is_none());
@@ -138,11 +121,7 @@ async fn subroute_not_nested() {
         .middleware(TestMiddleware::with_header_name("X-Child", "child"))
         .get(echo_path);
 
-    let req = http::Request::new(
-        Method::Get,
-        Url::parse("http://localhost/parent/child").unwrap(),
-    );
-    let res: http::Response = app.respond(req).await.unwrap();
+    let res = app.get("/parent/child").await;
     assert!(res.header("X-Parent").is_none());
     assert_eq!(res["x-child"], "child");
 }
