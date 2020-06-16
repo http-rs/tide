@@ -193,7 +193,6 @@
 
 mod cookies;
 mod endpoint;
-mod fs;
 mod middleware;
 mod redirect;
 mod request;
@@ -207,6 +206,7 @@ pub mod router;
 mod server;
 
 pub mod convert;
+pub mod fs;
 pub mod log;
 pub mod prelude;
 pub mod security;
