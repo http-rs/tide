@@ -80,11 +80,11 @@ impl<'a, State: 'static> Route<'a, State> {
     /// Apply the given middleware to the current route.
     pub fn middleware<M>(&mut self, middleware: M) -> &mut Self
     where
-        M: Middleware<State> + Debug,
+        M: Middleware<State>,
     {
         log::trace!(
-            "Adding middleware {:?} to route {:?}",
-            middleware,
+            "Adding middleware {} to route {:?}",
+            middleware.name(),
             self.path
         );
         self.middleware.push(Arc::new(middleware));
