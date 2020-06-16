@@ -1,7 +1,7 @@
 mod test_utils;
-
-use tide::http::{self, headers, mime, StatusCode};
-use tide::Response;
+use test_utils::ServerTestingExt;
+use tide::http::{headers, mime};
+use tide::{Response, StatusCode};
 
 #[async_std::test]
 async fn test_status() {
@@ -38,7 +38,6 @@ async fn string_content_type() {
 #[async_std::test]
 async fn json_content_type() {
     use std::collections::BTreeMap;
-    use tide::http::{Method, Url};
     use tide::Body;
 
     let mut app = tide::new();
@@ -51,14 +50,10 @@ async fn json_content_type() {
         resp.set_body(Body::from_json(&map)?);
         Ok(resp)
     });
-    let req = http::Request::new(
-        Method::Get,
-        Url::parse("http://localhost/json_content_type").unwrap(),
-    );
-    let mut resp: http::Response = app.respond(req).await.unwrap();
+
+    let mut resp = app.get("/json_content_type").await;
     assert_eq!(resp.status(), StatusCode::InternalServerError);
-    let body = resp.take_body().into_bytes().await.unwrap();
-    assert_eq!(body, b"");
+    assert_eq!(resp.body_string().await.unwrap(), "");
 
     let mut resp = async move {
         let mut map = BTreeMap::new();
@@ -79,7 +74,7 @@ async fn json_content_type() {
 fn from_response() {
     let msg = "This is an error";
 
-    let error = http::Error::from_str(StatusCode::NotFound, msg);
+    let error = tide::Error::from_str(StatusCode::NotFound, msg);
     let mut res: Response = error.into();
 
     assert!(res.error().is_some());
