@@ -156,7 +156,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
                 return Ok(self.build_preflight_response(&origins).into());
             }
 
-            let mut response: http_types::Response = next.run(req).await?.into();
+            let mut response = next.run(req).await?;
 
             response.insert_header(
                 headers::ACCESS_CONTROL_ALLOW_ORIGIN,
@@ -177,7 +177,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
                 );
             }
 
-            Ok(response.into())
+            Ok(response)
         })
     }
 }
@@ -363,5 +363,22 @@ mod test {
         let res: crate::http::Response = app.respond(req).await.unwrap();
 
         assert_eq!(res.status(), 401);
+    }
+
+    #[async_std::test]
+    async fn retain_cookies() {
+        let mut app = crate::Server::new();
+        app.middleware(CorsMiddleware::new().allow_origin(ALLOW_ORIGIN));
+        app.at(ENDPOINT).get(|_| async {
+            let mut res = crate::Response::new(http_types::StatusCode::Ok);
+            res.insert_cookie(http_types::Cookie::new("foo", "bar"));
+            Ok(res)
+        });
+
+        let mut req = http_types::Request::new(http_types::Method::Get, endpoint_url());
+        req.insert_header(http_types::headers::ORIGIN, ALLOW_ORIGIN);
+        let res: crate::http::Response = app.respond(req).await.unwrap();
+
+        assert_eq!(res[http_types::headers::SET_COOKIE][0], "foo=bar");
     }
 }
