@@ -282,19 +282,21 @@ impl<State: Send + Sync + 'static> Server<State> {
     }
 
     #[cfg(feature = "h1-server")]
-    async fn handle_tcp(&self, stream: async_std::net::TcpStream) -> crate::Result<()> {
-        let this = self.clone();
+    fn handle_tcp(self, stream: async_std::net::TcpStream) {
         let local_addr = stream.local_addr().ok();
         let peer_addr = stream.peer_addr().ok();
         task::spawn(async move {
-            async_h1::accept(stream, |mut req| async {
+            let result = async_h1::accept(stream, |mut req| async {
                 req.set_local_addr(local_addr);
                 req.set_peer_addr(peer_addr);
-                this.respond(req).await
+                self.respond(req).await
             })
-            .await
-        })
-        .await
+            .await;
+
+            if let Err(error) = result {
+                log::error!("async-h1 error", { error: error.to_string() });
+            }
+        });
     }
 
     /// Asynchronously serve the app at the given address.
@@ -313,7 +315,7 @@ impl<State: Send + Sync + 'static> Server<State> {
 
         let mut incoming = listener.incoming();
         while let Some(stream) = incoming.next().await {
-            let stream = match stream {
+            match stream {
                 Err(ref e) if is_transient_error(e) => continue,
                 Err(error) => {
                     let delay = std::time::Duration::from_millis(500);
@@ -321,12 +323,8 @@ impl<State: Send + Sync + 'static> Server<State> {
                     task::sleep(delay).await;
                     continue;
                 }
-                Ok(s) => s,
+                Ok(stream) => self.clone().handle_tcp(stream),
             };
-
-            if let Err(error) = self.handle_tcp(stream).await {
-                log::error!("async-h1 error", { error: error.to_string() });
-            }
         }
 
         Ok(())
@@ -352,7 +350,7 @@ impl<State: Send + Sync + 'static> Server<State> {
 
         let mut incoming = listener.incoming();
         while let Some(stream) = incoming.next().await {
-            let stream = match stream {
+            match stream {
                 Err(ref e) if is_transient_error(e) => continue,
                 Err(error) => {
                     let delay = std::time::Duration::from_millis(500);
@@ -360,30 +358,29 @@ impl<State: Send + Sync + 'static> Server<State> {
                     task::sleep(delay).await;
                     continue;
                 }
-                Ok(s) => s,
+                Ok(stream) => self.clone().handle_unix(stream),
             };
-
-            if let Err(error) = self.handle_unix(stream).await {
-                log::error!("async-h1 error", { error: error.to_string() });
-            }
         }
         Ok(())
     }
 
     #[cfg(all(feature = "h1-server", unix))]
-    async fn handle_unix(&self, stream: async_std::os::unix::net::UnixStream) -> crate::Result<()> {
-        let this = self.clone();
-        let local_addr = stream.local_addr().ok().map(|addr| format!("{:?}", addr));
-        let peer_addr = stream.peer_addr().ok().map(|addr| format!("{:?}", addr));
+    fn handle_unix(self, stream: async_std::os::unix::net::UnixStream) {
         task::spawn(async move {
-            async_h1::accept(stream, |mut req| async {
+            let local_addr = stream.local_addr().ok().map(|addr| format!("{:?}", addr));
+            let peer_addr = stream.peer_addr().ok().map(|addr| format!("{:?}", addr));
+
+            let result = async_h1::accept(stream, |mut req| async {
                 req.set_local_addr(local_addr.as_ref());
                 req.set_peer_addr(peer_addr.as_ref());
-                this.respond(req).await
+                self.respond(req).await
             })
-            .await
-        })
-        .await
+            .await;
+
+            if let Err(error) = result {
+                log::error!("async-h1 error", { error: error.to_string() });
+            }
+        });
     }
 
     /// Respond to a `Request` with a `Response`.
