@@ -25,13 +25,6 @@ async fn echo_path(req: Request<()>) -> Result<String, tide::Error> {
     }
 }
 
-async fn echo_empty(req: Request<()>) -> Result<String, tide::Error> {
-    match req.param::<String>("") {
-        Ok(path) => Ok(path),
-        Err(err) => Err(tide::Error::new(StatusCode::BadRequest, err)),
-    }
-}
-
 #[async_std::test]
 async fn wildcard() {
     let mut app = tide::Server::new();
@@ -223,13 +216,29 @@ async fn nameless_internal_wildcard() {
 #[async_std::test]
 async fn nameless_internal_wildcard2() {
     let mut app = tide::new();
-    app.at("/echo/:/:path").get(echo_empty);
+    app.at("/echo/:/:path").get(|req: Request<()>| async move {
+        assert_eq!(req.param::<String>("path")?, "two");
+        Ok("")
+    });
 
     let req = http::Request::new(
         Method::Get,
         Url::parse("http://localhost/echo/one/two").unwrap(),
     );
-    let mut res: http::Response = app.respond(req).await.unwrap();
-    assert_eq!(res.status(), StatusCode::Ok);
-    assert_eq!(&res.body_string().await.unwrap(), "one");
+    let _: tide::Response = app.respond(req).await.unwrap();
+}
+
+#[async_std::test]
+async fn ambiguous_router_wildcard_vs_star() {
+    let mut app = tide::new();
+    app.at("/:one/:two").get(|_| async { Ok("one/two") });
+    app.at("/posts/*").get(|_| async { Ok("posts/*") });
+    let req = http::Request::new(
+        Method::Get,
+        Url::parse("http://localhost/posts/10").unwrap(),
+    );
+
+    let mut response: http_types::Response = app.respond(req).await.unwrap();
+    let body_string = response.body_string().await.unwrap();
+    assert_eq!(body_string, "posts/*");
 }
