@@ -27,11 +27,11 @@ pub use middleware::LogMiddleware;
 /// Start logging.
 pub fn start() {
     femme::start();
-    crate::log::info!("Logger started", { level: "Info" });
+    info!("Logger started", { level: "Info" });
 }
 
 /// Start logging with a log level.
 pub fn with_level(level: LevelFilter) {
     femme::with_level(level);
-    crate::log::info!("Logger started", { level: format!("{}", level) });
+    info!("Logger started", { level: format!("{}", level) });
 }
