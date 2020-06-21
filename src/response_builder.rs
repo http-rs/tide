@@ -82,9 +82,3 @@ impl Into<Response> for ResponseBuilder {
         self.build()
     }
 }
-
-impl Into<crate::Result> for ResponseBuilder {
-    fn into(self) -> crate::Result {
-        Ok(self.build())
-    }
-}
