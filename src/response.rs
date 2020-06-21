@@ -43,7 +43,6 @@ impl Response {
     }
 
     /// Set the statuscode.
-    #[must_use]
     pub fn set_status(&mut self, status: crate::StatusCode) {
         self.res.set_status(status);
     }
