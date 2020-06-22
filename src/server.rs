@@ -427,22 +427,7 @@ impl<State: Send + Sync + 'static> Server<State> {
             next_middleware: &middleware,
         };
 
-        let mut res = next.run(req).await;
-        if res.len().is_some() {
-            let res: http_types::Response = res.into();
-            return Ok(res.into());
-        }
-
-        if let Some(err) = res.error() {
-            // Only send the message if it is a non-500 range error. All
-            // errors default to 500 by default, so sending the error
-            // body is opt-in at the call site.
-            if !err.status().is_server_error() {
-                let msg = err.to_string();
-                res.set_body(msg);
-            }
-        }
-
+        let res = next.run(req).await;
         let res: http_types::Response = res.into();
         Ok(res.into())
     }
