@@ -67,11 +67,11 @@ impl<State: Send + Sync + 'static> MultiListener<State> {
     /// # let app = tide::new();
     /// app.listen(
     ///     MultiListener::new()
-    ///         .with("127.0.0.1:8080")
-    ///         .with(async_std::net::TcpListener::bind("127.0.0.1:8081").await?),
+    ///         .with_listener("127.0.0.1:8080")
+    ///         .with_listener(async_std::net::TcpListener::bind("127.0.0.1:8081").await?),
     /// ).await?;
     /// #  Ok(()) }) }
-    pub fn with<TL: ToListener<State>>(mut self, listener: TL) -> Self {
+    pub fn with_listener<TL: ToListener<State>>(mut self, listener: TL) -> Self {
         self.add(listener).expect("Unable to add listener");
         self
     }
