@@ -98,19 +98,10 @@ impl<State: Send + Sync + 'static> MultiListener<State> {
 }
 
 impl<State: Send + Sync + 'static> Listener<State> for MultiListener<State> {
-    fn connect<'a>(&'a mut self) -> BoxFuture<'a, io::Result<()>> {
-        Box::pin(async move {
-            for listener in self.0.iter_mut() {
-                listener.connect().await?;
-            }
-            Ok(())
-        })
-    }
-
-    fn listen<'a>(&'a self, app: Server<State>) -> BoxFuture<'a, io::Result<()>> {
+    fn listen<'a>(&'a mut self, app: Server<State>) -> BoxFuture<'a, io::Result<()>> {
         let mut fut: Option<BoxFuture<'a, io::Result<()>>> = None;
 
-        for listener in self.0.iter() {
+        for listener in self.0.iter_mut() {
             let app = app.clone();
             let listened = listener.listen(app);
             if let Some(f) = fut {

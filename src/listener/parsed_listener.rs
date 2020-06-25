@@ -23,15 +23,7 @@ impl Display for ParsedListener {
 }
 
 impl<State: Send + Sync + 'static> Listener<State> for ParsedListener {
-    fn connect<'a>(&'a mut self) -> BoxFuture<'a, io::Result<()>> {
-        match self {
-            #[cfg(unix)]
-            Self::Unix(u) => Listener::<State>::connect(u),
-            Self::Tcp(t) => Listener::<State>::connect(t),
-        }
-    }
-
-    fn listen<'a>(&'a self, app: Server<State>) -> BoxFuture<'a, io::Result<()>> {
+    fn listen<'a>(&'a mut self, app: Server<State>) -> BoxFuture<'a, io::Result<()>> {
         match self {
             #[cfg(unix)]
             Self::Unix(u) => u.listen(app),

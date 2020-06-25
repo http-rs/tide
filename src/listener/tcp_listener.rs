@@ -35,6 +35,13 @@ impl TcpListener {
             )),
         }
     }
+
+    async fn connect(&mut self) -> io::Result<()> {
+        if let Self::FromAddrs(addrs, listener @ None) = self {
+            *listener = Some(net::TcpListener::bind(addrs.as_slice()).await?);
+        }
+        Ok(())
+    }
 }
 
 fn handle_tcp<State: Send + Sync + 'static>(app: Server<State>, stream: TcpStream) {
@@ -55,18 +62,12 @@ fn handle_tcp<State: Send + Sync + 'static>(app: Server<State>, stream: TcpStrea
 }
 
 impl<State: Send + Sync + 'static> Listener<State> for TcpListener {
-    fn connect<'a>(&'a mut self) -> BoxFuture<'a, io::Result<()>> {
+    fn listen<'a>(&'a mut self, app: Server<State>) -> BoxFuture<'a, async_std::io::Result<()>> {
         Box::pin(async move {
-            if let Self::FromAddrs(addrs, listener @ None) = self {
-                *listener = Some(net::TcpListener::bind(addrs.as_slice()).await?);
-            }
-            Ok(())
-        })
-    }
-
-    fn listen<'a>(&'a self, app: Server<State>) -> BoxFuture<'a, async_std::io::Result<()>> {
-        Box::pin(async move {
+            self.connect().await?;
             let listener = self.listener()?;
+            crate::log::info!("listening on {}", self);
+
             let mut incoming = listener.incoming();
 
             while let Some(stream) = incoming.next().await {
