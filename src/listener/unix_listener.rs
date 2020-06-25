@@ -35,6 +35,13 @@ impl UnixListener {
             )),
         }
     }
+
+    async fn connect(&mut self) -> io::Result<()> {
+        if let Self::FromPath(path, listener @ None) = self {
+            *listener = Some(net::UnixListener::bind(path).await?);
+        }
+        Ok(())
+    }
 }
 
 fn unix_socket_addr_to_string(result: io::Result<SocketAddr>) -> Option<String> {
@@ -65,17 +72,10 @@ fn handle_unix<State: Send + Sync + 'static>(app: Server<State>, stream: UnixStr
 }
 
 impl<State: Send + Sync + 'static> Listener<State> for UnixListener {
-    fn connect<'a>(&'a mut self) -> BoxFuture<'a, io::Result<()>> {
+    fn listen<'a>(&'a mut self, app: Server<State>) -> BoxFuture<'a, io::Result<()>> {
         Box::pin(async move {
-            if let Self::FromPath(path, listener @ None) = self {
-                *listener = Some(net::UnixListener::bind(path).await?);
-            }
-            Ok(())
-        })
-    }
-
-    fn listen<'a>(&'a self, app: Server<State>) -> BoxFuture<'a, io::Result<()>> {
-        Box::pin(async move {
+            self.connect().await?;
+            crate::log::info!("listening on {}", self);
             let listener = self.listener()?;
             let mut incoming = listener.incoming();
 

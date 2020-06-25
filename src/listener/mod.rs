@@ -29,12 +29,7 @@ pub trait Listener<State: 'static>:
     /// This is the primary entrypoint for the Listener trait. listen
     /// is called exactly once, and is expected to spawn tasks for
     /// each incoming connection.
-    fn listen<'a>(&'a self, app: Server<State>) -> BoxFuture<'a, io::Result<()>>;
-
-    /// Connect provides an opportunity to resolve any addresses, and
-    /// mutate self. This is called before
-    /// [listen](crate::listener::Listener::listen).
-    fn connect<'a>(&'a mut self) -> BoxFuture<'a, io::Result<()>>;
+    fn listen<'a>(&'a mut self, app: Server<State>) -> BoxFuture<'a, io::Result<()>>;
 }
 
 pub(crate) fn is_transient_error(e: &io::Error) -> bool {

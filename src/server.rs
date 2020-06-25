@@ -175,10 +175,7 @@ impl<State: Send + Sync + 'static> Server<State> {
 
     /// Asynchronously serve the app with the supplied listener. For more details, see [Listener] and [ToListener]
     pub async fn listen<TL: ToListener<State>>(self, listener: TL) -> io::Result<()> {
-        let mut listener = listener.to_listener()?;
-        listener.connect().await?;
-        log::info!("Server listening on {}", listener);
-        listener.listen(self).await
+        listener.to_listener()?.listen(self).await
     }
 
     /// Respond to a `Request` with a `Response`.
