@@ -78,7 +78,7 @@ impl<State: Send + Sync + 'static> ToListener<State> for Url {
                         self.path()
                     ));
 
-                    return Ok(ParsedListener::Unix(UnixListener::from_path(path)));
+                    Ok(ParsedListener::Unix(UnixListener::from_path(path)))
                 }
 
                 #[cfg(not(unix))]
@@ -132,7 +132,7 @@ impl<State: Send + Sync + 'static> ToListener<State> for &str {
                             format!("unable to parse listener from `{}`", self),
                         )
                     })
-                    .and_then(|url| ToListener::<State>::to_listener(url))
+                    .and_then(ToListener::<State>::to_listener)
             })
     }
 }
@@ -230,7 +230,11 @@ impl<State: Send + Sync + 'static> ToListener<State> for std::net::SocketAddr {
 impl<TL: ToListener<State>, State: Send + Sync + 'static> ToListener<State> for Vec<TL> {
     type Listener = MultiListener<State>;
     fn to_listener(self) -> io::Result<Self::Listener> {
-        MultiListener::from_iter(self)
+        let mut multi = MultiListener::new();
+        for listener in self {
+            multi.add(listener)?;
+        }
+        Ok(multi)
     }
 }
 
