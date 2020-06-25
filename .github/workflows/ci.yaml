@@ -66,7 +66,7 @@ jobs:
         args: --all --features unstable
 
   check_fmt_and_docs:
-    name: Checking fmt and docs
+    name: Checking fmt, clippy, and docs
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
@@ -78,8 +78,11 @@ jobs:
 
     - name: setup
       run: |
-        rustup component add rustfmt
+        rustup component add clippy rustfmt
         rustc --version
+
+    - name: clippy
+      run: cargo clippy -- -D warnings
 
     - name: fmt
       run: cargo fmt --all -- --check
