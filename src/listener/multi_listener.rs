@@ -61,7 +61,7 @@ impl<State: Send + Sync + 'static> MultiListener<State> {
         Ok(())
     }
 
-    /// `MultiListener::with` allows for chained construction of a MultiListener:
+    /// `MultiListener::with_listener` allows for chained construction of a MultiListener:
     /// ```rust,no_run
     /// # use tide::listener::MultiListener;
     /// # fn main() -> std::io::Result<()> { async_std::task::block_on(async move {
