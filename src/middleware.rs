@@ -51,9 +51,15 @@ impl<'a, State: Send + Sync + 'static> Next<'a, State> {
         Box::pin(async move {
             if let Some((current, next)) = self.next_middleware.split_first() {
                 self.next_middleware = next;
-                current.handle(req, self).await.into()
+                match current.handle(req, self).await {
+                    Ok(request) => request,
+                    Err(err) => err.into(),
+                }
             } else {
-                self.endpoint.call(req).await.into()
+                match self.endpoint.call(req).await {
+                    Ok(request) => request,
+                    Err(err) => err.into(),
+                }
             }
         })
     }

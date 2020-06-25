@@ -388,15 +388,6 @@ impl From<Error> for Response {
     }
 }
 
-impl From<crate::Result> for Response {
-    fn from(result: crate::Result) -> Self {
-        match result {
-            Ok(res) => res,
-            Err(err) => err.into(),
-        }
-    }
-}
-
 impl From<http::Response> for Response {
     fn from(res: http::Response) -> Self {
         Self {
