@@ -33,6 +33,7 @@ use async_std::prelude::*;
 ///}
 ///```
 
+#[derive(Default)]
 pub struct MultiListener<State>(Vec<Box<dyn Listener<State>>>);
 
 impl<State: Send + Sync + 'static> MultiListener<State> {
@@ -74,26 +75,6 @@ impl<State: Send + Sync + 'static> MultiListener<State> {
     pub fn with_listener<TL: ToListener<State>>(mut self, listener: TL) -> Self {
         self.add(listener).expect("Unable to add listener");
         self
-    }
-
-    /// from_iter allows for the construction of a new MultiListener
-    /// from collections of [`ToListener`](ToListener)s.
-    /// ```rust
-    /// # use tide::listener::MultiListener;
-    /// # fn main() -> std::io::Result<()> {
-    /// let mut multi = MultiListener::from_iter(vec!["127.0.0.1:8000", "tcp://localhost:8001"])?;
-    /// if cfg!(unix) {
-    ///     multi.add("unix:///var/run/tide/socket")?;
-    /// }
-    /// # std::mem::drop(tide::new().listen(multi)); // for the State generic
-    /// # Ok(()) }
-    /// ```
-    pub fn from_iter<TL: ToListener<State>>(vec: impl IntoIterator<Item = TL>) -> io::Result<Self> {
-        let mut multi = Self::new();
-        for listener in vec {
-            multi.add(listener)?;
-        }
-        Ok(multi)
     }
 }
 
