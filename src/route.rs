@@ -116,6 +116,8 @@ impl<'a, State: 'static> Route<'a, State> {
     /// Each file will be streamed from disk, and a mime type will be determined
     /// based on magic bytes.
     ///
+    /// Note: this does not serve "index" files. See [serve_index].
+    ///
     /// # Examples
     ///
     /// Serve the contents of the local directory `./public/images/*` from
@@ -135,6 +137,33 @@ impl<'a, State: 'static> Route<'a, State> {
         let dir = dir.as_ref().to_owned().canonicalize()?;
         let prefix = self.path().to_string();
         self.at("*").get(ServeDir::new(prefix, dir));
+        Ok(())
+    }
+
+    /// Serve a index file statically.
+    ///
+    /// The file will be streamed from disk, and a mime type will be determined
+    /// based on magic bytes.
+    ///
+    /// # Examples
+    ///
+    /// Serve the index file at `./public/images/index.json` from
+    /// `localhost:8080/images/`.
+    ///
+    /// ```no_run
+    /// #[async_std::main]
+    /// async fn main() -> Result<(), std::io::Error> {
+    ///     let mut app = tide::new();
+    ///     app.at("/public/images").serve_index("images/index.json")?;
+    ///     app.listen("127.0.0.1:8080").await?;
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn serve_index(&mut self, dir: impl AsRef<Path>) -> io::Result<()> {
+        // Verify path exists, return error if it doesn't.
+        let dir = dir.as_ref().to_owned().canonicalize()?;
+        let prefix = self.path().to_string();
+        self.at("/").get(ServeDir::new(prefix, dir));
         Ok(())
     }
 
