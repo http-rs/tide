@@ -118,22 +118,18 @@ impl<State: Send + Sync + 'static> ToListener<State> for &str {
     type Listener = ParsedListener;
 
     fn to_listener(self) -> io::Result<Self::Listener> {
-        self.to_socket_addrs()
-            .and_then(|socket_addrs| {
-                Ok(ParsedListener::Tcp(TcpListener::from_addrs(
-                    socket_addrs.collect(),
-                )))
-            })
-            .or_else(|_| {
-                Url::parse(self)
-                    .map_err(|_| {
-                        io::Error::new(
-                            io::ErrorKind::InvalidInput,
-                            format!("unable to parse listener from `{}`", self),
-                        )
-                    })
-                    .and_then(ToListener::<State>::to_listener)
-            })
+        if let Ok(socket_addrs) = self.to_socket_addrs() {
+            Ok(ParsedListener::Tcp(TcpListener::from_addrs(
+                socket_addrs.collect(),
+            )))
+        } else if let Ok(url) = Url::parse(self) {
+            ToListener::<State>::to_listener(url)
+        } else {
+            Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                format!("unable to parse listener from `{}`", self),
+            ))
+        }
     }
 }
 
