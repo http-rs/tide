@@ -1,6 +1,6 @@
 #[cfg(unix)]
 use super::UnixListener;
-use super::{ConcurrentListener, Listener, ParsedListener, TcpListener};
+use super::{ConcurrentListener, FailoverListener, Listener, ParsedListener, TcpListener};
 use crate::http::url::Url;
 use async_std::io;
 use std::net::ToSocketAddrs;
@@ -210,6 +210,13 @@ impl<State: Send + Sync + 'static> ToListener<State> for ConcurrentListener<Stat
 }
 
 impl<State: Send + Sync + 'static> ToListener<State> for ParsedListener {
+    type Listener = Self;
+    fn to_listener(self) -> io::Result<Self::Listener> {
+        Ok(self)
+    }
+}
+
+impl<State: Send + Sync + 'static> ToListener<State> for FailoverListener<State> {
     type Listener = Self;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(self)
