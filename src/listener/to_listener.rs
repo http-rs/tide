@@ -19,11 +19,11 @@ use std::net::ToSocketAddrs;
 /// * `[::1]:1213` (an ipv6 [SocketAddr](std::net::SocketAddr))
 ///
 /// # Strings supported only on `cfg(unix)` platforms:
-/// * `unix:///var/run/tide/socket` (absolute path)
-/// * `unix://socket` (relative path)
-/// * `unix://./socket.file` (also relative path)
-/// * `unix://../socket` (relative path)
-/// * any of the above with the alternate schemes of `file://` or `http+unix://`
+/// * `http+unix:///var/run/tide/socket` (absolute path)
+/// * `http+unix://socket` (relative path)
+/// * `http+unix://./socket.file` (also relative path)
+/// * `http+unix://../socket` (relative path)
+/// * any of the above with the alternate schemes of `file://` or `unix://`
 ///
 /// # String supported only on windows:
 /// * `:3000` (binds to port 3000)
@@ -296,26 +296,26 @@ mod parse_tests {
 
         #[test]
         fn str_url_to_unix_listener() {
-            let listener = listen("unix:///var/run/tide/socket").unwrap();
+            let listener = listen("http+unix:///var/run/tide/socket").unwrap();
             assert!(matches!(
                 listener,
                 ParsedListener::Unix(UnixListener::FromPath(_, None))
             ));
-            assert_eq!("unix:///var/run/tide/socket", listener.to_string());
+            assert_eq!("http+unix:///var/run/tide/socket", listener.to_string());
 
-            let listener = listen("unix://./socket").unwrap();
+            let listener = listen("http+unix://./socket").unwrap();
             assert!(matches!(
                 listener,
                 ParsedListener::Unix(UnixListener::FromPath(_, None))
             ));
-            assert_eq!("unix://./socket", listener.to_string());
+            assert_eq!("http+unix://./socket", listener.to_string());
 
-            let listener = listen("unix://socket").unwrap();
+            let listener = listen("http+unix://socket").unwrap();
             assert!(matches!(
                 listener,
                 ParsedListener::Unix(UnixListener::FromPath(_, None))
             ));
-            assert_eq!("unix://socket", listener.to_string());
+            assert_eq!("http+unix://socket", listener.to_string());
         }
 
         #[test]
@@ -330,7 +330,7 @@ mod parse_tests {
         use super::*;
         #[test]
         fn str_url_to_unix_listener() {
-            let err = listen("unix:///var/run/tide/socket").unwrap_err();
+            let err = listen("http+unix:///var/run/tide/socket").unwrap_err();
             assert_eq!(
                 err.to_string(),
                 "Unix sockets not supported on this platform"

@@ -21,7 +21,7 @@ use futures_util::stream::{futures_unordered::FuturesUnordered, StreamExt};
 ///        multi.add("127.0.0.1:8000")?;
 ///        multi.add(async_std::net::TcpListener::bind("127.0.0.1:8001").await?)?;
 /// # if cfg!(unix) {
-///        multi.add("unix://unix.socket")?;
+///        multi.add("http+unix://unix.socket")?;
 /// # }
 ///    
 /// # if false {

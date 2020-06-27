@@ -32,7 +32,7 @@ mod unix_tests {
                 assert_eq!(
                     local_addr,
                     format!(
-                        "unix://{}",
+                        "http+unix://{}",
                         sock_path_for_client.canonicalize()?.to_str().unwrap()
                     )
                 );

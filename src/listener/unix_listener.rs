@@ -47,7 +47,7 @@ impl UnixListener {
 fn unix_socket_addr_to_string(result: io::Result<SocketAddr>) -> Option<String> {
     result.ok().and_then(|addr| {
         if let Some(pathname) = addr.as_pathname().and_then(|p| p.canonicalize().ok()) {
-            Some(format!("unix://{}", pathname.display()))
+            Some(format!("http+unix://{}", pathname.display()))
         } else {
             None
         }
@@ -108,10 +108,10 @@ impl Display for UnixListener {
                 "{}",
                 unix_socket_addr_to_string(l.local_addr())
                     .as_deref()
-                    .unwrap_or("unix://[unknown]")
+                    .unwrap_or("http+unix://[unknown]")
             ),
             Self::FromPath(path, None) => {
-                write!(f, "unix://{}", path.to_str().unwrap_or("[unknown]"))
+                write!(f, "http+unix://{}", path.to_str().unwrap_or("[unknown]"))
             }
         }
     }
