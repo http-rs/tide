@@ -5,8 +5,7 @@ use crate::Server;
 use std::fmt::{self, Debug, Display, Formatter};
 
 use async_std::io;
-use async_std::prelude::*;
-
+use futures_util::stream::{futures_unordered::FuturesUnordered, StreamExt};
 /// MultiListener allows tide to listen on any number of transports
 /// simultaneously (such as tcp ports, unix sockets, or tls).
 ///
@@ -80,19 +79,19 @@ impl<State: Send + Sync + 'static> MultiListener<State> {
 
 impl<State: Send + Sync + 'static> Listener<State> for MultiListener<State> {
     fn listen<'a>(&'a mut self, app: Server<State>) -> BoxFuture<'a, io::Result<()>> {
-        let mut fut: Option<BoxFuture<'a, io::Result<()>>> = None;
+        Box::pin(async move {
+            let mut futures_unordered = FuturesUnordered::new();
 
-        for listener in self.0.iter_mut() {
-            let app = app.clone();
-            let listened = listener.listen(app);
-            if let Some(f) = fut {
-                fut = Some(Box::pin(f.race(listened)));
-            } else {
-                fut = Some(Box::pin(listened));
+            for listener in self.0.iter_mut() {
+                let app = app.clone();
+                futures_unordered.push(listener.listen(app));
             }
-        }
 
-        fut.expect("at least one listener must be provided to a MultiListener")
+            while let Some(result) = futures_unordered.next().await {
+                result?;
+            }
+            Ok(())
+        })
     }
 }
 
