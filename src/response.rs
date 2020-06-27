@@ -191,11 +191,11 @@ impl Response {
     }
 
     /// Take the response body as a `Body`.
-    //
-    // This method can be called after the body has already been taken or read,
-    // but will return an empty `Body`.
-    //
-    // Useful for adjusting the whole body, such as in middleware.
+    ///
+    /// This method can be called after the body has already been taken or read,
+    /// but will return an empty `Body`.
+    ///
+    /// Useful for adjusting the whole body, such as in middleware.
     pub fn take_body(&mut self) -> Body {
         self.res.take_body()
     }
