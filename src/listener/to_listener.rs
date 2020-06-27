@@ -23,7 +23,6 @@ use std::net::ToSocketAddrs;
 /// * `http+unix://socket` (relative path)
 /// * `http+unix://./socket.file` (also relative path)
 /// * `http+unix://../socket` (relative path)
-/// * any of the above with the alternate schemes of `file://` or `unix://`
 ///
 /// # String supported only on windows:
 /// * `:3000` (binds to port 3000)
@@ -69,7 +68,7 @@ impl<State: Send + Sync + 'static> ToListener<State> for Url {
 
     fn to_listener(self) -> io::Result<Self::Listener> {
         match self.scheme() {
-            "unix" | "file" | "http+unix" => {
+            "http+unix" => {
                 #[cfg(unix)]
                 {
                     let path = std::path::PathBuf::from(format!(
