@@ -6,12 +6,6 @@ use crate::endpoint::DynEndpoint;
 use crate::utils::BoxFuture;
 use crate::Request;
 
-// mod compression;
-// mod default_headers;
-
-// pub use compression::{Compression, Decompression};
-// pub use default_headers::DefaultHeaders;
-
 /// Middleware that wraps around the remaining middleware chain.
 pub trait Middleware<State>: 'static + Send + Sync {
     /// Asynchronously handle the request, and return a response.
