@@ -6,7 +6,8 @@ use std::fmt::{self, Debug, Display, Formatter};
 
 use async_std::io;
 use futures_util::stream::{futures_unordered::FuturesUnordered, StreamExt};
-/// MultiListener allows tide to listen on any number of transports
+
+/// ConcurrentListener allows tide to listen on any number of transports
 /// simultaneously (such as tcp ports, unix sockets, or tls).
 ///
 /// # Example:
@@ -17,15 +18,15 @@ use futures_util::stream::{futures_unordered::FuturesUnordered, StreamExt};
 ///        let mut app = tide::new();
 ///        app.at("/").get(|_| async { Ok("Hello, world!") });
 ///
-///        let mut multi = tide::listener::MultiListener::new();
-///        multi.add("127.0.0.1:8000")?;
-///        multi.add(async_std::net::TcpListener::bind("127.0.0.1:8001").await?)?;
+///        let mut listener = tide::listener::ConcurrentListener::new();
+///        listener.add("127.0.0.1:8000")?;
+///        listener.add(async_std::net::TcpListener::bind("127.0.0.1:8001").await?)?;
 /// # if cfg!(unix) {
-///        multi.add("http+unix://unix.socket")?;
+///        listener.add("http+unix://unix.socket")?;
 /// # }
 ///    
 /// # if false {
-///        app.listen(multi).await?;
+///        app.listen(listener).await?;
 /// # }
 ///        Ok(())
 ///    })
@@ -33,26 +34,26 @@ use futures_util::stream::{futures_unordered::FuturesUnordered, StreamExt};
 ///```
 
 #[derive(Default)]
-pub struct MultiListener<State>(Vec<Box<dyn Listener<State>>>);
+pub struct ConcurrentListener<State>(Vec<Box<dyn Listener<State>>>);
 
-impl<State: Send + Sync + 'static> MultiListener<State> {
-    /// creates a new MultiListener
+impl<State: Send + Sync + 'static> ConcurrentListener<State> {
+    /// creates a new ConcurrentListener
     pub fn new() -> Self {
         Self(vec![])
     }
 
     /// Adds any [`ToListener`](crate::listener::ToListener) to this
-    /// MultiListener. An error result represents a failure to convert
+    /// ConcurrentListener. An error result represents a failure to convert
     /// the [`ToListener`](crate::listener::ToListener) into a
     /// [`Listener`](crate::listener::Listener).
     ///
     /// ```rust
     /// # fn main() -> std::io::Result<()> {
-    /// let mut multi = tide::listener::MultiListener::new();
-    /// multi.add("127.0.0.1:8000")?;
-    /// multi.add(("localhost", 8001))?;
-    /// multi.add(std::net::TcpListener::bind(("localhost", 8002))?)?;
-    /// # std::mem::drop(tide::new().listen(multi)); // for the State generic
+    /// let mut listener = tide::listener::ConcurrentListener::new();
+    /// listener.add("127.0.0.1:8000")?;
+    /// listener.add(("localhost", 8001))?;
+    /// listener.add(std::net::TcpListener::bind(("localhost", 8002))?)?;
+    /// # std::mem::drop(tide::new().listen(listener)); // for the State generic
     /// # Ok(()) }
     /// ```
     pub fn add<TL: ToListener<State>>(&mut self, listener: TL) -> io::Result<()> {
@@ -60,13 +61,13 @@ impl<State: Send + Sync + 'static> MultiListener<State> {
         Ok(())
     }
 
-    /// `MultiListener::with_listener` allows for chained construction of a MultiListener:
+    /// `ConcurrentListener::with_listener` allows for chained construction of a ConcurrentListener:
     /// ```rust,no_run
-    /// # use tide::listener::MultiListener;
+    /// # use tide::listener::ConcurrentListener;
     /// # fn main() -> std::io::Result<()> { async_std::task::block_on(async move {
     /// # let app = tide::new();
     /// app.listen(
-    ///     MultiListener::new()
+    ///     ConcurrentListener::new()
     ///         .with_listener("127.0.0.1:8080")
     ///         .with_listener(async_std::net::TcpListener::bind("127.0.0.1:8081").await?),
     /// ).await?;
@@ -77,7 +78,7 @@ impl<State: Send + Sync + 'static> MultiListener<State> {
     }
 }
 
-impl<State: Send + Sync + 'static> Listener<State> for MultiListener<State> {
+impl<State: Send + Sync + 'static> Listener<State> for ConcurrentListener<State> {
     fn listen<'a>(&'a mut self, app: Server<State>) -> BoxFuture<'a, io::Result<()>> {
         Box::pin(async move {
             let mut futures_unordered = FuturesUnordered::new();
@@ -95,13 +96,13 @@ impl<State: Send + Sync + 'static> Listener<State> for MultiListener<State> {
     }
 }
 
-impl<State> Debug for MultiListener<State> {
+impl<State> Debug for ConcurrentListener<State> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.0)
     }
 }
 
-impl<State> Display for MultiListener<State> {
+impl<State> Display for ConcurrentListener<State> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let string = self
             .0

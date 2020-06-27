@@ -1,6 +1,6 @@
 //! Types that represent HTTP transports and binding
 
-mod multi_listener;
+mod concurrent_listener;
 mod parsed_listener;
 mod tcp_listener;
 mod to_listener;
@@ -11,7 +11,7 @@ use crate::utils::BoxFuture;
 use crate::Server;
 use async_std::io;
 
-pub use multi_listener::MultiListener;
+pub use concurrent_listener::ConcurrentListener;
 pub use to_listener::ToListener;
 
 pub(crate) use parsed_listener::ParsedListener;

@@ -1,6 +1,6 @@
 #[cfg(unix)]
 use super::UnixListener;
-use super::{Listener, MultiListener, ParsedListener, TcpListener};
+use super::{ConcurrentListener, Listener, ParsedListener, TcpListener};
 use crate::http::url::Url;
 use async_std::io;
 use std::net::ToSocketAddrs;
@@ -8,7 +8,7 @@ use std::net::ToSocketAddrs;
 /// ToListener represents any type that can be converted into a
 /// [`Listener`](crate::listener::Listener).  Any type that implements
 /// ToListener can be passed to [`Server::listen`](crate::Server::listen) or
-/// added to a [`MultiListener`](crate::listener::MultiListener)
+/// added to a [`ConcurrentListener`](crate::listener::ConcurrentListener)
 ///
 /// # Example strings on all platforms include:
 /// * `tcp://localhost:8000`
@@ -202,7 +202,7 @@ impl<State: Send + Sync + 'static> ToListener<State> for UnixListener {
     }
 }
 
-impl<State: Send + Sync + 'static> ToListener<State> for MultiListener<State> {
+impl<State: Send + Sync + 'static> ToListener<State> for ConcurrentListener<State> {
     type Listener = Self;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(self)
@@ -224,13 +224,13 @@ impl<State: Send + Sync + 'static> ToListener<State> for std::net::SocketAddr {
 }
 
 impl<TL: ToListener<State>, State: Send + Sync + 'static> ToListener<State> for Vec<TL> {
-    type Listener = MultiListener<State>;
+    type Listener = ConcurrentListener<State>;
     fn to_listener(self) -> io::Result<Self::Listener> {
-        let mut multi = MultiListener::new();
+        let mut concurrent_listener = ConcurrentListener::new();
         for listener in self {
-            multi.add(listener)?;
+            concurrent_listener.add(listener)?;
         }
-        Ok(multi)
+        Ok(concurrent_listener)
     }
 }
 
