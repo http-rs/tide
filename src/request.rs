@@ -291,11 +291,11 @@ impl<State> Request<State> {
     }
 
     /// Take the request body as a `Body`.
-    //
-    // This method can be called after the body has already been taken or read,
-    // but will return an empty `Body`.
-    //
-    // This is useful for consuming the body via an AsyncReader or AsyncBufReader.
+    ///
+    /// This method can be called after the body has already been taken or read,
+    /// but will return an empty `Body`.
+    ///
+    /// This is useful for consuming the body via an AsyncReader or AsyncBufReader.
     pub fn take_body(&mut self) -> Body {
         self.req.take_body()
     }
