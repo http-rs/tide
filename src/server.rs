@@ -286,14 +286,15 @@ impl<State: Send + Sync + 'static> Server<State> {
         let local_addr = stream.local_addr().ok();
         let peer_addr = stream.peer_addr().ok();
         task::spawn(async move {
-            let result = async_h1::accept(stream, |mut req| async {
+            let fut = async_h1::accept(stream.clone(), |mut req| async {
                 req.set_local_addr(local_addr);
                 req.set_peer_addr(peer_addr);
                 self.respond(req).await
-            })
-            .await;
+            });
 
-            if let Err(error) = result {
+            let fut = fut.race(peek_disconnect(stream));
+
+            if let Err(error) = fut.await {
                 log::error!("async-h1 error", { error: error.to_string() });
             }
         });
@@ -489,6 +490,20 @@ impl<State: Sync + Send + 'static, InnerState: Sync + Send + 'static> Endpoint<S
             Ok(res)
         })
     }
+}
+
+async fn peek_disconnect(stream: async_std::net::TcpStream) -> http_types::Result<()> {
+    let mut buf: Vec<u8> = vec![0; 1];
+    loop {
+        match stream.peek(&mut buf).await {
+            Ok(0) | Err(_) => {
+                log::error!("client disconnected");
+                break;
+            }
+            Ok(_) => continue,
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]
