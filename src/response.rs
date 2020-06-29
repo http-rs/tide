@@ -306,6 +306,12 @@ impl AsMut<http::Headers> for Response {
     }
 }
 
+impl AsMut<Body> for Response {
+    fn as_mut(&mut self) -> &mut Body {
+        self.res.as_mut()
+    }
+}
+
 impl Into<http::Response> for Response {
     fn into(self) -> http_types::Response {
         self.res

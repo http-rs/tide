@@ -60,3 +60,5 @@ required-features = ["unstable"]
 name = "router"
 harness = false
 
+[patch.crates-io]
+http-types = { git = "https://github.com/jbr/http-types", branch = "head-body" }
