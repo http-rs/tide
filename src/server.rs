@@ -427,14 +427,8 @@ impl<State: Send + Sync + 'static> Server<State> {
             next_middleware: &middleware,
         };
 
-        match next.run(req).await {
-            Ok(value) => {
-                let res: http_types::Response = value.into();
-                // We assume that if an error was manually cast to a
-                // Response that we actually want to send the body to the
-                // client. At this point we don't scrub the message.
-                Ok(res.into())
-            }
+        let mut response: http_types::Response = match next.run(req).await {
+            Ok(value) => value.into(),
             Err(err) => {
                 let mut res = http_types::Response::new(err.status());
                 res.set_content_type(http_types::mime::PLAIN);
@@ -444,9 +438,16 @@ impl<State: Send + Sync + 'static> Server<State> {
                 if !res.status().is_server_error() {
                     res.set_body(err.to_string());
                 }
-                Ok(res.into())
+                res
             }
+        };
+
+        if method == crate::http::Method::Head {
+            let body: &mut crate::http::Body = response.as_mut();
+            body.make_head();
         }
+
+        Ok(response.into())
     }
 }
 
