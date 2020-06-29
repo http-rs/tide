@@ -1,6 +1,5 @@
 mod test_utils;
 use async_std::io::Cursor;
-use async_std::prelude::*;
 use async_std::task;
 use std::time::Duration;
 
@@ -68,26 +67,24 @@ const TEXT: &'static str = concat![
 #[async_std::test]
 async fn chunked_large() -> Result<(), http_types::Error> {
     let port = test_utils::find_port().await;
+
     let server = task::spawn(async move {
         let mut app = tide::new();
         app.at("/")
             .get(|_| async { Ok(Body::from_reader(Cursor::new(TEXT), None)) });
-        app.listen(("localhost", port)).await?;
-        Result::<(), http_types::Error>::Ok(())
+        app.listen(("localhost", port)).await
     });
 
-    let client = task::spawn(async move {
-        task::sleep(Duration::from_millis(100)).await;
-        let mut res = surf::get(format!("http://localhost:{}", port))
-            .await
-            .unwrap();
-        assert_eq!(res.status(), 200);
-        assert_eq!(res.header("transfer-encoding").unwrap(), "chunked");
-        assert!(res.header("content-length").is_none());
-        let string = res.body_string().await.unwrap();
-        assert_eq!(string, TEXT.to_string());
-        Ok(())
-    });
+    task::sleep(Duration::from_millis(100)).await;
+    let mut res = surf::get(format!("http://localhost:{}", port))
+        .await
+        .unwrap();
+    assert_eq!(res.status(), 200);
+    assert_eq!(res.header("transfer-encoding").unwrap(), "chunked");
+    assert!(res.header("content-length").is_none());
+    let string = res.body_string().await.unwrap();
+    assert_eq!(string, TEXT.to_string());
 
-    server.race(client).await
+    server.cancel().await;
+    Ok(())
 }
