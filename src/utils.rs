@@ -3,7 +3,7 @@
 use std::future::Future;
 use std::pin::Pin;
 
-use crate::{Middleware, Next, Request};
+use crate::{Middleware, Next, Request, Response};
 
 /// An owned dynamically typed [`Future`] for use in cases where you can't
 /// statically type your result or need to add some indirection.
@@ -41,7 +41,7 @@ where
     ) -> BoxFuture<'a, crate::Result> {
         Box::pin(async move {
             let request = (self.0)(request).await;
-            next.run(request).await
+            Ok(next.run(request).await)
         })
     }
 }
@@ -57,8 +57,7 @@ where
 /// use tide::{utils, http, Response};
 ///
 /// let mut app = tide::new();
-/// app.middleware(utils::After(|res: tide::Result| async move {
-///     let res = res.unwrap_or_else(|e| Response::new(e.status()));
+/// app.middleware(utils::After(|res: Response| async move {
 ///     match res.status() {
 ///         http::StatusCode::NotFound => Ok("Page not found".into()),
 ///         http::StatusCode::InternalServerError => Ok("Something went wrong".into()),
@@ -71,7 +70,7 @@ pub struct After<F>(pub F);
 impl<State, F, Fut> Middleware<State> for After<F>
 where
     State: Send + Sync + 'static,
-    F: Fn(crate::Result) -> Fut + Send + Sync + 'static,
+    F: Fn(Response) -> Fut + Send + Sync + 'static,
     Fut: std::future::Future<Output = crate::Result> + Send + Sync,
 {
     fn handle<'a>(
@@ -80,8 +79,8 @@ where
         next: Next<'a, State>,
     ) -> BoxFuture<'a, crate::Result> {
         Box::pin(async move {
-            let result = next.run(request).await;
-            (self.0)(result).await
+            let response = next.run(request).await;
+            (self.0)(response).await
         })
     }
 }

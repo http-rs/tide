@@ -17,7 +17,10 @@ impl ServeDir {
     }
 }
 
-impl<State> Endpoint<State> for ServeDir {
+impl<State> Endpoint<State> for ServeDir
+where
+    State: Send + Sync + 'static,
+{
     fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, Result> {
         let path = req.url().path();
         let path = path.trim_start_matches(&self.prefix);

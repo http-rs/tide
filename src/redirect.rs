@@ -88,6 +88,7 @@ impl<T: AsRef<str>> Redirect<T> {
 
 impl<State, T> Endpoint<State> for Redirect<T>
 where
+    State: Send + Sync + 'static,
     T: AsRef<str> + Send + Sync + 'static,
 {
     fn call<'a>(&'a self, _req: Request<State>) -> BoxFuture<'a, crate::Result<Response>> {

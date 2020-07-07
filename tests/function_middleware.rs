@@ -14,7 +14,7 @@ fn auth_middleware<'a>(
         };
 
         if authenticated {
-            next.run(request).await
+            Ok(next.run(request).await)
         } else {
             Ok(tide::Response::new(tide::StatusCode::Unauthorized))
         }

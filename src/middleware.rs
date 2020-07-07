@@ -4,10 +4,10 @@ use std::sync::Arc;
 
 use crate::endpoint::DynEndpoint;
 use crate::utils::BoxFuture;
-use crate::Request;
+use crate::{Request, Response};
 
 /// Middleware that wraps around the remaining middleware chain.
-pub trait Middleware<State>: 'static + Send + Sync {
+pub trait Middleware<State>: Send + Sync + 'static {
     /// Asynchronously handle the request, and return a response.
     fn handle<'a>(
         &'a self,
@@ -44,15 +44,17 @@ pub struct Next<'a, State> {
     pub(crate) next_middleware: &'a [Arc<dyn Middleware<State>>],
 }
 
-impl<'a, State: 'static> Next<'a, State> {
+impl<'a, State: Send + Sync + 'static> Next<'a, State> {
     /// Asynchronously execute the remaining middleware chain.
     #[must_use]
-    pub fn run(mut self, req: Request<State>) -> BoxFuture<'a, crate::Result> {
-        if let Some((current, next)) = self.next_middleware.split_first() {
-            self.next_middleware = next;
-            current.handle(req, self)
-        } else {
-            self.endpoint.call(req)
-        }
+    pub fn run(mut self, req: Request<State>) -> BoxFuture<'a, Response> {
+        Box::pin(async move {
+            if let Some((current, next)) = self.next_middleware.split_first() {
+                self.next_middleware = next;
+                current.handle(req, self).await.into()
+            } else {
+                self.endpoint.call(req).await.into()
+            }
+        })
     }
 }

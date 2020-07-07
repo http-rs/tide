@@ -29,7 +29,7 @@ pub struct Route<'a, State> {
     prefix: bool,
 }
 
-impl<'a, State: 'static> Route<'a, State> {
+impl<'a, State: Send + Sync + 'static> Route<'a, State> {
     pub(crate) fn new(router: &'a mut Router<State>, path: String) -> Route<'a, State> {
         Route {
             router,
@@ -274,7 +274,11 @@ impl<E> Clone for StripPrefixEndpoint<E> {
     }
 }
 
-impl<State, E: Endpoint<State>> Endpoint<State> for StripPrefixEndpoint<E> {
+impl<State, E> Endpoint<State> for StripPrefixEndpoint<E>
+where
+    State: Send + Sync + 'static,
+    E: Endpoint<State>,
+{
     fn call<'a>(&'a self, req: crate::Request<State>) -> BoxFuture<'a, crate::Result> {
         let crate::Request {
             state,
