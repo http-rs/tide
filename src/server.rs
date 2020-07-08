@@ -341,12 +341,8 @@ impl<State: Send + Sync + 'static> Server<State> {
             "release"
         };
 
-        let address = listener
-            .local_addr()
-            .ok()
-            .map(|addr| format!("unix://{:?}", addr));
-
-        log::info!("Server listening on {}", address, { address: address, target: target, tls: tls });
+        let addr = format!("unix://{:?}", listener.local_addr()?);
+        log::info!("Server listening on {}", addr, { address: addr, target: target, tls: tls });
 
         let mut incoming = listener.incoming();
         while let Some(stream) = incoming.next().await {
