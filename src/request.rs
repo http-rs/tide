@@ -381,6 +381,37 @@ impl<State> Request<State> {
     }
 
     /// Parse the request body as a form.
+    ///
+    /// ```rust
+    /// # fn main() -> Result<(), std::io::Error> { async_std::task::block_on(async {
+    /// use tide::prelude::*;
+    /// let mut app = tide::new();
+    ///
+    /// #[derive(Deserialize)]
+    /// struct Animal {
+    ///   name: String,
+    ///   legs: u8
+    /// }
+    ///
+    /// app.at("/").post(|mut req: tide::Request<()>| async move {
+    ///     let animal: Animal = req.body_form().await?;
+    ///     Ok(format!(
+    ///         "hello, {}! i've put in an order for {} shoes",
+    ///         animal.name, animal.legs
+    ///     ))
+    /// });
+    ///
+    /// # if false {
+    /// app.listen("localhost:8000").await?;
+    /// # }
+    ///
+    /// // $ curl localhost:8000/orders/shoes -d "name=chashu&legs=4"
+    /// // hello, chashu! i've put in an order for 4 shoes
+    ///
+    /// // $ curl localhost:8000/orders/shoes -d "name=mary%20millipede&legs=750"
+    /// // number too large to fit in target type
+    /// # Ok(()) })}
+    /// ```
     pub async fn body_form<T: serde::de::DeserializeOwned>(&mut self) -> crate::Result<T> {
         let res = self.req.body_form().await?;
         Ok(res)
