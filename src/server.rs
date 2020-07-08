@@ -311,7 +311,7 @@ impl<State: Send + Sync + 'static> Server<State> {
         } else {
             "release"
         };
-        log::info!("Server listening", { address: addr, target: target, tls: tls });
+        log::info!("Server listening on {}", addr, { address: addr, target: target, tls: tls });
 
         let mut incoming = listener.incoming();
         while let Some(stream) = incoming.next().await {
@@ -346,7 +346,7 @@ impl<State: Send + Sync + 'static> Server<State> {
             .ok()
             .map(|addr| format!("unix://{:?}", addr));
 
-        log::info!("Server listening", { address: address, target: target, tls: tls });
+        log::info!("Server listening on {}", address, { address: address, target: target, tls: tls });
 
         let mut incoming = listener.incoming();
         while let Some(stream) = incoming.next().await {
