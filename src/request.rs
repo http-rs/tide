@@ -280,7 +280,54 @@ impl<State> Request<State> {
             .parse()
     }
 
-    /// Get the URL querystring.
+    /// Parse the URL query component into a struct, using [serde_qs](serde_qs). To get the entire
+    /// query as an unparsed string, use `request.url().query()`
+    ///
+    /// ```rust
+    /// # fn main() -> Result<(), std::io::Error> { async_std::task::block_on(async {
+    /// use tide::prelude::*;
+    /// let mut app = tide::new();
+    ///
+    /// #[derive(Deserialize)]
+    /// #[serde(default)]
+    /// struct Page {
+    ///     size: u8,
+    ///     offset: u8,
+    /// }
+    /// impl Default for Page {
+    ///     fn default() -> Self {
+    ///         Self {
+    ///             size: 25,
+    ///             offset: 0,
+    ///         }
+    ///     }
+    /// }
+    /// app.at("/pages").post(|req: tide::Request<()>| async move {
+    ///     let page: Page = req.query()?;
+    ///     Ok(format!("page {}, with {} items", page.offset, page.size))
+    /// });
+    ///
+    /// # if false {
+    /// app.listen("localhost:8000").await?;
+    /// # }
+    ///
+    /// // $ curl localhost:8000/pages
+    /// // page 0, with 25 items
+    ///
+    /// // $ curl localhost:8000/pages?offset=1
+    /// // page 1, with 25 items
+    ///
+    /// // $ curl localhost:8000/pages?offset=2&size=50
+    /// // page 2, with 50 items
+    ///
+    /// // $ curl localhost:8000/pages?size=5000
+    /// // failed with reason: number too large to fit in target type
+    ///
+    /// // $ curl localhost:8000/pages?size=all
+    /// // failed with reason: invalid digit found in string
+    /// # Ok(()) })}
+    /// ```
+
     pub fn query<T: serde::de::DeserializeOwned>(&self) -> crate::Result<T> {
         self.req.query()
     }
