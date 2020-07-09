@@ -54,3 +54,63 @@ impl<State> Endpoint<State> for ServeDir {
         })
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use async_std::sync::Arc;
+
+    use std::{
+        fs::{self, File},
+        io::Write,
+    };
+
+    fn serve_dir(tempdir: &tempfile::TempDir) -> crate::Result<ServeDir> {
+        let static_dir = tempdir.path().join("static");
+        fs::create_dir(&static_dir)?;
+
+        let file_path = static_dir.join("foo");
+        let mut file = File::create(&file_path)?;
+        write!(file, "Foobar")?;
+
+        Ok(ServeDir {
+            prefix: "/static/".to_string(),
+            dir: static_dir,
+        })
+    }
+
+    fn request(path: &str) -> crate::Request<()> {
+        let request = crate::http::Request::get(
+            crate::http::Url::parse(&format!("http://localhost/{}", path)).unwrap(),
+        );
+        crate::Request::new(Arc::new(()), request, vec![])
+    }
+
+    #[async_std::test]
+    async fn ok() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let serve_dir = serve_dir(&tempdir).unwrap();
+
+        let req = request("static/foo");
+
+        let resp = serve_dir.call(req).await.unwrap();
+        let mut resp: crate::http::Response = resp.into();
+
+        assert_eq!(resp.status(), 200);
+        assert_eq!(resp.body_string().await.unwrap(), "Foobar");
+    }
+
+    #[async_std::test]
+    async fn not_found() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let serve_dir = serve_dir(&tempdir).unwrap();
+
+        let req = request("static/bar");
+
+        let resp = serve_dir.call(req).await.unwrap();
+        let resp: crate::http::Response = resp.into();
+
+        assert_eq!(resp.status(), 404);
+    }
+}
