@@ -74,3 +74,21 @@ async fn json_content_type() {
     let body = resp.take_body().into_bytes().await.unwrap();
     assert_eq!(body, br##"{"a":2,"b":4,"c":6}"##);
 }
+
+#[test]
+fn from_response() {
+    let msg = "This is an error";
+
+    let error = http::Error::from_str(StatusCode::NotFound, msg);
+    let mut res: Response = error.into();
+
+    assert!(res.error().is_some());
+    // Ensure we did not consume the error
+    assert!(res.error().is_some());
+
+    assert_eq!(res.error().unwrap().status(), StatusCode::NotFound);
+    assert_eq!(res.error().unwrap().to_string(), msg);
+
+    res.take_error();
+    assert!(res.error().is_none());
+}

@@ -32,7 +32,7 @@ fn user_loader<'a>(
         if let Some(user) = request.state().find_user().await {
             tide::log::trace!("user loaded", {user: user.name});
             request.set_ext(user);
-            next.run(request).await
+            Ok(next.run(request).await)
         // this middleware only needs to run before the endpoint, so
         // it just passes through the result of Next
         } else {
@@ -72,7 +72,7 @@ impl<State: Send + Sync + 'static> Middleware<State> for RequestCounterMiddlewar
             tide::log::trace!("request counter", { count: count });
             req.set_ext(RequestCount(count));
 
-            let mut res = next.run(req).await?;
+            let mut res = next.run(req).await;
 
             res.insert_header("request-number", count.to_string());
             Ok(res)
@@ -100,9 +100,7 @@ async fn main() -> Result<()> {
     tide::log::start();
     let mut app = tide::with_state(UserDatabase::default());
 
-    app.middleware(After(|result: Result| async move {
-        let response = result.unwrap_or_else(|e| Response::new(e.status()));
-
+    app.middleware(After(|response: Response| async move {
         let response = match response.status() {
             StatusCode::NotFound => Response::builder(404)
                 .content_type(mime::HTML)

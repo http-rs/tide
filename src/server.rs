@@ -423,26 +423,9 @@ impl<State: Send + Sync + 'static> Server<State> {
             next_middleware: &middleware,
         };
 
-        match next.run(req).await {
-            Ok(value) => {
-                let res: http_types::Response = value.into();
-                // We assume that if an error was manually cast to a
-                // Response that we actually want to send the body to the
-                // client. At this point we don't scrub the message.
-                Ok(res.into())
-            }
-            Err(err) => {
-                let mut res = http_types::Response::new(err.status());
-                res.set_content_type(http_types::mime::PLAIN);
-                // Only send the message if it is a non-500 range error. All
-                // errors default to 500 by default, so sending the error
-                // body is opt-in at the call site.
-                if !res.status().is_server_error() {
-                    res.set_body(err.to_string());
-                }
-                Ok(res.into())
-            }
-        }
+        let res = next.run(req).await;
+        let res: http_types::Response = res.into();
+        Ok(res.into())
     }
 }
 
@@ -481,8 +464,7 @@ impl<State: Sync + Send + 'static, InnerState: Sync + Send + 'static> Endpoint<S
                 next_middleware: &middleware,
             };
 
-            let res = next.run(req).await?;
-            Ok(res)
+            Ok(next.run(req).await)
         })
     }
 }

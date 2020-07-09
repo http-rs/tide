@@ -37,43 +37,41 @@ impl LogMiddleware {
             path: path,
         });
         let start = std::time::Instant::now();
-        match next.run(ctx).await {
-            Ok(res) => {
-                let status = res.status();
-                if status.is_server_error() {
-                    log::error!("--> Response sent", {
-                        method: method,
-                        path: path,
-                        status: status as u16,
-                        duration: format!("{:?}", start.elapsed()),
-                    });
-                } else if status.is_client_error() {
-                    log::warn!("--> Response sent", {
-                        method: method,
-                        path: path,
-                        status: status as u16,
-                        duration: format!("{:?}", start.elapsed()),
-                    });
-                } else {
-                    log::info!("--> Response sent", {
-                        method: method,
-                        path: path,
-                        status: status as u16,
-                        duration: format!("{:?}", start.elapsed()),
-                    });
-                }
-                Ok(res)
-            }
-            Err(err) => {
-                log::error!("{}", err.to_string(), {
+        let response = next.run(ctx).await;
+        let status = response.status();
+        if status.is_server_error() {
+            if let Some(error) = response.error() {
+                log::error!("Internal error --> Response sent", {
+                    message: error.to_string(),
                     method: method,
                     path: path,
-                    status: err.status() as u16,
+                    status: status as u16,
                     duration: format!("{:?}", start.elapsed()),
                 });
-                Err(err)
+            } else {
+                log::error!("Internal error --> Response sent", {
+                    method: method,
+                    path: path,
+                    status: status as u16,
+                    duration: format!("{:?}", start.elapsed()),
+                });
             }
+        } else if status.is_client_error() {
+            log::warn!("--> Response sent", {
+                method: method,
+                path: path,
+                status: status as u16,
+                duration: format!("{:?}", start.elapsed()),
+            });
+        } else {
+            log::info!("--> Response sent", {
+                method: method,
+                path: path,
+                status: status as u16,
+                duration: format!("{:?}", start.elapsed()),
+            });
         }
+        Ok(response)
     }
 }
 

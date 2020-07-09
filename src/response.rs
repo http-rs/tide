@@ -1,11 +1,10 @@
 use std::convert::TryInto;
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 use std::ops::Index;
 
 use crate::http::cookies::Cookie;
 use crate::http::headers::{self, HeaderName, HeaderValues, ToHeaderValues};
-use crate::http::Mime;
-use crate::http::{self, Body, StatusCode};
+use crate::http::{self, Body, Error, Mime, StatusCode};
 use crate::ResponseBuilder;
 
 #[derive(Debug)]
@@ -18,6 +17,7 @@ pub(crate) enum CookieEvent {
 #[derive(Debug)]
 pub struct Response {
     pub(crate) res: http::Response,
+    pub(crate) error: Option<Error>,
     // tracking here
     pub(crate) cookie_events: Vec<CookieEvent>,
 }
@@ -33,6 +33,7 @@ impl Response {
         let res = http::Response::new(status);
         Self {
             res,
+            error: None,
             cookie_events: vec![],
         }
     }
@@ -257,6 +258,54 @@ impl Response {
         self.cookie_events.push(CookieEvent::Removed(cookie));
     }
 
+    /// Returns an optional reference to an error if the response contains one.
+    pub fn error(&self) -> Option<&Error> {
+        self.error.as_ref()
+    }
+
+    /// Returns a reference to the original error associated with this response if there is one and
+    /// if it can be downcast to the specified type.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use std::io::ErrorKind;
+    /// # use async_std::task::block_on;
+    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
+    /// #
+    /// use tide::Response;
+    ///
+    /// let error = std::io::Error::new(ErrorKind::Other, "oh no!");
+    /// let error = tide::http::Error::from(error);
+    ///
+    /// let mut res = Response::new(400);
+    /// res.set_error(error);
+    ///
+    /// if let Some(err) = res.downcast_error::<std::io::Error>() {
+    ///   // Do something with the `std::io::Error`.
+    /// }
+    /// # Ok(())
+    /// # })}
+    pub fn downcast_error<E>(&self) -> Option<&E>
+    where
+        E: Display + Debug + Send + Sync + 'static,
+    {
+        self.error.as_ref()?.downcast_ref()
+    }
+
+    /// Takes the error from the response if one exists, replacing it with `None`.
+    pub fn take_error(&mut self) -> Option<Error> {
+        self.error.take()
+    }
+
+    /// Sets the response's error, overwriting any existing error.
+    ///
+    /// This is particularly useful for middleware which would like to notify further
+    /// middleware that an error has occured without overwriting the existing response.
+    pub fn set_error(&mut self, error: impl Into<Error>) {
+        self.error = Some(error.into());
+    }
+
     /// Get a response scoped extension value.
     #[must_use]
     pub fn ext<T: Send + Sync + 'static>(&self) -> Option<&T> {
@@ -277,6 +326,7 @@ impl Response {
         let res: http_types::Response = value.into();
         Self {
             res,
+            error: None,
             cookie_events: vec![],
         }
     }
@@ -328,10 +378,21 @@ impl From<serde_json::Value> for Response {
     }
 }
 
+impl From<Error> for Response {
+    fn from(err: Error) -> Self {
+        Self {
+            res: http::Response::new(err.status()),
+            error: Some(err),
+            cookie_events: vec![],
+        }
+    }
+}
+
 impl From<http::Response> for Response {
     fn from(res: http::Response) -> Self {
         Self {
             res,
+            error: None,
             cookie_events: vec![],
         }
     }
