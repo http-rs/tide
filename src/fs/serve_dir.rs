@@ -1,6 +1,8 @@
 use crate::log;
 use crate::{Body, Endpoint, Request, Response, Result, StatusCode};
 
+use async_std::path::PathBuf as AsyncPathBuf;
+
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 
@@ -35,10 +37,15 @@ impl<State> Endpoint<State> for ServeDir {
 
         log::info!("Requested file: {:?}", file_path);
 
+        let file_path = AsyncPathBuf::from(file_path);
         Box::pin(async move {
             if !file_path.starts_with(&self.dir) {
                 log::warn!("Unauthorized attempt to read: {:?}", file_path);
                 return Ok(Response::new(StatusCode::Forbidden));
+            }
+            if !file_path.exists().await {
+                log::warn!("File not found: {:?}", file_path);
+                return Ok(Response::new(StatusCode::NotFound));
             }
             let body = Body::from_file(&file_path).await?;
             let mut res = Response::new(StatusCode::Ok);
