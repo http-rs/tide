@@ -61,10 +61,8 @@ mod test {
 
     use async_std::sync::Arc;
 
-    use std::{
-        fs::{self, File},
-        io::Write,
-    };
+    use std::fs::{self, File};
+    use std::io::Write;
 
     fn serve_dir(tempdir: &tempfile::TempDir) -> crate::Result<ServeDir> {
         let static_dir = tempdir.path().join("static");
@@ -94,11 +92,11 @@ mod test {
 
         let req = request("static/foo");
 
-        let resp = serve_dir.call(req).await.unwrap();
-        let mut resp: crate::http::Response = resp.into();
+        let res = serve_dir.call(req).await.unwrap();
+        let mut res: crate::http::Response = resp.into();
 
-        assert_eq!(resp.status(), 200);
-        assert_eq!(resp.body_string().await.unwrap(), "Foobar");
+        assert_eq!(res.status(), 200);
+        assert_eq!(res.body_string().await.unwrap(), "Foobar");
     }
 
     #[async_std::test]
@@ -108,9 +106,9 @@ mod test {
 
         let req = request("static/bar");
 
-        let resp = serve_dir.call(req).await.unwrap();
-        let resp: crate::http::Response = resp.into();
+        let res = serve_dir.call(req).await.unwrap();
+        let res: crate::http::Response = resp.into();
 
-        assert_eq!(resp.status(), 404);
+        assert_eq!(res.status(), 404);
     }
 }

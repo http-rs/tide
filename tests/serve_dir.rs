@@ -1,9 +1,7 @@
 use tide::{http, Result, Server};
 
-use std::{
-    fs::{self, File},
-    io::Write,
-};
+use std::fs::{self, File};
+use std::io::Write;
 
 fn app(tempdir: &tempfile::TempDir) -> Result<Server<()>> {
     let static_dir = tempdir.path().join("static");
