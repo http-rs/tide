@@ -93,7 +93,7 @@ mod test {
         let req = request("static/foo");
 
         let res = serve_dir.call(req).await.unwrap();
-        let mut res: crate::http::Response = resp.into();
+        let mut res: crate::http::Response = res.into();
 
         assert_eq!(res.status(), 200);
         assert_eq!(res.body_string().await.unwrap(), "Foobar");
@@ -107,7 +107,7 @@ mod test {
         let req = request("static/bar");
 
         let res = serve_dir.call(req).await.unwrap();
-        let res: crate::http::Response = resp.into();
+        let res: crate::http::Response = res.into();
 
         assert_eq!(res.status(), 404);
     }
