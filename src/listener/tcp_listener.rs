@@ -1,7 +1,6 @@
 use super::is_transient_error;
 
 use crate::listener::Listener;
-use crate::utils::BoxFuture;
 use crate::{log, Server};
 
 use std::fmt::{self, Display, Formatter};
@@ -61,32 +60,31 @@ fn handle_tcp<State: Send + Sync + 'static>(app: Server<State>, stream: TcpStrea
     });
 }
 
+#[async_trait::async_trait]
 impl<State: Send + Sync + 'static> Listener<State> for TcpListener {
-    fn listen<'a>(&'a mut self, app: Server<State>) -> BoxFuture<'a, async_std::io::Result<()>> {
-        Box::pin(async move {
-            self.connect().await?;
-            let listener = self.listener()?;
-            crate::log::info!("Server listening on {}", self);
+    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
+        self.connect().await?;
+        let listener = self.listener()?;
+        crate::log::info!("Server listening on {}", self);
 
-            let mut incoming = listener.incoming();
+        let mut incoming = listener.incoming();
 
-            while let Some(stream) = incoming.next().await {
-                match stream {
-                    Err(ref e) if is_transient_error(e) => continue,
-                    Err(error) => {
-                        let delay = std::time::Duration::from_millis(500);
-                        crate::log::error!("Error: {}. Pausing for {:?}.", error, delay);
-                        task::sleep(delay).await;
-                        continue;
-                    }
+        while let Some(stream) = incoming.next().await {
+            match stream {
+                Err(ref e) if is_transient_error(e) => continue,
+                Err(error) => {
+                    let delay = std::time::Duration::from_millis(500);
+                    crate::log::error!("Error: {}. Pausing for {:?}.", error, delay);
+                    task::sleep(delay).await;
+                    continue;
+                }
 
-                    Ok(stream) => {
-                        handle_tcp(app.clone(), stream);
-                    }
-                };
-            }
-            Ok(())
-        })
+                Ok(stream) => {
+                    handle_tcp(app.clone(), stream);
+                }
+            };
+        }
+        Ok(())
     }
 }
 

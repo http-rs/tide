@@ -8,7 +8,6 @@ mod to_listener;
 #[cfg(unix)]
 mod unix_listener;
 
-use crate::utils::BoxFuture;
 use crate::Server;
 use async_std::io;
 
@@ -25,17 +24,24 @@ pub(crate) use unix_listener::UnixListener;
 /// for a tide application. In order to provide a Listener to tide,
 /// you will also need to implement at least one [`ToListener`](crate::listener::ToListener) that
 /// outputs your Listener type.
+#[async_trait::async_trait]
 pub trait Listener<State: 'static>:
     std::fmt::Debug + std::fmt::Display + Send + Sync + 'static
 {
     /// This is the primary entrypoint for the Listener trait. listen
     /// is called exactly once, and is expected to spawn tasks for
     /// each incoming connection.
-    fn listen<'a>(&'a mut self, app: Server<State>) -> BoxFuture<'a, io::Result<()>>;
+    async fn listen(&mut self, app: Server<State>) -> io::Result<()>;
 }
 
+/// crate-internal shared logic used by tcp and unix listeners to
+/// determine if an io::Error needs a backoff delay. Transient error
+/// types do not require a delay.
 pub(crate) fn is_transient_error(e: &io::Error) -> bool {
-    e.kind() == io::ErrorKind::ConnectionRefused
-        || e.kind() == io::ErrorKind::ConnectionAborted
-        || e.kind() == io::ErrorKind::ConnectionReset
+    use io::ErrorKind::*;
+
+    matches!(
+        e.kind(),
+        ConnectionRefused | ConnectionAborted | ConnectionReset
+    )
 }

@@ -1,5 +1,4 @@
 use crate::listener::{Listener, ToListener};
-use crate::utils::BoxFuture;
 use crate::Server;
 
 use std::fmt::{self, Debug, Display, Formatter};
@@ -80,27 +79,26 @@ impl<State: Send + Sync + 'static> FailoverListener<State> {
     }
 }
 
+#[async_trait::async_trait]
 impl<State: Send + Sync + 'static> Listener<State> for FailoverListener<State> {
-    fn listen<'a>(&'a mut self, app: Server<State>) -> BoxFuture<'a, io::Result<()>> {
-        Box::pin(async move {
-            for listener in self.0.iter_mut() {
-                let app = app.clone();
-                match listener.listen(app).await {
-                    Ok(_) => return Ok(()),
-                    Err(e) => {
-                        crate::log::info!("unable to listen", {
-                            listener: listener.to_string(),
-                            error: e.to_string()
-                        });
-                    }
+    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
+        for listener in self.0.iter_mut() {
+            let app = app.clone();
+            match listener.listen(app).await {
+                Ok(_) => return Ok(()),
+                Err(e) => {
+                    crate::log::info!("unable to listen", {
+                        listener: listener.to_string(),
+                        error: e.to_string()
+                    });
                 }
             }
+        }
 
-            Err(io::Error::new(
-                io::ErrorKind::AddrNotAvailable,
-                "unable to bind to any supplied listener spec",
-            ))
-        })
+        Err(io::Error::new(
+            io::ErrorKind::AddrNotAvailable,
+            "unable to bind to any supplied listener spec",
+        ))
     }
 }
 

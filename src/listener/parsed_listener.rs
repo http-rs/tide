@@ -1,7 +1,7 @@
 #[cfg(unix)]
 use super::UnixListener;
 use super::{Listener, TcpListener};
-use crate::{utils::BoxFuture, Server};
+use crate::Server;
 use async_std::io;
 use std::fmt::{self, Display, Formatter};
 
@@ -22,12 +22,13 @@ impl Display for ParsedListener {
     }
 }
 
+#[async_trait::async_trait]
 impl<State: Send + Sync + 'static> Listener<State> for ParsedListener {
-    fn listen<'a>(&'a mut self, app: Server<State>) -> BoxFuture<'a, io::Result<()>> {
+    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
         match self {
             #[cfg(unix)]
-            Self::Unix(u) => u.listen(app),
-            Self::Tcp(t) => t.listen(app),
+            Self::Unix(u) => u.listen(app).await,
+            Self::Tcp(t) => t.listen(app).await,
         }
     }
 }
