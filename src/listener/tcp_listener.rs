@@ -66,7 +66,7 @@ impl<State: Send + Sync + 'static> Listener<State> for TcpListener {
         Box::pin(async move {
             self.connect().await?;
             let listener = self.listener()?;
-            crate::log::info!("listening on {}", self);
+            crate::log::info!("Server listening on {}", self);
 
             let mut incoming = listener.incoming();
 

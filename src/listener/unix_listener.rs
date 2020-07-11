@@ -75,7 +75,7 @@ impl<State: Send + Sync + 'static> Listener<State> for UnixListener {
     fn listen<'a>(&'a mut self, app: Server<State>) -> BoxFuture<'a, io::Result<()>> {
         Box::pin(async move {
             self.connect().await?;
-            crate::log::info!("listening on {}", self);
+            crate::log::info!("Server listening on {}", self);
             let listener = self.listener()?;
             let mut incoming = listener.incoming();
 
