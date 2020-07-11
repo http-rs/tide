@@ -61,22 +61,17 @@ impl RequestCounterMiddleware {
 
 struct RequestCount(usize);
 
+#[async_trait::async_trait]
 impl<State: Send + Sync + 'static> Middleware<State> for RequestCounterMiddleware {
-    fn handle<'a>(
-        &'a self,
-        mut req: Request<State>,
-        next: Next<'a, State>,
-    ) -> Pin<Box<dyn Future<Output = Result> + Send + 'a>> {
-        Box::pin(async move {
-            let count = self.requests_counted.fetch_add(1, Ordering::Relaxed);
-            tide::log::trace!("request counter", { count: count });
-            req.set_ext(RequestCount(count));
+    async fn handle(&self, mut req: Request<State>, next: Next<'_, State>) -> Result {
+        let count = self.requests_counted.fetch_add(1, Ordering::Relaxed);
+        tide::log::trace!("request counter", { count: count });
+        req.set_ext(RequestCount(count));
 
-            let mut res = next.run(req).await;
+        let mut res = next.run(req).await;
 
-            res.insert_header("request-number", count.to_string());
-            Ok(res)
-        })
+        res.insert_header("request-number", count.to_string());
+        Ok(res)
     }
 }
 

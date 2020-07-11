@@ -6,7 +6,6 @@ use std::sync::Arc;
 use crate::endpoint::MiddlewareEndpoint;
 use crate::fs::ServeDir;
 use crate::log;
-use crate::utils::BoxFuture;
 use crate::{router::Router, Endpoint, Middleware};
 
 /// A handle to a route.
@@ -274,12 +273,13 @@ impl<E> Clone for StripPrefixEndpoint<E> {
     }
 }
 
+#[async_trait::async_trait]
 impl<State, E> Endpoint<State> for StripPrefixEndpoint<E>
 where
     State: Send + Sync + 'static,
     E: Endpoint<State>,
 {
-    fn call<'a>(&'a self, req: crate::Request<State>) -> BoxFuture<'a, crate::Result> {
+    async fn call(&self, req: crate::Request<State>) -> crate::Result {
         let crate::Request {
             state,
             mut req,
@@ -289,10 +289,12 @@ where
         let rest = crate::request::rest(&route_params).unwrap_or_else(|| "");
         req.url_mut().set_path(&rest);
 
-        self.0.call(crate::Request {
-            state,
-            req,
-            route_params,
-        })
+        self.0
+            .call(crate::Request {
+                state,
+                req,
+                route_params,
+            })
+            .await
     }
 }

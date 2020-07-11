@@ -1,5 +1,4 @@
 use crate::log;
-use crate::utils::BoxFuture;
 use crate::{Middleware, Next, Request};
 
 /// Log all incoming requests and responses.
@@ -75,12 +74,9 @@ impl LogMiddleware {
     }
 }
 
+#[async_trait::async_trait]
 impl<State: Send + Sync + 'static> Middleware<State> for LogMiddleware {
-    fn handle<'a>(
-        &'a self,
-        ctx: Request<State>,
-        next: Next<'a, State>,
-    ) -> BoxFuture<'a, crate::Result> {
-        Box::pin(async move { self.log(ctx, next).await })
+    async fn handle(&self, req: Request<State>, next: Next<'_, State>) -> crate::Result {
+        self.log(req, next).await
     }
 }

@@ -10,7 +10,6 @@ use crate::cookies;
 use crate::log;
 use crate::middleware::{Middleware, Next};
 use crate::router::{Router, Selection};
-use crate::utils::BoxFuture;
 use crate::{Endpoint, Request, Route};
 
 /// An HTTP server.
@@ -439,10 +438,11 @@ impl<State> Clone for Server<State> {
     }
 }
 
+#[async_trait::async_trait]
 impl<State: Sync + Send + 'static, InnerState: Sync + Send + 'static> Endpoint<State>
     for Server<InnerState>
 {
-    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, crate::Result> {
+    async fn call(&self, req: Request<State>) -> crate::Result {
         let Request {
             req,
             mut route_params,
@@ -454,18 +454,16 @@ impl<State: Sync + Send + 'static, InnerState: Sync + Send + 'static> Endpoint<S
         let middleware = self.middleware.clone();
         let state = self.state.clone();
 
-        Box::pin(async move {
-            let Selection { endpoint, params } = router.route(&path, method);
-            route_params.push(params);
-            let req = Request::new(state, req, route_params);
+        let Selection { endpoint, params } = router.route(&path, method);
+        route_params.push(params);
+        let req = Request::new(state, req, route_params);
 
-            let next = Next {
-                endpoint,
-                next_middleware: &middleware,
-            };
+        let next = Next {
+            endpoint,
+            next_middleware: &middleware,
+        };
 
-            Ok(next.run(req).await)
-        })
+        Ok(next.run(req).await)
     }
 }
 

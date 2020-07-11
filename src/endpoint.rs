@@ -1,9 +1,9 @@
 use async_std::future::Future;
 use async_std::sync::Arc;
+use async_trait::async_trait;
 use http_types::Result;
 
 use crate::middleware::Next;
-use crate::utils::BoxFuture;
 use crate::{Middleware, Request, Response};
 
 /// An HTTP request handler.
@@ -44,26 +44,26 @@ use crate::{Middleware, Request, Response};
 /// ```
 ///
 /// Tide routes will also accept endpoints with `Fn` signatures of this form, but using the `async` keyword has better ergonomics.
+#[async_trait]
 pub trait Endpoint<State: Send + Sync + 'static>: Send + Sync + 'static {
     /// Invoke the endpoint within the given context
-    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, crate::Result>;
+    async fn call(&self, req: Request<State>) -> crate::Result;
 }
 
 pub(crate) type DynEndpoint<State> = dyn Endpoint<State>;
 
+#[async_trait]
 impl<State, F, Fut, Res> Endpoint<State> for F
 where
     State: Send + Sync + 'static,
     F: Send + Sync + 'static + Fn(Request<State>) -> Fut,
     Fut: Future<Output = Result<Res>> + Send + 'static,
-    Res: Into<Response>,
+    Res: Into<Response> + 'static,
 {
-    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, crate::Result> {
+    async fn call(&self, req: Request<State>) -> crate::Result {
         let fut = (self)(req);
-        Box::pin(async move {
-            let res = fut.await?;
-            Ok(res.into())
-        })
+        let res = fut.await?;
+        Ok(res.into())
     }
 }
 
@@ -104,16 +104,17 @@ where
     }
 }
 
+#[async_trait]
 impl<E, State> Endpoint<State> for MiddlewareEndpoint<E, State>
 where
     State: Send + Sync + 'static,
     E: Endpoint<State>,
 {
-    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, crate::Result> {
+    async fn call(&self, req: Request<State>) -> crate::Result {
         let next = Next {
             endpoint: &self.endpoint,
             next_middleware: &self.middleware,
         };
-        Box::pin(async move { Ok(next.run(req).await) })
+        Ok(next.run(req).await)
     }
 }

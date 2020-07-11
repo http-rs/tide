@@ -6,7 +6,6 @@ use async_std::path::PathBuf as AsyncPathBuf;
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 
-type BoxFuture<'a, T> = std::pin::Pin<Box<dyn std::future::Future<Output = T> + 'a + Send>>;
 pub struct ServeDir {
     prefix: String,
     dir: PathBuf,
@@ -19,11 +18,12 @@ impl ServeDir {
     }
 }
 
+#[async_trait::async_trait]
 impl<State> Endpoint<State> for ServeDir
 where
     State: Send + Sync + 'static,
 {
-    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, Result> {
+    async fn call(&self, req: Request<State>) -> Result {
         let path = req.url().path();
         let path = path.trim_start_matches(&self.prefix);
         let path = path.trim_start_matches('/');
@@ -41,20 +41,18 @@ where
         log::info!("Requested file: {:?}", file_path);
 
         let file_path = AsyncPathBuf::from(file_path);
-        Box::pin(async move {
-            if !file_path.starts_with(&self.dir) {
-                log::warn!("Unauthorized attempt to read: {:?}", file_path);
-                return Ok(Response::new(StatusCode::Forbidden));
-            }
-            if !file_path.exists().await {
-                log::warn!("File not found: {:?}", file_path);
-                return Ok(Response::new(StatusCode::NotFound));
-            }
-            let body = Body::from_file(&file_path).await?;
-            let mut res = Response::new(StatusCode::Ok);
-            res.set_body(body);
-            Ok(res)
-        })
+        if !file_path.starts_with(&self.dir) {
+            log::warn!("Unauthorized attempt to read: {:?}", file_path);
+            return Ok(Response::new(StatusCode::Forbidden));
+        }
+        if !file_path.exists().await {
+            log::warn!("File not found: {:?}", file_path);
+            return Ok(Response::new(StatusCode::NotFound));
+        }
+        let body = Body::from_file(&file_path).await?;
+        let mut res = Response::new(StatusCode::Ok);
+        res.set_body(body);
+        Ok(res)
     }
 }
 
