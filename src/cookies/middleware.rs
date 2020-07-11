@@ -1,6 +1,6 @@
 use crate::response::CookieEvent;
-use crate::utils::BoxFuture;
 use crate::{Middleware, Next, Request};
+use async_trait::async_trait;
 
 use crate::http::cookies::{Cookie, CookieJar, Delta};
 use crate::http::headers;
@@ -34,47 +34,42 @@ impl CookiesMiddleware {
     }
 }
 
+#[async_trait]
 impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
-    fn handle<'a>(
-        &'a self,
-        mut ctx: Request<State>,
-        next: Next<'a, State>,
-    ) -> BoxFuture<'a, crate::Result> {
-        Box::pin(async move {
-            let cookie_jar = if let Some(cookie_data) = ctx.ext::<CookieData>() {
-                cookie_data.content.clone()
-            } else {
-                let cookie_data = CookieData::from_request(&ctx);
-                // no cookie data in ext context, so we try to create it
-                let content = cookie_data.content.clone();
-                ctx.set_ext(cookie_data);
-                content
-            };
+    async fn handle(&self, mut ctx: Request<State>, next: Next<'_, State>) -> crate::Result {
+        let cookie_jar = if let Some(cookie_data) = ctx.ext::<CookieData>() {
+            cookie_data.content.clone()
+        } else {
+            let cookie_data = CookieData::from_request(&ctx);
+            // no cookie data in ext context, so we try to create it
+            let content = cookie_data.content.clone();
+            ctx.set_ext(cookie_data);
+            content
+        };
 
-            let mut res = next.run(ctx).await;
+        let mut res = next.run(ctx).await;
 
-            // Don't do anything if there are no cookies.
-            if res.cookie_events.is_empty() {
-                return Ok(res);
+        // Don't do anything if there are no cookies.
+        if res.cookie_events.is_empty() {
+            return Ok(res);
+        }
+
+        let jar = &mut *cookie_jar.write().unwrap();
+
+        // add modifications from response to original
+        for cookie in res.cookie_events.drain(..) {
+            match cookie {
+                CookieEvent::Added(cookie) => jar.add(cookie.clone()),
+                CookieEvent::Removed(cookie) => jar.remove(cookie.clone()),
             }
+        }
 
-            let jar = &mut *cookie_jar.write().unwrap();
-
-            // add modifications from response to original
-            for cookie in res.cookie_events.drain(..) {
-                match cookie {
-                    CookieEvent::Added(cookie) => jar.add(cookie.clone()),
-                    CookieEvent::Removed(cookie) => jar.remove(cookie.clone()),
-                }
-            }
-
-            // iterate over added and removed cookies
-            for cookie in jar.delta() {
-                let encoded_cookie = cookie.encoded().to_string();
-                res.append_header(headers::SET_COOKIE, encoded_cookie);
-            }
-            Ok(res)
-        })
+        // iterate over added and removed cookies
+        for cookie in jar.delta() {
+            let encoded_cookie = cookie.encoded().to_string();
+            res.append_header(headers::SET_COOKIE, encoded_cookie);
+        }
+        Ok(res)
     }
 }
 

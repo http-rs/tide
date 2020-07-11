@@ -17,7 +17,6 @@
 //! ```
 
 use crate::http::headers::LOCATION;
-use crate::utils::BoxFuture;
 use crate::StatusCode;
 use crate::{Endpoint, Request, Response};
 
@@ -86,14 +85,14 @@ impl<T: AsRef<str>> Redirect<T> {
     }
 }
 
+#[async_trait::async_trait]
 impl<State, T> Endpoint<State> for Redirect<T>
 where
     State: Send + Sync + 'static,
     T: AsRef<str> + Send + Sync + 'static,
 {
-    fn call<'a>(&'a self, _req: Request<State>) -> BoxFuture<'a, crate::Result<Response>> {
-        let res = self.into();
-        Box::pin(async move { Ok(res) })
+    async fn call(&self, _req: Request<State>) -> crate::Result<Response> {
+        Ok(self.into())
     }
 }
 

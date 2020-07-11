@@ -3,17 +3,16 @@
 use std::sync::Arc;
 
 use crate::endpoint::DynEndpoint;
-use crate::utils::BoxFuture;
 use crate::{Request, Response};
+use async_trait::async_trait;
+use std::future::Future;
+use std::pin::Pin;
 
 /// Middleware that wraps around the remaining middleware chain.
+#[async_trait]
 pub trait Middleware<State>: Send + Sync + 'static {
     /// Asynchronously handle the request, and return a response.
-    fn handle<'a>(
-        &'a self,
-        request: Request<State>,
-        next: Next<'a, State>,
-    ) -> BoxFuture<'a, crate::Result>;
+    async fn handle(&self, request: Request<State>, next: Next<'_, State>) -> crate::Result;
 
     /// Set the middleware's name. By default it uses the type signature.
     fn name(&self) -> &str {
@@ -21,19 +20,20 @@ pub trait Middleware<State>: Send + Sync + 'static {
     }
 }
 
+#[async_trait]
 impl<State, F> Middleware<State> for F
 where
+    State: Send + Sync + 'static,
     F: Send
         + Sync
         + 'static
-        + for<'a> Fn(Request<State>, Next<'a, State>) -> BoxFuture<'a, crate::Result>,
+        + for<'a> Fn(
+            Request<State>,
+            Next<'a, State>,
+        ) -> Pin<Box<dyn Future<Output = crate::Result> + 'a + Send>>,
 {
-    fn handle<'a>(
-        &'a self,
-        req: Request<State>,
-        next: Next<'a, State>,
-    ) -> BoxFuture<'a, crate::Result> {
-        (self)(req, next)
+    async fn handle(&self, req: Request<State>, next: Next<'_, State>) -> crate::Result {
+        (self)(req, next).await
     }
 }
 
@@ -44,23 +44,20 @@ pub struct Next<'a, State> {
     pub(crate) next_middleware: &'a [Arc<dyn Middleware<State>>],
 }
 
-impl<'a, State: Send + Sync + 'static> Next<'a, State> {
+impl<State: Send + Sync + 'static> Next<'_, State> {
     /// Asynchronously execute the remaining middleware chain.
-    #[must_use]
-    pub fn run(mut self, req: Request<State>) -> BoxFuture<'a, Response> {
-        Box::pin(async move {
-            if let Some((current, next)) = self.next_middleware.split_first() {
-                self.next_middleware = next;
-                match current.handle(req, self).await {
-                    Ok(request) => request,
-                    Err(err) => err.into(),
-                }
-            } else {
-                match self.endpoint.call(req).await {
-                    Ok(request) => request,
-                    Err(err) => err.into(),
-                }
+    pub async fn run(mut self, req: Request<State>) -> Response {
+        if let Some((current, next)) = self.next_middleware.split_first() {
+            self.next_middleware = next;
+            match current.handle(req, self).await {
+                Ok(request) => request,
+                Err(err) => err.into(),
             }
-        })
+        } else {
+            match self.endpoint.call(req).await {
+                Ok(request) => request,
+                Err(err) => err.into(),
+            }
+        }
     }
 }

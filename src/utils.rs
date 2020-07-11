@@ -1,13 +1,8 @@
 //! Miscellaneous utilities.
 
-use std::future::Future;
-use std::pin::Pin;
-
 use crate::{Middleware, Next, Request, Response};
-
-/// An owned dynamically typed [`Future`] for use in cases where you can't
-/// statically type your result or need to add some indirection.
-pub(crate) type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
+use async_trait::async_trait;
+use std::future::Future;
 
 /// Define a middleware that operates on incoming requests.
 ///
@@ -28,21 +23,17 @@ pub(crate) type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 /// ```
 #[derive(Debug)]
 pub struct Before<F>(pub F);
+
+#[async_trait]
 impl<State, F, Fut> Middleware<State> for Before<F>
 where
     State: Send + Sync + 'static,
     F: Fn(Request<State>) -> Fut + Send + Sync + 'static,
-    Fut: std::future::Future<Output = Request<State>> + Send + Sync,
+    Fut: Future<Output = Request<State>> + Send + Sync + 'static,
 {
-    fn handle<'a>(
-        &'a self,
-        request: Request<State>,
-        next: Next<'a, State>,
-    ) -> BoxFuture<'a, crate::Result> {
-        Box::pin(async move {
-            let request = (self.0)(request).await;
-            Ok(next.run(request).await)
-        })
+    async fn handle(&self, request: Request<State>, next: Next<'_, State>) -> crate::Result {
+        let request = (self.0)(request).await;
+        Ok(next.run(request).await)
     }
 }
 
@@ -67,20 +58,15 @@ where
 /// ```
 #[derive(Debug)]
 pub struct After<F>(pub F);
+#[async_trait]
 impl<State, F, Fut> Middleware<State> for After<F>
 where
     State: Send + Sync + 'static,
     F: Fn(Response) -> Fut + Send + Sync + 'static,
-    Fut: std::future::Future<Output = crate::Result> + Send + Sync,
+    Fut: Future<Output = crate::Result> + Send + Sync + 'static,
 {
-    fn handle<'a>(
-        &'a self,
-        request: Request<State>,
-        next: Next<'a, State>,
-    ) -> BoxFuture<'a, crate::Result> {
-        Box::pin(async move {
-            let response = next.run(request).await;
-            (self.0)(response).await
-        })
+    async fn handle(&self, request: Request<State>, next: Next<'_, State>) -> crate::Result {
+        let response = next.run(request).await;
+        (self.0)(response).await
     }
 }

@@ -1,4 +1,3 @@
-use crate::utils::BoxFuture;
 use http_types::headers::{HeaderValue, HeaderValues};
 use http_types::{headers, Method, StatusCode};
 
@@ -133,52 +132,51 @@ impl CorsMiddleware {
     }
 }
 
+#[async_trait::async_trait]
 impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
-    fn handle<'a>(&'a self, req: Request<State>, next: Next<'a, State>) -> BoxFuture<'a, Result> {
-        Box::pin(async move {
-            // TODO: how should multiple origin values be handled?
-            let origins = req.header(&headers::ORIGIN).cloned();
+    async fn handle(&self, req: Request<State>, next: Next<'_, State>) -> Result {
+        // TODO: how should multiple origin values be handled?
+        let origins = req.header(&headers::ORIGIN).cloned();
 
-            if origins.is_none() {
-                // This is not a CORS request if there is no Origin header
-                return Ok(next.run(req).await);
-            }
+        if origins.is_none() {
+            // This is not a CORS request if there is no Origin header
+            return Ok(next.run(req).await);
+        }
 
-            let origins = origins.unwrap();
-            let origin = origins.last();
+        let origins = origins.unwrap();
+        let origin = origins.last();
 
-            if !self.is_valid_origin(&origin) {
-                return Ok(http_types::Response::new(StatusCode::Unauthorized).into());
-            }
+        if !self.is_valid_origin(&origin) {
+            return Ok(http_types::Response::new(StatusCode::Unauthorized).into());
+        }
 
-            // Return results immediately upon preflight request
-            if req.method() == Method::Options {
-                return Ok(self.build_preflight_response(&origins).into());
-            }
+        // Return results immediately upon preflight request
+        if req.method() == Method::Options {
+            return Ok(self.build_preflight_response(&origins).into());
+        }
 
-            let mut response = next.run(req).await;
+        let mut response = next.run(req).await;
 
+        response.insert_header(
+            headers::ACCESS_CONTROL_ALLOW_ORIGIN,
+            self.response_origin(&origin),
+        );
+
+        if let Some(allow_credentials) = &self.allow_credentials {
             response.insert_header(
-                headers::ACCESS_CONTROL_ALLOW_ORIGIN,
-                self.response_origin(&origin),
+                headers::ACCESS_CONTROL_ALLOW_CREDENTIALS,
+                allow_credentials.clone(),
             );
+        }
 
-            if let Some(allow_credentials) = &self.allow_credentials {
-                response.insert_header(
-                    headers::ACCESS_CONTROL_ALLOW_CREDENTIALS,
-                    allow_credentials.clone(),
-                );
-            }
+        if let Some(expose_headers) = &self.expose_headers {
+            response.insert_header(
+                headers::ACCESS_CONTROL_EXPOSE_HEADERS,
+                expose_headers.clone(),
+            );
+        }
 
-            if let Some(expose_headers) = &self.expose_headers {
-                response.insert_header(
-                    headers::ACCESS_CONTROL_EXPOSE_HEADERS,
-                    expose_headers.clone(),
-                );
-            }
-
-            Ok(response)
-        })
+        Ok(response)
     }
 }
 

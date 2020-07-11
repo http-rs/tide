@@ -1,7 +1,7 @@
 mod test_utils;
 use http_types::headers::HeaderName;
 use std::convert::TryInto;
-use test_utils::{BoxFuture, ServerTestingExt};
+use test_utils::ServerTestingExt;
 use tide::Middleware;
 
 #[derive(Debug)]
@@ -13,17 +13,16 @@ impl TestMiddleware {
     }
 }
 
+#[async_trait::async_trait]
 impl<State: Send + Sync + 'static> Middleware<State> for TestMiddleware {
-    fn handle<'a>(
-        &'a self,
+    async fn handle(
+        &self,
         req: tide::Request<State>,
-        next: tide::Next<'a, State>,
-    ) -> BoxFuture<'a, tide::Result<tide::Response>> {
-        Box::pin(async move {
-            let mut res = next.run(req).await;
-            res.insert_header(self.0.clone(), self.1);
-            Ok(res)
-        })
+        next: tide::Next<'_, State>,
+    ) -> tide::Result<tide::Response> {
+        let mut res = next.run(req).await;
+        res.insert_header(self.0.clone(), self.1);
+        Ok(res)
     }
 }
 

@@ -1,7 +1,6 @@
 use crate::http::{mime, Body, StatusCode};
 use crate::log;
 use crate::sse::Sender;
-use crate::utils::BoxFuture;
 use crate::{Endpoint, Request, Response, Result};
 
 use async_std::future::Future;
@@ -38,33 +37,32 @@ where
     __fut: PhantomData<Fut>,
 }
 
+#[async_trait::async_trait]
 impl<F, Fut, State> Endpoint<State> for SseEndpoint<F, Fut, State>
 where
     State: Send + Sync + 'static,
     F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + Sync + 'static,
 {
-    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, Result<Response>> {
+    async fn call(&self, req: Request<State>) -> Result<Response> {
         let handler = self.handler.clone();
-        Box::pin(async move {
-            let (sender, encoder) = async_sse::encode();
-            task::spawn(async move {
-                let sender = Sender::new(sender);
-                if let Err(err) = handler(req, sender).await {
-                    log::error!("SSE handler error: {:?}", err);
-                }
-            });
+        let (sender, encoder) = async_sse::encode();
+        task::spawn(async move {
+            let sender = Sender::new(sender);
+            if let Err(err) = handler(req, sender).await {
+                log::error!("SSE handler error: {:?}", err);
+            }
+        });
 
-            // Perform the handshake as described here:
-            // https://html.spec.whatwg.org/multipage/server-sent-events.html#sse-processing-model
-            let mut res = Response::new(StatusCode::Ok);
-            res.insert_header("Cache-Control", "no-cache");
-            res.set_content_type(mime::SSE);
+        // Perform the handshake as described here:
+        // https://html.spec.whatwg.org/multipage/server-sent-events.html#sse-processing-model
+        let mut res = Response::new(StatusCode::Ok);
+        res.insert_header("Cache-Control", "no-cache");
+        res.set_content_type(mime::SSE);
 
-            let body = Body::from_reader(BufReader::new(encoder), None);
-            res.set_body(body);
+        let body = Body::from_reader(BufReader::new(encoder), None);
+        res.set_body(body);
 
-            Ok(res)
-        })
+        Ok(res)
     }
 }
