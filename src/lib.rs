@@ -191,6 +191,8 @@
 #![doc(html_favicon_url = "https://yoshuawuyts.com/assets/http-rs/favicon.ico")]
 #![doc(html_logo_url = "https://yoshuawuyts.com/assets/http-rs/logo-rounded.png")]
 
+use std::sync::Arc;
+
 mod cookies;
 mod endpoint;
 mod fs;
@@ -245,7 +247,7 @@ pub fn new() -> server::Server<()> {
     Server::new()
 }
 
-/// Create a new Tide server with shared application scoped state.
+/// Create a new Tide server with application scoped state.
 ///
 /// Application scoped state is useful for storing items
 ///
@@ -281,6 +283,48 @@ where
     State: Send + Sync + 'static,
 {
     Server::with_state(state)
+}
+
+/// Create a new Tide server with shared application scoped state.
+///
+/// Shared application scoped state is useful for storing items,
+/// including across multiple tide applications.
+///
+/// # Examples
+///
+/// ```no_run
+/// # use async_std::task::block_on;
+/// # fn main() -> Result<(), std::io::Error> { block_on(async {
+/// #
+/// use std::sync::Arc;
+/// use tide::Request;
+///
+/// /// The shared application state.
+/// struct State {
+///     name: String,
+/// }
+///
+/// // Define a new instance of the state.
+/// let state = Arc::new(State {
+///     name: "Nori".to_string()
+/// });
+///
+/// // Initialize the application with state.
+/// let mut app1 = tide::with_shared_state(state.clone());
+/// let mut app2 = tide::with_shared_state(state.clone());
+/// app2.at("/name").get(|req: Request<State>| async move {
+///     Ok(format!("Hello, {}!", &req.state().name))
+/// });
+/// app1.at("/hello").nest(app2);
+/// app1.listen("127.0.0.1:8080/hello/name").await?;
+/// #
+/// # Ok(()) }) }
+/// ```
+pub fn with_shared_state<State>(state: Arc<State>) -> server::Server<State>
+where
+    State: Send + Sync + 'static,
+{
+    Server::with_shared_state(state)
 }
 
 /// A specialized Result type for Tide.

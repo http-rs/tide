@@ -167,7 +167,7 @@ impl Default for Server<()> {
 }
 
 impl<State: Send + Sync + 'static> Server<State> {
-    /// Create a new Tide server with shared application scoped state.
+    /// Create a new Tide server with application scoped state.
     ///
     /// Application scoped state is useful for storing items
     ///
@@ -177,7 +177,7 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// # use async_std::task::block_on;
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
-    /// use tide::Request;
+    /// use tide::{Server, Request};
     ///
     /// /// The shared application state.
     /// struct State {
@@ -190,7 +190,7 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// };
     ///
     /// // Initialize the application with state.
-    /// let mut app = tide::with_state(state);
+    /// let mut app = Server::with_state(state);
     /// app.at("/").get(|req: Request<State>| async move {
     ///     Ok(format!("Hello, {}!", &req.state().name))
     /// });
@@ -199,10 +199,49 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// # Ok(()) }) }
     /// ```
     pub fn with_state(state: State) -> Self {
+        Self::with_shared_state(Arc::new(state))
+    }
+
+    /// Create a new Tide server with shared application scoped state.
+    ///
+    /// Shared application scoped state is useful for storing items,
+    /// including across multiple tide applications.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use async_std::task::block_on;
+    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
+    /// #
+    /// use std::sync::Arc;
+    /// use tide::{Server, Request};
+    ///
+    /// /// The shared application state.
+    /// struct State {
+    ///     name: String,
+    /// }
+    ///
+    /// // Define a new instance of the state.
+    /// let state = Arc::new(State {
+    ///     name: "Nori".to_string()
+    /// });
+    ///
+    /// // Initialize the application with state.
+    /// let mut app1 = Server::with_shared_state(state.clone());
+    /// let mut app2 = Server::with_shared_state(state.clone());
+    /// app2.at("/name").get(|req: Request<State>| async move {
+    ///     Ok(format!("Hello, {}!", &req.state().name))
+    /// });
+    /// app1.at("/hello").nest(app2);
+    /// app1.listen("127.0.0.1:8080/hello/name").await?;
+    /// #
+    /// # Ok(()) }) }
+    /// ```
+    pub fn with_shared_state(state: Arc<State>) -> Self {
         let mut server = Self {
             router: Arc::new(Router::new()),
             middleware: Arc::new(vec![]),
-            state: Arc::new(state),
+            state,
         };
         server.middleware(cookies::CookiesMiddleware::new());
         server.middleware(log::LogMiddleware::new());
