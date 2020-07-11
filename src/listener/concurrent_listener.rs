@@ -1,5 +1,4 @@
 use crate::listener::{Listener, ToListener};
-use crate::utils::BoxFuture;
 use crate::Server;
 
 use std::fmt::{self, Debug, Display, Formatter};
@@ -78,21 +77,20 @@ impl<State: Send + Sync + 'static> ConcurrentListener<State> {
     }
 }
 
+#[async_trait::async_trait]
 impl<State: Send + Sync + 'static> Listener<State> for ConcurrentListener<State> {
-    fn listen<'a>(&'a mut self, app: Server<State>) -> BoxFuture<'a, io::Result<()>> {
-        Box::pin(async move {
-            let mut futures_unordered = FuturesUnordered::new();
+    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
+        let mut futures_unordered = FuturesUnordered::new();
 
-            for listener in self.0.iter_mut() {
-                let app = app.clone();
-                futures_unordered.push(listener.listen(app));
-            }
+        for listener in self.0.iter_mut() {
+            let app = app.clone();
+            futures_unordered.push(listener.listen(app));
+        }
 
-            while let Some(result) = futures_unordered.next().await {
-                result?;
-            }
-            Ok(())
-        })
+        while let Some(result) = futures_unordered.next().await {
+            result?;
+        }
+        Ok(())
     }
 }
 

@@ -1,7 +1,6 @@
 use super::is_transient_error;
 
 use crate::listener::Listener;
-use crate::utils::BoxFuture;
 use crate::{log, Server};
 
 use std::fmt::{self, Display, Formatter};
@@ -71,32 +70,31 @@ fn handle_unix<State: Send + Sync + 'static>(app: Server<State>, stream: UnixStr
     });
 }
 
+#[async_trait::async_trait]
 impl<State: Send + Sync + 'static> Listener<State> for UnixListener {
-    fn listen<'a>(&'a mut self, app: Server<State>) -> BoxFuture<'a, io::Result<()>> {
-        Box::pin(async move {
-            self.connect().await?;
-            crate::log::info!("Server listening on {}", self);
-            let listener = self.listener()?;
-            let mut incoming = listener.incoming();
+    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
+        self.connect().await?;
+        crate::log::info!("Server listening on {}", self);
+        let listener = self.listener()?;
+        let mut incoming = listener.incoming();
 
-            while let Some(stream) = incoming.next().await {
-                match stream {
-                    Err(ref e) if is_transient_error(e) => continue,
-                    Err(error) => {
-                        let delay = std::time::Duration::from_millis(500);
-                        crate::log::error!("Error: {}. Pausing for {:?}.", error, delay);
-                        task::sleep(delay).await;
-                        continue;
-                    }
+        while let Some(stream) = incoming.next().await {
+            match stream {
+                Err(ref e) if is_transient_error(e) => continue,
+                Err(error) => {
+                    let delay = std::time::Duration::from_millis(500);
+                    crate::log::error!("Error: {}. Pausing for {:?}.", error, delay);
+                    task::sleep(delay).await;
+                    continue;
+                }
 
-                    Ok(stream) => {
-                        handle_unix(app.clone(), stream);
-                    }
-                };
-            }
+                Ok(stream) => {
+                    handle_unix(app.clone(), stream);
+                }
+            };
+        }
 
-            Ok(())
-        })
+        Ok(())
     }
 }
 
