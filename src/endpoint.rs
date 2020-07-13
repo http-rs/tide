@@ -46,7 +46,7 @@ use crate::{Middleware, Request, Response};
 /// Tide routes will also accept endpoints with `Fn` signatures of this form, but using the `async` keyword has better ergonomics.
 pub trait Endpoint<State: Send + Sync + 'static>: Send + Sync + 'static {
     /// Invoke the endpoint within the given context
-    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, crate::Result>;
+    fn call<'a>(&'a self, req: Request, state: State) -> BoxFuture<'a, crate::Result>;
 }
 
 pub(crate) type DynEndpoint<State> = dyn Endpoint<State>;
@@ -54,12 +54,28 @@ pub(crate) type DynEndpoint<State> = dyn Endpoint<State>;
 impl<State, F, Fut, Res> Endpoint<State> for F
 where
     State: Send + Sync + 'static,
-    F: Send + Sync + 'static + Fn(Request<State>) -> Fut,
+    F: Send + Sync + 'static + Fn(Request) -> Fut,
     Fut: Future<Output = Result<Res>> + Send + 'static,
     Res: Into<Response>,
 {
-    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, crate::Result> {
+    fn call<'a>(&'a self, req: Request, _: State) -> BoxFuture<'a, crate::Result> {
         let fut = (self)(req);
+        Box::pin(async move {
+            let res = fut.await?;
+            Ok(res.into())
+        })
+    }
+}
+
+impl<State, F, Fut, Res> Endpoint<State> for F
+where
+    State: Send + Sync + 'static,
+    F: Send + Sync + 'static + Fn(Request, State) -> Fut,
+    Fut: Future<Output = Result<Res>> + Send + 'static,
+    Res: Into<Response>,
+{
+    fn call<'a>(&'a self, req: Request, state: State) -> BoxFuture<'a, crate::Result> {
+        let fut = (self)(req, state);
         Box::pin(async move {
             let res = fut.await?;
             Ok(res.into())
@@ -109,7 +125,7 @@ where
     State: Send + Sync + 'static,
     E: Endpoint<State>,
 {
-    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, crate::Result> {
+    fn call<'a>(&'a self, req: Request, _: State) -> BoxFuture<'a, crate::Result> {
         let next = Next {
             endpoint: &self.endpoint,
             next_middleware: &self.middleware,

@@ -279,9 +279,8 @@ where
     State: Send + Sync + 'static,
     E: Endpoint<State>,
 {
-    fn call<'a>(&'a self, req: crate::Request<State>) -> BoxFuture<'a, crate::Result> {
+    fn call<'a>(&'a self, req: crate::Request, _: State) -> BoxFuture<'a, crate::Result> {
         let crate::Request {
-            state,
             mut req,
             route_params,
         } = req;
@@ -290,7 +289,6 @@ where
         req.url_mut().set_path(&rest);
 
         self.0.call(crate::Request {
-            state,
             req,
             route_params,
         })

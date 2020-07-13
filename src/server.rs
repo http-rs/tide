@@ -442,7 +442,7 @@ impl<State> Clone for Server<State> {
 impl<State: Sync + Send + 'static, InnerState: Sync + Send + 'static> Endpoint<State>
     for Server<InnerState>
 {
-    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, crate::Result> {
+    fn call<'a>(&'a self, req: Request) -> BoxFuture<'a, crate::Result> {
         let Request {
             req,
             mut route_params,

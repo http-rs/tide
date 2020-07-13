@@ -31,17 +31,35 @@ pub struct Before<F>(pub F);
 impl<State, F, Fut> Middleware<State> for Before<F>
 where
     State: Send + Sync + 'static,
-    F: Fn(Request<State>) -> Fut + Send + Sync + 'static,
-    Fut: std::future::Future<Output = Request<State>> + Send + Sync,
+    F: Fn(Request) -> Fut + Send + Sync + 'static,
+    Fut: std::future::Future<Output = Request> + Send + Sync,
 {
     fn handle<'a>(
         &'a self,
-        request: Request<State>,
+        request: Request,
         next: Next<'a, State>,
     ) -> BoxFuture<'a, crate::Result> {
         Box::pin(async move {
             let request = (self.0)(request).await;
             Ok(next.run(request).await)
+        })
+    }
+}
+impl<State, F, Fut> Middleware<State> for Before<F>
+where
+    State: Send + Sync + 'static,
+    F: Fn(Request, State) -> Fut + Send + Sync + 'static,
+    Fut: std::future::Future<Output = Request> + Send + Sync,
+{
+    fn handle<'a>(
+        &'a self,
+        request: Request,
+        state: State,
+        next: Next<'a, State>,
+    ) -> BoxFuture<'a, crate::Result> {
+        Box::pin(async move {
+            let request = (self.0)(request).await;
+            Ok(next.run(request, state).await)
         })
     }
 }
@@ -75,12 +93,30 @@ where
 {
     fn handle<'a>(
         &'a self,
-        request: Request<State>,
+        request: Request,
         next: Next<'a, State>,
     ) -> BoxFuture<'a, crate::Result> {
         Box::pin(async move {
             let response = next.run(request).await;
             (self.0)(response).await
+        })
+    }
+}
+impl<State, F, Fut> Middleware<State> for After<F>
+where
+    State: Send + Sync + 'static,
+    F: Fn(Response, State) -> Fut + Send + Sync + 'static,
+    Fut: std::future::Future<Output = crate::Result> + Send + Sync,
+{
+    fn handle<'a>(
+        &'a self,
+        request: Request,
+        state: State,
+        next: Next<'a, State>,
+    ) -> BoxFuture<'a, crate::Result> {
+        Box::pin(async move {
+            let response = next.run(request).await;
+            (self.0)(response, state).await
         })
     }
 }

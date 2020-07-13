@@ -37,7 +37,7 @@ impl CookiesMiddleware {
 impl<State: Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
     fn handle<'a>(
         &'a self,
-        mut ctx: Request<State>,
+        mut ctx: Request,
         next: Next<'a, State>,
     ) -> BoxFuture<'a, crate::Result> {
         Box::pin(async move {
@@ -117,7 +117,7 @@ impl LazyJar {
 }
 
 impl CookieData {
-    pub(crate) fn from_request<S>(req: &Request<S>) -> Self {
+    pub(crate) fn from_request(req: &Request) -> Self {
         let jar = if let Some(cookie_headers) = req.header(&headers::COOKIE) {
             let mut jar = CookieJar::new();
             for cookie_header in cookie_headers {

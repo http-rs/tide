@@ -23,7 +23,7 @@ impl<State> Endpoint<State> for ServeDir
 where
     State: Send + Sync + 'static,
 {
-    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, Result> {
+    fn call<'a>(&'a self, req: Request) -> BoxFuture<'a, Result> {
         let path = req.url().path();
         let path = path.trim_start_matches(&self.prefix);
         let path = path.trim_start_matches('/');
@@ -81,7 +81,7 @@ mod test {
         })
     }
 
-    fn request(path: &str) -> crate::Request<()> {
+    fn request(path: &str) -> crate::Request {
         let request = crate::http::Request::get(
             crate::http::Url::parse(&format!("http://localhost/{}", path)).unwrap(),
         );

@@ -27,7 +27,7 @@ impl LogMiddleware {
     /// Log a request and a response.
     async fn log<'a, State: Send + Sync + 'static>(
         &'a self,
-        ctx: Request<State>,
+        ctx: Request,
         next: Next<'a, State>,
     ) -> crate::Result {
         let path = ctx.url().path().to_owned();
@@ -78,7 +78,7 @@ impl LogMiddleware {
 impl<State: Send + Sync + 'static> Middleware<State> for LogMiddleware {
     fn handle<'a>(
         &'a self,
-        ctx: Request<State>,
+        ctx: Request,
         next: Next<'a, State>,
     ) -> BoxFuture<'a, crate::Result> {
         Box::pin(async move { self.log(ctx, next).await })

@@ -4,7 +4,7 @@ use route_recognizer::Params;
 
 use std::ops::Index;
 use std::pin::Pin;
-use std::{fmt, str::FromStr, sync::Arc};
+use std::{fmt, str::FromStr};
 
 use crate::cookies::CookieData;
 use crate::http::cookies::Cookie;
@@ -20,8 +20,7 @@ use crate::Response;
 /// Requests also provide *extensions*, a type map primarily used for low-level
 /// communication between middleware and endpoints.
 #[derive(Debug)]
-pub struct Request<State> {
-    pub(crate) state: Arc<State>,
+pub struct Request {
     pub(crate) req: http::Request,
     pub(crate) route_params: Vec<Params>,
 }
@@ -43,15 +42,13 @@ impl<E: fmt::Debug + fmt::Display> fmt::Display for ParamError<E> {
 
 impl<T: fmt::Debug + fmt::Display> std::error::Error for ParamError<T> {}
 
-impl<State> Request<State> {
+impl Request {
     /// Create a new `Request`.
     pub(crate) fn new(
-        state: Arc<State>,
         req: http_types::Request,
         route_params: Vec<Params>,
     ) -> Self {
         Self {
-            state,
             req,
             route_params,
         }
@@ -264,12 +261,6 @@ impl<State> Request<State> {
     /// Set a request extension value.
     pub fn set_ext<T: Send + Sync + 'static>(&mut self, val: T) -> Option<T> {
         self.req.ext_mut().insert(val)
-    }
-
-    #[must_use]
-    ///  Access application scoped state.
-    pub fn state(&self) -> &State {
-        &self.state
     }
 
     /// Extract and parse a route parameter by name.
@@ -524,31 +515,31 @@ impl<State> Request<State> {
     }
 }
 
-impl<State> AsRef<http::Request> for Request<State> {
+impl AsRef<http::Request> for Request {
     fn as_ref(&self) -> &http::Request {
         &self.req
     }
 }
 
-impl<State> AsMut<http::Request> for Request<State> {
+impl AsMut<http::Request> for Request {
     fn as_mut(&mut self) -> &mut http::Request {
         &mut self.req
     }
 }
 
-impl<State> AsRef<http::Headers> for Request<State> {
+impl AsRef<http::Headers> for Request {
     fn as_ref(&self) -> &http::Headers {
         self.req.as_ref()
     }
 }
 
-impl<State> AsMut<http::Headers> for Request<State> {
+impl AsMut<http::Headers> for Request {
     fn as_mut(&mut self) -> &mut http::Headers {
         self.req.as_mut()
     }
 }
 
-impl<State> Read for Request<State> {
+impl Read for Request {
     fn poll_read(
         mut self: Pin<&mut Self>,
         cx: &mut Context<'_>,
@@ -558,7 +549,7 @@ impl<State> Read for Request<State> {
     }
 }
 
-impl<State> Into<http::Request> for Request<State> {
+impl Into<http::Request> for Request {
     fn into(self) -> http::Request {
         self.req
     }
@@ -566,7 +557,7 @@ impl<State> Into<http::Request> for Request<State> {
 
 // NOTE: From cannot be implemented for this conversion because `State` needs to
 // be constrained by a type.
-impl<State: Send + Sync + 'static> Into<Response> for Request<State> {
+impl Into<Response> for Request {
     fn into(mut self) -> Response {
         let mut res = Response::new(StatusCode::Ok);
         res.set_body(self.take_body());
@@ -574,7 +565,7 @@ impl<State: Send + Sync + 'static> Into<Response> for Request<State> {
     }
 }
 
-impl<State> IntoIterator for Request<State> {
+impl IntoIterator for Request {
     type Item = (HeaderName, HeaderValues);
     type IntoIter = http_types::headers::IntoIter;
 
@@ -585,7 +576,7 @@ impl<State> IntoIterator for Request<State> {
     }
 }
 
-impl<'a, State> IntoIterator for &'a Request<State> {
+impl<'a> IntoIterator for &'a Request {
     type Item = (&'a HeaderName, &'a HeaderValues);
     type IntoIter = http_types::headers::Iter<'a>;
 
@@ -595,7 +586,7 @@ impl<'a, State> IntoIterator for &'a Request<State> {
     }
 }
 
-impl<'a, State> IntoIterator for &'a mut Request<State> {
+impl<'a> IntoIterator for &'a mut Request {
     type Item = (&'a HeaderName, &'a mut HeaderValues);
     type IntoIter = http_types::headers::IterMut<'a>;
 
@@ -605,7 +596,7 @@ impl<'a, State> IntoIterator for &'a mut Request<State> {
     }
 }
 
-impl<State> Index<HeaderName> for Request<State> {
+impl Index<HeaderName> for Request {
     type Output = HeaderValues;
 
     /// Returns a reference to the value corresponding to the supplied name.
@@ -619,7 +610,7 @@ impl<State> Index<HeaderName> for Request<State> {
     }
 }
 
-impl<State> Index<&str> for Request<State> {
+impl Index<&str> for Request {
     type Output = HeaderValues;
 
     /// Returns a reference to the value corresponding to the supplied name.
