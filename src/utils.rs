@@ -1,7 +1,7 @@
 //! Miscellaneous utilities.
 
 use crate::{Middleware, Next, Request, Response};
-use async_trait::async_trait;
+pub use async_trait::async_trait;
 use std::future::Future;
 
 /// Define a middleware that operates on incoming requests.

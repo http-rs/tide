@@ -61,7 +61,7 @@ impl RequestCounterMiddleware {
 
 struct RequestCount(usize);
 
-#[async_trait::async_trait]
+#[tide::utils::async_trait]
 impl<State: Send + Sync + 'static> Middleware<State> for RequestCounterMiddleware {
     async fn handle(&self, mut req: Request<State>, next: Next<'_, State>) -> Result {
         let count = self.requests_counted.fetch_add(1, Ordering::Relaxed);
