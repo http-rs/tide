@@ -11,7 +11,7 @@ pub trait Middleware<State>: Send + Sync + 'static {
     /// Asynchronously handle the request, and return a response.
     fn handle<'a>(
         &'a self,
-        request: Request<State>,
+        request: Request,
         next: Next<'a, State>,
     ) -> BoxFuture<'a, crate::Result>;
 
@@ -26,14 +26,32 @@ where
     F: Send
         + Sync
         + 'static
-        + for<'a> Fn(Request<State>, Next<'a, State>) -> BoxFuture<'a, crate::Result>,
+        + for<'a> Fn(Request, Next<'a, State>) -> BoxFuture<'a, crate::Result>,
 {
     fn handle<'a>(
         &'a self,
-        req: Request<State>,
+        req: Request,
+        _: State,
         next: Next<'a, State>,
     ) -> BoxFuture<'a, crate::Result> {
         (self)(req, next)
+    }
+}
+
+impl<State, F> Middleware<State> for F
+where
+    F: Send
+        + Sync
+        + 'static
+        + for<'a> Fn(Request, State, Next<'a, State>) -> BoxFuture<'a, crate::Result>,
+{
+    fn handle<'a>(
+        &'a self,
+        req: Request,
+        state: State,
+        next: Next<'a, State>,
+    ) -> BoxFuture<'a, crate::Result> {
+        (self)(req, state, next)
     }
 }
 
@@ -47,7 +65,7 @@ pub struct Next<'a, State> {
 impl<'a, State: Send + Sync + 'static> Next<'a, State> {
     /// Asynchronously execute the remaining middleware chain.
     #[must_use]
-    pub fn run(mut self, req: Request<State>) -> BoxFuture<'a, Response> {
+    pub fn run(mut self, req: Request) -> BoxFuture<'a, Response> {
         Box::pin(async move {
             if let Some((current, next)) = self.next_middleware.split_first() {
                 self.next_middleware = next;

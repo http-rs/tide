@@ -91,7 +91,7 @@ where
     State: Send + Sync + 'static,
     T: AsRef<str> + Send + Sync + 'static,
 {
-    fn call<'a>(&'a self, _req: Request<State>) -> BoxFuture<'a, crate::Result<Response>> {
+    fn call<'a>(&'a self, _req: Request) -> BoxFuture<'a, crate::Result<Response>> {
         let res = self.into();
         Box::pin(async move { Ok(res) })
     }

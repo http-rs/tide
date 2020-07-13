@@ -134,7 +134,7 @@ impl CorsMiddleware {
 }
 
 impl<State: Send + Sync + 'static> Middleware<State> for CorsMiddleware {
-    fn handle<'a>(&'a self, req: Request<State>, next: Next<'a, State>) -> BoxFuture<'a, Result> {
+    fn handle<'a>(&'a self, req: Request, next: Next<'a, State>) -> BoxFuture<'a, Result> {
         Box::pin(async move {
             // TODO: how should multiple origin values be handled?
             let origins = req.header(&headers::ORIGIN).cloned();

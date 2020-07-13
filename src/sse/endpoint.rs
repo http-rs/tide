@@ -15,7 +15,7 @@ use std::sync::Arc;
 pub fn endpoint<F, Fut, State>(handler: F) -> SseEndpoint<F, Fut, State>
 where
     State: Send + Sync + 'static,
-    F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
+    F: Fn(Request, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + Sync + 'static,
 {
     SseEndpoint {
@@ -30,7 +30,7 @@ where
 pub struct SseEndpoint<F, Fut, State>
 where
     State: Send + Sync + 'static,
-    F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
+    F: Fn(Request, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + Sync + 'static,
 {
     handler: Arc<F>,
@@ -41,10 +41,10 @@ where
 impl<F, Fut, State> Endpoint<State> for SseEndpoint<F, Fut, State>
 where
     State: Send + Sync + 'static,
-    F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
+    F: Fn(Request, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + Sync + 'static,
 {
-    fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, Result<Response>> {
+    fn call<'a>(&'a self, req: Request) -> BoxFuture<'a, Result<Response>> {
         let handler = self.handler.clone();
         Box::pin(async move {
             let (sender, encoder) = async_sse::encode();
