@@ -9,6 +9,14 @@ use async_std::os::unix::net::{self, SocketAddr, UnixStream};
 use async_std::prelude::*;
 use async_std::{io, path::PathBuf, task};
 
+/// This represents a tide [Listener](crate::listener::Listener) that
+/// wraps an [async_std::os::unix::net::UnixListener]. It is implemented as an
+/// enum in order to allow creation of a tide::listener::UnixListener
+/// from a [PathBuf] that has not yet been opened/bound OR from a bound
+/// [async_std::os::unix::net::UnixListener].
+///
+/// This is currently crate-visible only, and tide users are expected
+/// to create these through [ToListener](crate::ToListener) conversions.
 #[derive(Debug)]
 pub enum UnixListener {
     FromPath(PathBuf, Option<net::UnixListener>),
@@ -30,7 +38,10 @@ impl UnixListener {
             Self::FromListener(listener) => Ok(listener),
             Self::FromPath(path, None) => Err(io::Error::new(
                 io::ErrorKind::AddrNotAvailable,
-                format!("unable to connect {}", path.to_str().unwrap_or("[unknown]")),
+                format!(
+                    "unable to connect to {}",
+                    path.to_str().unwrap_or("[unknown]")
+                ),
             )),
         }
     }
