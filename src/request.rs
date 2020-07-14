@@ -260,6 +260,12 @@ impl<State> Request<State> {
         self.req.ext().get()
     }
 
+    /// Get a mutable reference to value stored in request extensions.
+    #[must_use]
+    pub fn ext_mut<T: Send + Sync + 'static>(&mut self) -> Option<&mut T> {
+        self.req.ext_mut().get_mut()
+    }
+
     /// Set a request extension value.
     pub fn set_ext<T: Send + Sync + 'static>(&mut self, val: T) -> Option<T> {
         self.req.ext_mut().insert(val)
@@ -504,6 +510,32 @@ impl<State> Request<State> {
     pub fn cookie(&self, name: &str) -> Option<Cookie<'static>> {
         self.ext::<CookieData>()
             .and_then(|cookie_data| cookie_data.content.read().unwrap().get(name).cloned())
+    }
+
+    /// Retrieves a reference to the current session.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if a tide::sessions:SessionMiddleware has not
+    /// been run.
+    #[cfg(feature = "sessions")]
+    pub fn session(&self) -> &crate::sessions::Session {
+        self.ext::<crate::sessions::Session>().expect(
+            "request session not initialized, did you enable tide::sessions::SessionMiddleware?",
+        )
+    }
+
+    /// Retrieves a mutable reference to the current session.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if a tide::sessions:SessionMiddleware has not
+    /// been run.
+    #[cfg(feature = "sessions")]
+    pub fn session_mut(&mut self) -> &mut crate::sessions::Session {
+        self.ext_mut().expect(
+            "request session not initialized, did you enable tide::sessions::SessionMiddleware?",
+        )
     }
 
     /// Get the length of the body stream, if it has been set.
