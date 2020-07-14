@@ -215,6 +215,9 @@ pub mod security;
 pub mod sse;
 pub mod utils;
 
+#[cfg(feature = "sessions")]
+pub mod sessions;
+
 pub use endpoint::Endpoint;
 pub use middleware::{Middleware, Next};
 pub use redirect::Redirect;

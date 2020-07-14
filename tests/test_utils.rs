@@ -24,7 +24,7 @@ where
     State: Clone + Send + Sync + 'static,
 {
     async fn request(&self, method: Method, path: &str) -> http::Response {
-        let url = if path.starts_with("http:") {
+        let url = if path.starts_with("http:") || path.starts_with("https:") {
             Url::parse(path).unwrap()
         } else {
             Url::parse("http://example.com/")
