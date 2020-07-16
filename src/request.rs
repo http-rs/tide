@@ -4,7 +4,7 @@ use route_recognizer::Params;
 
 use std::ops::Index;
 use std::pin::Pin;
-use std::{fmt, str::FromStr, sync::Arc};
+use std::{fmt, str::FromStr};
 
 use crate::cookies::CookieData;
 use crate::http::cookies::Cookie;
@@ -12,18 +12,21 @@ use crate::http::headers::{self, HeaderName, HeaderValues, ToHeaderValues};
 use crate::http::{self, Body, Method, Mime, StatusCode, Url, Version};
 use crate::Response;
 
-/// An HTTP request.
-///
-/// The `Request` gives endpoints access to basic information about the incoming
-/// request, route parameters, and various ways of accessing the request's body.
-///
-/// Requests also provide *extensions*, a type map primarily used for low-level
-/// communication between middleware and endpoints.
-#[derive(Debug)]
-pub struct Request<State> {
-    pub(crate) state: Arc<State>,
-    pub(crate) req: http::Request,
-    pub(crate) route_params: Vec<Params>,
+pin_project_lite::pin_project! {
+    /// An HTTP request.
+    ///
+    /// The `Request` gives endpoints access to basic information about the incoming
+    /// request, route parameters, and various ways of accessing the request's body.
+    ///
+    /// Requests also provide *extensions*, a type map primarily used for low-level
+    /// communication between middleware and endpoints.
+    #[derive(Debug)]
+    pub struct Request<State> {
+        pub(crate) state: State,
+        #[pin]
+        pub(crate) req: http::Request,
+        pub(crate) route_params: Vec<Params>,
+    }
 }
 
 #[derive(Debug)]
@@ -45,11 +48,7 @@ impl<T: fmt::Debug + fmt::Display> std::error::Error for ParamError<T> {}
 
 impl<State> Request<State> {
     /// Create a new `Request`.
-    pub(crate) fn new(
-        state: Arc<State>,
-        req: http_types::Request,
-        route_params: Vec<Params>,
-    ) -> Self {
+    pub(crate) fn new(state: State, req: http_types::Request, route_params: Vec<Params>) -> Self {
         Self {
             state,
             req,
@@ -550,11 +549,11 @@ impl<State> AsMut<http::Headers> for Request<State> {
 
 impl<State> Read for Request<State> {
     fn poll_read(
-        mut self: Pin<&mut Self>,
+        self: Pin<&mut Self>,
         cx: &mut Context<'_>,
         buf: &mut [u8],
     ) -> Poll<io::Result<usize>> {
-        Pin::new(&mut self.req).poll_read(cx, buf)
+        self.project().req.poll_read(cx, buf)
     }
 }
 
@@ -566,7 +565,7 @@ impl<State> Into<http::Request> for Request<State> {
 
 // NOTE: From cannot be implemented for this conversion because `State` needs to
 // be constrained by a type.
-impl<State: Send + Sync + 'static> Into<Response> for Request<State> {
+impl<State: Clone + Send + Sync + 'static> Into<Response> for Request<State> {
     fn into(mut self) -> Response {
         let mut res = Response::new(StatusCode::Ok);
         res.set_body(self.take_body());

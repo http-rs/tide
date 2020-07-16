@@ -44,6 +44,7 @@ route-recognizer = "0.2.0"
 logtest = "2.0.0"
 async-trait = "0.1.36"
 futures-util = "0.3.5"
+pin-project-lite = "0.1.7"
 
 [dev-dependencies]
 async-std = { version = "1.6.0", features = ["unstable", "attributes"] }

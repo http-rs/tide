@@ -27,7 +27,7 @@ pub struct Before<F>(pub F);
 #[async_trait]
 impl<State, F, Fut> Middleware<State> for Before<F>
 where
-    State: Send + Sync + 'static,
+    State: Clone + Send + Sync + 'static,
     F: Fn(Request<State>) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Request<State>> + Send + Sync + 'static,
 {
@@ -61,7 +61,7 @@ pub struct After<F>(pub F);
 #[async_trait]
 impl<State, F, Fut> Middleware<State> for After<F>
 where
-    State: Send + Sync + 'static,
+    State: Clone + Send + Sync + 'static,
     F: Fn(Response) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = crate::Result> + Send + Sync + 'static,
 {

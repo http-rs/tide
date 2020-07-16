@@ -14,7 +14,7 @@ impl TestMiddleware {
 }
 
 #[async_trait::async_trait]
-impl<State: Send + Sync + 'static> Middleware<State> for TestMiddleware {
+impl<State: Clone + Send + Sync + 'static> Middleware<State> for TestMiddleware {
     async fn handle(
         &self,
         req: tide::Request<State>,

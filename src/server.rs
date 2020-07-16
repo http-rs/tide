@@ -27,7 +27,7 @@ use crate::{Endpoint, Request, Route};
 #[allow(missing_debug_implementations)]
 pub struct Server<State> {
     router: Arc<Router<State>>,
-    state: Arc<State>,
+    state: State,
     middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
 }
 
@@ -58,7 +58,7 @@ impl Default for Server<()> {
     }
 }
 
-impl<State: Send + Sync + 'static> Server<State> {
+impl<State: Clone + Send + Sync + 'static> Server<State> {
     /// Create a new Tide server with shared application scoped state.
     ///
     /// Application scoped state is useful for storing items
@@ -72,6 +72,7 @@ impl<State: Send + Sync + 'static> Server<State> {
     /// use tide::Request;
     ///
     /// /// The shared application state.
+    /// #[derive(Clone)]
     /// struct State {
     ///     name: String,
     /// }
@@ -94,7 +95,7 @@ impl<State: Send + Sync + 'static> Server<State> {
         let mut server = Self {
             router: Arc::new(Router::new()),
             middleware: Arc::new(vec![]),
-            state: Arc::new(state),
+            state,
         };
         server.middleware(cookies::CookiesMiddleware::new());
         server.middleware(log::LogMiddleware::new());
@@ -228,7 +229,7 @@ impl<State: Send + Sync + 'static> Server<State> {
     }
 }
 
-impl<State> Clone for Server<State> {
+impl<State: Clone> Clone for Server<State> {
     fn clone(&self) -> Self {
         Self {
             router: self.router.clone(),
@@ -239,8 +240,8 @@ impl<State> Clone for Server<State> {
 }
 
 #[async_trait::async_trait]
-impl<State: Sync + Send + 'static, InnerState: Sync + Send + 'static> Endpoint<State>
-    for Server<InnerState>
+impl<State: Clone + Sync + Send + 'static, InnerState: Clone + Sync + Send + 'static>
+    Endpoint<State> for Server<InnerState>
 {
     async fn call(&self, req: Request<State>) -> crate::Result {
         let Request {

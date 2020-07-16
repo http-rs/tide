@@ -21,7 +21,7 @@ pub struct Selection<'a, State> {
     pub(crate) params: Params,
 }
 
-impl<State: Send + Sync + 'static> Router<State> {
+impl<State: Clone + Send + Sync + 'static> Router<State> {
     pub fn new() -> Self {
         Router {
             method_map: HashMap::default(),
@@ -81,10 +81,14 @@ impl<State: Send + Sync + 'static> Router<State> {
     }
 }
 
-async fn not_found_endpoint<State: Send + Sync + 'static>(_req: Request<State>) -> crate::Result {
+async fn not_found_endpoint<State: Clone + Send + Sync + 'static>(
+    _req: Request<State>,
+) -> crate::Result {
     Ok(Response::new(StatusCode::NotFound))
 }
 
-async fn method_not_allowed<State: Send + Sync + 'static>(_req: Request<State>) -> crate::Result {
+async fn method_not_allowed<State: Clone + Send + Sync + 'static>(
+    _req: Request<State>,
+) -> crate::Result {
     Ok(Response::new(StatusCode::MethodNotAllowed))
 }

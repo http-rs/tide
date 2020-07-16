@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use async_std::{fs::OpenOptions, io};
 use tempfile::TempDir;
 use tide::prelude::*;
@@ -6,7 +8,7 @@ use tide::{Body, Request, Response, StatusCode};
 #[async_std::main]
 async fn main() -> Result<(), std::io::Error> {
     tide::log::start();
-    let mut app = tide::with_state(tempfile::tempdir()?);
+    let mut app = tide::with_state(Arc::new(tempfile::tempdir()?));
 
     // To test this example:
     // $ cargo run --example upload
@@ -14,7 +16,7 @@ async fn main() -> Result<(), std::io::Error> {
     // $ curl localhost:8080/README.md # this reads the file from the same temp directory
 
     app.at(":file")
-        .put(|req: Request<TempDir>| async move {
+        .put(|req: Request<Arc<TempDir>>| async move {
             let path: String = req.param("file")?;
             let fs_path = req.state().path().join(path);
 
@@ -33,7 +35,7 @@ async fn main() -> Result<(), std::io::Error> {
 
             Ok(json!({ "bytes": bytes_written }))
         })
-        .get(|req: Request<TempDir>| async move {
+        .get(|req: Request<Arc<TempDir>>| async move {
             let path: String = req.param("file")?;
             let fs_path = req.state().path().join(path);
 

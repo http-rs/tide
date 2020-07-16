@@ -21,7 +21,7 @@ pub trait ServerTestingExt {
 #[async_trait::async_trait]
 impl<State> ServerTestingExt for Server<State>
 where
-    State: Send + Sync + 'static,
+    State: Clone + Send + Sync + 'static,
 {
     async fn request(&self, method: Method, path: &str) -> http::Response {
         let url = if path.starts_with("http:") {
