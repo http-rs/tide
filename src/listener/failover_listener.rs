@@ -35,7 +35,7 @@ use async_std::io;
 #[derive(Default)]
 pub struct FailoverListener<State>(Vec<Box<dyn Listener<State>>>);
 
-impl<State: Send + Sync + 'static> FailoverListener<State> {
+impl<State: Clone + Send + Sync + 'static> FailoverListener<State> {
     /// creates a new FailoverListener
     pub fn new() -> Self {
         Self(vec![])
@@ -80,7 +80,7 @@ impl<State: Send + Sync + 'static> FailoverListener<State> {
 }
 
 #[async_trait::async_trait]
-impl<State: Send + Sync + 'static> Listener<State> for FailoverListener<State> {
+impl<State: Clone + Send + Sync + 'static> Listener<State> for FailoverListener<State> {
     async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
         for listener in self.0.iter_mut() {
             let app = app.clone();

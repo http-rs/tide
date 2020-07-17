@@ -21,7 +21,7 @@ impl ServeDir {
 #[async_trait::async_trait]
 impl<State> Endpoint<State> for ServeDir
 where
-    State: Send + Sync + 'static,
+    State: Clone + Send + Sync + 'static,
 {
     async fn call(&self, req: Request<State>) -> Result {
         let path = req.url().path();
@@ -60,8 +60,6 @@ where
 mod test {
     use super::*;
 
-    use async_std::sync::Arc;
-
     use std::fs::{self, File};
     use std::io::Write;
 
@@ -83,7 +81,7 @@ mod test {
         let request = crate::http::Request::get(
             crate::http::Url::parse(&format!("http://localhost/{}", path)).unwrap(),
         );
-        crate::Request::new(Arc::new(()), request, vec![])
+        crate::Request::new((), request, vec![])
     }
 
     #[async_std::test]

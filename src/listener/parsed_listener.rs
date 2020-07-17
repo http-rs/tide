@@ -31,7 +31,7 @@ impl Display for ParsedListener {
 }
 
 #[async_trait::async_trait]
-impl<State: Send + Sync + 'static> Listener<State> for ParsedListener {
+impl<State: Clone + Send + Sync + 'static> Listener<State> for ParsedListener {
     async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
         match self {
             #[cfg(unix)]

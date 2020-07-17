@@ -28,7 +28,7 @@ pub struct Route<'a, State> {
     prefix: bool,
 }
 
-impl<'a, State: Send + Sync + 'static> Route<'a, State> {
+impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
     pub(crate) fn new(router: &'a mut Router<State>, path: String) -> Route<'a, State> {
         Route {
             router,
@@ -101,8 +101,8 @@ impl<'a, State: Send + Sync + 'static> Route<'a, State> {
     /// [`Server`]: struct.Server.html
     pub fn nest<InnerState>(&mut self, service: crate::Server<InnerState>) -> &mut Self
     where
-        State: Send + Sync + 'static,
-        InnerState: Send + Sync + 'static,
+        State: Clone + Send + Sync + 'static,
+        InnerState: Clone + Send + Sync + 'static,
     {
         self.prefix = true;
         self.all(service);
@@ -276,7 +276,7 @@ impl<E> Clone for StripPrefixEndpoint<E> {
 #[async_trait::async_trait]
 impl<State, E> Endpoint<State> for StripPrefixEndpoint<E>
 where
-    State: Send + Sync + 'static,
+    State: Clone + Send + Sync + 'static,
     E: Endpoint<State>,
 {
     async fn call(&self, req: crate::Request<State>) -> crate::Result {

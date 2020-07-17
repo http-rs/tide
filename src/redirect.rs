@@ -88,7 +88,7 @@ impl<T: AsRef<str>> Redirect<T> {
 #[async_trait::async_trait]
 impl<State, T> Endpoint<State> for Redirect<T>
 where
-    State: Send + Sync + 'static,
+    State: Clone + Send + Sync + 'static,
     T: AsRef<str> + Send + Sync + 'static,
 {
     async fn call(&self, _req: Request<State>) -> crate::Result<Response> {

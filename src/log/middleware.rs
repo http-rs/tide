@@ -24,7 +24,7 @@ impl LogMiddleware {
     }
 
     /// Log a request and a response.
-    async fn log<'a, State: Send + Sync + 'static>(
+    async fn log<'a, State: Clone + Send + Sync + 'static>(
         &'a self,
         ctx: Request<State>,
         next: Next<'a, State>,
@@ -75,7 +75,7 @@ impl LogMiddleware {
 }
 
 #[async_trait::async_trait]
-impl<State: Send + Sync + 'static> Middleware<State> for LogMiddleware {
+impl<State: Clone + Send + Sync + 'static> Middleware<State> for LogMiddleware {
     async fn handle(&self, req: Request<State>, next: Next<'_, State>) -> crate::Result {
         self.log(req, next).await
     }

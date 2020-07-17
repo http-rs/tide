@@ -13,7 +13,7 @@ use std::sync::Arc;
 /// Create an endpoint that can handle SSE connections.
 pub fn endpoint<F, Fut, State>(handler: F) -> SseEndpoint<F, Fut, State>
 where
-    State: Send + Sync + 'static,
+    State: Clone + Send + Sync + 'static,
     F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + Sync + 'static,
 {
@@ -28,7 +28,7 @@ where
 #[derive(Debug)]
 pub struct SseEndpoint<F, Fut, State>
 where
-    State: Send + Sync + 'static,
+    State: Clone + Send + Sync + 'static,
     F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + Sync + 'static,
 {
@@ -40,7 +40,7 @@ where
 #[async_trait::async_trait]
 impl<F, Fut, State> Endpoint<State> for SseEndpoint<F, Fut, State>
 where
-    State: Send + Sync + 'static,
+    State: Clone + Send + Sync + 'static,
     F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + Sync + 'static,
 {

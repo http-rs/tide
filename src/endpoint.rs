@@ -45,7 +45,7 @@ use crate::{Middleware, Request, Response};
 ///
 /// Tide routes will also accept endpoints with `Fn` signatures of this form, but using the `async` keyword has better ergonomics.
 #[async_trait]
-pub trait Endpoint<State: Send + Sync + 'static>: Send + Sync + 'static {
+pub trait Endpoint<State: Clone + Send + Sync + 'static>: Send + Sync + 'static {
     /// Invoke the endpoint within the given context
     async fn call(&self, req: Request<State>) -> crate::Result;
 }
@@ -55,7 +55,7 @@ pub(crate) type DynEndpoint<State> = dyn Endpoint<State>;
 #[async_trait]
 impl<State, F, Fut, Res> Endpoint<State> for F
 where
-    State: Send + Sync + 'static,
+    State: Clone + Send + Sync + 'static,
     F: Send + Sync + 'static + Fn(Request<State>) -> Fut,
     Fut: Future<Output = Result<Res>> + Send + 'static,
     Res: Into<Response> + 'static,
@@ -93,7 +93,7 @@ impl<E, State> std::fmt::Debug for MiddlewareEndpoint<E, State> {
 
 impl<E, State> MiddlewareEndpoint<E, State>
 where
-    State: Send + Sync + 'static,
+    State: Clone + Send + Sync + 'static,
     E: Endpoint<State>,
 {
     pub fn wrap_with_middleware(ep: E, middleware: &[Arc<dyn Middleware<State>>]) -> Self {
@@ -107,7 +107,7 @@ where
 #[async_trait]
 impl<E, State> Endpoint<State> for MiddlewareEndpoint<E, State>
 where
-    State: Send + Sync + 'static,
+    State: Clone + Send + Sync + 'static,
     E: Endpoint<State>,
 {
     async fn call(&self, req: Request<State>) -> crate::Result {

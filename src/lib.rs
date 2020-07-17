@@ -259,6 +259,7 @@ pub fn new() -> server::Server<()> {
 /// use tide::Request;
 ///
 /// /// The shared application state.
+/// #[derive(Clone)]
 /// struct State {
 ///     name: String,
 /// }
@@ -279,7 +280,7 @@ pub fn new() -> server::Server<()> {
 /// ```
 pub fn with_state<State>(state: State) -> server::Server<State>
 where
-    State: Send + Sync + 'static,
+    State: Clone + Send + Sync + 'static,
 {
     Server::with_state(state)
 }

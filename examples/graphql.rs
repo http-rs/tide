@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use async_std::task;
 use juniper::{http::graphiql, http::GraphQLRequest, RootNode};
 use std::sync::RwLock;
@@ -37,8 +39,9 @@ impl NewUser {
     }
 }
 
+#[derive(Clone)]
 pub struct State {
-    users: RwLock<Vec<User>>,
+    users: Arc<RwLock<Vec<User>>>,
 }
 impl juniper::Context for State {}
 
@@ -96,7 +99,7 @@ async fn handle_graphiql(_: Request<State>) -> tide::Result<impl Into<Response>>
 fn main() -> std::io::Result<()> {
     task::block_on(async {
         let mut app = Server::with_state(State {
-            users: RwLock::new(Vec::new()),
+            users: Arc::new(RwLock::new(Vec::new())),
         });
         app.at("/").get(Redirect::permanent("/graphiql"));
         app.at("/graphql").post(handle_graphql);
