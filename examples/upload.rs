@@ -1,3 +1,5 @@
+use std::io::Error as IoError;
+use std::path::Path;
 use std::sync::Arc;
 
 use async_std::{fs::OpenOptions, io};
@@ -5,10 +7,27 @@ use tempfile::TempDir;
 use tide::prelude::*;
 use tide::{Body, Request, Response, StatusCode};
 
+#[derive(Clone)]
+struct TempDirState {
+    tempdir: Arc<TempDir>,
+}
+
+impl TempDirState {
+    fn try_new() -> Result<Self, IoError> {
+        Ok(Self {
+            tempdir: Arc::new(tempfile::tempdir()?),
+        })
+    }
+
+    fn path(&self) -> &Path {
+        self.tempdir.path()
+    }
+}
+
 #[async_std::main]
-async fn main() -> Result<(), std::io::Error> {
+async fn main() -> Result<(), IoError> {
     tide::log::start();
-    let mut app = tide::with_state(Arc::new(tempfile::tempdir()?));
+    let mut app = tide::with_state(TempDirState::try_new()?);
 
     // To test this example:
     // $ cargo run --example upload
@@ -16,7 +35,7 @@ async fn main() -> Result<(), std::io::Error> {
     // $ curl localhost:8080/README.md # this reads the file from the same temp directory
 
     app.at(":file")
-        .put(|req: Request<Arc<TempDir>>| async move {
+        .put(|req: Request<TempDirState>| async move {
             let path: String = req.param("file")?;
             let fs_path = req.state().path().join(path);
 
@@ -35,7 +54,7 @@ async fn main() -> Result<(), std::io::Error> {
 
             Ok(json!({ "bytes": bytes_written }))
         })
-        .get(|req: Request<Arc<TempDir>>| async move {
+        .get(|req: Request<TempDirState>| async move {
             let path: String = req.param("file")?;
             let fs_path = req.state().path().join(path);
 
