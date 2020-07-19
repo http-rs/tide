@@ -16,12 +16,11 @@ pub fn endpoint<F, Fut, State>(handler: F) -> SseEndpoint<F, Fut, State>
 where
     State: Send + Sync + 'static,
     F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
-    Fut: Future<Output = Result<()>> + Send + Sync + 'static,
+    Fut: Future<Output = Result<()>> + Send + 'static,
 {
     SseEndpoint {
         handler: Arc::new(handler),
         __state: PhantomData,
-        __fut: PhantomData,
     }
 }
 
@@ -31,18 +30,17 @@ pub struct SseEndpoint<F, Fut, State>
 where
     State: Send + Sync + 'static,
     F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
-    Fut: Future<Output = Result<()>> + Send + Sync + 'static,
+    Fut: Future<Output = Result<()>> + Send + 'static,
 {
     handler: Arc<F>,
     __state: PhantomData<State>,
-    __fut: PhantomData<Fut>,
 }
 
 impl<F, Fut, State> Endpoint<State> for SseEndpoint<F, Fut, State>
 where
     State: Send + Sync + 'static,
     F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
-    Fut: Future<Output = Result<()>> + Send + Sync + 'static,
+    Fut: Future<Output = Result<()>> + Send + 'static,
 {
     fn call<'a>(&'a self, req: Request<State>) -> BoxFuture<'a, Result<Response>> {
         let handler = self.handler.clone();
