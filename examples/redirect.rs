@@ -1,7 +1,8 @@
-use tide::{http::StatusCode, Redirect, Response};
+use tide::{Redirect, Response, StatusCode};
 
 #[async_std::main]
 async fn main() -> Result<(), std::io::Error> {
+    tide::log::start();
     let mut app = tide::new();
     app.at("/").get(|_| async { Ok("Root") });
 

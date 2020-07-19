@@ -1,8 +1,7 @@
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
-use async_std::task;
 use juniper::{http::graphiql, http::GraphQLRequest, RootNode};
-use std::sync::RwLock;
+use lazy_static::lazy_static;
 use tide::{http::mime, Body, Redirect, Request, Response, Server, StatusCode};
 
 #[derive(Clone)]
@@ -71,14 +70,13 @@ impl MutationRoot {
 }
 
 pub type Schema = RootNode<'static, QueryRoot, MutationRoot>;
-fn create_schema() -> Schema {
-    Schema::new(QueryRoot {}, MutationRoot {})
+lazy_static! {
+    static ref SCHEMA: Schema = Schema::new(QueryRoot {}, MutationRoot {});
 }
 
 async fn handle_graphql(mut request: Request<State>) -> tide::Result {
     let query: GraphQLRequest = request.body_json().await?;
-    let schema = create_schema(); // probably worth making the schema a singleton using lazy_static library
-    let response = query.execute(&schema, request.state());
+    let response = query.execute(&SCHEMA, request.state());
     let status = if response.is_ok() {
         StatusCode::Ok
     } else {
@@ -96,15 +94,14 @@ async fn handle_graphiql(_: Request<State>) -> tide::Result<impl Into<Response>>
         .content_type(mime::HTML))
 }
 
-fn main() -> std::io::Result<()> {
-    task::block_on(async {
-        let mut app = Server::with_state(State {
-            users: Arc::new(RwLock::new(Vec::new())),
-        });
-        app.at("/").get(Redirect::permanent("/graphiql"));
-        app.at("/graphql").post(handle_graphql);
-        app.at("/graphiql").get(handle_graphiql);
-        app.listen("0.0.0.0:8080").await?;
-        Ok(())
-    })
+#[async_std::main]
+async fn main() -> std::io::Result<()> {
+    let mut app = Server::with_state(State {
+        users: Arc::new(RwLock::new(Vec::new())),
+    });
+    app.at("/").get(Redirect::permanent("/graphiql"));
+    app.at("/graphql").post(handle_graphql);
+    app.at("/graphiql").get(handle_graphiql);
+    app.listen("0.0.0.0:8080").await?;
+    Ok(())
 }
