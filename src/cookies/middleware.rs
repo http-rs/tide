@@ -1,4 +1,5 @@
 use crate::response::CookieEvent;
+use crate::utils::TideState;
 use crate::{Middleware, Next, Request};
 use async_trait::async_trait;
 
@@ -35,7 +36,7 @@ impl CookiesMiddleware {
 }
 
 #[async_trait]
-impl<State: Clone + Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
+impl<State: TideState> Middleware<State> for CookiesMiddleware {
     async fn handle(&self, mut ctx: Request<State>, next: Next<'_, State>) -> crate::Result {
         let cookie_jar = if let Some(cookie_data) = ctx.ext::<CookieData>() {
             cookie_data.content.clone()

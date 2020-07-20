@@ -1,4 +1,5 @@
 use crate::log;
+use crate::utils::TideState;
 use crate::{Body, Endpoint, Request, Response, Result, StatusCode};
 
 use async_std::path::PathBuf as AsyncPathBuf;
@@ -21,7 +22,7 @@ impl ServeDir {
 #[async_trait::async_trait]
 impl<State> Endpoint<State> for ServeDir
 where
-    State: Clone + Send + Sync + 'static,
+    State: TideState,
 {
     async fn call(&self, req: Request<State>) -> Result {
         let path = req.url().path();

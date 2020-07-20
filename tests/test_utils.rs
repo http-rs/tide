@@ -1,5 +1,6 @@
 use portpicker::pick_unused_port;
 use tide::http::{self, url::Url, Method};
+use tide::utils::TideState;
 use tide::Server;
 
 /// Find an unused port.
@@ -21,7 +22,7 @@ pub trait ServerTestingExt {
 #[async_trait::async_trait]
 impl<State> ServerTestingExt for Server<State>
 where
-    State: Clone + Send + Sync + 'static,
+    State: TideState,
 {
     async fn request(&self, method: Method, path: &str) -> http::Response {
         let url = if path.starts_with("http:") {

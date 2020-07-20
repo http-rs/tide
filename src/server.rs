@@ -8,6 +8,7 @@ use crate::listener::{Listener, ToListener};
 use crate::log;
 use crate::middleware::{Middleware, Next};
 use crate::router::{Router, Selection};
+use crate::utils::TideState;
 use crate::{Endpoint, Request, Route};
 /// An HTTP server.
 ///
@@ -58,7 +59,7 @@ impl Default for Server<()> {
     }
 }
 
-impl<State: Clone + Send + Sync + 'static> Server<State> {
+impl<State: TideState> Server<State> {
     /// Create a new Tide server with shared application scoped state.
     ///
     /// Application scoped state is useful for storing items

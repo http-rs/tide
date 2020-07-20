@@ -1,6 +1,7 @@
 #[cfg(unix)]
 use super::UnixListener;
 use super::{Listener, TcpListener};
+use crate::utils::TideState;
 use crate::Server;
 
 use async_std::io;
@@ -31,7 +32,7 @@ impl Display for ParsedListener {
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Listener<State> for ParsedListener {
+impl<State: TideState> Listener<State> for ParsedListener {
     async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
         match self {
             #[cfg(unix)]

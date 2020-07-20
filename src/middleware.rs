@@ -3,6 +3,7 @@
 use std::sync::Arc;
 
 use crate::endpoint::DynEndpoint;
+use crate::utils::TideState;
 use crate::{Request, Response};
 use async_trait::async_trait;
 use std::future::Future;
@@ -23,7 +24,7 @@ pub trait Middleware<State>: Send + Sync + 'static {
 #[async_trait]
 impl<State, F> Middleware<State> for F
 where
-    State: Clone + Send + Sync + 'static,
+    State: TideState,
     F: Send
         + Sync
         + 'static
@@ -44,7 +45,7 @@ pub struct Next<'a, State> {
     pub(crate) next_middleware: &'a [Arc<dyn Middleware<State>>],
 }
 
-impl<State: Clone + Send + Sync + 'static> Next<'_, State> {
+impl<State: TideState> Next<'_, State> {
     /// Asynchronously execute the remaining middleware chain.
     pub async fn run(mut self, req: Request<State>) -> Response {
         if let Some((current, next)) = self.next_middleware.split_first() {

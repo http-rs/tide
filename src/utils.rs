@@ -4,6 +4,10 @@ use crate::{Middleware, Next, Request, Response};
 pub use async_trait::async_trait;
 use std::future::Future;
 
+/// A shortcut for Tide's State trait bounds: `Clone + Send + Sync + 'static`.
+pub trait TideState: Clone + Send + Sync + 'static {}
+impl<T: Clone + Send + Sync + 'static> TideState for T {}
+
 /// Define a middleware that operates on incoming requests.
 ///
 /// This middleware is useful because it is not possible in Rust yet to use
@@ -27,7 +31,7 @@ pub struct Before<F>(pub F);
 #[async_trait]
 impl<State, F, Fut> Middleware<State> for Before<F>
 where
-    State: Clone + Send + Sync + 'static,
+    State: TideState,
     F: Fn(Request<State>) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Request<State>> + Send + Sync + 'static,
 {
@@ -61,7 +65,7 @@ pub struct After<F>(pub F);
 #[async_trait]
 impl<State, F, Fut> Middleware<State> for After<F>
 where
-    State: Clone + Send + Sync + 'static,
+    State: TideState,
     F: Fn(Response) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = crate::Result> + Send + Sync + 'static,
 {

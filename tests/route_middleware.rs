@@ -2,6 +2,7 @@ mod test_utils;
 use http_types::headers::HeaderName;
 use std::convert::TryInto;
 use test_utils::ServerTestingExt;
+use tide::utils::TideState;
 use tide::Middleware;
 
 #[derive(Debug)]
@@ -14,7 +15,7 @@ impl TestMiddleware {
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Middleware<State> for TestMiddleware {
+impl<State: TideState> Middleware<State> for TestMiddleware {
     async fn handle(
         &self,
         req: tide::Request<State>,

@@ -2,6 +2,7 @@ use route_recognizer::{Match, Params, Router as MethodRouter};
 use std::collections::HashMap;
 
 use crate::endpoint::DynEndpoint;
+use crate::utils::TideState;
 use crate::{Request, Response, StatusCode};
 
 /// The routing table used by `Server`
@@ -21,7 +22,7 @@ pub struct Selection<'a, State> {
     pub(crate) params: Params,
 }
 
-impl<State: Clone + Send + Sync + 'static> Router<State> {
+impl<State: TideState> Router<State> {
     pub fn new() -> Self {
         Router {
             method_map: HashMap::default(),
@@ -81,14 +82,10 @@ impl<State: Clone + Send + Sync + 'static> Router<State> {
     }
 }
 
-async fn not_found_endpoint<State: Clone + Send + Sync + 'static>(
-    _req: Request<State>,
-) -> crate::Result {
+async fn not_found_endpoint<State: TideState>(_req: Request<State>) -> crate::Result {
     Ok(Response::new(StatusCode::NotFound))
 }
 
-async fn method_not_allowed<State: Clone + Send + Sync + 'static>(
-    _req: Request<State>,
-) -> crate::Result {
+async fn method_not_allowed<State: TideState>(_req: Request<State>) -> crate::Result {
     Ok(Response::new(StatusCode::MethodNotAllowed))
 }

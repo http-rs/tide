@@ -10,6 +10,7 @@ use crate::cookies::CookieData;
 use crate::http::cookies::Cookie;
 use crate::http::headers::{self, HeaderName, HeaderValues, ToHeaderValues};
 use crate::http::{self, Body, Method, Mime, StatusCode, Url, Version};
+use crate::utils::TideState;
 use crate::Response;
 
 pin_project_lite::pin_project! {
@@ -565,7 +566,7 @@ impl<State> Into<http::Request> for Request<State> {
 
 // NOTE: From cannot be implemented for this conversion because `State` needs to
 // be constrained by a type.
-impl<State: Clone + Send + Sync + 'static> Into<Response> for Request<State> {
+impl<State: TideState> Into<Response> for Request<State> {
     fn into(mut self) -> Response {
         let mut res = Response::new(StatusCode::Ok);
         res.set_body(self.take_body());

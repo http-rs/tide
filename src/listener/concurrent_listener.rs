@@ -1,4 +1,5 @@
 use crate::listener::{Listener, ToListener};
+use crate::utils::TideState;
 use crate::Server;
 
 use std::fmt::{self, Debug, Display, Formatter};
@@ -35,7 +36,7 @@ use futures_util::stream::{futures_unordered::FuturesUnordered, StreamExt};
 #[derive(Default)]
 pub struct ConcurrentListener<State>(Vec<Box<dyn Listener<State>>>);
 
-impl<State: Clone + Send + Sync + 'static> ConcurrentListener<State> {
+impl<State: TideState> ConcurrentListener<State> {
     /// creates a new ConcurrentListener
     pub fn new() -> Self {
         Self(vec![])
@@ -78,7 +79,7 @@ impl<State: Clone + Send + Sync + 'static> ConcurrentListener<State> {
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Listener<State> for ConcurrentListener<State> {
+impl<State: TideState> Listener<State> for ConcurrentListener<State> {
     async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
         let mut futures_unordered = FuturesUnordered::new();
 

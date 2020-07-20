@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 
 use tide::http::mime;
-use tide::utils::{After, Before};
+use tide::utils::{After, Before, TideState};
 use tide::{Middleware, Next, Request, Response, Result, StatusCode};
 
 #[derive(Debug)]
@@ -61,7 +61,7 @@ impl RequestCounterMiddleware {
 struct RequestCount(usize);
 
 #[tide::utils::async_trait]
-impl<State: Clone + Send + Sync + 'static> Middleware<State> for RequestCounterMiddleware {
+impl<State: TideState> Middleware<State> for RequestCounterMiddleware {
     async fn handle(&self, mut req: Request<State>, next: Next<'_, State>) -> Result {
         let count = self.requests_counted.fetch_add(1, Ordering::Relaxed);
         tide::log::trace!("request counter", { count: count });

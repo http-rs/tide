@@ -6,6 +6,7 @@ use std::sync::Arc;
 use crate::endpoint::MiddlewareEndpoint;
 use crate::fs::ServeDir;
 use crate::log;
+use crate::utils::TideState;
 use crate::{router::Router, Endpoint, Middleware};
 
 /// A handle to a route.
@@ -28,7 +29,7 @@ pub struct Route<'a, State> {
     prefix: bool,
 }
 
-impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
+impl<'a, State: TideState> Route<'a, State> {
     pub(crate) fn new(router: &'a mut Router<State>, path: String) -> Route<'a, State> {
         Route {
             router,
@@ -101,8 +102,8 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
     /// [`Server`]: struct.Server.html
     pub fn nest<InnerState>(&mut self, service: crate::Server<InnerState>) -> &mut Self
     where
-        State: Clone + Send + Sync + 'static,
-        InnerState: Clone + Send + Sync + 'static,
+        State: TideState,
+        InnerState: TideState,
     {
         self.prefix = true;
         self.all(service);
@@ -276,7 +277,7 @@ impl<E> Clone for StripPrefixEndpoint<E> {
 #[async_trait::async_trait]
 impl<State, E> Endpoint<State> for StripPrefixEndpoint<E>
 where
-    State: Clone + Send + Sync + 'static,
+    State: TideState,
     E: Endpoint<State>,
 {
     async fn call(&self, req: crate::Request<State>) -> crate::Result {

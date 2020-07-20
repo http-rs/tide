@@ -1,6 +1,7 @@
 use crate::http::{mime, Body, StatusCode};
 use crate::log;
 use crate::sse::Sender;
+use crate::utils::TideState;
 use crate::{Endpoint, Request, Response, Result};
 
 use async_std::future::Future;
@@ -13,7 +14,7 @@ use std::sync::Arc;
 /// Create an endpoint that can handle SSE connections.
 pub fn endpoint<F, Fut, State>(handler: F) -> SseEndpoint<F, Fut, State>
 where
-    State: Clone + Send + Sync + 'static,
+    State: TideState,
     F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + Sync + 'static,
 {
@@ -28,7 +29,7 @@ where
 #[derive(Debug)]
 pub struct SseEndpoint<F, Fut, State>
 where
-    State: Clone + Send + Sync + 'static,
+    State: TideState,
     F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + Sync + 'static,
 {
@@ -40,7 +41,7 @@ where
 #[async_trait::async_trait]
 impl<F, Fut, State> Endpoint<State> for SseEndpoint<F, Fut, State>
 where
-    State: Clone + Send + Sync + 'static,
+    State: TideState,
     F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + Sync + 'static,
 {

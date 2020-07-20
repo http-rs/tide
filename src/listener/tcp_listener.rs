@@ -1,6 +1,7 @@
 use super::is_transient_error;
 
 use crate::listener::Listener;
+use crate::utils::TideState;
 use crate::{log, Server};
 
 use std::fmt::{self, Display, Formatter};
@@ -51,7 +52,7 @@ impl TcpListener {
     }
 }
 
-fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: TcpStream) {
+fn handle_tcp<State: TideState>(app: Server<State>, stream: TcpStream) {
     task::spawn(async move {
         let local_addr = stream.local_addr().ok();
         let peer_addr = stream.peer_addr().ok();
@@ -69,7 +70,7 @@ fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: 
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Listener<State> for TcpListener {
+impl<State: TideState> Listener<State> for TcpListener {
     async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
         self.connect().await?;
         let listener = self.listener()?;

@@ -1,4 +1,5 @@
 use crate::listener::{Listener, ToListener};
+use crate::utils::TideState;
 use crate::Server;
 
 use std::fmt::{self, Debug, Display, Formatter};
@@ -35,7 +36,7 @@ use async_std::io;
 #[derive(Default)]
 pub struct FailoverListener<State>(Vec<Box<dyn Listener<State>>>);
 
-impl<State: Clone + Send + Sync + 'static> FailoverListener<State> {
+impl<State: TideState> FailoverListener<State> {
     /// creates a new FailoverListener
     pub fn new() -> Self {
         Self(vec![])
@@ -80,7 +81,7 @@ impl<State: Clone + Send + Sync + 'static> FailoverListener<State> {
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Listener<State> for FailoverListener<State> {
+impl<State: TideState> Listener<State> for FailoverListener<State> {
     async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
         for listener in self.0.iter_mut() {
             let app = app.clone();

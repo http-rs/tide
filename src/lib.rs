@@ -227,6 +227,8 @@ pub use server::Server;
 #[doc(inline)]
 pub use http_types::{self as http, Body, Error, Status, StatusCode};
 
+use utils::TideState;
+
 /// Create a new Tide server.
 ///
 /// # Examples
@@ -280,7 +282,7 @@ pub fn new() -> server::Server<()> {
 /// ```
 pub fn with_state<State>(state: State) -> server::Server<State>
 where
-    State: Clone + Send + Sync + 'static,
+    State: TideState,
 {
     Server::with_state(state)
 }

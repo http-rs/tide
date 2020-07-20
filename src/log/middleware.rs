@@ -1,4 +1,5 @@
 use crate::log;
+use crate::utils::TideState;
 use crate::{Middleware, Next, Request};
 
 /// Log all incoming requests and responses.
@@ -24,7 +25,7 @@ impl LogMiddleware {
     }
 
     /// Log a request and a response.
-    async fn log<'a, State: Clone + Send + Sync + 'static>(
+    async fn log<'a, State: TideState>(
         &'a self,
         ctx: Request<State>,
         next: Next<'a, State>,
@@ -75,7 +76,7 @@ impl LogMiddleware {
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Middleware<State> for LogMiddleware {
+impl<State: TideState> Middleware<State> for LogMiddleware {
     async fn handle(&self, req: Request<State>, next: Next<'_, State>) -> crate::Result {
         self.log(req, next).await
     }

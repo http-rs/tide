@@ -1,5 +1,6 @@
 use crate::http::{mime, Body, StatusCode};
 use crate::log;
+use crate::utils::TideState;
 use crate::{Request, Response, Result};
 
 use super::Sender;
@@ -11,7 +12,7 @@ use async_std::task;
 /// Upgrade an existing HTTP connection to an SSE connection.
 pub fn upgrade<F, Fut, State>(req: Request<State>, handler: F) -> Response
 where
-    State: Clone + Send + Sync + 'static,
+    State: TideState,
     F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + Sync + 'static,
 {

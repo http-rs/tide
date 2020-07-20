@@ -17,6 +17,7 @@
 //! ```
 
 use crate::http::headers::LOCATION;
+use crate::utils::TideState;
 use crate::StatusCode;
 use crate::{Endpoint, Request, Response};
 
@@ -88,7 +89,7 @@ impl<T: AsRef<str>> Redirect<T> {
 #[async_trait::async_trait]
 impl<State, T> Endpoint<State> for Redirect<T>
 where
-    State: Clone + Send + Sync + 'static,
+    State: TideState,
     T: AsRef<str> + Send + Sync + 'static,
 {
     async fn call(&self, _req: Request<State>) -> crate::Result<Response> {
