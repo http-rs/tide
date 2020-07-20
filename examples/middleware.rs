@@ -2,6 +2,7 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+
 use tide::http::mime;
 use tide::utils::{After, Before};
 use tide::{Middleware, Next, Request, Response, Result, StatusCode};
@@ -42,9 +43,7 @@ fn user_loader<'a>(
     })
 }
 
-//
-//
-// this is an example of middleware that keeps its own state and could
+// This is an example of middleware that keeps its own state and could
 // be provided as a third party crate
 #[derive(Default)]
 struct RequestCounterMiddleware {
