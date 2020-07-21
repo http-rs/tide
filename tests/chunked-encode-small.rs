@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use tide::Body;
 
-const TEXT: &'static str = concat![
+const TEXT: &str = concat![
     "Eveniet delectus voluptatem in placeat modi. Qui nulla sunt aut non voluptas temporibus accusamus rem. Qui soluta nisi qui accusantium excepturi voluptatem. Ab rerum maiores neque ut expedita rem.",
     "Et neque praesentium eligendi quaerat consequatur asperiores dolorem. Pariatur tempore quidem animi consequuntur voluptatem quos. Porro quo ipsa quae suscipit. Doloribus est qui facilis ratione. Delectus ex perspiciatis ab alias et quisquam non est.",
     "Id dolorum distinctio distinctio quos est facilis commodi velit. Ex repudiandae aliquam eos voluptatum et. Provident qui molestiae molestiae nostrum voluptatum aperiam ut. Quis repellendus quidem mollitia aut recusandae laboriosam.",
