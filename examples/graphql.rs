@@ -30,10 +30,10 @@ struct NewUser {
 }
 
 impl NewUser {
-    fn to_internal(self) -> User {
+    fn into_internal(self) -> User {
         User {
             id: None,
-            first_name: self.first_name.to_owned(),
+            first_name: self.first_name,
         }
     }
 }
@@ -51,7 +51,7 @@ impl QueryRoot {
     #[graphql(description = "Get all Users")]
     fn users(context: &State) -> Vec<User> {
         let users = context.users.read().unwrap();
-        users.iter().map(|u| u.clone()).collect()
+        users.iter().cloned().collect()
     }
 }
 
@@ -62,7 +62,7 @@ impl MutationRoot {
     #[graphql(description = "Add new user")]
     fn add_user(context: &State, user: NewUser) -> User {
         let mut users = context.users.write().unwrap();
-        let mut user = user.to_internal();
+        let mut user = user.into_internal();
         user.id = Some((users.len() + 1) as u16);
         users.push(user.clone());
         user

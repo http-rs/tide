@@ -10,15 +10,12 @@ async fn main() -> Result<()> {
 
     app.middleware(After(|mut res: Response| async {
         if let Some(err) = res.downcast_error::<async_std::io::Error>() {
-            match err.kind() {
-                ErrorKind::NotFound => {
-                    let msg = err.to_string().to_owned();
-                    res.set_status(StatusCode::NotFound);
+            if let ErrorKind::NotFound = err.kind() {
+                let msg = err.to_string();
+                res.set_status(StatusCode::NotFound);
 
-                    // NOTE: You may want to avoid sending error messages in a production server.
-                    res.set_body(format!("Error: {}", msg));
-                }
-                _ => (), // Some default behavior if you like.
+                // NOTE: You may want to avoid sending error messages in a production server.
+                res.set_body(format!("Error: {}", msg));
             }
         }
         Ok(res)

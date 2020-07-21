@@ -8,8 +8,8 @@ async fn test_status() {
     let mut resp = Response::new(StatusCode::NotFound);
     resp.set_body("foo");
     assert_eq!(resp.status(), StatusCode::NotFound);
-    let foo = resp.take_body().into_string().await.unwrap();
-    assert_eq!(foo.as_bytes(), b"foo");
+    let body = resp.take_body().into_string().await.unwrap();
+    assert_eq!(body.as_bytes(), b"foo");
 }
 
 #[async_std::test]
@@ -21,8 +21,8 @@ async fn byte_vec_content_type() {
     resp.set_body(Body::from_reader(Cursor::new("foo"), None));
 
     assert_eq!(resp[headers::CONTENT_TYPE], mime::BYTE_STREAM.to_string());
-    let foo = resp.take_body().into_bytes().await.unwrap();
-    assert_eq!(foo, b"foo");
+    let body = resp.take_body().into_bytes().await.unwrap();
+    assert_eq!(body, b"foo");
 }
 
 #[async_std::test]
@@ -31,8 +31,8 @@ async fn string_content_type() {
     resp.set_body("foo");
 
     assert_eq!(resp[headers::CONTENT_TYPE], mime::PLAIN.to_string());
-    let foo = resp.take_body().into_string().await.unwrap();
-    assert_eq!(foo, "foo");
+    let body = resp.take_body().into_string().await.unwrap();
+    assert_eq!(body, "foo");
 }
 
 #[async_std::test]

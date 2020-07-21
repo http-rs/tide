@@ -43,7 +43,7 @@ async fn test_missing_param() {
 #[async_std::test]
 async fn hello_world_parametrized() {
     async fn greet(req: tide::Request<()>) -> Result<Response> {
-        let name = req.param("name").unwrap_or("nori".to_owned());
+        let name = req.param("name").unwrap_or_else(|_| "nori".to_owned());
         let mut response = tide::Response::new(StatusCode::Ok);
         response.set_body(format!("{} says hello", name));
         Ok(response)

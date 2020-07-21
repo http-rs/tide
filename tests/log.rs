@@ -5,7 +5,7 @@ mod test_utils;
 
 #[async_std::test]
 async fn start_server_log() {
-    let logger = logtest::start();
+    let mut logger = logtest::start();
 
     let port = test_utils::find_port().await;
     let app = tide::new();
@@ -16,8 +16,7 @@ async fn start_server_log() {
     assert!(res.is_err());
 
     let record = logger
-        .filter(|rec| rec.args().starts_with("Server listening"))
-        .next()
+        .find(|rec| rec.args().starts_with("Server listening"))
         .unwrap();
     assert_eq!(
         record.args(),
