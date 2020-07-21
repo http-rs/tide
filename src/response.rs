@@ -398,6 +398,13 @@ impl From<http::Response> for Response {
     }
 }
 
+impl From<StatusCode> for Response {
+    fn from(status: StatusCode) -> Self {
+        let res: http::Response = status.into();
+        res.into()
+    }
+}
+
 impl From<String> for Response {
     fn from(s: String) -> Self {
         Body::from_string(s).into()
