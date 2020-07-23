@@ -35,25 +35,25 @@ __internal__bench = []
 async-h1 = { version = "2.0.1", optional = true }
 async-sse = "4.0.0"
 async-std = { version = "1.6.0", features = ["unstable"] }
+async-trait = "0.1.36"
 femme = "2.0.1"
+futures-util = "0.3.5"
 http-types = "2.2.1"
 kv-log-macro = "1.0.4"
+pin-project-lite = "0.1.7"
+route-recognizer = "0.2.0"
 serde = "1.0.102"
 serde_json = "1.0.41"
-route-recognizer = "0.2.0"
-logtest = "2.0.0"
-async-trait = "0.1.36"
-futures-util = "0.3.5"
-pin-project-lite = "0.1.7"
 
 [dev-dependencies]
 async-std = { version = "1.6.0", features = ["unstable", "attributes"] }
+criterion = "0.3.1"
 juniper = "0.14.1"
 lazy_static = "1.4.0"
+logtest = "2.0.0"
 portpicker = "0.1.0"
-surf = { version = "2.0.0-alpha.3", default-features = false, features = ["h1-client"] }
 serde = { version = "1.0.102", features = ["derive"] }
-criterion = "0.3.1"
+surf = { version = "2.0.0-alpha.3", default-features = false, features = ["h1-client"] }
 tempfile = "3.1.0"
 
 [[test]]
