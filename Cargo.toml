@@ -24,8 +24,9 @@ features = ["docs"]
 rustdoc-args = ["--cfg", "feature=\"docs\""]
 
 [features]
-default = ["h1-server"]
+default = ["h1-server", "logger"]
 h1-server = ["async-h1"]
+logger = []
 docs = ["unstable"]
 unstable = []
 # DO NOT USE. Only exists to expose internals so they can be benchmarked.

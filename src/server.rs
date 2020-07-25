@@ -98,6 +98,7 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
             state,
         };
         server.middleware(cookies::CookiesMiddleware::new());
+        #[cfg(feature = "logger")]
         server.middleware(log::LogMiddleware::new());
         server
     }
