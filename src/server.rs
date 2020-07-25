@@ -24,6 +24,19 @@ use crate::{Endpoint, Request, Route};
 /// - Middleware extends the base Tide framework with additional request or
 /// response processing, such as compression, default headers, or logging. To
 /// add middleware to an app, use the [`Server::middleware`] method.
+///
+/// # Examples
+///
+/// ```no_run
+/// #[async_std::main]
+/// async fn main() -> Result<(), std::io::Error> {
+///     tide::log::start();
+///     let mut app = tide::default();
+///     app.at("/").get(|_| async { Ok("Hello, world!") });
+///     app.listen("127.0.0.1:8080").await?;
+///     Ok(())
+/// }
+/// ```
 #[allow(missing_debug_implementations)]
 pub struct Server<State> {
     router: Arc<Router<State>>,
@@ -33,6 +46,8 @@ pub struct Server<State> {
 
 impl Server<()> {
     /// Create a new Tide server.
+    ///
+    /// For default middleware, please see [Server::default()](Server::default).
     ///
     /// # Examples
     ///
@@ -53,15 +68,39 @@ impl Server<()> {
 }
 
 impl Default for Server<()> {
+    /// Create a new Tide server with default middleware.
+    ///
+    /// The default middleware consists of:
+    /// - [LogMiddleware](crate::log::LogMiddleware)
+    /// - [CookiesMiddleware](crate::cookies::CookiesMiddleware)
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use async_std::task::block_on;
+    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
+    /// #
+    /// tide::log::start();
+    /// let mut app = tide::default();
+    /// app.at("/").get(|_| async { Ok("Hello, world!") });
+    /// app.listen("127.0.0.1:8080").await?;
+    /// #
+    /// # Ok(()) }) }
+    /// ```
     fn default() -> Self {
-        Self::new()
+        let mut server = Self::new();
+        server.middleware(log::LogMiddleware::new());
+        server.middleware(cookies::CookiesMiddleware::new());
+        server
     }
 }
 
 impl<State: Clone + Send + Sync + 'static> Server<State> {
     /// Create a new Tide server with shared application scoped state.
     ///
-    /// Application scoped state is useful for storing items
+    /// Application scoped state is useful for storing items.
+    ///
+    /// For default middleware, please see [Server::default_with_state()](Server::default_with_state).
     ///
     /// # Examples
     ///
@@ -92,11 +131,50 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     /// # Ok(()) }) }
     /// ```
     pub fn with_state(state: State) -> Self {
-        let mut server = Self {
+        Self {
             router: Arc::new(Router::new()),
             middleware: Arc::new(vec![]),
             state,
-        };
+        }
+    }
+
+    /// Create a new Tide server with shared application scoped state.
+    ///
+    /// Application scoped state is useful for storing items
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use async_std::task::block_on;
+    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
+    /// #
+    /// use tide::Request;
+    ///
+    /// /// The shared application state.
+    /// #[derive(Clone)]
+    /// struct State {
+    ///     name: String,
+    /// }
+    ///
+    /// // Define a new instance of the state.
+    /// let state = State {
+    ///     name: "Nori".to_string()
+    /// };
+    ///
+    /// // Turn on the built-in logger.
+    /// tide::log::start();
+    ///
+    /// // Initialize the application with state.
+    /// let mut app = tide::default_with_state(state);
+    /// app.at("/").get(|req: Request<State>| async move {
+    ///     Ok(format!("Hello, {}!", &req.state().name))
+    /// });
+    /// app.listen("127.0.0.1:8080").await?;
+    /// #
+    /// # Ok(()) }) }
+    /// ```
+    pub fn default_with_state(state: State) -> Self {
+        let mut server = Self::with_state(state);
         server.middleware(cookies::CookiesMiddleware::new());
         server.middleware(log::LogMiddleware::new());
         server

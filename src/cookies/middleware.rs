@@ -25,7 +25,7 @@ use std::sync::{Arc, RwLock};
 /// });
 /// ```
 #[derive(Debug, Clone, Default)]
-pub(crate) struct CookiesMiddleware;
+pub struct CookiesMiddleware;
 
 impl CookiesMiddleware {
     /// Creates a new `CookiesMiddleware`.

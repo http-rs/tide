@@ -22,7 +22,7 @@ async fn remove_cookie(_req: Request<()>) -> tide::Result {
 #[async_std::main]
 async fn main() -> Result<(), std::io::Error> {
     tide::log::start();
-    let mut app = tide::new();
+    let mut app = tide::default();
 
     app.at("/").get(retrieve_cookie);
     app.at("/set").get(insert_cookie);

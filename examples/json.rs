@@ -10,7 +10,7 @@ struct Cat {
 #[async_std::main]
 async fn main() -> tide::Result<()> {
     tide::log::start();
-    let mut app = tide::new();
+    let mut app = tide::default();
 
     app.at("/submit").post(|mut req: Request<()>| async move {
         let cat: Cat = req.body_json().await?;

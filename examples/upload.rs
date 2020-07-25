@@ -27,7 +27,7 @@ impl TempDirState {
 #[async_std::main]
 async fn main() -> Result<(), IoError> {
     tide::log::start();
-    let mut app = tide::with_state(TempDirState::try_new()?);
+    let mut app = tide::default_with_state(TempDirState::try_new()?);
 
     // To test this example:
     // $ cargo run --example upload

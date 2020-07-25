@@ -92,7 +92,7 @@ const INTERNAL_SERVER_ERROR_HTML_PAGE: &str = "<html><body>
 #[async_std::main]
 async fn main() -> Result<()> {
     tide::log::start();
-    let mut app = tide::with_state(UserDatabase::default());
+    let mut app = tide::default_with_state(UserDatabase::default());
 
     app.middleware(After(|response: Response| async move {
         let response = match response.status() {

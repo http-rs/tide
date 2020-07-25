@@ -61,7 +61,7 @@ async-std = { version = "1.6.0", features = ["attributes"] }
 #[async_std::main]
 async fn main() -> Result<(), std::io::Error> {
     tide::log::start();
-    let mut app = tide::new();
+    let mut app = tide::default();
     app.at("/").get(|_| async { Ok("Hello, world!") });
     app.listen("127.0.0.1:8080").await?;
     Ok(())

@@ -6,7 +6,7 @@ use tide::{Body, Request, Response, Result, StatusCode};
 #[async_std::main]
 async fn main() -> Result<()> {
     tide::log::start();
-    let mut app = tide::new();
+    let mut app = tide::default();
 
     app.middleware(After(|mut res: Response| async {
         if let Some(err) = res.downcast_error::<async_std::io::Error>() {

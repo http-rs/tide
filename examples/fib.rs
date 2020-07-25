@@ -30,7 +30,7 @@ async fn fibsum(req: Request<()>) -> tide::Result<String> {
 // It was computed in 2 secs.
 #[async_std::main]
 async fn main() -> Result<(), std::io::Error> {
-    let mut app = tide::new();
+    let mut app = tide::default();
     app.at("/fib/:n").get(fibsum);
     app.listen("0.0.0.0:8080").await?;
     Ok(())

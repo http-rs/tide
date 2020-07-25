@@ -28,7 +28,8 @@
 //! # use async_std::task::block_on;
 //! # fn main() -> Result<(), std::io::Error> { block_on(async {
 //! #
-//! let mut app = tide::new();
+//! tide::log::start();
+//! let mut app = tide::default();
 //! app.at("/").get(|_| async { Ok("Hello, world!") });
 //! app.listen("127.0.0.1:8080").await?;
 //! #
@@ -56,7 +57,8 @@
 //! #[derive(Debug, serde::Deserialize, serde::Serialize)]
 //! struct Counter { count: usize }
 //!
-//! let mut app = tide::new();
+//! tide::log::start();
+//! let mut app = tide::default();
 //! app.at("/").get(|mut req: Request<()>| async move {
 //!    let mut counter: Counter = req.body_json().await?;
 //!    println!("count is {}", counter.count);
@@ -165,7 +167,8 @@
 //! #
 //! #[async_std::main]
 //! async fn main() -> Result<(), std::io::Error> {
-//!     let mut app = tide::new();
+//!     tide::log::start();
+//!     let mut app = tide::default();
 //!     app.at("/").get(|req: Request<()>| async move { Ok(req.bark()) });
 //!     app.listen("127.0.0.1:8080").await
 //! }
@@ -191,7 +194,6 @@
 #![doc(html_favicon_url = "https://yoshuawuyts.com/assets/http-rs/favicon.ico")]
 #![doc(html_logo_url = "https://yoshuawuyts.com/assets/http-rs/logo-rounded.png")]
 
-mod cookies;
 mod endpoint;
 mod fs;
 mod middleware;
@@ -208,6 +210,7 @@ pub mod router;
 mod server;
 
 pub mod convert;
+pub mod cookies;
 pub mod listener;
 pub mod log;
 pub mod prelude;
@@ -229,6 +232,8 @@ pub use http_types::{self as http, Body, Error, Status, StatusCode};
 
 /// Create a new Tide server.
 ///
+/// For default middleware, please see [tide::default()](tide::default).
+///
 /// # Examples
 ///
 /// ```no_run
@@ -242,13 +247,38 @@ pub use http_types::{self as http, Body, Error, Status, StatusCode};
 /// # Ok(()) }) }
 /// ```
 #[must_use]
-pub fn new() -> server::Server<()> {
+pub fn new() -> Server<()> {
     Server::new()
+}
+
+/// Create a new Tide server with default middleware.
+///
+/// The default middleware consists of:
+/// - [LogMiddleware](crate::log::LogMiddleware)
+/// - [CookiesMiddleware](crate::cookies::CookiesMiddleware)
+///
+/// # Examples
+///
+/// ```no_run
+/// # use async_std::task::block_on;
+/// # fn main() -> Result<(), std::io::Error> { block_on(async {
+/// #
+/// tide::log::start();
+/// let mut app = tide::default();
+/// app.at("/").get(|_| async { Ok("Hello, world!") });
+/// app.listen("127.0.0.1:8080").await?;
+/// #
+/// # Ok(()) }) }
+/// ```
+pub fn default() -> Server<()> {
+    Server::default()
 }
 
 /// Create a new Tide server with shared application scoped state.
 ///
-/// Application scoped state is useful for storing items
+/// Application scoped state is useful for storing items.
+///
+/// For default middleware, please see [tide::default_with_state()](tide::default_with_state).
 ///
 /// # Examples
 ///
@@ -278,11 +308,53 @@ pub fn new() -> server::Server<()> {
 /// #
 /// # Ok(()) }) }
 /// ```
-pub fn with_state<State>(state: State) -> server::Server<State>
+pub fn with_state<State>(state: State) -> Server<State>
 where
     State: Clone + Send + Sync + 'static,
 {
     Server::with_state(state)
+}
+
+/// Create a new Tide server with shared application scoped state.
+///
+/// Application scoped state is useful for storing items.
+///
+/// # Examples
+///
+/// ```no_run
+/// # use async_std::task::block_on;
+/// # fn main() -> Result<(), std::io::Error> { block_on(async {
+/// #
+/// use tide::Request;
+///
+/// /// The shared application state.
+/// #[derive(Clone)]
+/// struct State {
+///     name: String,
+/// }
+///
+/// // Define a new instance of the state.
+/// let state = State {
+///     name: "Nori".to_string()
+/// };
+///
+/// // Turn on the built-in logger.
+/// tide::log::start();
+///
+/// // Initialize the application with state.
+/// let mut app = tide::default_with_state(state);
+/// app.at("/").get(|req: Request<State>| async move {
+///     Ok(format!("Hello, {}!", &req.state().name))
+/// });
+/// app.listen("127.0.0.1:8080").await?;
+/// #
+/// # Ok(()) }) }
+/// ```
+pub fn default_with_state<State>(state: State) -> Server<State>
+where
+    State: Clone + Send + Sync + 'static,
+{
+    Server::default_with_state(state)
 }
 
 /// A specialized Result type for Tide.

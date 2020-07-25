@@ -250,7 +250,7 @@ mod test {
     }
 
     fn app() -> crate::Server<()> {
-        let mut app = crate::Server::new();
+        let mut app = crate::Server::default();
         app.at(ENDPOINT).get(|_| async { Ok("Hello World") });
 
         app
@@ -365,7 +365,7 @@ mod test {
 
     #[async_std::test]
     async fn retain_cookies() {
-        let mut app = crate::Server::new();
+        let mut app = crate::Server::default();
         app.middleware(CorsMiddleware::new().allow_origin(ALLOW_ORIGIN));
         app.at(ENDPOINT).get(|_| async {
             let mut res = crate::Response::new(http_types::StatusCode::Ok);
@@ -382,7 +382,7 @@ mod test {
 
     #[async_std::test]
     async fn set_cors_headers_to_error_responses() {
-        let mut app = crate::Server::new();
+        let mut app = crate::Server::default();
         app.at(ENDPOINT).get(|_| async {
             Err::<&str, _>(crate::Error::from_str(
                 StatusCode::BadRequest,
