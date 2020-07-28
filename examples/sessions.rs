@@ -16,7 +16,8 @@ async fn main() -> tide::Result<()> {
         std::env::var("TIDE_SECRET")
             .unwrap_or(
                 "Please provide a TIDE_SECRET value of at \
-                      least 32 bytes in order to run this example".to_owned(),
+                      least 32 bytes in order to run this example"
+                    .to_owned(),
             )
             .as_bytes(),
     ));
