@@ -84,16 +84,16 @@ where
             .and_then(|cookie| self.verify_signature(cookie.value()).ok());
 
         let mut session = self.load_or_create(cookie_value).await;
-
+        let secure_cookie = request.url().scheme() == "https";
         if let Some(ttl) = self.session_ttl {
             session.expire_in(ttl);
         }
 
-        let secure_cookie = request.url().scheme() == "https";
+        // Inser the session into the state and continue the middleware stack.
         request.set_ext(session.clone());
-
         let mut response = next.run(request).await;
 
+        // Check whether the session has been invalidated.
         if session.is_destroyed() {
             if let Err(e) = self.store.destroy_session(session).await {
                 crate::log::error!("unable to destroy session", { error: e.to_string() });
@@ -104,6 +104,7 @@ where
                 response.remove_cookie(cookie);
             }
         } else if self.save_unchanged || session.data_changed() {
+            // Store the newly created session.
             if let Some(cookie_value) = self
                 .store
                 .store_session(session)
