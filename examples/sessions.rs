@@ -1,14 +1,22 @@
 #[async_std::main]
-async fn main() -> Result<(), std::io::Error> {
+async fn main() -> tide::Result<()> {
     tide::log::start();
     let mut app = tide::new();
 
+    let db = "tide-sessions";
+    let coll_name = "sessions";
+    let store = async_mongodb_session::MongodbSessionStore::connect(
+        "mongodb://localhost:27017",
+        db,
+        coll_name,
+    )
+    .await?;
     app.middleware(tide::sessions::SessionMiddleware::new(
-        tide::sessions::MemoryStore::new(),
+        store,
         std::env::var("TIDE_SECRET")
-            .expect(
+            .unwrap_or(
                 "Please provide a TIDE_SECRET value of at \
-                      least 32 bytes in order to run this example",
+                      least 32 bytes in order to run this example".to_owned(),
             )
             .as_bytes(),
     ));
