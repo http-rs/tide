@@ -13,7 +13,7 @@ pub fn upgrade<F, Fut, State>(req: Request<State>, handler: F) -> Response
 where
     State: Clone + Send + Sync + 'static,
     F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
-    Fut: Future<Output = Result<()>> + Send + Sync + 'static,
+    Fut: Future<Output = Result<()>> + Send + 'static,
 {
     let (sender, encoder) = async_sse::encode();
     task::spawn(async move {

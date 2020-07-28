@@ -15,12 +15,11 @@ pub fn endpoint<F, Fut, State>(handler: F) -> SseEndpoint<F, Fut, State>
 where
     State: Clone + Send + Sync + 'static,
     F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
-    Fut: Future<Output = Result<()>> + Send + Sync + 'static,
+    Fut: Future<Output = Result<()>> + Send + 'static,
 {
     SseEndpoint {
         handler: Arc::new(handler),
         __state: PhantomData,
-        __fut: PhantomData,
     }
 }
 
@@ -30,11 +29,10 @@ pub struct SseEndpoint<F, Fut, State>
 where
     State: Clone + Send + Sync + 'static,
     F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
-    Fut: Future<Output = Result<()>> + Send + Sync + 'static,
+    Fut: Future<Output = Result<()>> + Send + 'static,
 {
     handler: Arc<F>,
     __state: PhantomData<State>,
-    __fut: PhantomData<Fut>,
 }
 
 #[async_trait::async_trait]
@@ -42,7 +40,7 @@ impl<F, Fut, State> Endpoint<State> for SseEndpoint<F, Fut, State>
 where
     State: Clone + Send + Sync + 'static,
     F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
-    Fut: Future<Output = Result<()>> + Send + Sync + 'static,
+    Fut: Future<Output = Result<()>> + Send + 'static,
 {
     async fn call(&self, req: Request<State>) -> Result<Response> {
         let handler = self.handler.clone();
