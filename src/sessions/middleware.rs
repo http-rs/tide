@@ -22,12 +22,12 @@ const BASE64_DIGEST_LEN: usize = 44;
 /// # async_std::task::block_on(async {
 /// let mut app = tide::new();
 ///
-/// app.middleware(tide::sessions::SessionMiddleware::new(
+/// app.with(tide::sessions::SessionMiddleware::new(
 ///     tide::sessions::MemoryStore::new(),
 ///     b"we recommend you use std::env::var(\"TIDE_SECRET\").unwrap().as_bytes() instead of a fixed value"
 /// ));
 ///
-/// app.middleware(tide::utils::Before(|mut request: tide::Request<()>| async move {
+/// app.with(tide::utils::Before(|mut request: tide::Request<()>| async move {
 ///     let session = request.session_mut();
 ///     let visits: usize = session.get("visits").unwrap_or_default();
 ///     session.insert("visits", visits + 1).unwrap();
@@ -153,7 +153,7 @@ impl<Store: SessionStore> SessionMiddleware<Store> {
     /// # use std::time::Duration;
     /// # use tide::sessions::{SessionMiddleware, MemoryStore};
     /// let mut app = tide::new();
-    /// app.middleware(
+    /// app.with(
     ///     SessionMiddleware::new(MemoryStore::new(), b"please do not hardcode your secret")
     ///         .with_cookie_name("custom.cookie.name")
     ///         .with_cookie_path("/some/path")

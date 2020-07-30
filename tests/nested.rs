@@ -20,7 +20,7 @@ async fn nested_middleware() {
     let echo_path = |req: tide::Request<()>| async move { Ok(req.url().path().to_string()) };
     let mut app = tide::new();
     let mut inner_app = tide::new();
-    inner_app.middleware(tide::utils::After(|mut res: tide::Response| async move {
+    inner_app.with(tide::utils::After(|mut res: tide::Response| async move {
         res.insert_header("x-tide-test", "1");
         Ok(res)
     }));

@@ -94,7 +94,7 @@ async fn main() -> Result<()> {
     tide::log::start();
     let mut app = tide::with_state(UserDatabase::default());
 
-    app.middleware(After(|response: Response| async move {
+    app.with(After(|response: Response| async move {
         let response = match response.status() {
             StatusCode::NotFound => Response::builder(404)
                 .content_type(mime::HTML)
@@ -112,9 +112,9 @@ async fn main() -> Result<()> {
         Ok(response)
     }));
 
-    app.middleware(user_loader);
-    app.middleware(RequestCounterMiddleware::new(0));
-    app.middleware(Before(|mut request: Request<UserDatabase>| async move {
+    app.with(user_loader);
+    app.with(RequestCounterMiddleware::new(0));
+    app.with(Before(|mut request: Request<UserDatabase>| async move {
         request.set_ext(std::time::Instant::now());
         request
     }));

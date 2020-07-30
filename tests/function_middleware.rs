@@ -29,9 +29,7 @@ async fn echo_path<State>(req: tide::Request<State>) -> tide::Result<String> {
 #[async_std::test]
 async fn route_middleware() {
     let mut app = tide::new();
-    app.at("/protected")
-        .middleware(auth_middleware)
-        .get(echo_path);
+    app.at("/protected").with(auth_middleware).get(echo_path);
     app.at("/unprotected").get(echo_path);
 
     // Protected
@@ -70,7 +68,7 @@ async fn route_middleware() {
 #[async_std::test]
 async fn app_middleware() {
     let mut app = tide::new();
-    app.middleware(auth_middleware);
+    app.with(auth_middleware);
     app.at("/foo").get(echo_path);
 
     // Foo

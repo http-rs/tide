@@ -35,11 +35,11 @@ async fn route_middleware() {
     let mut app = tide::new();
     let mut foo_route = app.at("/foo");
     foo_route // /foo
-        .middleware(TestMiddleware::with_header_name("X-Foo", "foo"))
+        .with(TestMiddleware::with_header_name("X-Foo", "foo"))
         .get(echo_path);
     foo_route
         .at("/bar") // nested, /foo/bar
-        .middleware(TestMiddleware::with_header_name("X-Bar", "bar"))
+        .with(TestMiddleware::with_header_name("X-Bar", "bar"))
         .get(echo_path);
     foo_route // /foo
         .post(echo_path)
@@ -58,12 +58,12 @@ async fn route_middleware() {
 #[async_std::test]
 async fn app_and_route_middleware() {
     let mut app = tide::new();
-    app.middleware(TestMiddleware::with_header_name("X-Root", "root"));
+    app.with(TestMiddleware::with_header_name("X-Root", "root"));
     app.at("/foo")
-        .middleware(TestMiddleware::with_header_name("X-Foo", "foo"))
+        .with(TestMiddleware::with_header_name("X-Foo", "foo"))
         .get(echo_path);
     app.at("/bar")
-        .middleware(TestMiddleware::with_header_name("X-Bar", "bar"))
+        .with(TestMiddleware::with_header_name("X-Bar", "bar"))
         .get(echo_path);
 
     let res = app.get("/foo").await;
@@ -80,19 +80,19 @@ async fn app_and_route_middleware() {
 #[async_std::test]
 async fn nested_app_with_route_middleware() {
     let mut inner = tide::new();
-    inner.middleware(TestMiddleware::with_header_name("X-Inner", "inner"));
+    inner.with(TestMiddleware::with_header_name("X-Inner", "inner"));
     inner
         .at("/baz")
-        .middleware(TestMiddleware::with_header_name("X-Baz", "baz"))
+        .with(TestMiddleware::with_header_name("X-Baz", "baz"))
         .get(echo_path);
 
     let mut app = tide::new();
-    app.middleware(TestMiddleware::with_header_name("X-Root", "root"));
+    app.with(TestMiddleware::with_header_name("X-Root", "root"));
     app.at("/foo")
-        .middleware(TestMiddleware::with_header_name("X-Foo", "foo"))
+        .with(TestMiddleware::with_header_name("X-Foo", "foo"))
         .get(echo_path);
     app.at("/bar")
-        .middleware(TestMiddleware::with_header_name("X-Bar", "bar"))
+        .with(TestMiddleware::with_header_name("X-Bar", "bar"))
         .nest(inner);
 
     let res = app.get("/foo").await;
@@ -114,10 +114,10 @@ async fn nested_app_with_route_middleware() {
 async fn subroute_not_nested() {
     let mut app = tide::new();
     app.at("/parent") // /parent
-        .middleware(TestMiddleware::with_header_name("X-Parent", "Parent"))
+        .with(TestMiddleware::with_header_name("X-Parent", "Parent"))
         .get(echo_path);
     app.at("/parent/child") // /parent/child, not nested
-        .middleware(TestMiddleware::with_header_name("X-Child", "child"))
+        .with(TestMiddleware::with_header_name("X-Child", "child"))
         .get(echo_path);
 
     let res = app.get("/parent/child").await;
