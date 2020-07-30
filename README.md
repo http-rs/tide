@@ -73,23 +73,7 @@ $ cargo run --example # shows a list of available examples
 $ cargo run --example hello
 ```
 
-## TLS termination and reverse proxies
-
-Tide's default backend currently does not support TLS, and only supports HTTP/1.1.
-
-### To use with nginx
-
-In order to use nginx as reverse proxy for Tide, your upstream proxy configuration must include this line:
-
-```
-proxy_http_version 1.1;
-```
-
-
-## Resources
-
-Read about the design here:
-
+# Tide's design:
 - [Rising Tide: building a modular web framework in the open](https://rustasync.github.io/team/2018/09/11/tide.html)
 - [Routing and extraction in Tide: a first sketch](https://rustasync.github.io/team/2018/10/16/tide-routing.html)
 - [Middleware in Tide](https://rustasync.github.io/team/2018/11/07/tide-middleware.html)
@@ -97,8 +81,40 @@ Read about the design here:
 - [Tide, the present and future of](https://blog.yoshuawuyts.com/tide/)
 - [Tide channels](https://blog.yoshuawuyts.com/tide-channels/)
 
-## Contributing
+# Community Resources
+<sub>To add a link to this list, [edit the markdown
+file](https://github.com/http-rs/tide/edit/master/README.md) and
+submit a pull request (github login required)</sub><br/><sup>Listing here
+does not constitute an endorsement or recommendation from the tide
+team. Use at your own risk.</sup>
 
+### Listeners
+* [tide-rustls](https://github.com/http-rs/tide-rustls) tls for tide based on async-tls/rustls
+
+### Template engines
+* [tide-tera](https://github.com/jbr/tide-tera)
+* [tide-handlebars](https://github.com/No9/tide-handlebars)
+* [askama](https://github.com/djc/askama) (includes support for tide)
+
+### Auth
+* [tide-http-auth](https://github.com/chrisdickinson/tide-http-auth)
+
+### Middleware
+* [tide-compress](https://github.com/Fishrock123/tide-compress)
+* [tide-trace](https://github.com/no9/tide-trace)
+* [tide-tracing](https://github.com/ethanboxx/tide-tracing)
+
+### Session Stores
+* [async-redis-session](https://github.com/jbr/async-redis-session)
+* [async-sqlx-session](https://github.com/jbr/async-sqlx-session) (sqlite-only currently)
+* [async-mongodb-session](https://github.com/yoshuawuyts/async-mongodb-session/)
+
+### Example applications
+* [tide-example](https://github.com/jbr/tide-example) (sqlx + askama)
+* [playground-tide-mongodb](https://github.com/yoshuawuyts/playground-tide-mongodb)
+* [tide-morth-example](https://github.com/No9/tide-morth-example/)
+
+# Contributing
 Want to join us? Check out our [The "Contributing" section of the
 guide][contributing] and take a look at some of these issues:
 
