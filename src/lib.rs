@@ -171,6 +171,16 @@
 //! }
 //! ```
 //!
+//! # HTTP Version 1.1 only
+//!
+//! Tide's default backend currently only supports HTTP/1.1. In order
+//! to use nginx as reverse proxy for Tide, your upstream proxy
+//! configuration must include this line:
+//!
+//! ```text
+//! proxy_http_version 1.1;
+//! ```
+//!
 //! # API Stability
 //!
 //! It's still early in Tide's development cycle. While the general shape of Tide might have
