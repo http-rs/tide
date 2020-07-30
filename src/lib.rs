@@ -171,7 +171,7 @@
 //! }
 //! ```
 //!
-//! # Stability
+//! # API Stability
 //!
 //! It's still early in Tide's development cycle. While the general shape of Tide might have
 //! roughly established, the exact traits and function parameters may change between versions. In
