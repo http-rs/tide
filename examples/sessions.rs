@@ -3,7 +3,7 @@ async fn main() -> Result<(), std::io::Error> {
     tide::log::start();
     let mut app = tide::new();
 
-    app.middleware(tide::sessions::SessionMiddleware::new(
+    app.with(tide::sessions::SessionMiddleware::new(
         tide::sessions::MemoryStore::new(),
         std::env::var("TIDE_SECRET")
             .expect(
@@ -13,7 +13,7 @@ async fn main() -> Result<(), std::io::Error> {
             .as_bytes(),
     ));
 
-    app.middleware(tide::utils::Before(
+    app.with(tide::utils::Before(
         |mut request: tide::Request<()>| async move {
             let session = request.session_mut();
             let visits: usize = session.get("visits").unwrap_or_default();

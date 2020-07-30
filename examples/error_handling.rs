@@ -8,7 +8,7 @@ async fn main() -> Result<()> {
     tide::log::start();
     let mut app = tide::new();
 
-    app.middleware(After(|mut res: Response| async {
+    app.with(After(|mut res: Response| async {
         if let Some(err) = res.downcast_error::<async_std::io::Error>() {
             if let ErrorKind::NotFound = err.kind() {
                 let msg = err.to_string();

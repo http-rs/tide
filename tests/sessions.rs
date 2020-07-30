@@ -21,12 +21,12 @@ struct SessionData {
 #[async_std::test]
 async fn test_basic_sessions() {
     let mut app = tide::new();
-    app.middleware(SessionMiddleware::new(
+    app.with(SessionMiddleware::new(
         MemoryStore::new(),
         b"12345678901234567890123456789012345",
     ));
 
-    app.middleware(Before(|mut request: tide::Request<()>| async move {
+    app.with(Before(|mut request: tide::Request<()>| async move {
         let visits: usize = request.session().get("visits").unwrap_or_default();
         request.session_mut().insert("visits", visits + 1).unwrap();
         request
@@ -62,7 +62,7 @@ async fn test_basic_sessions() {
 #[async_std::test]
 async fn test_customized_sessions() {
     let mut app = tide::new();
-    app.middleware(
+    app.with(
         SessionMiddleware::new(MemoryStore::new(), b"12345678901234567890123456789012345")
             .with_cookie_name("custom.cookie.name")
             .with_cookie_path("/nested")
@@ -129,12 +129,12 @@ async fn test_customized_sessions() {
 #[async_std::test]
 async fn test_session_destruction() {
     let mut app = tide::new();
-    app.middleware(SessionMiddleware::new(
+    app.with(SessionMiddleware::new(
         MemoryStore::new(),
         b"12345678901234567890123456789012345",
     ));
 
-    app.middleware(Before(|mut request: tide::Request<()>| async move {
+    app.with(Before(|mut request: tide::Request<()>| async move {
         let visits: usize = request.session().get("visits").unwrap_or_default();
         request.session_mut().insert("visits", visits + 1).unwrap();
         request

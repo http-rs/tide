@@ -97,9 +97,9 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
             middleware: Arc::new(vec![]),
             state,
         };
-        server.middleware(cookies::CookiesMiddleware::new());
+        server.with(cookies::CookiesMiddleware::new());
         #[cfg(feature = "logger")]
-        server.middleware(log::LogMiddleware::new());
+        server.with(log::LogMiddleware::new());
         server
     }
 
@@ -164,7 +164,7 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     ///
     /// Middleware can only be added at the "top level" of an application, and is processed in the
     /// order in which it is applied.
-    pub fn middleware<M>(&mut self, middleware: M) -> &mut Self
+    pub fn with<M>(&mut self, middleware: M) -> &mut Self
     where
         M: Middleware<State>,
     {

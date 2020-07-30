@@ -16,7 +16,7 @@ use std::future::Future;
 /// use std::time::Instant;
 ///
 /// let mut app = tide::new();
-/// app.middleware(utils::Before(|mut request: Request<()>| async move {
+/// app.with(utils::Before(|mut request: Request<()>| async move {
 ///     request.set_ext(Instant::now());
 ///     request
 /// }));
@@ -48,7 +48,7 @@ where
 /// use tide::{utils, http, Response};
 ///
 /// let mut app = tide::new();
-/// app.middleware(utils::After(|res: Response| async move {
+/// app.with(utils::After(|res: Response| async move {
 ///     match res.status() {
 ///         http::StatusCode::NotFound => Ok("Page not found".into()),
 ///         http::StatusCode::InternalServerError => Ok("Something went wrong".into()),

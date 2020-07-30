@@ -77,7 +77,7 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
     }
 
     /// Apply the given middleware to the current route.
-    pub fn middleware<M>(&mut self, middleware: M) -> &mut Self
+    pub fn with<M>(&mut self, middleware: M) -> &mut Self
     where
         M: Middleware<State>,
     {

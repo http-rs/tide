@@ -9,7 +9,7 @@ use crate::{Middleware, Next, Request};
 ///
 /// ```
 /// let mut app = tide::Server::new();
-/// app.middleware(tide::log::LogMiddleware::new());
+/// app.with(tide::log::LogMiddleware::new());
 /// ```
 #[derive(Debug, Default, Clone)]
 pub struct LogMiddleware {
