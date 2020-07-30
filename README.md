@@ -41,8 +41,7 @@
   </h3>
 </div>
 
-A modular web framework built around async/await. It's actively being developed
-and **not ready for production yet**.
+A modular web framework built around async/await
 
 ## Getting started
 
