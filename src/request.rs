@@ -595,6 +595,12 @@ impl<State> Into<http::Request> for Request<State> {
     }
 }
 
+impl<State: Default> Into<Request<State>> for http_types::Request {
+    fn into(self) -> Request<State> {
+        Request::new(State::default(), self, Vec::<Params>::new())
+    }
+}
+
 // NOTE: From cannot be implemented for this conversion because `State` needs to
 // be constrained by a type.
 impl<State: Clone + Send + Sync + 'static> Into<Response> for Request<State> {
