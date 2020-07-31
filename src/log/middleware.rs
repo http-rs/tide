@@ -3,7 +3,9 @@ use crate::{Middleware, Next, Request};
 
 /// Log all incoming requests and responses.
 ///
-/// This middleware is enabled by default in Tide.
+/// This middleware is enabled by default in Tide. In the case of
+/// nested applications, this middleware will only run once for each
+/// request.
 ///
 /// # Examples
 ///
@@ -16,6 +18,8 @@ pub struct LogMiddleware {
     _priv: (),
 }
 
+struct LogMiddlewareHasBeenRun;
+
 impl LogMiddleware {
     /// Create a new instance of `LogMiddleware`.
     #[must_use]
@@ -26,17 +30,22 @@ impl LogMiddleware {
     /// Log a request and a response.
     async fn log<'a, State: Clone + Send + Sync + 'static>(
         &'a self,
-        ctx: Request<State>,
+        mut req: Request<State>,
         next: Next<'a, State>,
     ) -> crate::Result {
-        let path = ctx.url().path().to_owned();
-        let method = ctx.method().to_string();
+        if req.ext::<LogMiddlewareHasBeenRun>().is_some() {
+            return Ok(next.run(req).await);
+        }
+        req.set_ext(LogMiddlewareHasBeenRun);
+
+        let path = req.url().path().to_owned();
+        let method = req.method().to_string();
         log::info!("<-- Request received", {
             method: method,
             path: path,
         });
         let start = std::time::Instant::now();
-        let response = next.run(ctx).await;
+        let response = next.run(req).await;
         let status = response.status();
         if status.is_server_error() {
             if let Some(error) = response.error() {
