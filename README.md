@@ -103,6 +103,7 @@ team. Use at your own risk.</sup>
 * [tide-compress](https://github.com/Fishrock123/tide-compress)
 * [tide-trace](https://github.com/no9/tide-trace)
 * [tide-tracing](https://github.com/ethanboxx/tide-tracing)
+* [opentelemetry-tide](https://github.com/asaaki/opentelemetry-tide)
 
 ### Session Stores
 * [async-redis-session](https://github.com/jbr/async-redis-session)
