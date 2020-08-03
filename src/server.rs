@@ -228,6 +228,21 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
         let res: http_types::Response = res.into();
         Ok(res.into())
     }
+
+    /// Gets a reference to the server's state. This is useful for testing and nesting:
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # #[derive(Clone)] struct SomeAppState;
+    /// let mut app = tide::with_state(SomeAppState);
+    /// let mut admin = tide::with_state(app.state().clone());
+    /// admin.at("/").get(|_| async { Ok("nested app with cloned state") });
+    /// app.at("/").nest(admin);
+    /// ```
+    pub fn state(&self) -> &State {
+        &self.state
+    }
 }
 
 impl<State: Clone> Clone for Server<State> {
