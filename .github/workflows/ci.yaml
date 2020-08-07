@@ -4,8 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - staging
-      - trying
+      - master
 
 env:
   RUSTFLAGS: -Dwarnings
@@ -46,6 +45,12 @@ jobs:
       with:
         command: check
         args: --all --bins --examples --tests --features unstable
+
+    - name: check no-default-features
+      uses: actions-rs/cargo@v1
+      with:
+        command: check
+        args: --no-default-features
 
     - name: check benches
       uses: actions-rs/cargo@v1
