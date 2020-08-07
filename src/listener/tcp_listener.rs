@@ -1,11 +1,11 @@
 use super::is_transient_error;
 
 use crate::listener::Listener;
-use crate::{log, Server};
+use crate::Server;
 
 use std::fmt::{self, Display, Formatter};
 
-use async_std::net::{self, SocketAddr, TcpStream};
+use async_std::net::{self, SocketAddr};
 use async_std::prelude::*;
 use async_std::{io, task};
 
@@ -51,7 +51,11 @@ impl TcpListener {
     }
 }
 
-fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: TcpStream) {
+#[cfg(feature = "h1-server")]
+fn handle_tcp<State: Clone + Send + Sync + 'static>(
+    app: Server<State>,
+    stream: async_std::net::TcpStream,
+) {
     task::spawn(async move {
         let local_addr = stream.local_addr().ok();
         let peer_addr = stream.peer_addr().ok();
@@ -63,14 +67,14 @@ fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: 
         });
 
         if let Err(error) = fut.await {
-            log::error!("async-h1 error", { error: error.to_string() });
+            crate::log::error!("async-h1 error", { error: error.to_string() });
         }
     });
 }
 
 #[async_trait::async_trait]
 impl<State: Clone + Send + Sync + 'static> Listener<State> for TcpListener {
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
+    async fn listen(&mut self, _app: Server<State>) -> io::Result<()> {
         self.connect().await?;
         let listener = self.listener()?;
         crate::log::info!("Server listening on {}", self);
@@ -87,8 +91,9 @@ impl<State: Clone + Send + Sync + 'static> Listener<State> for TcpListener {
                     continue;
                 }
 
-                Ok(stream) => {
-                    handle_tcp(app.clone(), stream);
+                Ok(_stream) => {
+                    #[cfg(feature = "h1-server")]
+                    handle_tcp(_app.clone(), _stream);
                 }
             };
         }

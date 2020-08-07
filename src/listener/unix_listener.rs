@@ -5,7 +5,7 @@ use crate::{log, Server};
 
 use std::fmt::{self, Display, Formatter};
 
-use async_std::os::unix::net::{self, SocketAddr, UnixStream};
+use async_std::os::unix::net::{self, SocketAddr};
 use async_std::prelude::*;
 use async_std::{io, path::PathBuf, task};
 
@@ -64,7 +64,11 @@ fn unix_socket_addr_to_string(result: io::Result<SocketAddr>) -> Option<String> 
     })
 }
 
-fn handle_unix<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: UnixStream) {
+#[cfg(feature = "h1-server")]
+fn handle_unix<State: Clone + Send + Sync + 'static>(
+    app: Server<State>,
+    stream: async_std::os::unix::net::UnixStream,
+) {
     task::spawn(async move {
         let local_addr = unix_socket_addr_to_string(stream.local_addr());
         let peer_addr = unix_socket_addr_to_string(stream.peer_addr());
@@ -83,9 +87,9 @@ fn handle_unix<State: Clone + Send + Sync + 'static>(app: Server<State>, stream:
 
 #[async_trait::async_trait]
 impl<State: Clone + Send + Sync + 'static> Listener<State> for UnixListener {
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
+    async fn listen(&mut self, _app: Server<State>) -> io::Result<()> {
         self.connect().await?;
-        crate::log::info!("Server listening on {}", self);
+        log::info!("Server listening on {}", self);
         let listener = self.listener()?;
         let mut incoming = listener.incoming();
 
@@ -99,8 +103,9 @@ impl<State: Clone + Send + Sync + 'static> Listener<State> for UnixListener {
                     continue;
                 }
 
-                Ok(stream) => {
-                    handle_unix(app.clone(), stream);
+                Ok(_stream) => {
+                    #[cfg(feature = "h1-server")]
+                    handle_unix(_app.clone(), _stream);
                 }
             };
         }

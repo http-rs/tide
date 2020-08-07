@@ -32,6 +32,12 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: check
+        args: --no-default-features
+
+    - name: check
+      uses: actions-rs/cargo@v1
+      with:
+        command: check
         args: --all --bins --examples
 
     - name: check avoid-dev-deps
