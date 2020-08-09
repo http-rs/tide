@@ -31,7 +31,7 @@
       API Docs
     </a>
     <span> | </span>
-    <a href="https://github.com/http-rs/tide/blob/master/.github/CONTRIBUTING.md">
+    <a href="https://github.com/http-rs/tide/blob/main/.github/CONTRIBUTING.md">
       Contributing
     </a>
     <span> | </span>
@@ -67,7 +67,7 @@ async fn main() -> Result<(), std::io::Error> {
 }
 ```
 
-To try [the included examples](https://github.com/http-rs/tide/tree/master/examples), check out this repository and run
+To try [the included examples](https://github.com/http-rs/tide/tree/main/examples), check out this repository and run
 ```sh
 $ cargo run --example # shows a list of available examples
 $ cargo run --example hello
@@ -83,7 +83,7 @@ $ cargo run --example hello
 
 # Community Resources
 <sub>To add a link to this list, [edit the markdown
-file](https://github.com/http-rs/tide/edit/master/README.md) and
+file](https://github.com/http-rs/tide/edit/main/README.md) and
 submit a pull request (github login required)</sub><br/><sup>Listing here
 does not constitute an endorsement or recommendation from the tide
 team. Use at your own risk.</sup>
@@ -125,7 +125,7 @@ guide][contributing] and take a look at some of these issues:
 #### Conduct
 
 The Tide project adheres to the [Contributor Covenant Code of
-Conduct](https://github.com/http-rs/tide/blob/master/.github/CODE_OF_CONDUCT.md).
+Conduct](https://github.com/http-rs/tide/blob/main/.github/CODE_OF_CONDUCT.md).
 This describes the minimum behavior expected from all contributors.
 
 ## License
@@ -144,6 +144,6 @@ for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 dual licensed as above, without any additional terms or conditions.
 
 [releases]: https://github.com/http-rs/tide/releases
-[contributing]: https://github.com/http-rs/tide/blob/master/.github/CONTRIBUTING.md
+[contributing]: https://github.com/http-rs/tide/blob/main/.github/CONTRIBUTING.md
 [good-first-issue]: https://github.com/http-rs/tide/labels/good%20first%20issue
 [help-wanted]: https://github.com/http-rs/tide/labels/help%20wanted
