@@ -114,6 +114,7 @@ team. Use at your own risk.</sup>
 * [tide-example](https://github.com/jbr/tide-example) (sqlx + askama)
 * [playground-tide-mongodb](https://github.com/yoshuawuyts/playground-tide-mongodb)
 * [tide-morth-example](https://github.com/No9/tide-morth-example/)
+* [realworld-tide](https://github.com/colinbankier/realworld-tide). Rust / Tide example app following realworld.io. (v0.6)
 
 # Contributing
 Want to join us? Check out our [The "Contributing" section of the
