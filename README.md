@@ -111,9 +111,9 @@ team. Use at your own risk.</sup>
 * [async-mongodb-session](https://github.com/yoshuawuyts/async-mongodb-session/)
 
 ### Example applications
-* [tide-example](https://github.com/jbr/tide-example) (sqlx + askama)
-* [playground-tide-mongodb](https://github.com/yoshuawuyts/playground-tide-mongodb)
-* [tide-morth-example](https://github.com/No9/tide-morth-example/)
+* [tide-example](https://github.com/jbr/tide-example). An example application using askama and sqlx, modeled closely after the rails getting started tutorial. (latest)
+* [playground-tide-mongodb](https://github.com/yoshuawuyts/playground-tide-mongodb). An Example using tide + mongodb. (v0.8.0)
+* [tide-morth-example](https://github.com/No9/tide-morth-example/). An example application using mongodb rust tide and handlebars. (v0.13)
 
 # Contributing
 Want to join us? Check out our [The "Contributing" section of the
