@@ -73,7 +73,7 @@ $ cargo run --example # shows a list of available examples
 $ cargo run --example hello
 ```
 
-# Tide's design:
+## Tide's design:
 - [Rising Tide: building a modular web framework in the open](https://rustasync.github.io/team/2018/09/11/tide.html)
 - [Routing and extraction in Tide: a first sketch](https://rustasync.github.io/team/2018/10/16/tide-routing.html)
 - [Middleware in Tide](https://rustasync.github.io/team/2018/11/07/tide-middleware.html)
@@ -81,7 +81,7 @@ $ cargo run --example hello
 - [Tide, the present and future of](https://blog.yoshuawuyts.com/tide/)
 - [Tide channels](https://blog.yoshuawuyts.com/tide-channels/)
 
-# Community Resources
+## Community Resources
 <sub>To add a link to this list, [edit the markdown
 file](https://github.com/http-rs/tide/edit/main/README.md) and
 submit a pull request (github login required)</sub><br/><sup>Listing here
@@ -115,7 +115,7 @@ team. Use at your own risk.</sup>
 * [playground-tide-mongodb](https://github.com/yoshuawuyts/playground-tide-mongodb)
 * [tide-morth-example](https://github.com/No9/tide-morth-example/)
 
-# Contributing
+## Contributing
 Want to join us? Check out our [The "Contributing" section of the
 guide][contributing] and take a look at some of these issues:
 
