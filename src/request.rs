@@ -321,8 +321,8 @@ impl<State> Request<State> {
             .and_then(|param| param.parse().map_err(ParamError::ParsingError))
     }
 
-    /// Parse the URL query component into a struct, using [serde_qs](serde_qs). To get the entire
-    /// query as an unparsed string, use `request.url().query()`
+    /// Parse the URL query component into a struct, using [serde_qs](https://docs.rs/serde_qs). To
+    /// get the entire query as an unparsed string, use `request.url().query()`
     ///
     /// ```rust
     /// # fn main() -> Result<(), std::io::Error> { async_std::task::block_on(async {
