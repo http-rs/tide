@@ -35,6 +35,7 @@ __internal__bench = []
 async-h1 = { version = "2.0.1", optional = true }
 async-sse = "4.0.0"
 async-std = { version = "1.6.0", features = ["unstable"] }
+async-tungstenite = "0.8"
 femme = "2.0.1"
 http-types = "2.2.1"
 kv-log-macro = "1.0.4"
@@ -45,6 +46,7 @@ logtest = "2.0.0"
 async-trait = "0.1.36"
 futures-util = "0.3.5"
 pin-project-lite = "0.1.7"
+websocket_handshake = "0.1.0"
 
 [dev-dependencies]
 async-std = { version = "1.6.0", features = ["unstable", "attributes"] }
