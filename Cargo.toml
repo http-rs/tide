@@ -32,12 +32,12 @@ unstable = []
 __internal__bench = []
 
 [dependencies]
-async-h1 = { version = "2.0.1", optional = true }
+async-h1 = { version = "2.1.2", optional = true }
 async-sse = "4.0.0"
 async-std = { version = "1.6.0", features = ["unstable"] }
 async-tungstenite = "0.8"
 femme = "2.0.1"
-http-types = "2.2.1"
+http-types = "2.4.0"
 kv-log-macro = "1.0.4"
 serde = "1.0.102"
 serde_json = "1.0.41"
@@ -66,4 +66,8 @@ required-features = ["unstable"]
 [[bench]]
 name = "router"
 harness = false
+
+[patch.crates-io]
+http-types = { git = "https://github.com/Yarn/http-types.git", rev = "4ba7c547d37f7e172e69a6bd619336e067f70103" }
+async-h1 = { git = "https://github.com/Yarn/async-h1.git", rev = "5bca9bea599e3f500e608fcfea32399985c83f31" }
 
