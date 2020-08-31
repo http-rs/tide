@@ -50,34 +50,34 @@ impl LogMiddleware {
         if status.is_server_error() {
             if let Some(error) = response.error() {
                 log::error!("Internal error --> Response sent", {
-                    message: error.to_string(),
+                    message: format!("\"{}\"", error.to_string()),
                     method: method,
                     path: path,
-                    status: status as u16,
+                    status: format!("{} - {}", status as u16, status.canonical_reason()),
                     duration: format!("{:?}", start.elapsed()),
                 });
             } else {
                 log::error!("Internal error --> Response sent", {
                     method: method,
                     path: path,
-                    status: status as u16,
+                    status: format!("{} - {}", status as u16, status.canonical_reason()),
                     duration: format!("{:?}", start.elapsed()),
                 });
             }
         } else if status.is_client_error() {
             if let Some(error) = response.error() {
                 log::warn!("Client error --> Response sent", {
-                    message: error.to_string(),
+                    message: format!("\"{}\"", error.to_string()),
                     method: method,
                     path: path,
-                    status: status as u16,
+                    status: format!("{} - {}", status as u16, status.canonical_reason()),
                     duration: format!("{:?}", start.elapsed()),
                 });
             } else {
                 log::warn!("Client error --> Response sent", {
                     method: method,
                     path: path,
-                    status: status as u16,
+                    status: format!("{} - {}", status as u16, status.canonical_reason()),
                     duration: format!("{:?}", start.elapsed()),
                 });
             }
@@ -85,7 +85,7 @@ impl LogMiddleware {
             log::info!("--> Response sent", {
                 method: method,
                 path: path,
-                status: status as u16,
+                status: format!("{} - {}", status as u16, status.canonical_reason()),
                 duration: format!("{:?}", start.elapsed()),
             });
         }
