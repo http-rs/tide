@@ -65,12 +65,22 @@ impl LogMiddleware {
                 });
             }
         } else if status.is_client_error() {
-            log::warn!("--> Response sent", {
-                method: method,
-                path: path,
-                status: status as u16,
-                duration: format!("{:?}", start.elapsed()),
-            });
+            if let Some(error) = response.error() {
+                log::warn!("Client error --> Response sent", {
+                    message: error.to_string(),
+                    method: method,
+                    path: path,
+                    status: status as u16,
+                    duration: format!("{:?}", start.elapsed()),
+                });
+            } else {
+                log::warn!("Client error --> Response sent", {
+                    method: method,
+                    path: path,
+                    status: status as u16,
+                    duration: format!("{:?}", start.elapsed()),
+                });
+            }
         } else {
             log::info!("--> Response sent", {
                 method: method,
