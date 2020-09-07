@@ -21,7 +21,9 @@ pub use kv_log_macro::{max_level, Level};
 
 mod middleware;
 
+#[cfg(feature = "logger")]
 pub use femme::LevelFilter;
+
 pub use middleware::LogMiddleware;
 
 /// Start logging.
