@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use tide::{Body, Request};
 
 #[test]
-fn hello_world() -> Result<(), http_types::Error> {
+fn hello_world() -> tide::Result<()> {
     task::block_on(async {
         let port = test_utils::find_port().await;
         let server = task::spawn(async move {
@@ -25,7 +25,7 @@ fn hello_world() -> Result<(), http_types::Error> {
         let client = task::spawn(async move {
             task::sleep(Duration::from_millis(100)).await;
             let string = surf::get(format!("http://localhost:{}", port))
-                .body("nori".to_string())
+                .body(Body::from_string("nori".to_string()))
                 .recv_string()
                 .await
                 .unwrap();
@@ -38,7 +38,7 @@ fn hello_world() -> Result<(), http_types::Error> {
 }
 
 #[test]
-fn echo_server() -> Result<(), http_types::Error> {
+fn echo_server() -> tide::Result<()> {
     task::block_on(async {
         let port = test_utils::find_port().await;
         let server = task::spawn(async move {
@@ -52,7 +52,7 @@ fn echo_server() -> Result<(), http_types::Error> {
         let client = task::spawn(async move {
             task::sleep(Duration::from_millis(100)).await;
             let string = surf::get(format!("http://localhost:{}", port))
-                .body("chashu".to_string())
+                .body(Body::from_string("chashu".to_string()))
                 .recv_string()
                 .await
                 .unwrap();
@@ -65,7 +65,7 @@ fn echo_server() -> Result<(), http_types::Error> {
 }
 
 #[test]
-fn json() -> Result<(), http_types::Error> {
+fn json() -> tide::Result<()> {
     #[derive(Deserialize, Serialize)]
     struct Counter {
         count: usize,
