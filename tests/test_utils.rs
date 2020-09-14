@@ -11,7 +11,6 @@ pub async fn find_port() -> u16 {
     pick_unused_port().expect("No ports free")
 }
 
-#[async_trait::async_trait]
 pub trait ServerTestingExt {
     fn client(&self) -> Client;
     fn connect(&self, path: &str) -> RequestBuilder;
@@ -25,7 +24,6 @@ pub trait ServerTestingExt {
     fn trace(&self, path: &str) -> RequestBuilder;
 }
 
-#[async_trait::async_trait]
 impl<State> ServerTestingExt for Server<State>
 where
     State: Unpin + Clone + Send + Sync + 'static,
