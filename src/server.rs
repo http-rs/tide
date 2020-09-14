@@ -9,6 +9,7 @@ use crate::log;
 use crate::middleware::{Middleware, Next};
 use crate::router::{Router, Selection};
 use crate::{Endpoint, Request, Route};
+
 /// An HTTP server.
 ///
 /// Servers are built up as a combination of *state*, *endpoints* and *middleware*:
@@ -24,7 +25,6 @@ use crate::{Endpoint, Request, Route};
 /// - Middleware extends the base Tide framework with additional request or
 /// response processing, such as compression, default headers, or logging. To
 /// add middleware to an app, use the [`Server::middleware`] method.
-#[allow(missing_debug_implementations)]
 pub struct Server<State> {
     router: Arc<Router<State>>,
     state: State,
@@ -245,6 +245,12 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     }
 }
 
+impl<State: Send + Sync + 'static> std::fmt::Debug for Server<State> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Server").finish()
+    }
+}
+
 impl<State: Clone> Clone for Server<State> {
     fn clone(&self) -> Self {
         Self {
@@ -281,6 +287,13 @@ impl<State: Clone + Sync + Send + 'static, InnerState: Clone + Sync + Send + 'st
         };
 
         Ok(next.run(req).await)
+    }
+}
+
+#[crate::utils::async_trait]
+impl<State: Clone + Send + Sync + Unpin + 'static> http_client::HttpClient for Server<State> {
+    async fn send(&self, req: crate::http::Request) -> crate::http::Result<crate::http::Response> {
+        self.respond(req).await
     }
 }
 
