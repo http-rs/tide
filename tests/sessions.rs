@@ -2,14 +2,10 @@ mod test_utils;
 use test_utils::ServerTestingExt;
 
 use cookie::SameSite;
+use http_types::headers::SET_COOKIE;
 use std::time::Duration;
 use tide::{
-    http::{
-        cookies as cookie,
-        headers::HeaderValue,
-        Method::{Get, Post},
-        Request, Response, Url,
-    },
+    http::{cookies as cookie, headers::HeaderValue, Response},
     sessions::{MemoryStore, SessionMiddleware},
     utils::Before,
 };
@@ -19,7 +15,7 @@ struct SessionData {
 }
 
 #[async_std::test]
-async fn test_basic_sessions() {
+async fn test_basic_sessions() -> tide::Result<()> {
     let mut app = tide::new();
     app.with(SessionMiddleware::new(
         MemoryStore::new(),
@@ -37,7 +33,7 @@ async fn test_basic_sessions() {
         Ok(format!("you have visited this website {} times", visits))
     });
 
-    let response = app.get("/").await;
+    let response = app.get("/").await?;
     let cookies = Cookies::from_response(&response);
     let cookie = &cookies["tide.sid"];
     assert_eq!(cookie.name(), "tide.sid");
@@ -46,21 +42,21 @@ async fn test_basic_sessions() {
     assert_eq!(cookie.secure(), None); // this request was http://
     assert_eq!(cookie.path(), Some("/"));
 
-    let mut second_request = Request::new(Get, Url::parse("https://whatever/").unwrap());
-    second_request.insert_header("Cookie", &cookies);
-    let mut second_response: Response = app.respond(second_request).await.unwrap();
-    let body = second_response.body_string().await.unwrap();
+    let mut second_response = app.get("/").header("Cookie", &cookies).await?;
+
+    let body = second_response.body_string().await?;
     assert_eq!("you have visited this website 2 times", body);
     assert!(second_response.header("Set-Cookie").is_none());
 
-    let response = app.get("https://secure/").await;
+    let response = app.get("https://secure/").await?;
     let cookies = Cookies::from_response(&response);
     let cookie = &cookies["tide.sid"];
     assert_eq!(cookie.secure(), Some(true));
+    Ok(())
 }
 
 #[async_std::test]
-async fn test_customized_sessions() {
+async fn test_customized_sessions() -> tide::Result<()> {
     let mut app = tide::new();
     app.with(
         SessionMiddleware::new(MemoryStore::new(), b"12345678901234567890123456789012345")
@@ -82,20 +78,20 @@ async fn test_customized_sessions() {
         .get(|mut req: tide::Request<()>| async move {
             let mut visits: usize = req.session().get("visits").unwrap_or_default();
             visits += 1;
-            req.session_mut().insert("visits", visits).unwrap();
+            req.session_mut().insert("visits", visits)?;
             Ok(format!("/nested/incr {}", visits))
         });
 
-    let response = app.get("/").await;
+    let response = app.get("/").await?;
     assert_eq!(Cookies::from_response(&response).len(), 0);
 
-    let mut response = app.get("/nested").await;
+    let mut response = app.get("/nested").await?;
     assert_eq!(Cookies::from_response(&response).len(), 0);
-    assert_eq!(response.body_string().await.unwrap(), "/nested 0");
+    assert_eq!(response.body_string().await?, "/nested 0");
 
-    let mut response = app.get("/nested/incr").await;
+    let mut response = app.get("/nested/incr").await?;
     let cookies = Cookies::from_response(&response);
-    assert_eq!(response.body_string().await.unwrap(), "/nested/incr 1");
+    assert_eq!(response.body_string().await?, "/nested/incr 1");
 
     assert_eq!(cookies.len(), 1);
     assert!(cookies.get("tide.sid").is_none());
@@ -105,29 +101,31 @@ async fn test_customized_sessions() {
     assert_eq!(cookie.path(), Some("/nested"));
     let cookie_value = cookie.value().to_string();
 
-    let mut second_request = Request::new(Get, Url::parse("https://whatever/nested/incr").unwrap());
-    second_request.insert_header("Cookie", &cookies);
-    let mut second_response: Response = app.respond(second_request).await.unwrap();
-    let body = second_response.body_string().await.unwrap();
+    let mut second_response = app
+        .get("https://whatever/nested/incr")
+        .header("Cookie", &cookies)
+        .await?;
+    let body = second_response.body_string().await?;
     assert_eq!("/nested/incr 2", body);
     assert!(second_response.header("Set-Cookie").is_none());
 
     async_std::task::sleep(Duration::from_secs(5)).await; // wait for expiration
 
-    let mut expired_request =
-        Request::new(Get, Url::parse("https://whatever/nested/incr").unwrap());
-    expired_request.insert_header("Cookie", &cookies);
-    let mut expired_response: Response = app.respond(expired_request).await.unwrap();
+    let mut expired_response = app
+        .get("https://whatever/nested/incr")
+        .header("Cookie", &cookies)
+        .await?;
     let cookies = Cookies::from_response(&expired_response);
     assert_eq!(cookies.len(), 1);
     assert!(cookies["custom.cookie.name"].value() != cookie_value);
 
-    let body = expired_response.body_string().await.unwrap();
+    let body = expired_response.body_string().await?;
     assert_eq!("/nested/incr 1", body);
+    Ok(())
 }
 
 #[async_std::test]
-async fn test_session_destruction() {
+async fn test_session_destruction() -> tide::Result<()> {
     let mut app = tide::new();
     app.with(SessionMiddleware::new(
         MemoryStore::new(),
@@ -151,15 +149,17 @@ async fn test_session_destruction() {
             Ok(Response::new(200))
         });
 
-    let response = app.get("/").await;
+    let response = app.get("/").await?;
     let cookies = Cookies::from_response(&response);
 
-    let mut second_request = Request::new(Post, Url::parse("https://whatever/logout").unwrap());
-    second_request.insert_header("Cookie", &cookies);
-    let second_response: Response = app.respond(second_request).await.unwrap();
+    let second_response = app
+        .post("https://whatever/logout")
+        .header("Cookie", &cookies)
+        .await?;
     let cookies = Cookies::from_response(&second_response);
     assert_eq!(cookies["tide.sid"].value(), "");
     assert_eq!(cookies.len(), 1);
+    Ok(())
 }
 
 #[derive(Debug, Clone)]
@@ -169,9 +169,10 @@ impl Cookies {
         self.0.len()
     }
 
-    fn from_response(response: &http_types::Response) -> Self {
+    fn from_response(response: &impl AsRef<http_types::Response>) -> Self {
         response
-            .header("Set-Cookie")
+            .as_ref()
+            .header(SET_COOKIE)
             .map(|hv| hv.to_string())
             .unwrap_or_else(|| "[]".into())
             .parse()

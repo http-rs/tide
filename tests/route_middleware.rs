@@ -31,7 +31,7 @@ async fn echo_path<State>(req: tide::Request<State>) -> tide::Result<String> {
 }
 
 #[async_std::test]
-async fn route_middleware() {
+async fn route_middleware() -> tide::Result<()> {
     let mut app = tide::new();
     let mut foo_route = app.at("/foo");
     foo_route // /foo
@@ -46,17 +46,18 @@ async fn route_middleware() {
         .reset_middleware()
         .put(echo_path);
 
-    assert_eq!(app.get("/foo").await["X-Foo"], "foo");
-    assert_eq!(app.post("/foo").await["X-Foo"], "foo");
-    assert!(app.put("/foo").await.header("X-Foo").is_none());
+    assert_eq!(app.get("/foo").await?["X-Foo"], "foo");
+    assert_eq!(app.post("/foo").await?["X-Foo"], "foo");
+    assert!(app.put("/foo").await?.header("X-Foo").is_none());
 
-    let res = app.get("/foo/bar").await;
+    let res = app.get("/foo/bar").await?;
     assert_eq!(res["X-Foo"], "foo");
     assert_eq!(res["x-bar"], "bar");
+    Ok(())
 }
 
 #[async_std::test]
-async fn app_and_route_middleware() {
+async fn app_and_route_middleware() -> tide::Result<()> {
     let mut app = tide::new();
     app.with(TestMiddleware::with_header_name("X-Root", "root"));
     app.at("/foo")
@@ -66,19 +67,20 @@ async fn app_and_route_middleware() {
         .with(TestMiddleware::with_header_name("X-Bar", "bar"))
         .get(echo_path);
 
-    let res = app.get("/foo").await;
+    let res = app.get("/foo").await?;
     assert_eq!(res["X-Root"], "root");
     assert_eq!(res["x-foo"], "foo");
     assert!(res.header("x-bar").is_none());
 
-    let res = app.get("/bar").await;
+    let res = app.get("/bar").await?;
     assert_eq!(res["X-Root"], "root");
     assert!(res.header("x-foo").is_none());
     assert_eq!(res["X-Bar"], "bar");
+    Ok(())
 }
 
 #[async_std::test]
-async fn nested_app_with_route_middleware() {
+async fn nested_app_with_route_middleware() -> tide::Result<()> {
     let mut inner = tide::new();
     inner.with(TestMiddleware::with_header_name("X-Inner", "inner"));
     inner
@@ -95,23 +97,24 @@ async fn nested_app_with_route_middleware() {
         .with(TestMiddleware::with_header_name("X-Bar", "bar"))
         .nest(inner);
 
-    let res = app.get("/foo").await;
+    let res = app.get("/foo").await?;
     assert_eq!(res["X-Root"], "root");
     assert!(res.header("X-Inner").is_none());
     assert_eq!(res["X-Foo"], "foo");
     assert!(res.header("X-Bar").is_none());
     assert!(res.header("X-Baz").is_none());
 
-    let res = app.get("/bar/baz").await;
+    let res = app.get("/bar/baz").await?;
     assert_eq!(res["X-Root"], "root");
     assert_eq!(res["X-Inner"], "inner");
     assert!(res.header("X-Foo").is_none());
     assert_eq!(res["X-Bar"], "bar");
     assert_eq!(res["X-Baz"], "baz");
+    Ok(())
 }
 
 #[async_std::test]
-async fn subroute_not_nested() {
+async fn subroute_not_nested() -> tide::Result<()> {
     let mut app = tide::new();
     app.at("/parent") // /parent
         .with(TestMiddleware::with_header_name("X-Parent", "Parent"))
@@ -120,7 +123,8 @@ async fn subroute_not_nested() {
         .with(TestMiddleware::with_header_name("X-Child", "child"))
         .get(echo_path);
 
-    let res = app.get("/parent/child").await;
+    let res = app.get("/parent/child").await?;
     assert!(res.header("X-Parent").is_none());
     assert_eq!(res["x-child"], "child");
+    Ok(())
 }
