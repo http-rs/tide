@@ -1,5 +1,8 @@
+use std::sync::Arc;
+
 use portpicker::pick_unused_port;
-use tide::http::{self, url::Url, Method};
+use surf::{Client, RequestBuilder};
+use tide::http::url::Url;
 use tide::Server;
 
 /// Find an unused port.
@@ -10,51 +13,54 @@ pub async fn find_port() -> u16 {
 
 #[async_trait::async_trait]
 pub trait ServerTestingExt {
-    async fn request(&self, method: Method, path: &str) -> http::Response;
-    async fn request_body(&self, method: Method, path: &str) -> String;
-    async fn get(&self, path: &str) -> http::Response;
-    async fn get_body(&self, path: &str) -> String;
-    async fn post(&self, path: &str) -> http::Response;
-    async fn put(&self, path: &str) -> http::Response;
+    fn client(&self) -> Client;
+    fn connect(&self, path: &str) -> RequestBuilder;
+    fn delete(&self, path: &str) -> RequestBuilder;
+    fn get(&self, path: &str) -> RequestBuilder;
+    fn head(&self, path: &str) -> RequestBuilder;
+    fn options(&self, path: &str) -> RequestBuilder;
+    fn patch(&self, path: &str) -> RequestBuilder;
+    fn post(&self, path: &str) -> RequestBuilder;
+    fn put(&self, path: &str) -> RequestBuilder;
+    fn trace(&self, path: &str) -> RequestBuilder;
 }
 
 #[async_trait::async_trait]
 impl<State> ServerTestingExt for Server<State>
 where
-    State: Clone + Send + Sync + 'static,
+    State: Unpin + Clone + Send + Sync + 'static,
 {
-    async fn request(&self, method: Method, path: &str) -> http::Response {
-        let url = if path.starts_with("http:") || path.starts_with("https:") {
-            Url::parse(path).unwrap()
-        } else {
-            Url::parse("http://example.com/")
-                .unwrap()
-                .join(path)
-                .unwrap()
-        };
-
-        let request = http::Request::new(method, url);
-        self.respond(request).await.unwrap()
+    fn client(&self) -> Client {
+        let mut client = Client::with_http_client(Arc::new(self.clone()));
+        client.set_base_url(Url::parse("http://example.com").unwrap());
+        client
     }
 
-    async fn request_body(&self, method: Method, path: &str) -> String {
-        let mut response = self.request(method, path).await;
-        response.body_string().await.unwrap()
+    fn connect(&self, path: &str) -> RequestBuilder {
+        self.client().connect(path)
     }
-
-    async fn get(&self, path: &str) -> http::Response {
-        self.request(Method::Get, path).await
+    fn delete(&self, path: &str) -> RequestBuilder {
+        self.client().delete(path)
     }
-
-    async fn get_body(&self, path: &str) -> String {
-        self.request_body(Method::Get, path).await
+    fn get(&self, path: &str) -> RequestBuilder {
+        self.client().get(path)
     }
-
-    async fn post(&self, path: &str) -> http::Response {
-        self.request(Method::Post, path).await
+    fn head(&self, path: &str) -> RequestBuilder {
+        self.client().head(path)
     }
-
-    async fn put(&self, path: &str) -> http::Response {
-        self.request(Method::Put, path).await
+    fn options(&self, path: &str) -> RequestBuilder {
+        self.client().options(path)
+    }
+    fn patch(&self, path: &str) -> RequestBuilder {
+        self.client().patch(path)
+    }
+    fn post(&self, path: &str) -> RequestBuilder {
+        self.client().post(path)
+    }
+    fn put(&self, path: &str) -> RequestBuilder {
+        self.client().put(path)
+    }
+    fn trace(&self, path: &str) -> RequestBuilder {
+        self.client().trace(path)
     }
 }
