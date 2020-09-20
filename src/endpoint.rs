@@ -96,10 +96,17 @@ where
     State: Clone + Send + Sync + 'static,
     E: Endpoint<State>,
 {
-    pub(crate) fn wrap_with_middleware(ep: E, middleware: &[Arc<dyn Middleware<State>>]) -> Self {
-        Self {
-            endpoint: ep,
-            middleware: middleware.to_vec(),
+    pub(crate) fn wrap_with_middleware(
+        ep: E,
+        middleware: &[Arc<dyn Middleware<State>>],
+    ) -> Box<dyn Endpoint<State> + Send + Sync + 'static> {
+        if middleware.is_empty() {
+            Box::new(ep)
+        } else {
+            Box::new(Self {
+                endpoint: ep,
+                middleware: middleware.to_vec(),
+            })
         }
     }
 }
