@@ -1,5 +1,4 @@
-mod test_utils;
-use test_utils::ServerTestingExt;
+use tide::testing::TestingExt;
 
 #[async_std::test]
 async fn nested() -> tide::Result<()> {

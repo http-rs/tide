@@ -1,12 +1,10 @@
-mod test_utils;
-use http_types::headers::SET_COOKIE;
-use test_utils::ServerTestingExt;
-
 use cookie::SameSite;
+use http_types::headers::SET_COOKIE;
 use std::time::Duration;
 use tide::{
     http::{cookies as cookie, headers::HeaderValue, Response},
     sessions::{MemoryStore, SessionMiddleware},
+    testing::TestingExt,
     utils::Before,
 };
 #[derive(Clone, Debug, Default, PartialEq)]

@@ -1,6 +1,4 @@
-mod test_utils;
-use test_utils::ServerTestingExt;
-use tide::{Request, StatusCode};
+use tide::{testing::TestingExt, Request, StatusCode};
 async fn add_one(req: Request<()>) -> Result<String, tide::Error> {
     match req.param::<i64>("num") {
         Ok(num) => Ok((num + 1).to_string()),

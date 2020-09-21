@@ -1,8 +1,7 @@
 use async_std::prelude::*;
 use std::time::Duration;
-
+use tide::testing::TestingExt;
 mod test_utils;
-use test_utils::ServerTestingExt;
 
 #[async_std::test]
 async fn log_tests() -> tide::Result<()> {

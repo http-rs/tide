@@ -251,16 +251,6 @@ impl<State: Send + Sync + 'static> std::fmt::Debug for Server<State> {
     }
 }
 
-impl<State: Clone + Send + Sync + Unpin + 'static> http_client::HttpClient for Server<State> {
-    fn send(
-        &self,
-        req: http_client::Request,
-    ) -> futures_util::future::BoxFuture<'static, Result<http_client::Response, http_client::Error>>
-    {
-        let self_cloned = self.clone();
-        Box::pin(async move { self_cloned.respond(req).await })
-    }
-}
 
 impl<State: Clone> Clone for Server<State> {
     fn clone(&self) -> Self {

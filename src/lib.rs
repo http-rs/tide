@@ -227,6 +227,8 @@ pub mod utils;
 
 #[cfg(feature = "sessions")]
 pub mod sessions;
+#[cfg(any(test, feature = "testing"))]
+pub mod testing;
 
 pub use endpoint::Endpoint;
 pub use middleware::{Middleware, Next};

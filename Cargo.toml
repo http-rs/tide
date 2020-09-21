@@ -30,6 +30,7 @@ logger = []
 docs = ["unstable"]
 sessions = ["async-session"]
 unstable = []
+testing = ["surf"]
 # DO NOT USE. Only exists to expose internals so they can be benchmarked.
 __internal__bench = []
 
@@ -47,7 +48,7 @@ pin-project-lite = "0.1.7"
 route-recognizer = "0.2.0"
 serde = "1.0.102"
 serde_json = "1.0.41"
-http-client = {version = "4.0.0", default-features = false }
+surf = { version = "2.0.0-alpha.5", default-features = false, optional = true, features = ["h1-client"] } # TODO(jbr): remove this feature when surf can build without default features
 
 [dev-dependencies]
 async-std = { version = "1.6.0", features = ["unstable", "attributes"] }
@@ -59,6 +60,7 @@ portpicker = "0.1.0"
 serde = { version = "1.0.102", features = ["derive"] }
 surf = { version = "2.0.0-alpha.5", default-features = false, features = ["h1-client"] }
 tempfile = "3.1.0"
+tide = { path = ".", features = ["testing"] }
 
 [[test]]
 name = "nested"

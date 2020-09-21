@@ -1,7 +1,5 @@
-mod test_utils;
-use test_utils::ServerTestingExt;
 use tide::http::{headers, mime};
-use tide::{Response, StatusCode};
+use tide::{testing::TestingExt, Response, StatusCode};
 
 #[async_std::test]
 async fn test_status() {

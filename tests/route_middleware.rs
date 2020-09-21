@@ -1,8 +1,6 @@
-mod test_utils;
 use http_types::headers::HeaderName;
 use std::convert::TryInto;
-use test_utils::ServerTestingExt;
-use tide::Middleware;
+use tide::{testing::TestingExt, Middleware};
 
 #[derive(Debug)]
 struct TestMiddleware(HeaderName, &'static str);
