@@ -251,7 +251,6 @@ impl<State: Send + Sync + 'static> std::fmt::Debug for Server<State> {
     }
 }
 
-
 impl<State: Clone> Clone for Server<State> {
     fn clone(&self) -> Self {
         Self {
