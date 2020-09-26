@@ -25,7 +25,7 @@ fn hello_world() -> Result<(), http_types::Error> {
         let client = task::spawn(async move {
             task::sleep(Duration::from_millis(100)).await;
             let string = surf::get(format!("http://localhost:{}", port))
-                .body_string("nori".to_string())
+                .body("nori".to_string())
                 .recv_string()
                 .await
                 .unwrap();
@@ -52,7 +52,7 @@ fn echo_server() -> Result<(), http_types::Error> {
         let client = task::spawn(async move {
             task::sleep(Duration::from_millis(100)).await;
             let string = surf::get(format!("http://localhost:{}", port))
-                .body_string("chashu".to_string())
+                .body("chashu".to_string())
                 .recv_string()
                 .await
                 .unwrap();
@@ -88,7 +88,7 @@ fn json() -> Result<(), http_types::Error> {
         let client = task::spawn(async move {
             task::sleep(Duration::from_millis(100)).await;
             let counter: Counter = surf::get(format!("http://localhost:{}", &port))
-                .body_json(&Counter { count: 0 })?
+                .body(Body::from_json(&Counter { count: 0 })?)
                 .recv_json()
                 .await
                 .unwrap();
