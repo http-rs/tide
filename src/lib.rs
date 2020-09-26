@@ -53,10 +53,9 @@
 //! See more examples in the [examples](https://github.com/http-rs/tide/tree/main/examples) directory.
 
 #![cfg_attr(feature = "docs", feature(doc_cfg))]
-// #![warn(missing_docs)]
-#![warn(missing_debug_implementations, rust_2018_idioms)]
-#![doc(test(attr(deny(rust_2018_idioms, warnings))))]
-#![doc(test(attr(allow(unused_extern_crates, unused_variables))))]
+#![forbid(unsafe_code, rust_2018_idioms)]
+#![deny(future_incompatible, missing_debug_implementations, nonstandard_style)]
+#![warn(missing_docs, missing_doc_code_examples, unreachable_pub)]
 #![doc(html_favicon_url = "https://yoshuawuyts.com/assets/http-rs/favicon.ico")]
 #![doc(html_logo_url = "https://yoshuawuyts.com/assets/http-rs/logo-rounded.png")]
 
