@@ -29,7 +29,12 @@ impl<State: Clone + Send + Sync + 'static> Router<State> {
         }
     }
 
-    pub(crate) fn add(&mut self, path: &str, method: http_types::Method, ep: Box<DynEndpoint<State>>) {
+    pub(crate) fn add(
+        &mut self,
+        path: &str,
+        method: http_types::Method,
+        ep: Box<DynEndpoint<State>>,
+    ) {
         self.method_map
             .entry(method)
             .or_insert_with(MethodRouter::new)
