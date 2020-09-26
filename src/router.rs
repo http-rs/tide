@@ -9,38 +9,38 @@ use crate::{Request, Response, StatusCode};
 /// Internally, we have a separate state machine per http method; indexing
 /// by the method first allows the table itself to be more efficient.
 #[allow(missing_debug_implementations)]
-pub struct Router<State> {
+pub(crate) struct Router<State> {
     method_map: HashMap<http_types::Method, MethodRouter<Box<DynEndpoint<State>>>>,
     all_method_router: MethodRouter<Box<DynEndpoint<State>>>,
 }
 
 /// The result of routing a URL
 #[allow(missing_debug_implementations)]
-pub struct Selection<'a, State> {
+pub(crate) struct Selection<'a, State> {
     pub(crate) endpoint: &'a DynEndpoint<State>,
     pub(crate) params: Params,
 }
 
 impl<State: Clone + Send + Sync + 'static> Router<State> {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Router {
             method_map: HashMap::default(),
             all_method_router: MethodRouter::new(),
         }
     }
 
-    pub fn add(&mut self, path: &str, method: http_types::Method, ep: Box<DynEndpoint<State>>) {
+    pub(crate) fn add(&mut self, path: &str, method: http_types::Method, ep: Box<DynEndpoint<State>>) {
         self.method_map
             .entry(method)
             .or_insert_with(MethodRouter::new)
             .add(path, ep)
     }
 
-    pub fn add_all(&mut self, path: &str, ep: Box<DynEndpoint<State>>) {
+    pub(crate) fn add_all(&mut self, path: &str, ep: Box<DynEndpoint<State>>) {
         self.all_method_router.add(path, ep)
     }
 
-    pub fn route(&self, path: &str, method: http_types::Method) -> Selection<'_, State> {
+    pub(crate) fn route(&self, path: &str, method: http_types::Method) -> Selection<'_, State> {
         if let Some(Match { handler, params }) = self
             .method_map
             .get(&method)

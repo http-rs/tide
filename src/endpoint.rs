@@ -67,7 +67,7 @@ where
     }
 }
 
-pub struct MiddlewareEndpoint<E, State> {
+pub(crate) struct MiddlewareEndpoint<E, State> {
     endpoint: E,
     middleware: Vec<Arc<dyn Middleware<State>>>,
 }
@@ -96,7 +96,7 @@ where
     State: Clone + Send + Sync + 'static,
     E: Endpoint<State>,
 {
-    pub fn wrap_with_middleware(ep: E, middleware: &[Arc<dyn Middleware<State>>]) -> Self {
+    pub(crate) fn wrap_with_middleware(ep: E, middleware: &[Arc<dyn Middleware<State>>]) -> Self {
         Self {
             endpoint: ep,
             middleware: middleware.to_vec(),

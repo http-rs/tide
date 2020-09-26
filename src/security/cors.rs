@@ -27,9 +27,9 @@ pub struct CorsMiddleware {
     max_age: HeaderValue,
 }
 
-pub const DEFAULT_MAX_AGE: &str = "86400";
-pub const DEFAULT_METHODS: &str = "GET, POST, OPTIONS";
-pub const WILDCARD: &str = "*";
+pub(crate) const DEFAULT_MAX_AGE: &str = "86400";
+pub(crate) const DEFAULT_METHODS: &str = "GET, POST, OPTIONS";
+pub(crate) const WILDCARD: &str = "*";
 
 impl CorsMiddleware {
     /// Creates a new Cors middleware.
