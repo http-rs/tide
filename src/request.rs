@@ -4,10 +4,10 @@ use route_recognizer::Params;
 
 use std::ops::Index;
 use std::pin::Pin;
-use std::{fmt, str::FromStr};
 
 use crate::cookies::CookieData;
 use crate::http::cookies::Cookie;
+use crate::http::format_err;
 use crate::http::headers::{self, HeaderName, HeaderValues, ToHeaderValues};
 use crate::http::{self, Body, Method, Mime, StatusCode, Url, Version};
 use crate::Response;
@@ -28,23 +28,6 @@ pin_project_lite::pin_project! {
         pub(crate) route_params: Vec<Params>,
     }
 }
-
-#[derive(Debug)]
-pub enum ParamError<E> {
-    NotFound(String),
-    ParsingError(E),
-}
-
-impl<E: fmt::Debug + fmt::Display> fmt::Display for ParamError<E> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            ParamError::NotFound(name) => write!(f, "Param \"{}\" not found!", name),
-            ParamError::ParsingError(err) => write!(f, "Param failed to parse: {}", err),
-        }
-    }
-}
-
-impl<T: fmt::Debug + fmt::Display> std::error::Error for ParamError<T> {}
 
 impl<State> Request<State> {
     /// Create a new `Request`.
@@ -287,10 +270,7 @@ impl<State> Request<State> {
     ///
     /// # Errors
     ///
-    /// Yields a `ParamError::ParsingError` if the parameter was found but failed to parse as an
-    /// instance of type `T`.
-    ///
-    /// Yields a `ParamError::NotFound` if `key` is not a parameter for the route.
+    /// An error is returned if `key` is not a valid parameter for the route.
     ///
     /// # Examples
     ///
@@ -301,7 +281,7 @@ impl<State> Request<State> {
     /// use tide::{Request, Result};
     ///
     /// async fn greet(req: Request<()>) -> Result<String> {
-    ///     let name = req.param("name").unwrap_or("world".to_owned());
+    ///     let name = req.param("name").unwrap_or("world");
     ///     Ok(format!("Hello, {}!", name))
     /// }
     ///
@@ -312,13 +292,12 @@ impl<State> Request<State> {
     /// #
     /// # Ok(()) })}
     /// ```
-    pub fn param<T: FromStr>(&self, key: &str) -> Result<T, ParamError<T::Err>> {
+    pub fn param(&self, key: &str) -> crate::Result<&str> {
         self.route_params
             .iter()
             .rev()
             .find_map(|params| params.find(key))
-            .ok_or_else(|| ParamError::NotFound(key.to_string()))
-            .and_then(|param| param.parse().map_err(ParamError::ParsingError))
+            .ok_or_else(|| format_err!("Param \"{}\" not found", key.to_string()))
     }
 
     /// Parse the URL query component into a struct, using [serde_qs](https://docs.rs/serde_qs). To
