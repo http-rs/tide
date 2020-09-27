@@ -1,25 +1,22 @@
-// use criterion::{black_box, criterion_group, criterion_main, Criterion};
-// use http_types::Method;
-// use tide::router::Router;
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use http_types::{Method, Request, Response, Url};
 
-// fn criterion_benchmark(c: &mut Criterion) {
-//     let mut router = Router::<()>::new();
-//     router.add(
-//         "hello",
-//         Method::Get,
-//         Box::new(|_| async { Ok("hello world") }),
-//     );
+fn criterion_benchmark(c: &mut Criterion) {
+    let mut app = tide::new();
+    app.at("/hello").get(|_| async { Ok("hello world") });
 
-//     c.bench_function("route-match", |b| {
-//         b.iter(|| black_box(router.route("/hello", Method::Get)))
-//     });
+    let route = Url::parse("https://example.com/hello").unwrap();
+    let req = Request::new(Method::Get, route);
+    c.bench_function("route-match", |b| {
+        b.iter(|| black_box(app.respond::<_, Response>(req.clone())));
+    });
 
-//     c.bench_function("route-root", |b| {
-//         b.iter(|| black_box(router.route("", Method::Get)))
-//     });
-// }
+    let route = Url::parse("https://example.com").unwrap();
+    let req = Request::new(Method::Get, route);
+    c.bench_function("route-root", |b| {
+        b.iter(|| black_box(app.respond::<_, Response>(req.clone())));
+    });
+}
 
-// criterion_group!(benches, criterion_benchmark);
-// criterion_main!(benches);
-
-fn main() {}
+criterion_group!(benches, criterion_benchmark);
+criterion_main!(benches);
