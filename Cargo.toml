@@ -1,7 +1,7 @@
 [package]
 name = "tide"
 version = "0.13.0"
-description = "Serve the web – HTTP server framework"
+description = "A minimal and pragmatic Rust web application framework built for rapid development"
 authors = [
     "Aaron Turon <aturon@mozilla.com>",
     "Yoshua Wuyts <yoshuawuyts@gmail.com>",
