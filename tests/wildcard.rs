@@ -1,27 +1,34 @@
 mod test_utils;
 use test_utils::ServerTestingExt;
-use tide::{Request, StatusCode};
+use tide::{Error, Request, StatusCode};
+
 async fn add_one(req: Request<()>) -> Result<String, tide::Error> {
-    match req.param::<i64>("num") {
-        Ok(num) => Ok((num + 1).to_string()),
-        Err(err) => Err(tide::Error::new(StatusCode::BadRequest, err)),
-    }
+    let num: i64 = req
+        .param("num")?
+        .parse()
+        .map_err(|err| Error::new(StatusCode::BadRequest, err))?;
+    Ok((num + 1).to_string())
 }
 
 async fn add_two(req: Request<()>) -> Result<String, tide::Error> {
-    let one = req
-        .param::<i64>("one")
-        .map_err(|err| tide::Error::new(StatusCode::BadRequest, err))?;
-    let two = req
-        .param::<i64>("two")
-        .map_err(|err| tide::Error::new(StatusCode::BadRequest, err))?;
+    let one: i64 = req
+        .param("one")?
+        .parse()
+        .map_err(|err| Error::new(StatusCode::BadRequest, err))?;
+    let two: i64 = req
+        .param("two")?
+        .parse()
+        .map_err(|err| Error::new(StatusCode::BadRequest, err))?;
     Ok((one + two).to_string())
 }
 
 async fn echo_path(req: Request<()>) -> Result<String, tide::Error> {
-    match req.param::<String>("path") {
-        Ok(path) => Ok(path),
-        Err(err) => Err(tide::Error::new(StatusCode::BadRequest, err)),
+    match req.param("path") {
+        Ok(path) => Ok(path.into()),
+        Err(mut err) => {
+            err.set_status(StatusCode::BadRequest);
+            Err(err)
+        }
     }
 }
 
@@ -109,7 +116,7 @@ async fn nameless_internal_wildcard() {
 async fn nameless_internal_wildcard2() {
     let mut app = tide::new();
     app.at("/echo/:/:path").get(|req: Request<()>| async move {
-        assert_eq!(req.param::<String>("path")?, "two");
+        assert_eq!(req.param("path")?, "two");
         Ok("")
     });
 

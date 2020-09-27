@@ -36,7 +36,7 @@ async fn main() -> Result<(), IoError> {
 
     app.at(":file")
         .put(|req: Request<TempDirState>| async move {
-            let path: String = req.param("file")?;
+            let path = req.param("file")?;
             let fs_path = req.state().path().join(path);
 
             let file = OpenOptions::new()
@@ -55,7 +55,7 @@ async fn main() -> Result<(), IoError> {
             Ok(json!({ "bytes": bytes_written }))
         })
         .get(|req: Request<TempDirState>| async move {
-            let path: String = req.param("file")?;
+            let path = req.param("file")?;
             let fs_path = req.state().path().join(path);
 
             if let Ok(body) = Body::from_file(fs_path).await {

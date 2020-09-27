@@ -231,7 +231,7 @@ pub mod sessions;
 pub use endpoint::Endpoint;
 pub use middleware::{Middleware, Next};
 pub use redirect::Redirect;
-pub use request::{ParamError, Request};
+pub use request::Request;
 pub use response::Response;
 pub use response_builder::ResponseBuilder;
 pub use route::Route;
