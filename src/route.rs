@@ -104,9 +104,12 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
         State: Clone + Send + Sync + 'static,
         InnerState: Clone + Send + Sync + 'static,
     {
+        let prefix = self.prefix;
+
         self.prefix = true;
         self.all(service);
-        self.prefix = false;
+        self.prefix = prefix;
+
         self
     }
 
