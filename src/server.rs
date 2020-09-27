@@ -28,6 +28,14 @@ use crate::{Endpoint, Request, Route};
 pub struct Server<State> {
     router: Arc<Router<State>>,
     state: State,
+    /// Holds the middleware stack.
+    ///
+    /// Note(Fishrock123): We do actually want this structure.
+    /// The outer Arc allows us to clone in .respond() without cloning the array.
+    /// The Vec allows us to add middleware at runtime.
+    /// The inner Arc-s allow MiddlewareEndpoint-s to be cloned internally.
+    /// We don't use a Mutex around the Vec here because adding a middleware during execution should be an error.
+    #[allow(clippy::rc_buffer)]
     middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
 }
 
