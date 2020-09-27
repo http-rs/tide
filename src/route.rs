@@ -43,7 +43,7 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
         let mut p = self.path.clone();
 
         if !p.ends_with('/') && !path.starts_with('/') {
-            p.push_str("/");
+            p.push('/');
         }
 
         if path != "/" {
@@ -289,7 +289,7 @@ where
             route_params,
         } = req;
 
-        let rest = crate::request::rest(&route_params).unwrap_or_else(|| "");
+        let rest = crate::request::rest(&route_params).unwrap_or("");
         req.url_mut().set_path(&rest);
 
         self.0
