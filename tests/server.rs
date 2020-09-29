@@ -89,7 +89,7 @@ fn json() -> Result<(), http_types::Error> {
             let counter = Counter { count: 0 };
             task::sleep(Duration::from_millis(100)).await;
             let counter: Counter = surf::get(format!("http://localhost:{}", &port))
-                .body(serde_json::to_string(&counter)?)
+                .body(Body::from_json(&Counter { count: 0 })?)
                 .recv_json()
                 .await
                 .unwrap();
