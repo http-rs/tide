@@ -27,14 +27,14 @@ where
 {
     pub fn not_found_endpoint() -> Selection<'a, State> {
         Selection {
-            endpoint: &method_not_allowed,
+            endpoint: &not_found_endpoint,
             params: Params::new(),
         }
     }
 
     pub fn method_not_allowed() -> Selection<'a, State> {
         Selection {
-            endpoint: &not_found_endpoint,
+            endpoint: &method_not_allowed,
             params: Params::new(),
         }
     }
