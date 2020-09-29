@@ -3,11 +3,14 @@
 use async_std::io;
 use async_std::sync::Arc;
 
-use crate::cookies;
-use crate::listener::{Listener, ToListener};
 use crate::log;
 use crate::middleware::{Middleware, Next};
-use crate::router::{Router, Selection};
+use crate::router::Selection;
+use crate::{cookies, namespace::Namespace};
+use crate::{
+    listener::{Listener, ToListener},
+    subdomain::Subdomain,
+};
 use crate::{Endpoint, Request, Route};
 /// An HTTP server.
 ///
@@ -26,7 +29,7 @@ use crate::{Endpoint, Request, Route};
 /// add middleware to an app, use the [`Server::middleware`] method.
 #[allow(missing_debug_implementations)]
 pub struct Server<State> {
-    router: Arc<Router<State>>,
+    router: Arc<Namespace<State>>,
     state: State,
     middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
 }
@@ -93,7 +96,7 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     /// ```
     pub fn with_state(state: State) -> Self {
         let mut server = Self {
-            router: Arc::new(Router::new()),
+            router: Arc::new(Namespace::new()),
             middleware: Arc::new(vec![]),
             state,
         };
@@ -101,6 +104,12 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
         #[cfg(feature = "logger")]
         server.with(log::LogMiddleware::new());
         server
+    }
+
+    pub fn subdomain<'a>(&'a mut self, domain: &str) -> &'a mut Subdomain<State> {
+        let namespace = Arc::get_mut(&mut self.router)
+            .expect("Registering namespaces is not possible after the server has started");
+        Subdomain::new(namespace, domain)
     }
 
     /// Add a new route at the given `path`, relative to root.
@@ -150,9 +159,8 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     /// match or not, which means that the order of adding resources has no
     /// effect.
     pub fn at<'a>(&'a mut self, path: &str) -> Route<'a, State> {
-        let router = Arc::get_mut(&mut self.router)
-            .expect("Registering routes is not possible after the Server has started");
-        Route::new(router, path.to_owned())
+        let subdomain = self.subdomain("");
+        subdomain.at(path)
     }
 
     /// Add middleware to an application.
@@ -215,7 +223,8 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
         } = self.clone();
 
         let method = req.method().to_owned();
-        let Selection { endpoint, params } = router.route(&req.url().path(), method);
+        let domain = req.host().unwrap_or("");
+        let Selection { endpoint, params } = router.route(domain, &req.url().path(), method);
         let route_params = vec![params];
         let req = Request::new(state, req, route_params);
 
@@ -265,13 +274,14 @@ impl<State: Clone + Sync + Send + 'static, InnerState: Clone + Sync + Send + 'st
             mut route_params,
             ..
         } = req;
+        let domain = req.host().unwrap_or("");
         let path = req.url().path().to_owned();
         let method = req.method().to_owned();
         let router = self.router.clone();
         let middleware = self.middleware.clone();
         let state = self.state.clone();
 
-        let Selection { endpoint, params } = router.route(&path, method);
+        let Selection { endpoint, params } = router.route(domain, &path, method);
         route_params.push(params);
         let req = Request::new(state, req, route_params);
 

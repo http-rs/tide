@@ -205,11 +205,13 @@ mod cookies;
 mod endpoint;
 mod fs;
 mod middleware;
+mod namespace;
 mod redirect;
 mod request;
 mod response;
 mod response_builder;
 mod route;
+mod subdomain;
 
 #[cfg(not(feature = "__internal__bench"))]
 mod router;
