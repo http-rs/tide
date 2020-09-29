@@ -86,7 +86,6 @@ fn json() -> Result<(), http_types::Error> {
         });
 
         let client = task::spawn(async move {
-            let counter = Counter { count: 0 };
             task::sleep(Duration::from_millis(100)).await;
             let counter: Counter = surf::get(format!("http://localhost:{}", &port))
                 .body(Body::from_json(&Counter { count: 0 })?)

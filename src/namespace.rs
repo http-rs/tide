@@ -50,7 +50,17 @@ impl<State: Clone + Send + Sync + 'static> Namespace<State> {
         path: &str,
         method: http_types::Method,
     ) -> Selection<'_, State> {
-        match self.subdomain_map.mapper.get(domain) {
+        let subdomains = domain.split('.').rev().skip(2).collect::<Vec<&str>>();
+        let domain = if subdomains.len() == 0 {
+            "".to_owned()
+        } else {
+            subdomains
+                .iter()
+                .rev()
+                .fold(String::new(), |sub, part| sub + "." + part)[1..]
+                .to_owned()
+        };
+        match self.subdomain_map.mapper.get(&domain) {
             Some(d) => d.route(path, method),
             None => Selection::not_found_endpoint(),
         }

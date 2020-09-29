@@ -227,9 +227,7 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
         let Selection { endpoint, params } = router.route(domain, &req.url().path(), method);
         let route_params = vec![params];
         let req = Request::new(state, req, route_params);
-        for m in middleware.iter() {
-            println!("middlewares {:?}", m.name());
-        }
+
         let next = Next {
             endpoint,
             next_middleware: &middleware,
