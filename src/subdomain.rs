@@ -28,8 +28,12 @@ impl<State: Clone + Send + Sync + 'static> Subdomain<State> {
         namespace.add(router.subdomain.clone(), router)
     }
 
-    pub(crate) fn route(&self, path: &str, method: http_types::Method) -> Selection<'_, State> {
+    pub(crate) fn route<'a>(&self, path: &str, method: http_types::Method) -> Selection<'_, State> {
         self.router.route(path, method)
+    }
+
+    pub(crate) fn middleware(&self) -> &Vec<Arc<dyn Middleware<State>>> {
+        &self.middleware
     }
 
     pub fn with<M>(&mut self, middleware: M) -> &mut Self

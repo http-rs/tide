@@ -5,7 +5,6 @@ use async_std::sync::Arc;
 
 use crate::log;
 use crate::middleware::{Middleware, Next};
-use crate::router::Selection;
 use crate::{cookies, namespace::Namespace};
 use crate::{
     listener::{Listener, ToListener},
@@ -224,13 +223,16 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
 
         let method = req.method().to_owned();
         let domain = req.host().unwrap_or("");
-        let Selection { endpoint, params } = router.route(domain, &req.url().path(), method);
-        let route_params = vec![params];
+
+        let namespace = router.route(domain, &req.url().path(), method, &middleware);
+        let mut route_params = vec![];
+        route_params.push(namespace.subdomain_params());
+        route_params.push(namespace.selection.params);
         let req = Request::new(state, req, route_params);
 
         let next = Next {
-            endpoint,
-            next_middleware: &middleware,
+            endpoint: namespace.selection.endpoint,
+            next_middleware: &namespace.middleware,
         };
 
         let res = next.run(req).await;
@@ -275,19 +277,21 @@ impl<State: Clone + Sync + Send + 'static, InnerState: Clone + Sync + Send + 'st
             ..
         } = req;
         let domain = req.host().unwrap_or("");
-        let path = req.url().path().to_owned();
+        let path = req.url().path();
         let method = req.method().to_owned();
+
         let router = self.router.clone();
         let middleware = self.middleware.clone();
         let state = self.state.clone();
 
-        let Selection { endpoint, params } = router.route(domain, &path, method);
-        route_params.push(params);
+        let namespace = router.route(domain, path, method, &middleware);
+        route_params.push(namespace.subdomain_params());
+        route_params.push(namespace.selection.params);
         let req = Request::new(state, req, route_params);
 
         let next = Next {
-            endpoint,
-            next_middleware: &middleware,
+            endpoint: namespace.selection.endpoint,
+            next_middleware: &namespace.middleware,
         };
 
         Ok(next.run(req).await)
