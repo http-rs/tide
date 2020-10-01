@@ -43,7 +43,7 @@
 
 Tide is a minimal and pragmatic Rust web application framework built for
 rapid development. It comes with a robust set of features that make building
-database-backed web applications easier and more fun.
+async web applications and APIs easier and more fun.
 
 ## Getting started
 
@@ -59,8 +59,8 @@ async-std = { version = "1.6.0", features = ["attributes"] }
 
 ## Examples
 
-Create an HTTP server that takes JSON, validates it, and responds with a
-confirmation message.
+Create an HTTP server that receives a JSON body, validates it, and responds
+with a confirmation message.
 
 ```rust
 use tide::Request;
