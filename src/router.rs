@@ -94,13 +94,13 @@ impl<State: Clone + Send + Sync + 'static> Router<State> {
     }
 }
 
-pub async fn not_found_endpoint<State: Clone + Send + Sync + 'static>(
+async fn not_found_endpoint<State: Clone + Send + Sync + 'static>(
     _req: Request<State>,
 ) -> crate::Result {
     Ok(Response::new(StatusCode::NotFound))
 }
 
-pub async fn method_not_allowed<State: Clone + Send + Sync + 'static>(
+async fn method_not_allowed<State: Clone + Send + Sync + 'static>(
     _req: Request<State>,
 ) -> crate::Result {
     Ok(Response::new(StatusCode::MethodNotAllowed))
