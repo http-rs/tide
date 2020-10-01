@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use super::{holder::Holder, Match};
 
+/// A router made for routing subdomain strings to a resource
 pub struct SubdomainRouter<T> {
     subdomains: HashMap<String, Holder<T>>,
 }

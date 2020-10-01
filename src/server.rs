@@ -105,10 +105,50 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
         server
     }
 
-    pub fn subdomain<'a>(&'a mut self, domain: &str) -> &'a mut Subdomain<State> {
+    /// Add a new subdomain route given a `subdomain`, relative to the apex domain.
+    ///
+    /// Routing subdomains only works if you are listening for an apex domain.
+    /// Routing works by putting all subdomains into a list and looping over all
+    /// of them until the correct route has been found. Be sure to place routes
+    /// that require parameters at the bottom of your routing. After a subdomain
+    /// has been picked you can use whatever you like. An example of subdomain
+    /// routing would look like:
+    ///
+    /// ```rust,no_run
+    /// let mut app = tide::Server::new();
+    /// app.subdomain("blog").get(|_| async { Ok("Hello blogger")});
+    /// ```
+    ///
+    /// A subdomain is comprised of zero or more non-empty string segments that
+    /// are separated by '.'. Like `Route` there are two kinds of segments:
+    /// concrete and wildcard. A concrete segment is used to exactly match the
+    /// respective part of the subdomain of the incoming request. A wildcard
+    /// segment on the other hand extracts and parses the respective part of the
+    /// subdomain of the incoming request to pass it along to the endpoint as an
+    /// argument. A wildcard segment is written as `:user`, which creates an
+    /// endpoint parameter called `user`. Something to remember is that this
+    /// parameter feature is also used inside of path routing so if you use a
+    /// wildcard for your subdomain and path that share the same key name, it
+    /// will replace the subdomain value with the paths value.
+    ///
+    /// Alternatively a wildcard definition can only be a `*`, for example
+    /// `blog.*`, which means that the wildcard will match any subdomain from
+    /// the first part.
+    ///
+    /// Here are some examples omitting the path routing selection:
+    ///
+    /// ```rust,no_run
+    /// # let mut app = tide::Server::new();
+    /// app.subdomain("");
+    /// app.subdomain("blog");
+    /// app.subdomain(":user.blog");
+    /// app.subdomain(":user.*");
+    /// app.subdomain(":context.:.api");
+    /// ```
+    pub fn subdomain<'a>(&'a mut self, subdomain: &str) -> &'a mut Subdomain<State> {
         let namespace = Arc::get_mut(&mut self.router)
             .expect("Registering namespaces is not possible after the server has started");
-        Subdomain::new(namespace, domain)
+        Subdomain::new(namespace, subdomain)
     }
 
     /// Add a new route at the given `path`, relative to root.

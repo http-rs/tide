@@ -1,13 +1,13 @@
 use crate::{log, namespace::Namespace, router::Router, router::Selection, Middleware, Route};
 use std::sync::Arc;
 
-/// Filter route on the subdomain the user registers
+/// A handle to a subdomain
 ///
-/// This middleware is a helper function that router uses to give users
-/// access to route on subdomains on certain routes. If routes include
-/// subdomains that can be parameters then it attaches it to the request
-/// object.
+/// All routes can be nested inside of a subdomain using [`Server::subdomain`]
+/// to establish a subdomain. The `Subdomain` type can be used to establish
+/// various `Route`.
 ///
+/// [`Server::subdomain`]: ./struct.Server.html#method.subdomain
 #[allow(missing_debug_implementations)]
 pub struct Subdomain<State> {
     subdomain: String,
@@ -36,6 +36,12 @@ impl<State: Clone + Send + Sync + 'static> Subdomain<State> {
         &self.middleware
     }
 
+    /// Create a route on the given subdomain
+    pub fn at<'b>(&'b mut self, path: &str) -> Route<'b, State> {
+        Route::new(&mut self.router, path.to_owned())
+    }
+
+    /// Apply the given middleware to the current route
     pub fn with<M>(&mut self, middleware: M) -> &mut Self
     where
         M: Middleware<State>,
@@ -47,9 +53,5 @@ impl<State: Clone + Send + Sync + 'static> Subdomain<State> {
         );
         self.middleware.push(Arc::new(middleware));
         self
-    }
-
-    pub fn at<'b>(&'b mut self, path: &str) -> Route<'b, State> {
-        Route::new(&mut self.router, path.to_owned())
     }
 }

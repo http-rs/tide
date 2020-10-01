@@ -23,6 +23,8 @@ impl<T> Holder<T> {
         Holder { data, map }
     }
 
+    /// Compare a subdomain that has been split into parts to the subdomain
+    /// that the holder implements
     pub fn compare(&self, parts: &Vec<&str>) -> Option<Match<'_, T>> {
         if self.map.len() != parts.len() {
             return None;

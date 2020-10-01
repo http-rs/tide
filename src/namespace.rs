@@ -4,8 +4,26 @@ use crate::{
     router::Selection, subdomain::Subdomain, subdomain_router::router::SubdomainRouter, Middleware,
 };
 
+/// The routing for subdomains used by `Server`
 pub struct Namespace<State> {
     router: SubdomainRouter<Subdomain<State>>,
+}
+
+/// The result of routing a subdomain and a URL
+pub struct NamespaceSelection<'a, State> {
+    pub(crate) selection: Selection<'a, State>,
+    pub(crate) middleware: Vec<Arc<dyn Middleware<State>>>,
+    pub(crate) params: BTreeMap<&'a String, String>,
+}
+
+impl<'a, State> NamespaceSelection<'a, State> {
+    pub fn subdomain_params(&self) -> route_recognizer::Params {
+        let mut params = route_recognizer::Params::new();
+        for (key, value) in &self.params {
+            params.insert(key.to_string(), value.to_owned());
+        }
+        params
+    }
 }
 
 impl<State: Clone + Send + Sync + 'static> Namespace<State> {
@@ -64,21 +82,5 @@ impl<State: Clone + Send + Sync + 'static> Namespace<State> {
                 }
             }
         }
-    }
-}
-
-pub struct NamespaceSelection<'a, State> {
-    pub(crate) selection: Selection<'a, State>,
-    pub(crate) middleware: Vec<Arc<dyn Middleware<State>>>,
-    pub(crate) params: BTreeMap<&'a String, String>,
-}
-
-impl<'a, State> NamespaceSelection<'a, State> {
-    pub fn subdomain_params(&self) -> route_recognizer::Params {
-        let mut params = route_recognizer::Params::new();
-        for (key, value) in &self.params {
-            params.insert(key.to_string(), value.to_owned());
-        }
-        params
     }
 }
