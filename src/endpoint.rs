@@ -122,6 +122,6 @@ where
 #[async_trait]
 impl<State: Clone + Send + Sync + 'static> Endpoint<State> for Box<dyn Endpoint<State>> {
     async fn call(&self, request: Request<State>) -> crate::Result {
-        self.call(request).await
+        self.as_ref().call(request).await
     }
 }
