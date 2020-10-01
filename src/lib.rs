@@ -212,6 +212,7 @@ mod response;
 mod response_builder;
 mod route;
 mod subdomain;
+mod subdomain_router;
 
 #[cfg(not(feature = "__internal__bench"))]
 mod router;
