@@ -11,26 +11,18 @@ async fn main() -> Result<(), std::io::Error> {
     Ok(())
 }
 
-async fn login(req: Request<()>) -> tide::Result<impl Into<Response>> {
-    let please_login = || {
-        let schema = AuthenticationScheme::Basic;
-        let realm = "access the tuna mainframe";
-        let auth = WwwAuthenticate::new(schema, realm.into());
-        let mut res = Response::new(401);
-        auth.apply(&mut res);
-        return Ok(res);
-    };
-
-    // Tell the client to authenticate
-    if let None = req.header("Authorization") {
-        return please_login();
-    }
+async fn login(req: Request<()>) -> tide::Result {
     let auth = match BasicAuth::from_headers(req)? {
         Some(auth) => auth,
-        None => return please_login(),
+        None => {
+            let schema = AuthenticationScheme::Basic;
+            let realm = "access the tuna mainframe";
+            let auth = WwwAuthenticate::new(schema, realm.into());
+            return Ok(Response::builder(401)
+                .header(auth.name(), auth.value())
+                .build());
+        }
     };
-
-    dbg!(&auth);
 
     ensure_eq!(auth.username(), "nori", 401, "unknown username");
     ensure_eq!(auth.password(), "ilovefish", 401, "incorrect password");

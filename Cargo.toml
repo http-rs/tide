@@ -61,7 +61,7 @@ surf = { version = "2.0.0-alpha.3", default-features = false, features = ["h1-cl
 tempfile = "3.1.0"
 
 [patch.crates-io]
-http-types = { git = "https://github.com/http-rs/http-types", branch = "basic-auth" }
+http-types = { path = "../http-types" }
 
 [[test]]
 name = "nested"
