@@ -5,10 +5,11 @@ mod test_utils;
 use test_utils::ServerTestingExt;
 
 #[async_std::test]
-async fn log_tests() {
+async fn log_tests() -> tide::Result<()> {
     let mut logger = logtest::start();
     test_server_listen(&mut logger).await;
-    test_only_log_once(&mut logger).await;
+    test_only_log_once(&mut logger).await?;
+    Ok(())
 }
 
 async fn test_server_listen(logger: &mut logtest::Logger) {
@@ -29,14 +30,14 @@ async fn test_server_listen(logger: &mut logtest::Logger) {
     );
 }
 
-async fn test_only_log_once(logger: &mut logtest::Logger) {
+async fn test_only_log_once(logger: &mut logtest::Logger) -> tide::Result<()> {
     let mut app = tide::new();
     app.at("/").nest({
         let mut app = tide::new();
         app.at("/").get(|_| async { Ok("nested") });
         app
     });
-    app.get("/").await;
+    assert!(app.get("/").await?.status().is_success());
 
     let entries: Vec<_> = logger.collect();
 
@@ -55,4 +56,5 @@ async fn test_only_log_once(logger: &mut logtest::Logger) {
             .filter(|entry| entry.args() == "--> Response sent")
             .count()
     );
+    Ok(())
 }
