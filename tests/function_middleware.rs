@@ -4,11 +4,14 @@ use tide::http::{self, url::Url, Method};
 
 mod test_utils;
 
-fn auth_middleware<'a>(
+fn auth_middleware<'a, State>(
     req: tide::Request,
-    state: (),
-    next: tide::Next<'a, ()>,
-) -> Pin<Box<dyn Future<Output = tide::Result> + 'a + Send>> {
+    state: State,
+    next: tide::Next<'a, State>,
+) -> Pin<Box<dyn Future<Output = tide::Result> + 'a + Send>>
+where
+    State: Clone + Send + Sync + 'static,
+{
     let authenticated = match req.header("X-Auth") {
         Some(header) => header == "secret_key",
         None => false,
