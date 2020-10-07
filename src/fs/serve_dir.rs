@@ -23,7 +23,7 @@ impl<State> Endpoint<State> for ServeDir
 where
     State: Clone + Send + Sync + 'static,
 {
-    async fn call(&self, req: Request<State>) -> Result {
+    async fn call(&self, req: Request, _state: State) -> Result {
         let path = req.url().path();
         let path = path.trim_start_matches(&self.prefix);
         let path = path.trim_start_matches('/');
@@ -77,11 +77,10 @@ mod test {
         })
     }
 
-    fn request(path: &str) -> crate::Request<()> {
-        let request = crate::http::Request::get(
-            crate::http::Url::parse(&format!("http://localhost/{}", path)).unwrap(),
-        );
-        crate::Request::new((), request, vec![])
+    fn request(path: &str) -> crate::Request {
+        let url = crate::http::Url::parse(&format!("http://localhost/{}", path)).unwrap();
+        let req = crate::http::Request::get(url);
+        crate::Request::new(req, vec![])
     }
 
     #[async_std::test]
@@ -91,7 +90,7 @@ mod test {
 
         let req = request("static/foo");
 
-        let res = serve_dir.call(req).await.unwrap();
+        let res = serve_dir.call(req, ()).await.unwrap();
         let mut res: crate::http::Response = res.into();
 
         assert_eq!(res.status(), 200);
@@ -105,7 +104,7 @@ mod test {
 
         let req = request("static/bar");
 
-        let res = serve_dir.call(req).await.unwrap();
+        let res = serve_dir.call(req, ()).await.unwrap();
         let res: crate::http::Response = res.into();
 
         assert_eq!(res.status(), 404);

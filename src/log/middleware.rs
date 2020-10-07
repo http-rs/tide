@@ -30,11 +30,12 @@ impl LogMiddleware {
     /// Log a request and a response.
     async fn log<'a, State: Clone + Send + Sync + 'static>(
         &'a self,
-        mut req: Request<State>,
+        mut req: Request,
+        state: State,
         next: Next<'a, State>,
     ) -> crate::Result {
         if req.ext::<LogMiddlewareHasBeenRun>().is_some() {
-            return Ok(next.run(req).await);
+            return Ok(next.run(req, state).await);
         }
         req.set_ext(LogMiddlewareHasBeenRun);
 
@@ -45,7 +46,7 @@ impl LogMiddleware {
             path: path,
         });
         let start = std::time::Instant::now();
-        let response = next.run(req).await;
+        let response = next.run(req, state).await;
         let status = response.status();
         if status.is_server_error() {
             if let Some(error) = response.error() {
@@ -95,7 +96,7 @@ impl LogMiddleware {
 
 #[async_trait::async_trait]
 impl<State: Clone + Send + Sync + 'static> Middleware<State> for LogMiddleware {
-    async fn handle(&self, req: Request<State>, next: Next<'_, State>) -> crate::Result {
-        self.log(req, next).await
+    async fn handle(&self, req: Request, state: State, next: Next<'_, State>) -> crate::Result {
+        self.log(req, state, next).await
     }
 }

@@ -15,7 +15,7 @@ use async_std::io;
 ///    async_std::task::block_on(async {
 ///        tide::log::start();
 ///        let mut app = tide::new();
-///        app.at("/").get(|_| async { Ok("Hello, world!") });
+///        app.at("/").get(|_, _| async { Ok("Hello, world!") });
 ///
 ///        let mut listener = tide::listener::FailoverListener::new();
 ///        listener.add("127.0.0.1:8000")?;

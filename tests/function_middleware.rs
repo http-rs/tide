@@ -5,24 +5,25 @@ use tide::http::{self, url::Url, Method};
 mod test_utils;
 
 fn auth_middleware<'a>(
-    request: tide::Request<()>,
+    req: tide::Request,
+    state: (),
     next: tide::Next<'a, ()>,
 ) -> Pin<Box<dyn Future<Output = tide::Result> + 'a + Send>> {
-    let authenticated = match request.header("X-Auth") {
+    let authenticated = match req.header("X-Auth") {
         Some(header) => header == "secret_key",
         None => false,
     };
 
     Box::pin(async move {
         if authenticated {
-            Ok(next.run(request).await)
+            Ok(next.run(req, state).await)
         } else {
             Ok(tide::Response::new(tide::StatusCode::Unauthorized))
         }
     })
 }
 
-async fn echo_path<State>(req: tide::Request<State>) -> tide::Result<String> {
+async fn echo_path<State>(req: tide::Request, _state: State) -> tide::Result<String> {
     Ok(req.url().path().to_string())
 }
 

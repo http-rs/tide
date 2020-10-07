@@ -14,7 +14,7 @@ use std::sync::Arc;
 pub fn endpoint<F, Fut, State>(handler: F) -> SseEndpoint<F, Fut, State>
 where
     State: Clone + Send + Sync + 'static,
-    F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
+    F: Fn(Request, State, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + 'static,
 {
     SseEndpoint {
@@ -28,7 +28,7 @@ where
 pub struct SseEndpoint<F, Fut, State>
 where
     State: Clone + Send + Sync + 'static,
-    F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
+    F: Fn(Request, State, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + 'static,
 {
     handler: Arc<F>,
@@ -39,15 +39,15 @@ where
 impl<F, Fut, State> Endpoint<State> for SseEndpoint<F, Fut, State>
 where
     State: Clone + Send + Sync + 'static,
-    F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
+    F: Fn(Request, State, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + 'static,
 {
-    async fn call(&self, req: Request<State>) -> Result<Response> {
+    async fn call(&self, req: Request, state: State) -> Result<Response> {
         let handler = self.handler.clone();
         let (sender, encoder) = async_sse::encode();
         task::spawn(async move {
             let sender = Sender::new(sender);
-            if let Err(err) = handler(req, sender).await {
+            if let Err(err) = handler(req, state, sender).await {
                 log::error!("SSE handler error: {:?}", err);
             }
         });

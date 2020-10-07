@@ -4,13 +4,13 @@ use tide::{Redirect, Response, StatusCode};
 async fn main() -> Result<(), std::io::Error> {
     tide::log::start();
     let mut app = tide::new();
-    app.at("/").get(|_| async { Ok("Root") });
+    app.at("/").get(|_, _| async { Ok("Root") });
 
     // Redirect hackers to YouTube.
     app.at("/.env")
         .get(Redirect::new("https://www.youtube.com/watch?v=dQw4w9WgXcQ"));
 
-    app.at("/users-page").get(|_| async {
+    app.at("/users-page").get(|_, _| async {
         Ok(if signed_in() {
             Response::new(StatusCode::Ok)
         } else {

@@ -14,21 +14,21 @@ async fn main() -> Result<(), std::io::Error> {
     ));
 
     app.with(tide::utils::Before(
-        |mut request: tide::Request<()>| async move {
-            let session = request.session_mut();
+        |mut req: tide::Request, state| async move {
+            let session = req.session_mut();
             let visits: usize = session.get("visits").unwrap_or_default();
             session.insert("visits", visits + 1).unwrap();
-            request
+            (req, state)
         },
     ));
 
-    app.at("/").get(|req: tide::Request<()>| async move {
+    app.at("/").get(|req: tide::Request, _| async move {
         let visits: usize = req.session().get("visits").unwrap();
         Ok(format!("you have visited this website {} times", visits))
     });
 
     app.at("/reset")
-        .get(|mut req: tide::Request<()>| async move {
+        .get(|mut req: tide::Request, _| async move {
             req.session_mut().destroy();
             Ok(tide::Redirect::new("/"))
         });
