@@ -17,16 +17,17 @@ impl TestMiddleware {
 impl<State: Clone + Send + Sync + 'static> Middleware<State> for TestMiddleware {
     async fn handle(
         &self,
-        req: tide::Request<State>,
+        req: tide::Request,
+        state: State,
         next: tide::Next<'_, State>,
     ) -> tide::Result<tide::Response> {
-        let mut res = next.run(req).await;
+        let mut res = next.run(req, state).await;
         res.insert_header(self.0.clone(), self.1);
         Ok(res)
     }
 }
 
-async fn echo_path<State>(req: tide::Request<State>) -> tide::Result<String> {
+async fn echo_path<State>(req: tide::Request, _state: State) -> tide::Result<String> {
     Ok(req.url().path().to_string())
 }
 

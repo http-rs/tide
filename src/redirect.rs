@@ -9,7 +9,7 @@
 //! use tide::Redirect;
 //!
 //! let mut app = tide::new();
-//! app.at("/").get(|_| async { Ok("meow") });
+//! app.at("/").get(|_, _| async { Ok("meow") });
 //! app.at("/nori").get(Redirect::temporary("/"));
 //! app.listen("127.0.0.1:8080").await?;
 //! #
@@ -28,7 +28,7 @@ use crate::{Endpoint, Request, Response};
 /// # use tide::{Response, Redirect, Request, StatusCode};
 /// # fn next_product() -> Option<String> { None }
 /// # #[allow(dead_code)]
-/// async fn route_handler(request: Request<()>) -> tide::Result {
+/// async fn route_handler(req: Request, state: ()) -> tide::Result {
 ///     if let Some(product_url) = next_product() {
 ///         Ok(Redirect::new(product_url).into())
 ///     } else {
@@ -91,7 +91,7 @@ where
     State: Clone + Send + Sync + 'static,
     T: AsRef<str> + Send + Sync + 'static,
 {
-    async fn call(&self, _req: Request<State>) -> crate::Result<Response> {
+    async fn call(&self, _req: Request, _state: State) -> crate::Result<Response> {
         Ok(self.into())
     }
 }

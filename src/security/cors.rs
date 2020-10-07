@@ -134,13 +134,13 @@ impl CorsMiddleware {
 
 #[async_trait::async_trait]
 impl<State: Clone + Send + Sync + 'static> Middleware<State> for CorsMiddleware {
-    async fn handle(&self, req: Request<State>, next: Next<'_, State>) -> Result {
+    async fn handle(&self, req: Request, state: State, next: Next<'_, State>) -> Result {
         // TODO: how should multiple origin values be handled?
         let origins = req.header(&headers::ORIGIN).cloned();
 
         if origins.is_none() {
             // This is not a CORS request if there is no Origin header
-            return Ok(next.run(req).await);
+            return Ok(next.run(req, state).await);
         }
 
         let origins = origins.unwrap();
@@ -155,7 +155,7 @@ impl<State: Clone + Send + Sync + 'static> Middleware<State> for CorsMiddleware 
             return Ok(self.build_preflight_response(&origins).into());
         }
 
-        let mut response = next.run(req).await;
+        let mut response = next.run(req, state).await;
 
         response.insert_header(
             headers::ACCESS_CONTROL_ALLOW_ORIGIN,
@@ -251,7 +251,7 @@ mod test {
 
     fn app() -> crate::Server<()> {
         let mut app = crate::Server::new();
-        app.at(ENDPOINT).get(|_| async { Ok("Hello World") });
+        app.at(ENDPOINT).get(|_, _| async { Ok("Hello World") });
 
         app
     }
@@ -367,7 +367,7 @@ mod test {
     async fn retain_cookies() {
         let mut app = crate::Server::new();
         app.with(CorsMiddleware::new().allow_origin(ALLOW_ORIGIN));
-        app.at(ENDPOINT).get(|_| async {
+        app.at(ENDPOINT).get(|_, _| async {
             let mut res = crate::Response::new(http_types::StatusCode::Ok);
             res.insert_cookie(http_types::Cookie::new("foo", "bar"));
             Ok(res)
@@ -383,7 +383,7 @@ mod test {
     #[async_std::test]
     async fn set_cors_headers_to_error_responses() {
         let mut app = crate::Server::new();
-        app.at(ENDPOINT).get(|_| async {
+        app.at(ENDPOINT).get(|_, _| async {
             Err::<&str, _>(crate::Error::from_str(
                 StatusCode::BadRequest,
                 "bad request",

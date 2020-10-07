@@ -15,10 +15,10 @@ use std::sync::{Arc, RwLock};
 /// # use tide::{Request, Response, StatusCode};
 /// # use tide::http::cookies::Cookie;
 /// let mut app = tide::Server::new();
-/// app.at("/get").get(|req: Request<()>| async move {
+/// app.at("/get").get(|req: Request, _| async move {
 ///     Ok(req.cookie("testCookie").unwrap().value().to_string())
 /// });
-/// app.at("/set").get(|_| async {
+/// app.at("/set").get(|_, _| async {
 ///     let mut res = Response::new(StatusCode::Ok);
 ///     res.insert_cookie(Cookie::new("testCookie", "NewCookieValue"));
 ///     Ok(res)
@@ -36,18 +36,18 @@ impl CookiesMiddleware {
 
 #[async_trait]
 impl<State: Clone + Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
-    async fn handle(&self, mut ctx: Request<State>, next: Next<'_, State>) -> crate::Result {
+    async fn handle(&self, mut ctx: Request, state: State, next: Next<'_, State>) -> crate::Result {
         let cookie_jar = if let Some(cookie_data) = ctx.ext::<CookieData>() {
             cookie_data.content.clone()
         } else {
-            let cookie_data = CookieData::from_request(&ctx);
+            let cookie_data = CookieData::from_request(&ctx, &state);
             // no cookie data in ext context, so we try to create it
             let content = cookie_data.content.clone();
             ctx.set_ext(cookie_data);
             content
         };
 
-        let mut res = next.run(ctx).await;
+        let mut res = next.run(ctx, state).await;
 
         // Don't do anything if there are no cookies.
         if res.cookie_events.is_empty() {
@@ -112,7 +112,7 @@ impl LazyJar {
 }
 
 impl CookieData {
-    pub(crate) fn from_request<S>(req: &Request<S>) -> Self {
+    pub(crate) fn from_request<S>(req: &Request, _state: &S) -> Self {
         let jar = if let Some(cookie_headers) = req.header(&headers::COOKIE) {
             let mut jar = CookieJar::new();
             for cookie_header in cookie_headers {

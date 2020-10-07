@@ -49,7 +49,7 @@ impl Server<()> {
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
     /// let mut app = tide::new();
-    /// app.at("/").get(|_| async { Ok("Hello, world!") });
+    /// app.at("/").get(|_, _| async { Ok("Hello, world!") });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
     /// # Ok(()) }) }
@@ -92,8 +92,8 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     ///
     /// // Initialize the application with state.
     /// let mut app = tide::with_state(state);
-    /// app.at("/").get(|req: Request<State>| async move {
-    ///     Ok(format!("Hello, {}!", &req.state().name))
+    /// app.at("/").get(|req: Request, state: State| async move {
+    ///     Ok(format!("Hello, {}!", &state.name))
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
@@ -121,7 +121,7 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     ///
     /// ```rust,no_run
     /// # let mut app = tide::Server::new();
-    /// app.at("/").get(|_| async { Ok("Hello, world!") });
+    /// app.at("/").get(|_, _| async { Ok("Hello, world!") });
     /// ```
     ///
     /// A path is comprised of zero or many segments, i.e. non-empty strings
@@ -202,7 +202,7 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     /// use tide::http::{Url, Method, Request, Response};
     ///
     /// let mut app = tide::new();
-    /// app.at("/").get(|_| async { Ok("hello world") });
+    /// app.at("/").get(|_, _| async { Ok("hello world") });
     ///
     /// let req = Request::new(Method::Get, Url::parse("https://example.com")?);
     /// let res: Response = app.respond(req).await?;
@@ -225,14 +225,14 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
         let method = req.method().to_owned();
         let Selection { endpoint, params } = router.route(&req.url().path(), method);
         let route_params = vec![params];
-        let req = Request::new(state, req, route_params);
+        let req = Request::new(req, route_params);
 
         let next = Next {
             endpoint,
             next_middleware: &middleware,
         };
 
-        let res = next.run(req).await;
+        let res = next.run(req, state).await;
         let res: http_types::Response = res.into();
         Ok(res.into())
     }
@@ -245,7 +245,7 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     /// # #[derive(Clone)] struct SomeAppState;
     /// let mut app = tide::with_state(SomeAppState);
     /// let mut admin = tide::with_state(app.state().clone());
-    /// admin.at("/").get(|_| async { Ok("nested app with cloned state") });
+    /// admin.at("/").get(|_, _| async { Ok("nested app with cloned state") });
     /// app.at("/").nest(admin);
     /// ```
     pub fn state(&self) -> &State {
@@ -273,11 +273,10 @@ impl<State: Clone> Clone for Server<State> {
 impl<State: Clone + Sync + Send + 'static, InnerState: Clone + Sync + Send + 'static>
     Endpoint<State> for Server<InnerState>
 {
-    async fn call(&self, req: Request<State>) -> crate::Result {
+    async fn call(&self, req: Request, _state: State) -> crate::Result {
         let Request {
             req,
             mut route_params,
-            ..
         } = req;
         let path = req.url().path().to_owned();
         let method = req.method().to_owned();
@@ -287,14 +286,14 @@ impl<State: Clone + Sync + Send + 'static, InnerState: Clone + Sync + Send + 'st
 
         let Selection { endpoint, params } = router.route(&path, method);
         route_params.push(params);
-        let req = Request::new(state, req, route_params);
+        let req = Request::new(req, route_params);
 
         let next = Next {
             endpoint,
             next_middleware: &middleware,
         };
 
-        Ok(next.run(req).await)
+        Ok(next.run(req, state).await)
     }
 }
 

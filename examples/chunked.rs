@@ -4,7 +4,7 @@ use tide::Body;
 async fn main() -> Result<(), std::io::Error> {
     tide::log::start();
     let mut app = tide::new();
-    app.at("/").get(|_| async {
+    app.at("/").get(|_, _| async {
         // File sends are chunked by default.
         Ok(Body::from_file(file!()).await?)
     });

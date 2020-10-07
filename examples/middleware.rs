@@ -26,14 +26,15 @@ impl UserDatabase {
 // application state. Because it depends on a specific request state,
 // it would likely be closely tied to a specific application
 fn user_loader<'a>(
-    mut request: Request<UserDatabase>,
+    mut request: Request,
+    state: UserDatabase,
     next: Next<'a, UserDatabase>,
 ) -> Pin<Box<dyn Future<Output = Result> + Send + 'a>> {
     Box::pin(async {
-        if let Some(user) = request.state().find_user().await {
+        if let Some(user) = state.find_user().await {
             tide::log::trace!("user loaded", {user: user.name});
             request.set_ext(user);
-            Ok(next.run(request).await)
+            Ok(next.run(request, state).await)
         // this middleware only needs to run before the endpoint, so
         // it just passes through the result of Next
         } else {
@@ -62,12 +63,12 @@ struct RequestCount(usize);
 
 #[tide::utils::async_trait]
 impl<State: Clone + Send + Sync + 'static> Middleware<State> for RequestCounterMiddleware {
-    async fn handle(&self, mut req: Request<State>, next: Next<'_, State>) -> Result {
+    async fn handle(&self, mut req: Request, state: State, next: Next<'_, State>) -> Result {
         let count = self.requests_counted.fetch_add(1, Ordering::Relaxed);
         tide::log::trace!("request counter", { count: count });
         req.set_ext(RequestCount(count));
 
-        let mut res = next.run(req).await;
+        let mut res = next.run(req, state).await;
 
         res.insert_header("request-number", count.to_string());
         Ok(res)
@@ -114,12 +115,12 @@ async fn main() -> Result<()> {
 
     app.with(user_loader);
     app.with(RequestCounterMiddleware::new(0));
-    app.with(Before(|mut request: Request<UserDatabase>| async move {
-        request.set_ext(std::time::Instant::now());
-        request
+    app.with(Before(|mut req: Request, state: UserDatabase| async move {
+        req.set_ext(std::time::Instant::now());
+        (req, state)
     }));
 
-    app.at("/").get(|req: Request<_>| async move {
+    app.at("/").get(|req: Request, _| async move {
         let count: &RequestCount = req.ext().unwrap();
         let user: &User = req.ext().unwrap();
 

@@ -37,7 +37,7 @@
 //!     Ok(())
 //! }
 //!
-//! async fn order_shoes(mut req: Request<()>) -> tide::Result {
+//! async fn order_shoes(mut req: Request, _state: ()) -> tide::Result {
 //!     let Animal { name, legs } = req.body_json().await?;
 //!     Ok(format!("Hello, {}! I've put in an order for {} shoes", name, legs).into())
 //! }
@@ -108,7 +108,7 @@ pub use http_types::{self as http, Body, Error, Status, StatusCode};
 /// # fn main() -> Result<(), std::io::Error> { block_on(async {
 /// #
 /// let mut app = tide::new();
-/// app.at("/").get(|_| async { Ok("Hello, world!") });
+/// app.at("/").get(|_, _| async { Ok("Hello, world!") });
 /// app.listen("127.0.0.1:8080").await?;
 /// #
 /// # Ok(()) }) }
@@ -143,8 +143,8 @@ pub fn new() -> server::Server<()> {
 ///
 /// // Initialize the application with state.
 /// let mut app = tide::with_state(state);
-/// app.at("/").get(|req: Request<State>| async move {
-///     Ok(format!("Hello, {}!", &req.state().name))
+/// app.at("/").get(|req: Request, state: State| async move {
+///     Ok(format!("Hello, {}!", &state.name))
 /// });
 /// app.listen("127.0.0.1:8080").await?;
 /// #

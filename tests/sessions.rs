@@ -22,13 +22,13 @@ async fn test_basic_sessions() -> tide::Result<()> {
         b"12345678901234567890123456789012345",
     ));
 
-    app.with(Before(|mut request: tide::Request<()>| async move {
-        let visits: usize = request.session().get("visits").unwrap_or_default();
-        request.session_mut().insert("visits", visits + 1).unwrap();
-        request
+    app.with(Before(|mut req: tide::Request, state: ()| async move {
+        let visits: usize = req.session().get("visits").unwrap_or_default();
+        req.session_mut().insert("visits", visits + 1).unwrap();
+        (req, state)
     }));
 
-    app.at("/").get(|req: tide::Request<()>| async move {
+    app.at("/").get(|req: tide::Request, _| async move {
         let visits: usize = req.session().get("visits").unwrap();
         Ok(format!("you have visited this website {} times", visits))
     });
@@ -67,15 +67,15 @@ async fn test_customized_sessions() -> tide::Result<()> {
             .without_save_unchanged(),
     );
 
-    app.at("/").get(|_| async { Ok("/") });
-    app.at("/nested").get(|req: tide::Request<()>| async move {
+    app.at("/").get(|_, _| async { Ok("/") });
+    app.at("/nested").get(|req: tide::Request, _| async move {
         Ok(format!(
             "/nested {}",
             req.session().get::<usize>("visits").unwrap_or_default()
         ))
     });
     app.at("/nested/incr")
-        .get(|mut req: tide::Request<()>| async move {
+        .get(|mut req: tide::Request, _| async move {
             let mut visits: usize = req.session().get("visits").unwrap_or_default();
             visits += 1;
             req.session_mut().insert("visits", visits)?;
@@ -132,19 +132,19 @@ async fn test_session_destruction() -> tide::Result<()> {
         b"12345678901234567890123456789012345",
     ));
 
-    app.with(Before(|mut request: tide::Request<()>| async move {
-        let visits: usize = request.session().get("visits").unwrap_or_default();
-        request.session_mut().insert("visits", visits + 1).unwrap();
-        request
+    app.with(Before(|mut req: tide::Request, state: ()| async move {
+        let visits: usize = req.session().get("visits").unwrap_or_default();
+        req.session_mut().insert("visits", visits + 1).unwrap();
+        (req, state)
     }));
 
-    app.at("/").get(|req: tide::Request<()>| async move {
+    app.at("/").get(|req: tide::Request, _| async move {
         let visits: usize = req.session().get("visits").unwrap();
         Ok(format!("you have visited this website {} times", visits))
     });
 
     app.at("/logout")
-        .post(|mut req: tide::Request<()>| async move {
+        .post(|mut req: tide::Request, _| async move {
             req.session_mut().destroy();
             Ok(Response::new(200))
         });
