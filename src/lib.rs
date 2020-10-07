@@ -69,12 +69,12 @@ mod request;
 mod response;
 mod response_builder;
 mod route;
+mod server;
 
 #[cfg(not(feature = "__internal__bench"))]
 mod router;
 #[cfg(feature = "__internal__bench")]
 pub mod router;
-mod server;
 
 pub mod convert;
 pub mod listener;
