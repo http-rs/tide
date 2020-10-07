@@ -51,10 +51,11 @@ async fn nested_middleware() -> tide::Result<()> {
 async fn nested_with_different_state() -> tide::Result<()> {
     let mut outer = tide::new();
     let mut inner = tide::with_state(42);
-    inner.at("/").get(|req: tide::Request<i32>| async move {
-        let num = state;
-        Ok(format!("the number is {}", num))
-    });
+    inner
+        .at("/")
+        .get(
+            |_req: tide::Request, state: i32| async move { Ok(format!("the number is {}", state)) },
+        );
     outer.at("/").get(|_, _| async { Ok("Hello, world!") });
     outer.at("/foo").nest(inner);
 
