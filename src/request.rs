@@ -5,11 +5,12 @@ use route_recognizer::Params;
 use std::ops::Index;
 use std::pin::Pin;
 
+use crate::convert::Validate;
 use crate::cookies::CookieData;
 use crate::http::cookies::Cookie;
 use crate::http::format_err;
 use crate::http::headers::{self, HeaderName, HeaderValues, ToHeaderValues};
-use crate::http::{self, Body, Method, Mime, StatusCode, Url, Version};
+use crate::http::{self, Body, Method, Mime, Status, StatusCode, Url, Version};
 use crate::Response;
 
 pin_project_lite::pin_project! {
@@ -433,7 +434,9 @@ impl<State> Request<State> {
         Ok(res)
     }
 
-    /// Reads and deserialized the entire request body via json.
+    /// Reads, deserializes and validates the entire request body via json.
+    ///
+    /// Unlike `Body::into_json` this method also validates the request body.
     ///
     /// # Errors
     ///
@@ -442,19 +445,26 @@ impl<State> Request<State> {
     ///
     /// If the body cannot be interpreted as valid json for the target type `T`,
     /// an `Err` is returned.
-    pub async fn body_json<T: serde::de::DeserializeOwned>(&mut self) -> crate::Result<T> {
-        let res = self.req.body_json().await?;
+    ///
+    /// If the body cannot be validated, an `Err` is returned.
+    pub async fn body_json<T: serde::de::DeserializeOwned + Validate>(
+        &mut self,
+    ) -> crate::Result<T> {
+        let res: T = self.req.body_json().await?;
+        res.validate().status(400)?;
         Ok(res)
     }
 
-    /// Parse the request body as a form.
+    /// Parse the request body as a form and validate it.
+    ///
+    /// Unlike `Body::into_form` this method also validates the request body.
     ///
     /// ```rust
     /// # fn main() -> Result<(), std::io::Error> { async_std::task::block_on(async {
     /// use tide::prelude::*;
     /// let mut app = tide::new();
     ///
-    /// #[derive(Deserialize)]
+    /// #[derive(Deserialize, Validate)]
     /// struct Animal {
     ///   name: String,
     ///   legs: u8
@@ -479,8 +489,11 @@ impl<State> Request<State> {
     /// // number too large to fit in target type
     /// # Ok(()) })}
     /// ```
-    pub async fn body_form<T: serde::de::DeserializeOwned>(&mut self) -> crate::Result<T> {
-        let res = self.req.body_form().await?;
+    pub async fn body_form<T: serde::de::DeserializeOwned + Validate>(
+        &mut self,
+    ) -> crate::Result<T> {
+        let res: T = self.req.body_form().await?;
+        res.validate().status(400)?;
         Ok(res)
     }
 

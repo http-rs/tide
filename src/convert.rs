@@ -23,10 +23,8 @@
 //! }
 //!
 //! async fn order_shoes(mut req: Request<()>) -> tide::Result {
-//!     let animal: Animal = req.body_json().await?;
-//!     animal.validate().status(400)?;
-//!     let msg = format!("Hello, {}! I've put in an order for {} shoes", animal.name, animal.legs);
-//!     Ok(msg.into())
+//!     let Animal { name, legs } = req.body_json().await?;
+//!     Ok(format!("Hello, {}! I've put in an order for {} shoes", name, legs).into())
 //! }
 //! ```
 

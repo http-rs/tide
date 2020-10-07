@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use tide::prelude::*; // Pulls in the json! macro.
 use tide::{Body, Request};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Validate)]
 struct Cat {
     name: String,
 }

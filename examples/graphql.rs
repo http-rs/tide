@@ -75,7 +75,8 @@ lazy_static! {
 }
 
 async fn handle_graphql(mut request: Request<State>) -> tide::Result {
-    let query: GraphQLRequest = request.body_json().await?;
+    let body = request.take_body();
+    let query: GraphQLRequest = body.into_json().await?;
     let response = query.execute(&SCHEMA, request.state());
     let status = if response.is_ok() {
         StatusCode::Ok

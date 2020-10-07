@@ -3,7 +3,7 @@ use async_std::prelude::*;
 use async_std::task;
 use std::time::Duration;
 
-use serde::{Deserialize, Serialize};
+use tide::prelude::*;
 use tide::{Body, Request};
 
 #[test]
@@ -66,7 +66,7 @@ fn echo_server() -> tide::Result<()> {
 
 #[test]
 fn json() -> tide::Result<()> {
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, Validate)]
     struct Counter {
         count: usize,
     }

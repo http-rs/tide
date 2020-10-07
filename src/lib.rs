@@ -23,7 +23,7 @@
 //! use tide::Request;
 //! use tide::prelude::*;
 //!
-//! #[derive(Debug, Deserialize)]
+//! #[derive(Debug, Deserialize, Validate)]
 //! struct Animal {
 //!     name: String,
 //!     legs: u8,
