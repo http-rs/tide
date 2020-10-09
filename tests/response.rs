@@ -36,7 +36,7 @@ async fn string_content_type() {
 }
 
 #[async_std::test]
-async fn json_content_type() {
+async fn json_content_type() -> tide::Result<()> {
     use std::collections::BTreeMap;
     use tide::Body;
 
@@ -51,7 +51,7 @@ async fn json_content_type() {
         Ok(resp)
     });
 
-    let mut resp = app.get("/json_content_type").await;
+    let mut resp = app.get("/json_content_type").await?;
     assert_eq!(resp.status(), StatusCode::InternalServerError);
     assert_eq!(resp.body_string().await.unwrap(), "");
 
@@ -68,6 +68,8 @@ async fn json_content_type() {
     assert_eq!(resp.status(), StatusCode::Ok);
     let body = resp.take_body().into_bytes().await.unwrap();
     assert_eq!(body, br##"{"a":2,"b":4,"c":6}"##);
+
+    Ok(())
 }
 
 #[test]

@@ -10,7 +10,7 @@ fn fib(n: usize) -> usize {
 
 async fn fibsum(req: Request<()>) -> tide::Result<String> {
     use std::time::Instant;
-    let n: usize = req.param("n").unwrap_or(0);
+    let n: usize = req.param("n")?.parse().unwrap_or(0);
     // Start a stopwatch
     let start = Instant::now();
     // Compute the nth number in the fibonacci sequence
