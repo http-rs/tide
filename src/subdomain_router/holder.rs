@@ -34,15 +34,24 @@ impl<T> Holder<T> {
             params: BTreeMap::new(),
         };
         for (url_part, subdomain_part) in parts.iter().zip(&self.map) {
-            match subdomain_part {
-                SubdomainParams::Param(param_name) => {
-                    m.params.insert(param_name, url_part.to_string());
+            // this check is for checking the apex domain which has a parts of [""]
+            if *url_part == "" {
+                match subdomain_part {
+                    SubdomainParams::Param(_) => return None,
+                    SubdomainParams::String(_) => continue,
                 }
-                SubdomainParams::String(exact_name) => {
-                    if exact_name == "*" {
-                        continue;
-                    } else if url_part != exact_name {
-                        return None;
+            // everything else will run into this else block
+            } else {
+                match subdomain_part {
+                    SubdomainParams::Param(param_name) => {
+                        m.params.insert(param_name, url_part.to_string());
+                    }
+                    SubdomainParams::String(exact_name) => {
+                        if exact_name == "*" {
+                            continue;
+                        } else if url_part != exact_name {
+                            return None;
+                        }
                     }
                 }
             }

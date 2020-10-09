@@ -149,3 +149,85 @@ async fn subdomain_wildcard() {
     let response: http::Response = app.respond(request).await.unwrap();
     assert_eq!(response.status(), 404);
 }
+
+#[async_std::test]
+async fn subdomain_routing() {
+    let mut app = tide::Server::new();
+    // setup
+    app.at("/").get(|_| async { Ok("landing page") });
+    app.subdomain("blog")
+        .at("/")
+        .get(|_| async { Ok("my blog") });
+    app.subdomain(":user")
+        .at("/")
+        .get(|req: tide::Request<()>| async move {
+            let user = req.param::<String>("user").unwrap();
+            Ok(format!("user {}", user))
+        });
+
+    // testing
+    let url: Url = "http://example.com/".parse().unwrap();
+    let request = http::Request::new(Method::Get, url);
+    let mut response: http::Response = app.respond(request).await.unwrap();
+    assert_eq!(response.status(), 200);
+    assert_eq!(response.body_string().await.unwrap(), "landing page");
+
+    let url: Url = "http://blog.example.com/".parse().unwrap();
+    let request = http::Request::new(Method::Get, url);
+    let mut response: http::Response = app.respond(request).await.unwrap();
+    assert_eq!(response.status(), 200);
+    assert_eq!(response.body_string().await.unwrap(), "my blog");
+
+    let url: Url = "http://tom.example.com/".parse().unwrap();
+    let request = http::Request::new(Method::Get, url);
+    let mut response: http::Response = app.respond(request).await.unwrap();
+    assert_eq!(response.status(), 200);
+    assert_eq!(response.body_string().await.unwrap(), "user tom");
+
+    let url: Url = "http://user.example.com/".parse().unwrap();
+    let request = http::Request::new(Method::Get, url);
+    let mut response: http::Response = app.respond(request).await.unwrap();
+    assert_eq!(response.status(), 200);
+    assert_eq!(response.body_string().await.unwrap(), "user user");
+}
+
+#[async_std::test]
+async fn subdomain_routing_wildcard() {
+    let mut app = tide::Server::new();
+    // setup
+    app.subdomain(":user")
+        .at("/")
+        .get(|req: tide::Request<()>| async move {
+            let user = req.param::<String>("user").unwrap();
+            Ok(format!("user {}", user))
+        });
+    app.at("/").get(|_| async { Ok("landing page") });
+    app.subdomain("blog")
+        .at("/")
+        .get(|_| async { Ok("my blog") });
+
+    // testing
+    let url: Url = "http://example.com/".parse().unwrap();
+    let request = http::Request::new(Method::Get, url);
+    let mut response: http::Response = app.respond(request).await.unwrap();
+    assert_eq!(response.status(), 200);
+    assert_eq!(response.body_string().await.unwrap(), "landing page");
+
+    let url: Url = "http://blog.example.com/".parse().unwrap();
+    let request = http::Request::new(Method::Get, url);
+    let mut response: http::Response = app.respond(request).await.unwrap();
+    assert_eq!(response.status(), 200);
+    assert_eq!(response.body_string().await.unwrap(), "user blog");
+
+    let url: Url = "http://tom.example.com/".parse().unwrap();
+    let request = http::Request::new(Method::Get, url);
+    let mut response: http::Response = app.respond(request).await.unwrap();
+    assert_eq!(response.status(), 200);
+    assert_eq!(response.body_string().await.unwrap(), "user tom");
+
+    let url: Url = "http://user.example.com/".parse().unwrap();
+    let request = http::Request::new(Method::Get, url);
+    let mut response: http::Response = app.respond(request).await.unwrap();
+    assert_eq!(response.status(), 200);
+    assert_eq!(response.body_string().await.unwrap(), "user user");
+}
