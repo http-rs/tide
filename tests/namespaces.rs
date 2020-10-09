@@ -10,16 +10,16 @@ async fn success(_: tide::Request<()>) -> Result<tide::Response, tide::Error> {
 }
 
 async fn echo_path(req: tide::Request<()>) -> Result<String, tide::Error> {
-    match req.param::<String>("path") {
-        Ok(path) => Ok(path),
-        Err(err) => Err(tide::Error::new(tide::StatusCode::BadRequest, err)),
+    match req.param("path") {
+        Ok(path) => Ok(path.to_owned()),
+        Err(err) => Err(tide::Error::from_str(tide::StatusCode::BadRequest, err)),
     }
 }
 
 async fn multiple_echo_path(req: tide::Request<()>) -> Result<String, tide::Error> {
-    let err = |err| tide::Error::new(tide::StatusCode::BadRequest, err);
-    let path = req.param::<String>("path").map_err(err)?;
-    let user = req.param::<String>("user").map_err(err)?;
+    let err = |err| tide::Error::from_str(tide::StatusCode::BadRequest, err);
+    let path = req.param("path").map_err(err)?;
+    let user = req.param("user").map_err(err)?;
     Ok(format!("{} {}", path, user))
 }
 
@@ -161,7 +161,7 @@ async fn subdomain_routing() {
     app.subdomain(":user")
         .at("/")
         .get(|req: tide::Request<()>| async move {
-            let user = req.param::<String>("user").unwrap();
+            let user = req.param("user").unwrap();
             Ok(format!("user {}", user))
         });
 
@@ -198,7 +198,7 @@ async fn subdomain_routing_wildcard() {
     app.subdomain(":user")
         .at("/")
         .get(|req: tide::Request<()>| async move {
-            let user = req.param::<String>("user").unwrap();
+            let user = req.param("user").unwrap();
             Ok(format!("user {}", user))
         });
     app.at("/").get(|_| async { Ok("landing page") });
