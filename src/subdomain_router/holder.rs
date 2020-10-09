@@ -1,20 +1,10 @@
 use std::collections::BTreeMap;
 
-use super::{Match, SubdomainParams, SubdomainType};
+use super::{Match, SubdomainParams};
 
 pub struct Holder<T> {
     data: T,
     map: Vec<SubdomainParams>,
-}
-
-pub fn domain_type(subdomain: &str) -> SubdomainType {
-    let parts = subdomain.split('.').rev();
-    for part in parts {
-        if part.starts_with(":") {
-            return SubdomainType::Parametrized;
-        }
-    }
-    SubdomainType::Static
 }
 
 impl<T> Holder<T> {
@@ -44,24 +34,15 @@ impl<T> Holder<T> {
             params: BTreeMap::new(),
         };
         for (url_part, subdomain_part) in parts.iter().zip(&self.map) {
-            // this check is for checking the apex domain which has a parts of [""]
-            if *url_part == "" {
-                match subdomain_part {
-                    SubdomainParams::Param(_) => return None,
-                    SubdomainParams::String(_) => continue,
+            match subdomain_part {
+                SubdomainParams::Param(param_name) => {
+                    m.params.insert(param_name, url_part.to_string());
                 }
-            // everything else will run into this else block
-            } else {
-                match subdomain_part {
-                    SubdomainParams::Param(param_name) => {
-                        m.params.insert(param_name, url_part.to_string());
-                    }
-                    SubdomainParams::String(exact_name) => {
-                        if exact_name == "*" {
-                            continue;
-                        } else if url_part != exact_name {
-                            return None;
-                        }
+                SubdomainParams::String(exact_name) => {
+                    if exact_name == "*" {
+                        continue;
+                    } else if url_part != exact_name {
+                        return None;
                     }
                 }
             }
