@@ -10,7 +10,7 @@ async fn main() -> Result<(), std::io::Error> {
     app.subdomain(":user")
         .at("/")
         .get(|req: tide::Request<()>| async move {
-            let user = req.param::<String>("user").unwrap();
+            let user = req.param("user").unwrap();
             Ok(format!("Welcome user {}", user))
         });
 
