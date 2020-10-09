@@ -364,6 +364,7 @@ mod test {
     }
 
     #[async_std::test]
+    #[cfg(feature = "cookies")]
     async fn retain_cookies() {
         let mut app = crate::Server::new();
         app.with(CorsMiddleware::new().allow_origin(ALLOW_ORIGIN));

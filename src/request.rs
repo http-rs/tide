@@ -5,7 +5,9 @@ use route_recognizer::Params;
 use std::ops::Index;
 use std::pin::Pin;
 
+#[cfg(feature = "cookies")]
 use crate::cookies::CookieData;
+#[cfg(feature = "cookies")]
 use crate::http::cookies::Cookie;
 use crate::http::format_err;
 use crate::http::headers::{self, HeaderName, HeaderValues, ToHeaderValues};
@@ -485,6 +487,7 @@ impl<State> Request<State> {
     }
 
     /// returns a `Cookie` by name of the cookie.
+    #[cfg(feature = "cookies")]
     #[must_use]
     pub fn cookie(&self, name: &str) -> Option<Cookie<'static>> {
         self.ext::<CookieData>()
