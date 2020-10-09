@@ -217,7 +217,7 @@ async fn subdomain_routing_wildcard() {
     let request = http::Request::new(Method::Get, url);
     let mut response: http::Response = app.respond(request).await.unwrap();
     assert_eq!(response.status(), 200);
-    assert_eq!(response.body_string().await.unwrap(), "user blog");
+    assert_eq!(response.body_string().await.unwrap(), "my blog");
 
     let url: Url = "http://tom.example.com/".parse().unwrap();
     let request = http::Request::new(Method::Get, url);

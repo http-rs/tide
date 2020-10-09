@@ -1,10 +1,20 @@
 use std::collections::BTreeMap;
 
-use super::{Match, SubdomainParams};
+use super::{Match, SubdomainParams, SubdomainType};
 
 pub struct Holder<T> {
     data: T,
     map: Vec<SubdomainParams>,
+}
+
+pub fn domain_type(subdomain: &str) -> SubdomainType {
+    let parts = subdomain.split('.').rev();
+    for part in parts {
+        if part.starts_with(":") {
+            return SubdomainType::Parametrized;
+        }
+    }
+    SubdomainType::Static
 }
 
 impl<T> Holder<T> {

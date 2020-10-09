@@ -116,7 +116,7 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     ///
     /// ```rust,no_run
     /// let mut app = tide::Server::new();
-    /// app.subdomain("blog").get(|_| async { Ok("Hello blogger")});
+    /// app.subdomain("blog").at("/").get(|_| async { Ok("Hello blogger")});
     /// ```
     ///
     /// A subdomain is comprised of zero or more non-empty string segments that
@@ -261,10 +261,11 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
             middleware,
         } = self.clone();
 
+        let path = req.url().path();
         let method = req.method().to_owned();
         let domain = req.host().unwrap_or("");
 
-        let namespace = router.route(domain, &req.url().path(), method, &middleware);
+        let namespace = router.route(domain, &path, method, &middleware);
         let mut route_params = vec![];
         route_params.push(namespace.subdomain_params());
         route_params.push(namespace.selection.params);
