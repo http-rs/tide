@@ -135,6 +135,7 @@ team. Use at your own risk.</sup>
 * [async-mongodb-session](https://github.com/yoshuawuyts/async-mongodb-session/)
 
 ### Example applications
+* [dot dot vote](https://github.com/rtyler/dotdotvote/)
 * [tide-example](https://github.com/jbr/tide-example) (sqlx + askama)
 * [playground-tide-mongodb](https://github.com/yoshuawuyts/playground-tide-mongodb)
 * [tide-morth-example](https://github.com/No9/tide-morth-example/)
