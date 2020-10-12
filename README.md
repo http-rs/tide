@@ -119,6 +119,9 @@ team. Use at your own risk.</sup>
 * [tide-handlebars](https://github.com/No9/tide-handlebars)
 * [askama](https://github.com/djc/askama) (includes support for tide)
 
+### Routers
+* [tide-fluent-routes](https://github.com/mendelt/tide-fluent-routes)
+
 ### Auth
 * [tide-http-auth](https://github.com/chrisdickinson/tide-http-auth)
 
