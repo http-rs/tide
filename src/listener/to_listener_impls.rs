@@ -1,9 +1,9 @@
 #[cfg(unix)]
 use super::UnixListener;
 use super::{/*ConcurrentListener,*/ FailoverListener, ParsedListener, TcpListener, ToListener,};
-use crate::{http::url::Url, Server};
+use crate::{http::url::Url};
 use async_std::io;
-use std::future::Future;
+
 use std::net::ToSocketAddrs;
 
 impl<State, F> ToListener<State, F> for Url

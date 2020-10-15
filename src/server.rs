@@ -1,6 +1,6 @@
 //! An HTTP server
 
-use std::future::Future;
+
 
 use async_std::io;
 use async_std::sync::Arc;

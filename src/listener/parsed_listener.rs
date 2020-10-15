@@ -5,7 +5,7 @@ use crate::Server;
 
 use async_std::io;
 use std::fmt::{self, Display, Formatter};
-use std::future::Future;
+
 
 /// This is an enum that contains variants for each of the listeners
 /// that can be parsed from a string. This is used as the associated
