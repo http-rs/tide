@@ -69,17 +69,16 @@ fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: 
 }
 
 #[async_trait::async_trait]
-impl<State, F, Fut> Listener<State, F, Fut> for TcpListener
+impl<State, F> Listener<State, F> for TcpListener
 where
     State: Clone + Send + Sync + 'static,
-    F: Fn(Server<State>) -> Fut + Clone + Send + Sync + 'static,
-    Fut: Future<Output = io::Result<Server<State>>> + Send + Sync + 'static,
+    F: crate::listener::OnListen<State>,
 {
     async fn listen_with(&mut self, mut app: Server<State>, f: F) -> io::Result<()> {
         self.connect().await?;
         let listener = self.listener()?;
         crate::log::info!("Server listening on {}", self);
-        app = f(app).await?;
+        app = f.call(app).await?;
 
         let mut incoming = listener.incoming();
 

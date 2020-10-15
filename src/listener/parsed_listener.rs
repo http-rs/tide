@@ -32,11 +32,10 @@ impl Display for ParsedListener {
 }
 
 #[async_trait::async_trait]
-impl<State, F, Fut> Listener<State, F, Fut> for ParsedListener
+impl<State, F> Listener<State, F> for ParsedListener
 where
     State: Clone + Send + Sync + 'static,
-    F: Fn(Server<State>) -> Fut + Clone + Send + Sync + 'static,
-    Fut: Future<Output = io::Result<Server<State>>> + Send + Sync + 'static,
+    F: crate::listener::OnListen<State>,
 {
     async fn listen_with(&mut self, app: Server<State>, f: F) -> io::Result<()> {
         match self {

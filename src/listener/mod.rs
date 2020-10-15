@@ -1,5 +1,7 @@
 //! Types that represent HTTP transports and binding
 
+use async_trait::async_trait;
+
 // mod concurrent_listener;
 mod failover_listener;
 #[cfg(feature = "h1-server")]
@@ -13,7 +15,6 @@ mod to_listener_impls;
 mod unix_listener;
 
 use std::fmt::{Debug, Display};
-use std::future::Future;
 
 use crate::Server;
 use async_std::io;
@@ -33,12 +34,11 @@ pub(crate) use unix_listener::UnixListener;
 /// for a tide application. In order to provide a Listener to tide,
 /// you will also need to implement at least one [`ToListener`](crate::listener::ToListener) that
 /// outputs your Listener type.
-#[async_trait::async_trait]
-pub trait Listener<State, F, Fut>: Debug + Display + Send + Sync + 'static
+#[async_trait]
+pub trait Listener<State, F>: Debug + Display + Send + Sync + 'static
 where
-    State: 'static,
-    F: Fn(Server<State>) -> Fut + Clone + Send + Sync + 'static,
-    Fut: Future<Output = io::Result<Server<State>>> + Send + Sync + 'static,
+    State: Send + Sync + 'static,
+    F: OnListen<State>,
 {
     /// This is the primary entrypoint for the Listener trait. `listen`
     /// is called exactly once, and is expected to spawn tasks for
@@ -50,6 +50,28 @@ where
     //     self.listen_with(app, |server| async move { Ok(server) })
     //         .await
     // }
+}
+
+#[async_trait]
+pub trait OnListen<State>: Clone + Send + Sync + 'static
+where
+    State: Send + Sync + 'static,
+{
+    async fn call(&self, server: Server<State>) -> io::Result<Server<State>>;
+}
+
+/// Empty `OnListen` impl.
+#[derive(Clone)]
+pub struct NoopOnListen;
+
+#[async_trait]
+impl<State> OnListen<State> for NoopOnListen
+where
+    State: Send + Sync + 'static,
+{
+    async fn call(&self, server: Server<State>) -> io::Result<Server<State>> {
+        Ok(server)
+    }
 }
 
 /// crate-internal shared logic used by tcp and unix listeners to

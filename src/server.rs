@@ -185,29 +185,24 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
         self
     }
 
-    // /// Asynchronously serve the app with the supplied listener.
-    // ///
-    // /// For more details, see [Listener] and [ToListener]
-    // pub async fn listen<L, F, Fut>(self, listener: L) -> io::Result<()>
-    // where
-    //     L: ToListener<State, F, Fut>,
-    //     F: Fn(Server<State>) -> Fut + Clone + Send + Sync + 'static,
-    //     Fut: Future<Output = io::Result<Server<State>>> + Send + Sync + 'static,
-    // {
-    //     listener
-    //         .to_listener()?
-    //         .listen_with(self, Box::new(|app| async move { Ok(app) }))
-    //         .await
-    // }
+    /// Asynchronously serve the app with the supplied listener.
+    ///
+    /// For more details, see [Listener] and [ToListener]
+    pub async fn listen<L>(self, listener: L) -> io::Result<()>
+    where
+        L: ToListener<State, crate::listener::NoopOnListen>,
+    {
+        self.listen_with(listener, crate::listener::NoopOnListen)
+            .await
+    }
 
     /// Asynchronously serve the app with the supplied listener and a callback.
     ///
     /// For more details, see [Listener] and [ToListener]
-    pub async fn listen_with<L, F, Fut>(self, listener: L, f: F) -> io::Result<()>
+    pub async fn listen_with<L, F>(self, listener: L, f: F) -> io::Result<()>
     where
-        L: ToListener<State, F, Fut>,
-        F: Fn(Server<State>) -> Fut + Clone + Send + Sync + 'static,
-        Fut: Future<Output = io::Result<Server<State>>> + Send + Sync + 'static,
+        L: ToListener<State, F>,
+        F: crate::listener::OnListen<State>,
     {
         listener.to_listener()?.listen_with(self, f).await
     }
