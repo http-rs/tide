@@ -11,11 +11,11 @@ async fn main() -> Result<()> {
     app.with(After(|mut res: Response| async {
         if let Some(err) = res.downcast_error::<async_std::io::Error>() {
             if let ErrorKind::NotFound = err.kind() {
-                let msg = err.to_string();
+                let msg = format!("Error: {:?}", err);
                 res.set_status(StatusCode::NotFound);
 
                 // NOTE: You may want to avoid sending error messages in a production server.
-                res.set_body(format!("Error: {}", msg));
+                res.set_body(msg);
             }
         }
         Ok(res)

@@ -50,7 +50,8 @@ impl LogMiddleware {
         if status.is_server_error() {
             if let Some(error) = response.error() {
                 log::error!("Internal error --> Response sent", {
-                    message: format!("\"{}\"", error.to_string()),
+                    message: format!("{:?}", error),
+                    error_type: error.type_name(),
                     method: method,
                     path: path,
                     status: format!("{} - {}", status as u16, status.canonical_reason()),
@@ -67,7 +68,8 @@ impl LogMiddleware {
         } else if status.is_client_error() {
             if let Some(error) = response.error() {
                 log::warn!("Client error --> Response sent", {
-                    message: format!("\"{}\"", error.to_string()),
+                    message: format!("{:?}", error),
+                    error_type: error.type_name(),
                     method: method,
                     path: path,
                     status: format!("{} - {}", status as u16, status.canonical_reason()),
