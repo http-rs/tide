@@ -1,3 +1,7 @@
+use std::future::Future;
+
+use crate::Server;
+
 use super::Listener;
 use async_std::io;
 
@@ -48,8 +52,13 @@ use async_std::io;
 /// # Other implementations
 /// See below for additional provided implementations of ToListener.
 
-pub trait ToListener<State: Clone + Send + Sync + 'static> {
-    type Listener: Listener<State>;
+pub trait ToListener<State, F, Fut>
+where
+    State: Clone + Send + Sync + 'static,
+    F: Fn(Server<State>) -> Fut + Clone + Send + Sync + 'static,
+    Fut: Future<Output = io::Result<Server<State>>> + Send + Sync + 'static,
+{
+    type Listener: Listener<State, F, Fut>;
     /// Transform self into a
     /// [`Listener`](crate::listener::Listener). Unless self is
     /// already bound/connected to the underlying io, converting to a

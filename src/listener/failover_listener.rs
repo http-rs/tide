@@ -2,6 +2,7 @@ use crate::listener::{Listener, ToListener};
 use crate::Server;
 
 use std::fmt::{self, Debug, Display, Formatter};
+use std::future::Future;
 
 use async_std::io;
 
@@ -33,9 +34,14 @@ use async_std::io;
 ///```
 
 #[derive(Default)]
-pub struct FailoverListener<State>(Vec<Box<dyn Listener<State>>>);
+pub struct FailoverListener<State, F, Fut>(Vec<Box<dyn Listener<State, F, Fut>>>);
 
-impl<State: Clone + Send + Sync + 'static> FailoverListener<State> {
+impl<State, F, Fut> FailoverListener<State, F, Fut>
+where
+    State: Clone + Send + Sync + 'static,
+    F: Fn(Server<State>) -> Fut + Clone + Send + Sync + 'static,
+    Fut: Future<Output = io::Result<Server<State>>> + Send + Sync + 'static,
+{
     /// creates a new FailoverListener
     pub fn new() -> Self {
         Self(vec![])
@@ -57,7 +63,10 @@ impl<State: Clone + Send + Sync + 'static> FailoverListener<State> {
     /// # std::mem::drop(tide::new().listen(listener)); // for the State generic
     /// # Ok(()) }
     /// ```
-    pub fn add<TL: ToListener<State>>(&mut self, listener: TL) -> io::Result<()> {
+    pub fn add<TL>(&mut self, listener: TL) -> io::Result<()>
+    where
+        TL: ToListener<State, F, Fut>,
+    {
         self.0.push(Box::new(listener.to_listener()?));
         Ok(())
     }
@@ -73,18 +82,23 @@ impl<State: Clone + Send + Sync + 'static> FailoverListener<State> {
     ///         .with_listener(("localhost", 8081)),
     /// ).await?;
     /// #  Ok(()) }) }
-    pub fn with_listener<TL: ToListener<State>>(mut self, listener: TL) -> Self {
+    pub fn with_listener<TL: ToListener<State, F, Fut>>(mut self, listener: TL) -> Self {
         self.add(listener).expect("Unable to add listener");
         self
     }
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Listener<State> for FailoverListener<State> {
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
+impl<State, F, Fut> Listener<State, F, Fut> for FailoverListener<State, F, Fut>
+where
+    State: Clone + Send + Sync + 'static,
+    F: Fn(Server<State>) -> Fut + Clone + Send + Sync + 'static,
+    Fut: Future<Output = io::Result<Server<State>>> + Send + Sync + 'static,
+{
+    async fn listen_with(&mut self, app: Server<State>, f: F) -> io::Result<()> {
         for listener in self.0.iter_mut() {
             let app = app.clone();
-            match listener.listen(app).await {
+            match listener.listen_with(app, f.clone()).await {
                 Ok(_) => return Ok(()),
                 Err(e) => {
                     crate::log::info!("unable to listen", {
@@ -102,13 +116,13 @@ impl<State: Clone + Send + Sync + 'static> Listener<State> for FailoverListener<
     }
 }
 
-impl<State> Debug for FailoverListener<State> {
+impl<State, F, Fut> Debug for FailoverListener<State, F, Fut> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.0)
     }
 }
 
-impl<State> Display for FailoverListener<State> {
+impl<State, F, Fut> Display for FailoverListener<State, F, Fut> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let string = self
             .0

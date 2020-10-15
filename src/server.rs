@@ -1,5 +1,7 @@
 //! An HTTP server
 
+use std::future::Future;
+
 use async_std::io;
 use async_std::sync::Arc;
 
@@ -183,9 +185,31 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
         self
     }
 
-    /// Asynchronously serve the app with the supplied listener. For more details, see [Listener] and [ToListener]
-    pub async fn listen<TL: ToListener<State>>(self, listener: TL) -> io::Result<()> {
-        listener.to_listener()?.listen(self).await
+    // /// Asynchronously serve the app with the supplied listener.
+    // ///
+    // /// For more details, see [Listener] and [ToListener]
+    // pub async fn listen<L, F, Fut>(self, listener: L) -> io::Result<()>
+    // where
+    //     L: ToListener<State, F, Fut>,
+    //     F: Fn(Server<State>) -> Fut + Clone + Send + Sync + 'static,
+    //     Fut: Future<Output = io::Result<Server<State>>> + Send + Sync + 'static,
+    // {
+    //     listener
+    //         .to_listener()?
+    //         .listen_with(self, Box::new(|app| async move { Ok(app) }))
+    //         .await
+    // }
+
+    /// Asynchronously serve the app with the supplied listener and a callback.
+    ///
+    /// For more details, see [Listener] and [ToListener]
+    pub async fn listen_with<L, F, Fut>(self, listener: L, f: F) -> io::Result<()>
+    where
+        L: ToListener<State, F, Fut>,
+        F: Fn(Server<State>) -> Fut + Clone + Send + Sync + 'static,
+        Fut: Future<Output = io::Result<Server<State>>> + Send + Sync + 'static,
+    {
+        listener.to_listener()?.listen_with(self, f).await
     }
 
     /// Respond to a `Request` with a `Response`.

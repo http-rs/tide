@@ -2,8 +2,10 @@ use crate::listener::{Listener, ToListener};
 use crate::Server;
 
 use std::fmt::{self, Debug, Display, Formatter};
+use std::future::Future;
 
 use async_std::io;
+use async_std::sync::{Arc, Barrier};
 use futures_util::stream::{futures_unordered::FuturesUnordered, StreamExt};
 
 /// ConcurrentListener allows tide to listen on any number of transports
@@ -33,9 +35,14 @@ use futures_util::stream::{futures_unordered::FuturesUnordered, StreamExt};
 ///```
 
 #[derive(Default)]
-pub struct ConcurrentListener<State>(Vec<Box<dyn Listener<State>>>);
+pub struct ConcurrentListener<State, F, Fut>(Vec<Box<dyn Listener<State, F, Fut>>>);
 
-impl<State: Clone + Send + Sync + 'static> ConcurrentListener<State> {
+impl<State, F, Fut> ConcurrentListener<State, F, Fut>
+where
+    State: Clone + Send + Sync + 'static,
+    F: Fn(Server<State>) -> Fut + Clone + Send + Sync + 'static,
+    Fut: Future<Output = io::Result<Server<State>>> + Send + Sync + 'static,
+{
     /// creates a new ConcurrentListener
     pub fn new() -> Self {
         Self(vec![])
@@ -55,7 +62,7 @@ impl<State: Clone + Send + Sync + 'static> ConcurrentListener<State> {
     /// # std::mem::drop(tide::new().listen(listener)); // for the State generic
     /// # Ok(()) }
     /// ```
-    pub fn add<TL: ToListener<State>>(&mut self, listener: TL) -> io::Result<()> {
+    pub fn add<L: ToListener<State, F, Fut>>(&mut self, listener: L) -> io::Result<()> {
         self.0.push(Box::new(listener.to_listener()?));
         Ok(())
     }
@@ -71,20 +78,43 @@ impl<State: Clone + Send + Sync + 'static> ConcurrentListener<State> {
     ///         .with_listener(async_std::net::TcpListener::bind("127.0.0.1:8081").await?),
     /// ).await?;
     /// #  Ok(()) }) }
-    pub fn with_listener<TL: ToListener<State>>(mut self, listener: TL) -> Self {
+    pub fn with_listener<L>(mut self, listener: L) -> Self
+    where
+        L: ToListener<State, F, Fut>,
+    {
         self.add(listener).expect("Unable to add listener");
         self
     }
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Listener<State> for ConcurrentListener<State> {
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
+impl<State, F, Fut> Listener<State, F, Fut> for ConcurrentListener<State, F, Fut>
+where
+    State: Clone + Send + Sync + 'static,
+    F: Fn(Server<State>) -> Fut + Clone + Send + Sync + 'static,
+    Fut: Future<Output = io::Result<Server<State>>> + Send + Sync + 'static,
+{
+    async fn listen_with(&mut self, app: Server<State>, f: F) -> io::Result<()> {
         let mut futures_unordered = FuturesUnordered::new();
+
+        let barrier = Arc::new(Barrier::new(self.0.len()));
 
         for listener in self.0.iter_mut() {
             let app = app.clone();
-            futures_unordered.push(listener.listen(app));
+            let c = barrier.clone();
+
+            // Call `listen_with` on each individual listener, and after they
+            // all started listen invoke `f` exactly once.
+            futures_unordered.push(listener.listen_with(
+                app,
+                Box::new(|app| async move {
+                    let res = c.wait().await;
+                    if res.is_leader() {
+                        app = f(app).await?;
+                    }
+                    Ok(app)
+                }),
+            ));
         }
 
         while let Some(result) = futures_unordered.next().await {
@@ -94,13 +124,13 @@ impl<State: Clone + Send + Sync + 'static> Listener<State> for ConcurrentListene
     }
 }
 
-impl<State> Debug for ConcurrentListener<State> {
+impl<State, F, Fut> Debug for ConcurrentListener<State, F, Fut> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.0)
     }
 }
 
-impl<State> Display for ConcurrentListener<State> {
+impl<State, F, Fut> Display for ConcurrentListener<State, F, Fut> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let string = self
             .0

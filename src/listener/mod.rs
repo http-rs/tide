@@ -1,6 +1,6 @@
 //! Types that represent HTTP transports and binding
 
-mod concurrent_listener;
+// mod concurrent_listener;
 mod failover_listener;
 #[cfg(feature = "h1-server")]
 mod parsed_listener;
@@ -12,10 +12,13 @@ mod to_listener_impls;
 #[cfg(all(unix, feature = "h1-server"))]
 mod unix_listener;
 
+use std::fmt::{Debug, Display};
+use std::future::Future;
+
 use crate::Server;
 use async_std::io;
 
-pub use concurrent_listener::ConcurrentListener;
+// pub use concurrent_listener::ConcurrentListener;
 pub use failover_listener::FailoverListener;
 pub use to_listener::ToListener;
 
@@ -31,13 +34,22 @@ pub(crate) use unix_listener::UnixListener;
 /// you will also need to implement at least one [`ToListener`](crate::listener::ToListener) that
 /// outputs your Listener type.
 #[async_trait::async_trait]
-pub trait Listener<State: 'static>:
-    std::fmt::Debug + std::fmt::Display + Send + Sync + 'static
+pub trait Listener<State, F, Fut>: Debug + Display + Send + Sync + 'static
+where
+    State: 'static,
+    F: Fn(Server<State>) -> Fut + Clone + Send + Sync + 'static,
+    Fut: Future<Output = io::Result<Server<State>>> + Send + Sync + 'static,
 {
-    /// This is the primary entrypoint for the Listener trait. listen
+    /// This is the primary entrypoint for the Listener trait. `listen`
     /// is called exactly once, and is expected to spawn tasks for
     /// each incoming connection.
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()>;
+    async fn listen_with(&mut self, app: Server<State>, f: F) -> io::Result<()>;
+
+    // /// This is a shorthand for `listen_with` with an empty closure.
+    // async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
+    //     self.listen_with(app, |server| async move { Ok(server) })
+    //         .await
+    // }
 }
 
 /// crate-internal shared logic used by tcp and unix listeners to
