@@ -1,7 +1,5 @@
 //! An HTTP server
 
-
-
 use async_std::io;
 use async_std::sync::Arc;
 
@@ -199,6 +197,23 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     /// Asynchronously serve the app with the supplied listener and a callback.
     ///
     /// For more details, see [Listener] and [ToListener]
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use async_std::task::block_on;
+    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
+    /// #
+    /// let mut app = tide::new();
+    /// app.at("/").get(|_| async { Ok("Hello, world!") });
+    /// app.listen_with("127.0.0.1:8080", |app| async move {
+    ///     println!("server started!");
+    ///     Ok(app)
+    /// }).await?;
+    /// #
+    /// # Ok(()) }) }
+    /// ```
+
     pub async fn listen_with<L, F>(self, listener: L, f: F) -> io::Result<()>
     where
         L: ToListener<State, F>,

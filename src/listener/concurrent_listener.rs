@@ -1,12 +1,17 @@
 use crate::listener::{Listener, ToListener};
 use crate::Server;
 
-use std::fmt::{self, Debug, Display, Formatter};
-use std::future::Future;
+use std::{
+    fmt::{self, Debug, Display, Formatter},
+    marker::PhantomData,
+};
 
 use async_std::io;
 use async_std::sync::{Arc, Barrier};
+use async_trait::async_trait;
 use futures_util::stream::{futures_unordered::FuturesUnordered, StreamExt};
+
+use crate::listener::OnListen;
 
 /// ConcurrentListener allows tide to listen on any number of transports
 /// simultaneously (such as tcp ports, unix sockets, or tls).
@@ -40,7 +45,7 @@ pub struct ConcurrentListener<State, F>(Vec<Box<dyn Listener<State, F>>>);
 impl<State, F> ConcurrentListener<State, F>
 where
     State: Clone + Send + Sync + 'static,
-F: crate::listener::OnListen<State>,
+    F: crate::listener::OnListen<State>,
 {
     /// creates a new ConcurrentListener
     pub fn new() -> Self {
@@ -87,10 +92,11 @@ F: crate::listener::OnListen<State>,
 }
 
 #[async_trait::async_trait]
-impl<State, F> Listener<State, F> for ConcurrentListener<State, F>
+impl<State, F> Listener<State, BarrierOnListen<State, F>>
+    for ConcurrentListener<State, BarrierOnListen<State, F>>
 where
     State: Clone + Send + Sync + 'static,
-F: crate::listener::OnListen<State>,
+    F: crate::listener::OnListen<State>,
 {
     async fn listen_with(&mut self, app: Server<State>, f: F) -> io::Result<()> {
         let mut futures_unordered = FuturesUnordered::new();
@@ -98,21 +104,17 @@ F: crate::listener::OnListen<State>,
         let barrier = Arc::new(Barrier::new(self.0.len()));
 
         for listener in self.0.iter_mut() {
-            let app = app.clone();
-            let c = barrier.clone();
-
             // Call `listen_with` on each individual listener, and after they
             // all started listen invoke `f` exactly once.
-            futures_unordered.push(listener.listen_with(
-                app,
-                Box::new(|app| async move {
-                    let res = c.wait().await;
-                    if res.is_leader() {
-                        app = f(app).await?;
-                    }
-                    Ok(app)
-                }),
-            ));
+            let cb = BarrierOnListen::new(f.clone(), barrier.clone());
+            futures_unordered.push(listener.listen_with(app.clone(), cb));
+            //             |app| async move {
+            //                 let res = c.wait().await;
+            //                 if res.is_leader() {
+            //                     app = f.call(app).await?;
+            //                 }
+            //                 Ok(app)
+            //             })
         }
 
         while let Some(result) = futures_unordered.next().await {
@@ -138,5 +140,47 @@ impl<State, F> Display for ConcurrentListener<State, F> {
             .join(", ");
 
         writeln!(f, "{}", string)
+    }
+}
+
+/// Empty `OnListen` impl.
+#[derive(Clone, Debug)]
+pub struct BarrierOnListen<State, F>
+where
+    State: Clone + Send + Sync + 'static,
+    F: OnListen<State>,
+{
+    f: F,
+    barrier: Arc<Barrier>,
+    _state: PhantomData<State>,
+}
+
+impl<State, F> BarrierOnListen<State, F>
+where
+    State: Clone + Send + Sync + 'static,
+    F: OnListen<State>,
+{
+    /// Create a new instance.
+    pub fn new(f: F, barrier: Arc<Barrier>) -> Self {
+        Self {
+            f,
+            barrier,
+            _state: PhantomData,
+        }
+    }
+}
+
+#[async_trait]
+impl<State, F> OnListen<State> for BarrierOnListen<State, F>
+where
+    State: Clone + Send + Sync + 'static,
+    F: OnListen<State>,
+{
+    async fn call(&self, mut server: Server<State>) -> io::Result<Server<State>> {
+        let res = self.barrier.wait().await;
+        if res.is_leader() {
+            server = self.f.call(server).await?;
+        }
+        Ok(server)
     }
 }

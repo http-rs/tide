@@ -2,7 +2,7 @@
 
 use async_trait::async_trait;
 
-// mod concurrent_listener;
+mod concurrent_listener;
 mod failover_listener;
 #[cfg(feature = "h1-server")]
 mod parsed_listener;
@@ -19,7 +19,7 @@ use std::fmt::{Debug, Display};
 use crate::Server;
 use async_std::io;
 
-// pub use concurrent_listener::ConcurrentListener;
+pub use concurrent_listener::ConcurrentListener;
 pub use failover_listener::FailoverListener;
 pub use to_listener::ToListener;
 
@@ -61,7 +61,7 @@ where
 }
 
 /// Empty `OnListen` impl.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct NoopOnListen;
 
 #[async_trait]
