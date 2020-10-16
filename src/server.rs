@@ -195,7 +195,7 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
 
     /// Asynchronously serve the app with the supplied listener and a callback.
     ///
-    /// For more details, see [Listener] and [ToListener]
+    /// For more details, see [Listener], [ToListener] and [Report].
     ///
     /// # Examples
     ///
@@ -203,18 +203,17 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     /// # use async_std::task::block_on;
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
-    /// use tide::listener::ConnectionInfo;
+    /// use tide::listener::ListenInfo;
     ///
     /// let mut app = tide::new();
     /// app.at("/").get(|_| async { Ok("Hello, world!") });
-    /// app.listen_with("127.0.0.1:8080", |info: ConnectionInfo| async move {
+    /// app.listen_with("127.0.0.1:8080", |info: ListenInfo| async move {
     ///     println!("started listening on {}!", info.connection());
     ///     Ok(())
     /// }).await?;
     /// #
     /// # Ok(()) }) }
     /// ```
-
     pub async fn listen_with<L, F>(self, listener: L, f: F) -> io::Result<()>
     where
         L: ToListener<State, F>,

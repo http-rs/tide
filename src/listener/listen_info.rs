@@ -1,11 +1,13 @@
-/// Information about the `listener`.
+/// Information about the `Listener`.
+///
+/// See [`Report`](../listener/trait.Report.html) for more.
 #[derive(Debug, Clone)]
-pub struct ConnectionInfo {
+pub struct ListenInfo {
     connection: String,
 }
 
-impl ConnectionInfo {
-    /// Create a new instance of `ConnectionInfo`.
+impl ListenInfo {
+    /// Create a new instance of `ListenInfo`.
     ///
     /// This method should only be called when implementing a new Tide `listener`
     /// strategy.

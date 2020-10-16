@@ -1,6 +1,6 @@
 use super::is_transient_error;
 
-use crate::listener::{ConnectionInfo, Listener};
+use crate::listener::{ListenInfo, Listener};
 use crate::{log, Server};
 
 use std::fmt::{self, Display, Formatter};
@@ -90,7 +90,7 @@ where
     async fn listen_with(&mut self, app: Server<State>, f: F) -> io::Result<()> {
         self.connect().await?;
         let listener = self.listener()?;
-        let info = ConnectionInfo::new(format!("{}", self));
+        let info = ListenInfo::new(format!("{}", self));
         f.call(info).await?;
 
         let mut incoming = listener.incoming();
