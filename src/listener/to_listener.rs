@@ -1,7 +1,3 @@
-
-
-
-
 use super::Listener;
 use async_std::io;
 
@@ -55,7 +51,7 @@ use async_std::io;
 pub trait ToListener<State, F>
 where
     State: Clone + Send + Sync + 'static,
-    F: crate::listener::OnListen<State>,
+    F: crate::listener::OnListen,
 {
     type Listener: Listener<State, F>;
     /// Transform self into a

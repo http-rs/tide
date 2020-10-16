@@ -1,4 +1,4 @@
-use super::is_transient_error;
+use super::{is_transient_error, ListenInfo};
 
 use crate::listener::Listener;
 use crate::{log, Server};
@@ -72,13 +72,14 @@ fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: 
 impl<State, F> Listener<State, F> for TcpListener
 where
     State: Clone + Send + Sync + 'static,
-    F: crate::listener::OnListen<State>,
+    F: crate::listener::OnListen,
 {
-    async fn listen_with(&mut self, mut app: Server<State>, f: F) -> io::Result<()> {
+    async fn listen_with(&mut self, app: Server<State>, f: F) -> io::Result<()> {
         self.connect().await?;
         let listener = self.listener()?;
         crate::log::info!("Server listening on {}", self);
-        app = f.call(app).await?;
+        let info = ListenInfo::new();
+        f.call(info).await?;
 
         let mut incoming = listener.incoming();
 

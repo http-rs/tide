@@ -38,7 +38,7 @@ pub(crate) use unix_listener::UnixListener;
 pub trait Listener<State, F>: Debug + Display + Send + Sync + 'static
 where
     State: Send + Sync + 'static,
-    F: OnListen<State>,
+    F: OnListen,
 {
     /// This is the primary entrypoint for the Listener trait. `listen`
     /// is called exactly once, and is expected to spawn tasks for
@@ -53,11 +53,24 @@ where
 }
 
 #[async_trait]
-pub trait OnListen<State>: Clone + Send + Sync + 'static
-where
-    State: Send + Sync + 'static,
-{
-    async fn call(&self, server: Server<State>) -> io::Result<Server<State>>;
+pub trait OnListen: Clone + Send + Sync + 'static {
+    async fn call(&self, server: ListenInfo) -> io::Result<()>;
+}
+
+/// Information about the `listener`.
+#[derive(Debug, Clone)]
+pub struct ListenInfo {
+    _priv: (),
+}
+
+impl ListenInfo {
+    /// Create a new instance of `ListenInfo`.
+    ///
+    /// This method should only be called when implementing a new Tide `listener`
+    /// strategy.
+    pub fn new() -> Self {
+        Self { _priv: () }
+    }
 }
 
 /// Empty `OnListen` impl.
@@ -65,12 +78,9 @@ where
 pub struct NoopOnListen;
 
 #[async_trait]
-impl<State> OnListen<State> for NoopOnListen
-where
-    State: Send + Sync + 'static,
-{
-    async fn call(&self, server: Server<State>) -> io::Result<Server<State>> {
-        Ok(server)
+impl OnListen for NoopOnListen {
+    async fn call(&self, _info: ListenInfo) -> io::Result<()> {
+        Ok(())
     }
 }
 

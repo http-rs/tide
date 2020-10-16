@@ -6,7 +6,6 @@ use crate::Server;
 use async_std::io;
 use std::fmt::{self, Display, Formatter};
 
-
 /// This is an enum that contains variants for each of the listeners
 /// that can be parsed from a string. This is used as the associated
 /// Listener type for the string-parsing
@@ -35,7 +34,7 @@ impl Display for ParsedListener {
 impl<State, F> Listener<State, F> for ParsedListener
 where
     State: Clone + Send + Sync + 'static,
-    F: crate::listener::OnListen<State>,
+    F: crate::listener::OnListen,
 {
     async fn listen_with(&mut self, app: Server<State>, f: F) -> io::Result<()> {
         match self {

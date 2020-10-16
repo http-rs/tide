@@ -217,7 +217,7 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     pub async fn listen_with<L, F>(self, listener: L, f: F) -> io::Result<()>
     where
         L: ToListener<State, F>,
-        F: crate::listener::OnListen<State>,
+        F: crate::listener::OnListen,
     {
         listener.to_listener()?.listen_with(self, f).await
     }
