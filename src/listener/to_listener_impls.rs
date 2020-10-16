@@ -181,7 +181,11 @@ where
 }
 
 #[cfg(unix)]
-impl<State: Clone + Send + Sync + 'static> ToListener<State, F> for UnixListener {
+impl<State, F> ToListener<State, F> for UnixListener
+where
+    State: Clone + Send + Sync + 'static,
+    F: crate::listener::Report,
+{
     type Listener = Self;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(self)
