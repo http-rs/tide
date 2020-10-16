@@ -92,8 +92,7 @@ where
 }
 
 #[async_trait::async_trait]
-impl<State, F> Listener<State, BarrierOnListen<State, F>>
-    for ConcurrentListener<State, BarrierOnListen<State, F>>
+impl<State, F> Listener<State, F> for ConcurrentListener<State, BarrierOnListen<State, F>>
 where
     State: Clone + Send + Sync + 'static,
     F: crate::listener::OnListen<State>,
