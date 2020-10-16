@@ -15,7 +15,10 @@ mod to_listener_impls;
 #[cfg(all(unix, feature = "h1-server"))]
 mod unix_listener;
 
-use std::fmt::{Debug, Display};
+use std::{
+    fmt::{Debug, Display},
+    future::Future,
+};
 
 use crate::Server;
 use async_std::io;
@@ -57,6 +60,18 @@ where
 #[async_trait]
 pub trait OnListen: Clone + Send + Sync + 'static {
     async fn call(&self, server: ConnectionInfo) -> io::Result<()>;
+}
+
+#[async_trait]
+impl<F, Fut> OnListen for F
+where
+    F: Clone + Send + Sync + 'static + Fn(ConnectionInfo) -> Fut,
+    Fut: Future<Output = io::Result<()>> + Send + 'static,
+{
+    async fn call(&self, info: ConnectionInfo) -> io::Result<()> {
+        let fut = (self)(info);
+        Ok(fut.await?)
+    }
 }
 
 /// crate-internal shared logic used by tcp and unix listeners to
