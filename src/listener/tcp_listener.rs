@@ -1,4 +1,4 @@
-use super::{is_transient_error, ListenInfo};
+use super::{is_transient_error, ConnectionInfo};
 
 use crate::listener::Listener;
 use crate::{log, Server};
@@ -77,8 +77,7 @@ where
     async fn listen_with(&mut self, app: Server<State>, f: F) -> io::Result<()> {
         self.connect().await?;
         let listener = self.listener()?;
-        crate::log::info!("Server listening on {}", self);
-        let info = ListenInfo::new();
+        let info = ConnectionInfo::new(format!("{}", self));
         f.call(info).await?;
 
         let mut incoming = listener.incoming();

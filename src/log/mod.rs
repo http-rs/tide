@@ -20,11 +20,13 @@ pub use kv_log_macro::{debug, error, info, log, trace, warn};
 pub use kv_log_macro::{max_level, Level};
 
 mod middleware;
+mod on_connect;
 
 #[cfg(feature = "logger")]
 pub use femme::LevelFilter;
 
 pub use middleware::LogMiddleware;
+pub use on_connect::OnConnect;
 
 /// Start logging.
 #[cfg(feature = "logger")]

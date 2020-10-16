@@ -253,10 +253,9 @@ where
 mod parse_tests {
     use super::*;
 
-    fn listen<L, F>(listener: L) -> io::Result<L::Listener>
+    fn listen<L>(listener: L) -> io::Result<L::Listener>
     where
-        L: ToListener<(), F>,
-        F: crate::listener::OnListen,
+        L: ToListener<(), crate::log::OnConnect>,
     {
         listener.to_listener()
     }

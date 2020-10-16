@@ -188,10 +188,9 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     /// For more details, see [Listener] and [ToListener]
     pub async fn listen<L>(self, listener: L) -> io::Result<()>
     where
-        L: ToListener<State, crate::listener::NoopOnListen>,
+        L: ToListener<State, crate::log::OnConnect>,
     {
-        self.listen_with(listener, crate::listener::NoopOnListen)
-            .await
+        self.listen_with(listener, crate::log::OnConnect).await
     }
 
     /// Asynchronously serve the app with the supplied listener and a callback.

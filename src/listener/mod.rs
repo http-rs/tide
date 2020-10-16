@@ -4,6 +4,7 @@ use async_trait::async_trait;
 
 mod concurrent_listener;
 mod failover_listener;
+mod listen_info;
 #[cfg(feature = "h1-server")]
 mod parsed_listener;
 #[cfg(feature = "h1-server")]
@@ -21,6 +22,7 @@ use async_std::io;
 
 pub use concurrent_listener::ConcurrentListener;
 pub use failover_listener::FailoverListener;
+pub use listen_info::ConnectionInfo;
 pub use to_listener::ToListener;
 
 #[cfg(feature = "h1-server")]
@@ -54,34 +56,7 @@ where
 
 #[async_trait]
 pub trait OnListen: Clone + Send + Sync + 'static {
-    async fn call(&self, server: ListenInfo) -> io::Result<()>;
-}
-
-/// Information about the `listener`.
-#[derive(Debug, Clone)]
-pub struct ListenInfo {
-    _priv: (),
-}
-
-impl ListenInfo {
-    /// Create a new instance of `ListenInfo`.
-    ///
-    /// This method should only be called when implementing a new Tide `listener`
-    /// strategy.
-    pub fn new() -> Self {
-        Self { _priv: () }
-    }
-}
-
-/// Empty `OnListen` impl.
-#[derive(Clone, Debug)]
-pub struct NoopOnListen;
-
-#[async_trait]
-impl OnListen for NoopOnListen {
-    async fn call(&self, _info: ListenInfo) -> io::Result<()> {
-        Ok(())
-    }
+    async fn call(&self, server: ConnectionInfo) -> io::Result<()>;
 }
 
 /// crate-internal shared logic used by tcp and unix listeners to
