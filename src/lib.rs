@@ -10,7 +10,7 @@
 //!
 //! ```toml
 //! # Example, use the version numbers you need
-//! tide = "0.13.0"
+//! tide = "0.14.0"
 //! async-std = { version = "1.6.0", features = ["attributes"] }
 //!```
 //!
