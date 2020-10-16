@@ -3,8 +3,8 @@
 use async_trait::async_trait;
 
 mod concurrent_listener;
+mod connection_info;
 mod failover_listener;
-mod listen_info;
 #[cfg(feature = "h1-server")]
 mod parsed_listener;
 #[cfg(feature = "h1-server")]
@@ -24,8 +24,8 @@ use crate::Server;
 use async_std::io;
 
 pub use concurrent_listener::ConcurrentListener;
+pub use connection_info::ConnectionInfo;
 pub use failover_listener::FailoverListener;
-pub use listen_info::ConnectionInfo;
 pub use to_listener::ToListener;
 
 #[cfg(feature = "h1-server")]
@@ -43,7 +43,7 @@ pub(crate) use unix_listener::UnixListener;
 pub trait Listener<State, F>: Debug + Display + Send + Sync + 'static
 where
     State: Send + Sync + 'static,
-    F: OnListen,
+    F: Report,
 {
     /// This is the primary entrypoint for the Listener trait. `listen`
     /// is called exactly once, and is expected to spawn tasks for
@@ -58,12 +58,12 @@ where
 }
 
 #[async_trait]
-pub trait OnListen: Clone + Send + Sync + 'static {
+pub trait Report: Clone + Send + Sync + 'static {
     async fn call(&self, server: ConnectionInfo) -> io::Result<()>;
 }
 
 #[async_trait]
-impl<F, Fut> OnListen for F
+impl<F, Fut> Report for F
 where
     F: Clone + Send + Sync + 'static + Fn(ConnectionInfo) -> Fut,
     Fut: Future<Output = io::Result<()>> + Send + 'static,

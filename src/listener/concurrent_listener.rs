@@ -38,7 +38,7 @@ pub struct ConcurrentListener<State, F>(Vec<Box<dyn Listener<State, F>>>);
 impl<State, F> ConcurrentListener<State, F>
 where
     State: Clone + Send + Sync + 'static,
-    F: crate::listener::OnListen,
+    F: crate::listener::Report,
 {
     /// creates a new ConcurrentListener
     pub fn new() -> Self {
@@ -88,22 +88,13 @@ where
 impl<State, F> Listener<State, F> for ConcurrentListener<State, F>
 where
     State: Clone + Send + Sync + 'static,
-    F: crate::listener::OnListen,
+    F: crate::listener::Report,
 {
     async fn listen_with(&mut self, app: Server<State>, f: F) -> io::Result<()> {
         let mut futures_unordered = FuturesUnordered::new();
 
         for listener in self.0.iter_mut() {
-            // Call `listen_with` on each individual listener, and after they
-            // all started listen invoke `f` exactly once.
             futures_unordered.push(listener.listen_with(app.clone(), f.clone()));
-            //             |app| async move {
-            //                 let res = c.wait().await;
-            //                 if res.is_leader() {
-            //                     app = f.call(app).await?;
-            //                 }
-            //                 Ok(app)
-            //             })
         }
 
         while let Some(result) = futures_unordered.next().await {

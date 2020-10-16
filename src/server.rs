@@ -188,9 +188,9 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     /// For more details, see [Listener] and [ToListener]
     pub async fn listen<L>(self, listener: L) -> io::Result<()>
     where
-        L: ToListener<State, crate::log::OnConnect>,
+        L: ToListener<State, crate::log::Reporter>,
     {
-        self.listen_with(listener, crate::log::OnConnect).await
+        self.listen_with(listener, crate::log::Reporter).await
     }
 
     /// Asynchronously serve the app with the supplied listener and a callback.
@@ -203,11 +203,13 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     /// # use async_std::task::block_on;
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
+    /// use tide::listener::ConnectionInfo;
+    ///
     /// let mut app = tide::new();
     /// app.at("/").get(|_| async { Ok("Hello, world!") });
-    /// app.listen_with("127.0.0.1:8080", |app| async move {
-    ///     println!("server started!");
-    ///     Ok(app)
+    /// app.listen_with("127.0.0.1:8080", |info: ConnectionInfo| async move {
+    ///     println!("started listening on {}!", info.connection());
+    ///     Ok(())
     /// }).await?;
     /// #
     /// # Ok(()) }) }
@@ -216,7 +218,7 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     pub async fn listen_with<L, F>(self, listener: L, f: F) -> io::Result<()>
     where
         L: ToListener<State, F>,
-        F: crate::listener::OnListen,
+        F: crate::listener::Report,
     {
         listener.to_listener()?.listen_with(self, f).await
     }

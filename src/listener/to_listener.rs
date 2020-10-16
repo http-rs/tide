@@ -47,11 +47,10 @@ use async_std::io;
 /// ```
 /// # Other implementations
 /// See below for additional provided implementations of ToListener.
-
 pub trait ToListener<State, F>
 where
     State: Clone + Send + Sync + 'static,
-    F: crate::listener::OnListen,
+    F: crate::listener::Report,
 {
     type Listener: Listener<State, F>;
     /// Transform self into a

@@ -38,7 +38,7 @@ pub struct FailoverListener<State, F>(Vec<Box<dyn Listener<State, F>>>);
 impl<State, F> FailoverListener<State, F>
 where
     State: Clone + Send + Sync + 'static,
-    F: crate::listener::OnListen,
+    F: crate::listener::Report,
 {
     /// creates a new FailoverListener
     pub fn new() -> Self {
@@ -90,7 +90,7 @@ where
 impl<State, F> Listener<State, F> for FailoverListener<State, F>
 where
     State: Clone + Send + Sync + 'static,
-    F: crate::listener::OnListen,
+    F: crate::listener::Report,
 {
     async fn listen_with(&mut self, app: Server<State>, f: F) -> io::Result<()> {
         for listener in self.0.iter_mut() {

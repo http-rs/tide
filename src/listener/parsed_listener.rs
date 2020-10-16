@@ -34,7 +34,7 @@ impl Display for ParsedListener {
 impl<State, F> Listener<State, F> for ParsedListener
 where
     State: Clone + Send + Sync + 'static,
-    F: crate::listener::OnListen,
+    F: crate::listener::Report,
 {
     async fn listen_with(&mut self, app: Server<State>, f: F) -> io::Result<()> {
         match self {

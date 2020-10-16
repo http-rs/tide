@@ -1,13 +1,13 @@
-use crate::listener::{ConnectionInfo, OnListen};
+use crate::listener::{ConnectionInfo, Report};
 use async_trait::async_trait;
 use std::io;
 
-/// Empty `OnListen` impl.
+/// Empty `Report` impl.
 #[derive(Clone, Debug)]
-pub struct OnConnect;
+pub struct Reporter;
 
 #[async_trait]
-impl OnListen for OnConnect {
+impl Report for Reporter {
     async fn call(&self, info: ConnectionInfo) -> io::Result<()> {
         log::info!("Server listening on {}", info.connection());
         Ok(())

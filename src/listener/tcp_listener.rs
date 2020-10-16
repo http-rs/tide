@@ -72,7 +72,7 @@ fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: 
 impl<State, F> Listener<State, F> for TcpListener
 where
     State: Clone + Send + Sync + 'static,
-    F: crate::listener::OnListen,
+    F: crate::listener::Report,
 {
     async fn listen_with(&mut self, app: Server<State>, f: F) -> io::Result<()> {
         self.connect().await?;
