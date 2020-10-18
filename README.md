@@ -125,6 +125,9 @@ team. Use at your own risk.</sup>
 ### Auth
 * [tide-http-auth](https://github.com/chrisdickinson/tide-http-auth)
 
+### Testing
+* [tide-testing](https://github.com/jbr/tide-testing)
+
 ### Middleware
 * [tide-compress](https://github.com/Fishrock123/tide-compress)
 * [tide-trace](https://github.com/no9/tide-trace)
