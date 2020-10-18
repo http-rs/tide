@@ -101,27 +101,15 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     /// # Ok(()) }) }
     /// ```
     pub fn with_state(state: State) -> Self {
-        #[cfg(any(feature = "cookies", feature = "logger"))]
-        {
-            let mut server = Self {
-                router: Arc::new(Router::new()),
-                middleware: Arc::new(vec![]),
-                state,
-            };
-            #[cfg(feature = "cookies")]
-            server.with(cookies::CookiesMiddleware::new());
-            #[cfg(feature = "logger")]
-            server.with(log::LogMiddleware::new());
-            server
-        }
-
-        #[cfg(not(any(feature = "cookies", feature = "logger")))]
-        {
-            Self {
-                router: Arc::new(Router::new()),
-                middleware: Arc::new(vec![]),
-                state,
-            }
+        Self {
+            router: Arc::new(Router::new()),
+            middleware: Arc::new(vec![
+                #[cfg(feature = "cookies")]
+                Arc::new(cookies::CookiesMiddleware::new()),
+                #[cfg(feature = "logger")]
+                Arc::new(log::LogMiddleware::new()),
+            ]),
+            state,
         }
     }
 
