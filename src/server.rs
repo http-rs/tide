@@ -3,11 +3,13 @@
 use async_std::io;
 use async_std::sync::Arc;
 
-use crate::cookies;
-use crate::listener::{Listener, ToListener};
 use crate::log;
 use crate::middleware::{Middleware, Next};
-use crate::router::{Router, Selection};
+use crate::{cookies, namespace::Namespace};
+use crate::{
+    listener::{Listener, ToListener},
+    subdomain::Subdomain,
+};
 use crate::{Endpoint, Request, Route};
 
 /// An HTTP server.
@@ -26,7 +28,7 @@ use crate::{Endpoint, Request, Route};
 /// response processing, such as compression, default headers, or logging. To
 /// add middleware to an app, use the [`Server::middleware`] method.
 pub struct Server<State> {
-    router: Arc<Router<State>>,
+    router: Arc<Namespace<State>>,
     state: State,
     /// Holds the middleware stack.
     ///
@@ -101,7 +103,7 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     /// ```
     pub fn with_state(state: State) -> Self {
         let mut server = Self {
-            router: Arc::new(Router::new()),
+            router: Arc::new(Namespace::new()),
             middleware: Arc::new(vec![]),
             state,
         };
@@ -109,6 +111,52 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
         #[cfg(feature = "logger")]
         server.with(log::LogMiddleware::new());
         server
+    }
+
+    /// Add a new subdomain route given a `subdomain`, relative to the apex domain.
+    ///
+    /// Routing subdomains only works if you are listening for an apex domain.
+    /// Routing works by putting all subdomains into a list and looping over all
+    /// of them until the correct route has been found. Be sure to place routes
+    /// that require parameters at the bottom of your routing. After a subdomain
+    /// has been picked you can use whatever you like. An example of subdomain
+    /// routing would look like:
+    ///
+    /// ```rust,no_run
+    /// let mut app = tide::Server::new();
+    /// app.subdomain("blog").at("/").get(|_| async { Ok("Hello blogger")});
+    /// ```
+    ///
+    /// A subdomain is comprised of zero or more non-empty string segments that
+    /// are separated by '.'. Like `Route` there are two kinds of segments:
+    /// concrete and wildcard. A concrete segment is used to exactly match the
+    /// respective part of the subdomain of the incoming request. A wildcard
+    /// segment on the other hand extracts and parses the respective part of the
+    /// subdomain of the incoming request to pass it along to the endpoint as an
+    /// argument. A wildcard segment is written as `:user`, which creates an
+    /// endpoint parameter called `user`. Something to remember is that this
+    /// parameter feature is also used inside of path routing so if you use a
+    /// wildcard for your subdomain and path that share the same key name, it
+    /// will replace the subdomain value with the paths value.
+    ///
+    /// Alternatively a wildcard definition can only be a `*`, for example
+    /// `blog.*`, which means that the wildcard will match any subdomain from
+    /// the first part.
+    ///
+    /// Here are some examples omitting the path routing selection:
+    ///
+    /// ```rust,no_run
+    /// # let mut app = tide::Server::new();
+    /// app.subdomain("");
+    /// app.subdomain("blog");
+    /// app.subdomain(":user.blog");
+    /// app.subdomain(":user.*");
+    /// app.subdomain(":context.:.api");
+    /// ```
+    pub fn subdomain<'a>(&'a mut self, subdomain: &str) -> &'a mut Subdomain<State> {
+        let namespace = Arc::get_mut(&mut self.router)
+            .expect("Registering namespaces is not possible after the server has started");
+        Subdomain::new(namespace, subdomain)
     }
 
     /// Add a new route at the given `path`, relative to root.
@@ -158,9 +206,8 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     /// match or not, which means that the order of adding resources has no
     /// effect.
     pub fn at<'a>(&'a mut self, path: &str) -> Route<'a, State> {
-        let router = Arc::get_mut(&mut self.router)
-            .expect("Registering routes is not possible after the Server has started");
-        Route::new(router, path.to_owned())
+        let subdomain = self.subdomain("");
+        subdomain.at(path)
     }
 
     /// Add middleware to an application.
@@ -222,14 +269,19 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
             middleware,
         } = self.clone();
 
+        let path = req.url().path();
         let method = req.method().to_owned();
-        let Selection { endpoint, params } = router.route(&req.url().path(), method);
-        let route_params = vec![params];
+        let domain = req.host().unwrap_or("");
+
+        let namespace = router.route(domain, &path, method, &middleware);
+        let mut route_params = vec![];
+        route_params.push(namespace.subdomain_params());
+        route_params.push(namespace.selection.params);
         let req = Request::new(state, req, route_params);
 
         let next = Next {
-            endpoint,
-            next_middleware: &middleware,
+            endpoint: namespace.selection.endpoint,
+            next_middleware: &namespace.middleware,
         };
 
         let res = next.run(req).await;
@@ -279,19 +331,22 @@ impl<State: Clone + Sync + Send + 'static, InnerState: Clone + Sync + Send + 'st
             mut route_params,
             ..
         } = req;
-        let path = req.url().path().to_owned();
+        let domain = req.host().unwrap_or("");
+        let path = req.url().path();
         let method = req.method().to_owned();
+
         let router = self.router.clone();
         let middleware = self.middleware.clone();
         let state = self.state.clone();
 
-        let Selection { endpoint, params } = router.route(&path, method);
-        route_params.push(params);
+        let namespace = router.route(domain, path, method, &middleware);
+        route_params.push(namespace.subdomain_params());
+        route_params.push(namespace.selection.params);
         let req = Request::new(state, req, route_params);
 
         let next = Next {
-            endpoint,
-            next_middleware: &middleware,
+            endpoint: namespace.selection.endpoint,
+            next_middleware: &namespace.middleware,
         };
 
         Ok(next.run(req).await)

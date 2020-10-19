@@ -21,6 +21,25 @@ pub struct Selection<'a, State> {
     pub(crate) params: Params,
 }
 
+impl<'a, State> Selection<'a, State>
+where
+    State: Clone + Send + Sync + 'static,
+{
+    pub fn not_found_endpoint() -> Selection<'a, State> {
+        Selection {
+            endpoint: &not_found_endpoint,
+            params: Params::new(),
+        }
+    }
+
+    pub fn method_not_allowed() -> Selection<'a, State> {
+        Selection {
+            endpoint: &method_not_allowed,
+            params: Params::new(),
+        }
+    }
+}
+
 impl<State: Clone + Send + Sync + 'static> Router<State> {
     pub fn new() -> Self {
         Router {
@@ -68,15 +87,9 @@ impl<State: Clone + Send + Sync + 'static> Router<State> {
         {
             // If this `path` can be handled by a callback registered with a different HTTP method
             // should return 405 Method Not Allowed
-            Selection {
-                endpoint: &method_not_allowed,
-                params: Params::new(),
-            }
+            Selection::method_not_allowed()
         } else {
-            Selection {
-                endpoint: &not_found_endpoint,
-                params: Params::new(),
-            }
+            Selection::not_found_endpoint()
         }
     }
 }
