@@ -140,6 +140,10 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
         Ok(())
     }
 
+    /// Serve a static file.
+    ///
+    /// The file will be streamed from disk, and a mime type will be determined
+    /// based on magic bytes. Similar to serve_dir
     pub fn serve_file(&mut self, file: impl AsRef<Path>) -> io::Result<()> {
         self.get(ServeFile::init(file)?);
         Ok(())
