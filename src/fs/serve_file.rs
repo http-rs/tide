@@ -7,15 +7,15 @@ use async_std::path::PathBuf as AsyncPathBuf;
 use async_trait::async_trait;
 
 pub struct ServeFile {
-    file: AsyncPathBuf,
+    path: AsyncPathBuf,
 }
 
 impl ServeFile {
     /// Create a new instance of `ServeFile`.
-    pub(crate) fn init(file: impl AsRef<Path>) -> io::Result<Self> {
-        let file = file.as_ref().to_owned().canonicalize()?;
+    pub(crate) fn init(path: impl AsRef<Path>) -> io::Result<Self> {
+        let file = path.as_ref().to_owned().canonicalize()?;
         Ok(Self {
-            file: AsyncPathBuf::from(file),
+            path: AsyncPathBuf::from(file),
         })
     }
 }
@@ -23,13 +23,12 @@ impl ServeFile {
 #[async_trait]
 impl<State: Clone + Send + Sync + 'static> Endpoint<State> for ServeFile {
     async fn call(&self, _: Request<State>) -> Result {
-        if !self.file.exists().await {
-            log::warn!("File not found: {:?}", &self.file);
-            println!("File not found: {:?}", &self.file);
+        if !self.path.exists().await {
+            log::warn!("File not found: {:?}", &self.path);
             Ok(Response::new(StatusCode::NotFound))
         } else {
             Ok(Response::builder(StatusCode::Ok)
-                .body(Body::from_file(&self.file).await?)
+                .body(Body::from_file(&self.path).await?)
                 .build())
         }
     }
@@ -74,7 +73,7 @@ mod test {
     #[async_std::test]
     async fn should_serve_404_when_file_missing() {
         let serve_file = ServeFile {
-            file: AsyncPathBuf::from("gone/file"),
+            path: AsyncPathBuf::from("gone/file"),
         };
 
         let res: Response = serve_file.call(request("static/foo")).await.unwrap().into();
