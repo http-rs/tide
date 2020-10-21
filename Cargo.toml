@@ -24,11 +24,12 @@ features = ["docs"]
 rustdoc-args = ["--cfg", "feature=\"docs\""]
 
 [features]
-default = ["h1-server", "logger", "sessions"]
+default = ["h1-server", "cookies", "logger", "sessions"]
+cookies = []
 h1-server = ["async-h1"]
 logger = ["femme"]
 docs = ["unstable"]
-sessions = ["async-session"]
+sessions = ["async-session", "cookies"]
 unstable = []
 # DO NOT USE. Only exists to expose internals so they can be benchmarked.
 __internal__bench = []
@@ -62,10 +63,28 @@ surf = { version = "2.0.0", default-features = false, features = ["h1-client"] }
 tempfile = "3.1.0"
 
 [[test]]
+name = "cookies"
+path = "tests/cookies.rs"
+required-features = ["cookies"]
+
+[[test]]
 name = "nested"
 path = "tests/nested.rs"
 required-features = ["unstable"]
 
+[[test]]
+name = "sessions"
+path = "tests/sessions.rs"
+required-features = ["sessions"]
+
 [[bench]]
 name = "router"
 harness = false
+
+[[example]]
+name = "cookies"
+required-features = ["cookies"]
+
+[[example]]
+name = "sessions"
+required-features = ["sessions"]

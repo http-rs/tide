@@ -3,6 +3,7 @@
 use async_std::io;
 use async_std::sync::Arc;
 
+#[cfg(feature = "cookies")]
 use crate::cookies;
 use crate::listener::{Listener, ToListener};
 use crate::log;
@@ -100,15 +101,16 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     /// # Ok(()) }) }
     /// ```
     pub fn with_state(state: State) -> Self {
-        let mut server = Self {
+        Self {
             router: Arc::new(Router::new()),
-            middleware: Arc::new(vec![]),
+            middleware: Arc::new(vec![
+                #[cfg(feature = "cookies")]
+                Arc::new(cookies::CookiesMiddleware::new()),
+                #[cfg(feature = "logger")]
+                Arc::new(log::LogMiddleware::new()),
+            ]),
             state,
-        };
-        server.with(cookies::CookiesMiddleware::new());
-        #[cfg(feature = "logger")]
-        server.with(log::LogMiddleware::new());
-        server
+        }
     }
 
     /// Add a new route at the given `path`, relative to root.
