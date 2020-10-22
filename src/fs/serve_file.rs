@@ -6,7 +6,7 @@ use std::path::Path;
 use async_std::path::PathBuf as AsyncPathBuf;
 use async_trait::async_trait;
 
-pub struct ServeFile {
+pub(crate) struct ServeFile {
     path: AsyncPathBuf,
 }
 
@@ -29,7 +29,7 @@ impl<State: Clone + Send + Sync + 'static> Endpoint<State> for ServeFile {
                 log::warn!("File not found: {:?}", &self.path);
                 Ok(Response::new(StatusCode::NotFound))
             }
-            Err(e) => Err(e)?,
+            Err(e) => Err(e.into()),
         }
     }
 }

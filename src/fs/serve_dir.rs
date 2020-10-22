@@ -3,8 +3,8 @@ use crate::{Body, Endpoint, Request, Response, Result, StatusCode};
 
 use async_std::path::PathBuf as AsyncPathBuf;
 
-use std::{ffi::OsStr, io};
 use std::path::{Path, PathBuf};
+use std::{ffi::OsStr, io};
 
 pub(crate) struct ServeDir {
     prefix: String,
@@ -51,7 +51,7 @@ where
                     log::warn!("File not found: {:?}", &file_path);
                     Ok(Response::new(StatusCode::NotFound))
                 }
-                Err(e) => Err(e)?,
+                Err(e) => Err(e.into()),
             }
         }
     }
