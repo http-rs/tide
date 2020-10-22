@@ -23,13 +23,13 @@ impl ServeFile {
 #[async_trait]
 impl<State: Clone + Send + Sync + 'static> Endpoint<State> for ServeFile {
     async fn call(&self, _: Request<State>) -> Result {
-        if !self.path.exists().await {
-            log::warn!("File not found: {:?}", &self.path);
-            Ok(Response::new(StatusCode::NotFound))
-        } else {
-            Ok(Response::builder(StatusCode::Ok)
-                .body(Body::from_file(&self.path).await?)
-                .build())
+        match Body::from_file(&self.path).await {
+            Ok(body) => Ok(Response::builder(StatusCode::Ok).body(body).build()),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => {
+                log::warn!("File not found: {:?}", &self.path);
+                Ok(Response::new(StatusCode::NotFound))
+            }
+            Err(e) => Err(e)?,
         }
     }
 }

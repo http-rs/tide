@@ -3,7 +3,7 @@ use crate::{Body, Endpoint, Request, Response, Result, StatusCode};
 
 use async_std::path::PathBuf as AsyncPathBuf;
 
-use std::ffi::OsStr;
+use std::{ffi::OsStr, io};
 use std::path::{Path, PathBuf};
 
 pub(crate) struct ServeDir {
@@ -43,16 +43,17 @@ where
         let file_path = AsyncPathBuf::from(file_path);
         if !file_path.starts_with(&self.dir) {
             log::warn!("Unauthorized attempt to read: {:?}", file_path);
-            return Ok(Response::new(StatusCode::Forbidden));
+            Ok(Response::new(StatusCode::Forbidden))
+        } else {
+            match Body::from_file(&file_path).await {
+                Ok(body) => Ok(Response::builder(StatusCode::Ok).body(body).build()),
+                Err(e) if e.kind() == io::ErrorKind::NotFound => {
+                    log::warn!("File not found: {:?}", &file_path);
+                    Ok(Response::new(StatusCode::NotFound))
+                }
+                Err(e) => Err(e)?,
+            }
         }
-        if !file_path.exists().await {
-            log::warn!("File not found: {:?}", file_path);
-            return Ok(Response::new(StatusCode::NotFound));
-        }
-        let body = Body::from_file(&file_path).await?;
-        let mut res = Response::new(StatusCode::Ok);
-        res.set_body(body);
-        Ok(res)
     }
 }
 
