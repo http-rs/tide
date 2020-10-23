@@ -33,7 +33,28 @@ pin_project_lite::pin_project! {
 
 impl<State> Request<State> {
     /// Create a new `Request`.
-    pub(crate) fn new(state: State, req: http_types::Request, route_params: Vec<Params>) -> Self {
+    ///
+    /// Usually tide does this for you once listening, and passes the request through middleware and to an endpoint.
+    /// However, if you wish to call an endpoint manually, then this is useful.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use async_std::task::block_on;
+    /// # fn main() -> Result<(), tide::Error> { block_on(async {
+    /// #
+    /// use tide::http::{Method, Url};
+    /// use tide::Request;
+    ///
+    /// let url = Url::parse("http://example.org")?;
+    /// let req = Request::new(
+    ///     (), // State
+    ///     tide::http::Request::new(Method::Get, url),
+    ///     vec![]
+    /// );
+    /// # Ok(()) })}
+    /// ```
+    pub fn new(state: State, req: http_types::Request, route_params: Vec<Params>) -> Self {
         Self {
             state,
             req,
