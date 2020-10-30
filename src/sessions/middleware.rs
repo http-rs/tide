@@ -51,6 +51,7 @@ pub struct SessionMiddleware<Store> {
     store: Store,
     cookie_path: String,
     cookie_name: String,
+    cookie_domain: Option<String>,
     session_ttl: Option<Duration>,
     save_unchanged: bool,
     same_site_policy: SameSite,
@@ -63,6 +64,7 @@ impl<Store: SessionStore> std::fmt::Debug for SessionMiddleware<Store> {
             .field("store", &self.store)
             .field("cookie_path", &self.cookie_path)
             .field("cookie_name", &self.cookie_name)
+            .field("cookie_domain", &self.cookie_domain)
             .field("session_ttl", &self.session_ttl)
             .field("same_site_policy", &self.same_site_policy)
             .field("key", &"..")
@@ -157,6 +159,7 @@ impl<Store: SessionStore> SessionMiddleware<Store> {
     ///     SessionMiddleware::new(MemoryStore::new(), b"please do not hardcode your secret")
     ///         .with_cookie_name("custom.cookie.name")
     ///         .with_cookie_path("/some/path")
+    ///         .with_cookie_domain("www.rust-lang.org")
     ///         .with_same_site_policy(SameSite::Lax)
     ///         .with_session_ttl(Some(Duration::from_secs(1)))
     ///         .without_save_unchanged(),
@@ -168,6 +171,7 @@ impl<Store: SessionStore> SessionMiddleware<Store> {
             save_unchanged: true,
             cookie_path: "/".into(),
             cookie_name: "tide.sid".into(),
+            cookie_domain: None,
             same_site_policy: SameSite::Strict,
             session_ttl: Some(Duration::from_secs(24 * 60 * 60)),
             key: Key::derive_from(secret),
@@ -222,6 +226,12 @@ impl<Store: SessionStore> SessionMiddleware<Store> {
         self
     }
 
+    /// Sets the domain of the cookie.
+    pub fn with_cookie_domain(mut self, cookie_domain: impl AsRef<str>) -> Self {
+        self.cookie_domain = Some(cookie_domain.as_ref().to_owned());
+        self
+    }
+
     //--- methods below here are private ---
 
     async fn load_or_create(&self, cookie_value: Option<String>) -> Session {
@@ -245,6 +255,10 @@ impl<Store: SessionStore> SessionMiddleware<Store> {
 
         if let Some(ttl) = self.session_ttl {
             cookie.set_expires(Some((std::time::SystemTime::now() + ttl).into()));
+        }
+
+        if let Some(cookie_domain) = self.cookie_domain.clone() {
+            cookie.set_domain(cookie_domain)
         }
 
         self.sign_cookie(&mut cookie);
