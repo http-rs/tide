@@ -49,8 +49,13 @@ impl LogMiddleware {
         let status = response.status();
         if status.is_server_error() {
             if let Some(error) = response.error() {
+                #[cfg(debug_assertions)]
+                let message = format!("{:?}", error);
+                #[cfg(not(debug_assertions))]
+                let message = format!("{}", error);
+
                 log::error!("Internal error --> Response sent", {
-                    message: format!("{:?}", error),
+                    message: message,
                     error_type: error.type_name(),
                     method: method,
                     path: path,
@@ -67,8 +72,13 @@ impl LogMiddleware {
             }
         } else if status.is_client_error() {
             if let Some(error) = response.error() {
+                #[cfg(debug_assertions)]
+                let message = format!("{:?}", error);
+                #[cfg(not(debug_assertions))]
+                let message = format!("{}", error);
+
                 log::warn!("Client error --> Response sent", {
-                    message: format!("{:?}", error),
+                    message: message,
                     error_type: error.type_name(),
                     method: method,
                     path: path,
