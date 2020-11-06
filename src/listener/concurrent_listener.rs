@@ -1,5 +1,5 @@
 use crate::listener::{Listener, ToListener};
-use crate::Server;
+use crate::{CancelationToken, Server};
 
 use std::fmt::{self, Debug, Display, Formatter};
 
@@ -79,12 +79,13 @@ impl<State: Clone + Send + Sync + 'static> ConcurrentListener<State> {
 
 #[async_trait::async_trait]
 impl<State: Clone + Send + Sync + 'static> Listener<State> for ConcurrentListener<State> {
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
+    async fn listen(&mut self, app: Server<State>, cancelation_token: CancelationToken) -> io::Result<()> {
         let mut futures_unordered = FuturesUnordered::new();
 
         for listener in self.0.iter_mut() {
             let app = app.clone();
-            futures_unordered.push(listener.listen(app));
+            // TODO: Track the cancelation tokens
+            futures_unordered.push(listener.listen(app, cancelation_token.clone()));
         }
 
         while let Some(result) = futures_unordered.next().await {

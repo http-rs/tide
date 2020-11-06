@@ -1,7 +1,7 @@
 #[cfg(unix)]
 use super::UnixListener;
 use super::{Listener, TcpListener};
-use crate::Server;
+use crate::{CancelationToken, Server};
 
 use async_std::io;
 use std::fmt::{self, Display, Formatter};
@@ -32,11 +32,11 @@ impl Display for ParsedListener {
 
 #[async_trait::async_trait]
 impl<State: Clone + Send + Sync + 'static> Listener<State> for ParsedListener {
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
+    async fn listen(&mut self, app: Server<State>, cancelation_token: CancelationToken) -> io::Result<()> {
         match self {
             #[cfg(unix)]
-            Self::Unix(u) => u.listen(app).await,
-            Self::Tcp(t) => t.listen(app).await,
+            Self::Unix(u) => u.listen(app, cancelation_token).await,
+            Self::Tcp(t) => t.listen(app, cancelation_token).await,
         }
     }
 }

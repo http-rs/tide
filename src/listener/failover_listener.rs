@@ -1,5 +1,5 @@
 use crate::listener::{Listener, ToListener};
-use crate::Server;
+use crate::{CancelationToken, Server};
 
 use std::fmt::{self, Debug, Display, Formatter};
 
@@ -81,10 +81,11 @@ impl<State: Clone + Send + Sync + 'static> FailoverListener<State> {
 
 #[async_trait::async_trait]
 impl<State: Clone + Send + Sync + 'static> Listener<State> for FailoverListener<State> {
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
+    async fn listen(&mut self, app: Server<State>, cancelation_token: CancelationToken) -> io::Result<()> {
         for listener in self.0.iter_mut() {
             let app = app.clone();
-            match listener.listen(app).await {
+            // TODO: Track the cancelation tokens
+            match listener.listen(app, cancelation_token.clone()).await {
                 Ok(_) => return Ok(()),
                 Err(e) => {
                     crate::log::info!("unable to listen", {

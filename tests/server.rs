@@ -40,27 +40,28 @@ fn hello_world() -> tide::Result<()> {
 #[test]
 fn echo_server() -> tide::Result<()> {
     task::block_on(async {
+
+        let cancelation_token = tide::CancelationToken::new();
+
         let port = test_utils::find_port().await;
-        let server = task::spawn(async move {
-            let mut app = tide::new();
-            app.at("/").get(|req| async move { Ok(req) });
+        let mut app = tide::new();
+        app.at("/").get(|req| async move { Ok(req) });
 
-            app.listen(("localhost", port)).await?;
-            Result::<(), http_types::Error>::Ok(())
-        });
+        let server = app.listen_with_cancelation_token(("localhost", port), cancelation_token.clone());
+        let server = task::spawn(server);
 
-        let client = task::spawn(async move {
-            task::sleep(Duration::from_millis(100)).await;
-            let string = surf::get(format!("http://localhost:{}", port))
-                .body(Body::from_string("chashu".to_string()))
-                .recv_string()
-                .await
-                .unwrap();
-            assert_eq!(string, "chashu".to_string());
-            Ok(())
-        });
+        task::sleep(Duration::from_millis(100)).await;
+        let string = surf::get(format!("http://localhost:{}", port))
+            .body(Body::from_string("chashu".to_string()))
+            .recv_string()
+            .await
+            .unwrap();
+        assert_eq!(string, "chashu".to_string());
 
-        server.race(client).await
+        cancelation_token.complete();
+
+        server.await.expect("Server did not complete gracefully");
+        Result::<(), http_types::Error>::Ok(())
     })
 }
 

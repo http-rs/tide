@@ -9,7 +9,7 @@ use crate::listener::{Listener, ToListener};
 use crate::log;
 use crate::middleware::{Middleware, Next};
 use crate::router::{Router, Selection};
-use crate::{Endpoint, Request, Route};
+use crate::{CancelationToken, Endpoint, Request, Route};
 
 /// An HTTP server.
 ///
@@ -187,7 +187,12 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
 
     /// Asynchronously serve the app with the supplied listener. For more details, see [Listener] and [ToListener]
     pub async fn listen<TL: ToListener<State>>(self, listener: TL) -> io::Result<()> {
-        listener.to_listener()?.listen(self).await
+        self.listen_with_cancelation_token(listener, CancelationToken::new()).await
+    }
+
+    /// Asynchronously serve the app with the supplied listener and canelation token. For more details, see [Listener] and [ToListener]
+    pub async fn listen_with_cancelation_token<TL: ToListener<State>>(self, listener: TL, cancelation_token: CancelationToken) -> io::Result<()> {
+        listener.to_listener()?.listen(self, cancelation_token).await
     }
 
     /// Respond to a `Request` with a `Response`.

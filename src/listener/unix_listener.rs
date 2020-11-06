@@ -1,7 +1,7 @@
 use super::is_transient_error;
 
 use crate::listener::Listener;
-use crate::{log, Server};
+use crate::{CancelationToken, log, Server};
 
 use std::fmt::{self, Display, Formatter};
 
@@ -83,7 +83,7 @@ fn handle_unix<State: Clone + Send + Sync + 'static>(app: Server<State>, stream:
 
 #[async_trait::async_trait]
 impl<State: Clone + Send + Sync + 'static> Listener<State> for UnixListener {
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
+    async fn listen(&mut self, app: Server<State>, cancelation_token: CancelationToken) -> io::Result<()> {
         self.connect().await?;
         crate::log::info!("Server listening on {}", self);
         let listener = self.listener()?;

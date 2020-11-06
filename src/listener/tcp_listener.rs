@@ -1,13 +1,16 @@
+extern crate futures;
+
 use super::is_transient_error;
 
 use crate::listener::Listener;
-use crate::{log, Server};
+use crate::{CancelationToken, log, Server};
 
 use std::fmt::{self, Display, Formatter};
 
 use async_std::net::{self, SocketAddr, TcpStream};
 use async_std::prelude::*;
 use async_std::{io, task};
+use futures::future::{self, Either, Future, FutureExt};
 
 /// This represents a tide [Listener](crate::listener::Listener) that
 /// wraps an [async_std::net::TcpListener]. It is implemented as an
@@ -70,28 +73,43 @@ fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: 
 
 #[async_trait::async_trait]
 impl<State: Clone + Send + Sync + 'static> Listener<State> for TcpListener {
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
+    async fn listen(&mut self, app: Server<State>, cancelation_token: CancelationToken) -> io::Result<()> {
         self.connect().await?;
         let listener = self.listener()?;
         crate::log::info!("Server listening on {}", self);
 
+        /*let canceled_task = task::spawn(async {
+            cancelation_token.await;
+            let result: Option<TcpStream> = None;
+            result
+        });*/
+
         let mut incoming = listener.incoming();
 
-        while let Some(stream) = incoming.next().await {
-            match stream {
-                Err(ref e) if is_transient_error(e) => continue,
-                Err(error) => {
-                    let delay = std::time::Duration::from_millis(500);
-                    crate::log::error!("Error: {}. Pausing for {:?}.", error, delay);
-                    task::sleep(delay).await;
-                    continue;
-                }
-
-                Ok(stream) => {
-                    handle_tcp(app.clone(), stream);
+        'serve_loop:
+        while let Either::Left(result) = future::select(incoming.next(), cancelation_token.clone()).await {
+            match result.0 {
+                Some(stream) => {
+                    match stream {
+                        Err(ref e) if is_transient_error(e) => continue,
+                        Err(error) => {
+                            let delay = std::time::Duration::from_millis(500);
+                            crate::log::error!("Error: {}. Pausing for {:?}.", error, delay);
+                            task::sleep(delay).await;
+                            continue;
+                        }
+        
+                        Ok(stream) => {
+                            handle_tcp(app.clone(), stream);
+                        }
+                    };
+                },
+                None => {
+                    break 'serve_loop;
                 }
             };
         }
+
         Ok(())
     }
 }
