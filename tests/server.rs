@@ -1,5 +1,4 @@
 mod test_utils;
-use async_std::prelude::*;
 use async_std::task;
 use std::time::Duration;
 
