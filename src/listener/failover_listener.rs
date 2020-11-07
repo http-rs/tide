@@ -3,7 +3,7 @@ use crate::{CancelationToken, Server};
 
 use std::fmt::{self, Debug, Display, Formatter};
 
-use async_std::io;
+use async_std::{io, task};
 
 /// FailoverListener allows tide to attempt to listen in a sequential
 /// order to any number of ports/addresses. The first successful
@@ -82,10 +82,13 @@ impl<State: Clone + Send + Sync + 'static> FailoverListener<State> {
 #[async_trait::async_trait]
 impl<State: Clone + Send + Sync + 'static> Listener<State> for FailoverListener<State> {
     async fn listen(&mut self, app: Server<State>, cancelation_token: CancelationToken) -> io::Result<()> {
+
+        let mut cancelation_tokens = Vec::new();
+
         for listener in self.0.iter_mut() {
             let app = app.clone();
-            // TODO: Track the cancelation tokens
-            match listener.listen(app, cancelation_token.clone()).await {
+            let sub_cancelation_token = CancelationToken::new();
+            match listener.listen(app, sub_cancelation_token.clone()).await {
                 Ok(_) => return Ok(()),
                 Err(e) => {
                     crate::log::info!("unable to listen", {
@@ -94,7 +97,15 @@ impl<State: Clone + Send + Sync + 'static> Listener<State> for FailoverListener<
                     });
                 }
             }
+            cancelation_tokens.push(sub_cancelation_token);
         }
+
+        task::spawn(async move {
+            cancelation_token.await;
+            for sub_cancelation_token in cancelation_tokens.iter_mut() {
+                sub_cancelation_token.complete();
+            }
+        });
 
         Err(io::Error::new(
             io::ErrorKind::AddrNotAvailable,

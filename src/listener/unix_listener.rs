@@ -8,6 +8,7 @@ use std::fmt::{self, Display, Formatter};
 use async_std::os::unix::net::{self, SocketAddr, UnixStream};
 use async_std::prelude::*;
 use async_std::{io, path::PathBuf, task};
+use futures::future::{self, Either};
 
 /// This represents a tide [Listener](crate::listener::Listener) that
 /// wraps an [async_std::os::unix::net::UnixListener]. It is implemented as an
@@ -89,18 +90,26 @@ impl<State: Clone + Send + Sync + 'static> Listener<State> for UnixListener {
         let listener = self.listener()?;
         let mut incoming = listener.incoming();
 
-        while let Some(stream) = incoming.next().await {
-            match stream {
-                Err(ref e) if is_transient_error(e) => continue,
-                Err(error) => {
-                    let delay = std::time::Duration::from_millis(500);
-                    crate::log::error!("Error: {}. Pausing for {:?}.", error, delay);
-                    task::sleep(delay).await;
-                    continue;
-                }
-
-                Ok(stream) => {
-                    handle_unix(app.clone(), stream);
+        'serve_loop:
+        while let Either::Left(result) = future::select(incoming.next(), cancelation_token.clone()).await {
+            match result.0 {
+                Some(stream) => {
+                    match stream {
+                        Err(ref e) if is_transient_error(e) => continue,
+                        Err(error) => {
+                            let delay = std::time::Duration::from_millis(500);
+                            crate::log::error!("Error: {}. Pausing for {:?}.", error, delay);
+                            task::sleep(delay).await;
+                            continue;
+                        }
+        
+                        Ok(stream) => {
+                            handle_unix(app.clone(), stream);
+                        }
+                    };
+                },
+                None => {
+                    break 'serve_loop;
                 }
             };
         }

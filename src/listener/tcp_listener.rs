@@ -1,5 +1,3 @@
-extern crate futures;
-
 use super::is_transient_error;
 
 use crate::listener::Listener;
@@ -10,7 +8,7 @@ use std::fmt::{self, Display, Formatter};
 use async_std::net::{self, SocketAddr, TcpStream};
 use async_std::prelude::*;
 use async_std::{io, task};
-use futures::future::{self, Either, Future, FutureExt};
+use futures::future::{self, Either};
 
 /// This represents a tide [Listener](crate::listener::Listener) that
 /// wraps an [async_std::net::TcpListener]. It is implemented as an
@@ -77,12 +75,6 @@ impl<State: Clone + Send + Sync + 'static> Listener<State> for TcpListener {
         self.connect().await?;
         let listener = self.listener()?;
         crate::log::info!("Server listening on {}", self);
-
-        /*let canceled_task = task::spawn(async {
-            cancelation_token.await;
-            let result: Option<TcpStream> = None;
-            result
-        });*/
 
         let mut incoming = listener.incoming();
 
