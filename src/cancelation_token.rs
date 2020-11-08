@@ -1,11 +1,7 @@
-use {
-	std::{
-        future::Future,
-		pin::Pin,
-		sync::{Arc, Mutex},
-		task::{Context, Poll, Waker},
-	},
-};
+use std::future::Future;
+use std::pin::Pin;
+use std::sync::{Arc, Mutex};
+use std::task::{Context, Poll, Waker};
 
 #[derive(Debug)]
 pub struct CancelationToken {
@@ -18,6 +14,7 @@ struct CancelationTokenState {
 	waker: Option<Waker>
 }
 
+/// Future that allows gracefully shutting down the server
 impl CancelationToken {
 	pub fn new() -> CancelationToken {
 		CancelationToken {
@@ -28,6 +25,7 @@ impl CancelationToken {
 		}
 	}
 
+	/// Call to shut down the server
 	pub fn complete(&self) {
 		let mut shared_state = self.shared_state.lock().unwrap();
 
