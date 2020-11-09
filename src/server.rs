@@ -1,7 +1,7 @@
 //! An HTTP server
 
-use async_std::io;
 use async_std::sync::Arc;
+use async_std::{io, task};
 
 use crate::cookies;
 use crate::listener::{Listener, ToListener};
@@ -185,41 +185,34 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
 
     /// Asynchronously serve the app with the supplied listener.
     ///
+    /// Logs the listen information by default.
+    ///
     /// For more details, see [Listener] and [ToListener]
     pub async fn listen<L>(self, listener: L) -> io::Result<()>
     where
-        L: ToListener<State, crate::log::Reporter>,
+        L: ToListener<State, crate::listener::Reporter>,
     {
-        self.listen_with(listener, crate::log::Reporter).await
+        let listener = self.bind(listener).await?;
+        log::info!("Server listening on {}", listener.info().connection());
+        listener.accept().await
     }
 
-    /// Asynchronously serve the app with the supplied listener and a callback.
-    ///
-    /// For more details, see [Listener], [ToListener] and [Report].
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// # use async_std::task::block_on;
-    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
-    /// #
-    /// use tide::listener::ListenInfo;
-    ///
-    /// let mut app = tide::new();
-    /// app.at("/").get(|_| async { Ok("Hello, world!") });
-    /// app.listen_with("127.0.0.1:8080", |info: ListenInfo| async move {
-    ///     println!("started listening on {}!", info.connection());
-    ///     Ok(())
-    /// }).await?;
-    /// #
-    /// # Ok(()) }) }
-    /// ```
-    pub async fn listen_with<L, F>(self, listener: L, f: F) -> io::Result<()>
+    /// Start listening, but don't see it through to completion.
+    pub async fn bind<L>(self, listener: L) -> io::Result<crate::listener::Bound>
     where
-        L: ToListener<State, F>,
-        F: crate::listener::Report,
+        L: ToListener<State, crate::listener::Reporter>,
     {
-        listener.to_listener()?.listen_with(self, f).await
+        let mut listener = listener.to_listener()?;
+        let (sender, receiver) = async_std::sync::channel(1);
+        let reporter = crate::listener::Reporter::new(sender);
+        let fut = Box::pin(task::spawn(async move {
+            listener.listen_with(self, reporter).await
+        }));
+        let output = receiver
+            .recv()
+            .await
+            .expect("bind should always receive a connectioninfo before closing");
+        Ok(crate::listener::Bound::new(output, fut))
     }
 
     /// Respond to a `Request` with a `Response`.

@@ -1,6 +1,8 @@
+use async_std::sync::Sender;
 use async_trait::async_trait;
 use std::future::Future;
 use std::io;
+use std::pin::Pin;
 
 use crate::listener::ListenInfo;
 
@@ -41,5 +43,57 @@ where
     async fn call(&self, info: ListenInfo) -> io::Result<()> {
         let fut = (self)(info);
         Ok(fut.await?)
+    }
+}
+
+/// A `log`-based `Report` implementation.
+///
+/// This is the default reporter used in `Server::listen`.
+#[derive(Clone, Debug)]
+pub struct Reporter {
+    sender: Sender<ListenInfo>,
+}
+
+impl Reporter {
+    /// Create a new instance.
+    pub fn new(sender: Sender<ListenInfo>) -> Self {
+        Self { sender }
+    }
+}
+
+#[async_trait]
+impl Report for Reporter {
+    async fn call(&self, info: ListenInfo) -> io::Result<()> {
+        log::info!("Server listening on {}", info.connection());
+        Ok(())
+    }
+}
+
+/// A bound server.
+pub struct Bound {
+    info: ListenInfo,
+    fut: Pin<Box<dyn std::future::Future<Output = io::Result<()>> + Send + 'static>>,
+}
+
+impl std::fmt::Debug for Bound {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Bound").field(&"info", &self.info).finish()
+    }
+}
+
+impl Bound {
+    pub(crate) fn new(
+        info: ListenInfo,
+        fut: Pin<Box<dyn std::future::Future<Output = std::io::Result<()>> + Send + 'static>>,
+    ) -> Self {
+        Self { info, fut }
+    }
+
+    pub fn info(&self) -> &ListenInfo {
+        &self.info
+    }
+
+    pub async fn accept(self) -> io::Result<()> {
+        self.fut.await
     }
 }

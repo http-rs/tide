@@ -25,7 +25,7 @@ use async_std::io;
 pub use concurrent_listener::ConcurrentListener;
 pub use failover_listener::FailoverListener;
 pub use listen_info::ListenInfo;
-pub use report::Report;
+pub use report::{Bound, Report, Reporter};
 pub use to_listener::ToListener;
 
 #[cfg(feature = "h1-server")]
