@@ -31,9 +31,11 @@ use async_std::io;
 ///    })
 ///}
 ///```
-
 #[derive(Default)]
-pub struct FailoverListener<State>(Vec<Box<dyn Listener<State>>>);
+pub struct FailoverListener<State> {
+    listeners: Vec<Option<Box<dyn Listener<State>>>>,
+    index: Option<usize>,
+}
 
 impl<State> FailoverListener<State>
 where
@@ -41,7 +43,10 @@ where
 {
     /// creates a new FailoverListener
     pub fn new() -> Self {
-        Self(vec![])
+        Self {
+            listeners: vec![],
+            index: None,
+        }
     }
 
     /// Adds any [`ToListener`](crate::listener::ToListener) to this
@@ -64,7 +69,7 @@ where
     where
         L: ToListener<State>,
     {
-        self.0.push(Box::new(listener.to_listener()?));
+        self.listeners.push(Some(Box::new(listener.to_listener()?)));
         Ok(())
     }
 
@@ -93,13 +98,16 @@ impl<State> Listener<State> for FailoverListener<State>
 where
     State: Clone + Send + Sync + 'static,
 {
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
-        for listener in self.0.iter_mut() {
-            let app = app.clone();
-            match listener.listen(app).await {
-                Ok(_) => return Ok(()),
+    async fn bind(&mut self) -> io::Result<()> {
+        for (index, listener) in self.listeners.iter_mut().enumerate() {
+            let listener = listener.as_deref_mut().expect("bind called twice");
+            match listener.bind().await {
+                Ok(_) => {
+                    self.index = Some(index);
+                    return Ok(());
+                }
                 Err(e) => {
-                    crate::log::info!("unable to listen", {
+                    crate::log::info!("unable to bind", {
                         listener: listener.to_string(),
                         error: e.to_string()
                     });
@@ -112,20 +120,37 @@ where
             "unable to bind to any supplied listener spec",
         ))
     }
+
+    async fn accept(&mut self, app: Server<State>) -> io::Result<()> {
+        match self.index {
+            Some(index) => {
+                let mut listener = self.listeners[index].take().expect("accept called twice");
+                listener.accept(app).await?;
+                Ok(())
+            }
+            None => Err(io::Error::new(
+                io::ErrorKind::AddrNotAvailable,
+                "unable to listen to any supplied listener spec",
+            )),
+        }
+    }
 }
 
 impl<State> Debug for FailoverListener<State> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self.0)
+        write!(f, "{:?}", self.listeners)
     }
 }
 
 impl<State> Display for FailoverListener<State> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let string = self
-            .0
+            .listeners
             .iter()
-            .map(|l| l.to_string())
+            .map(|l| match l {
+                Some(l) => l.to_string(),
+                None => String::new(),
+            })
             .collect::<Vec<_>>()
             .join(", ");
 

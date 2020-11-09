@@ -31,12 +31,22 @@ impl Display for ParsedListener {
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Listener<State> for ParsedListener {
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
+impl<State> Listener<State> for ParsedListener
+where
+    State: Clone + Send + Sync + 'static,
+{
+    async fn bind(&mut self) -> io::Result<()> {
         match self {
             #[cfg(unix)]
-            Self::Unix(u) => u.listen(app).await,
-            Self::Tcp(t) => t.listen(app).await,
+            Self::Unix(u) => u.bind().await,
+            Self::Tcp(t) => t.bind().await,
+        }
+    }
+    async fn accept(&mut self, app: Server<State>) -> io::Result<()> {
+        match self {
+            #[cfg(unix)]
+            Self::Unix(u) => u.accept(app).await,
+            Self::Tcp(t) => t.accept(app).await,
         }
     }
 }

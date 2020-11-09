@@ -88,12 +88,19 @@ impl<State> Listener<State> for ConcurrentListener<State>
 where
     State: Clone + Send + Sync + 'static,
 {
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
+    async fn bind(&mut self) -> io::Result<()> {
+        for listener in self.0.iter_mut() {
+            listener.bind().await?;
+        }
+        Ok(())
+    }
+
+    async fn accept(&mut self, app: Server<State>) -> io::Result<()> {
         let mut futures_unordered = FuturesUnordered::new();
 
         for listener in self.0.iter_mut() {
             let app = app.clone();
-            futures_unordered.push(listener.listen(app));
+            futures_unordered.push(listener.accept(app));
         }
 
         while let Some(result) = futures_unordered.next().await {

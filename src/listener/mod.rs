@@ -34,10 +34,30 @@ pub(crate) use unix_listener::UnixListener;
 pub trait Listener<State: 'static>:
     std::fmt::Debug + std::fmt::Display + Send + Sync + 'static
 {
+    /// Bind the listener to the specified address.
+    async fn bind(&mut self) -> io::Result<()>;
+
     /// This is the primary entrypoint for the Listener trait. listen
     /// is called exactly once, and is expected to spawn tasks for
     /// each incoming connection.
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()>;
+    ///
+    /// Accept a new incoming connection from this listener.
+    async fn accept(&mut self, app: Server<State>) -> io::Result<()>;
+}
+
+#[async_trait::async_trait]
+impl<L, State> Listener<State> for Box<L>
+where
+    L: Listener<State>,
+    State: Send + Sync + 'static,
+{
+    async fn bind(&mut self) -> io::Result<()> {
+        self.as_mut().bind().await
+    }
+
+    async fn accept(&mut self, app: Server<State>) -> io::Result<()> {
+        self.as_mut().accept(app).await
+    }
 }
 
 /// crate-internal shared logic used by tcp and unix listeners to

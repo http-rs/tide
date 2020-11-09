@@ -42,13 +42,6 @@ impl TcpListener {
             )),
         }
     }
-
-    async fn connect(&mut self) -> io::Result<()> {
-        if let Self::FromAddrs(addrs, listener @ None) = self {
-            *listener = Some(net::TcpListener::bind(addrs.as_slice()).await?);
-        }
-        Ok(())
-    }
 }
 
 fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: TcpStream) {
@@ -70,10 +63,16 @@ fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: 
 
 #[async_trait::async_trait]
 impl<State: Clone + Send + Sync + 'static> Listener<State> for TcpListener {
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
-        self.connect().await?;
-        let listener = self.listener()?;
+    async fn bind(&mut self) -> io::Result<()> {
+        if let Self::FromAddrs(addrs, listener @ None) = self {
+            *listener = Some(net::TcpListener::bind(addrs.as_slice()).await?);
+        }
         crate::log::info!("Server listening on {}", self);
+        Ok(())
+    }
+
+    async fn accept(&mut self, app: Server<State>) -> io::Result<()> {
+        let listener = self.listener()?;
 
         let mut incoming = listener.incoming();
 
