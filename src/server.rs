@@ -198,6 +198,21 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     }
 
     /// Start listening, but don't see it through to completion.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use async_std::task::block_on;
+    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
+    /// #
+    /// let mut app = tide::new();
+    /// app.at("/").get(|_| async { Ok("Hello, world!") });
+    /// let listener = app.bind("127.0.0.1:8080").await?;
+    /// println!("started listening on {}!", listener.info().connection());
+    /// listener.accept().await?;
+    /// #
+    /// # Ok(()) }) }
+    /// ```
     pub async fn bind<L>(self, listener: L) -> io::Result<crate::listener::Bound>
     where
         L: ToListener<State, crate::listener::Reporter>,
