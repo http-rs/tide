@@ -18,14 +18,11 @@ use crate::listener::ListenInfo;
 /// # use async_std::task::block_on;
 /// # fn main() -> Result<(), std::io::Error> { block_on(async {
 /// #
-/// use tide::listener::ListenInfo;
-///
 /// let mut app = tide::new();
 /// app.at("/").get(|_| async { Ok("Hello, world!") });
-/// app.listen_with("127.0.0.1:8080", |info: ListenInfo| async move {
-///     println!("started listening on {}!", info.connection());
-///     Ok(())
-/// }).await?;
+/// let listener = app.bind("127.0.0.1:8080").await?;
+/// println!("started listening on {}!", listener.info().connection());
+/// listener.accept().await?;
 /// #
 /// # Ok(()) }) }
 /// ```
