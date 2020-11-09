@@ -67,7 +67,10 @@ impl Default for Server<()> {
     }
 }
 
-impl<State: Clone + Send + Sync + 'static> Server<State> {
+impl<State> Server<State>
+where
+    State: Clone + Send + Sync + 'static,
+{
     /// Create a new Tide server with shared application scoped state.
     ///
     /// Application scoped state is useful for storing items
@@ -185,8 +188,9 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
         self
     }
 
-    /// Asynchronously serve the app with the supplied listener. For more details, see [Listener] and [ToListener]
-    pub async fn listen<TL: ToListener<State>>(self, listener: TL) -> io::Result<()> {
+    /// Asynchronously serve the app with the supplied listener. For more
+    /// details, see [Listener] and [ToListener]
+    pub async fn listen<L: ToListener<State>>(self, listener: L) -> io::Result<()> {
         listener.to_listener()?.listen(self).await
     }
 

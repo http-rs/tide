@@ -35,7 +35,10 @@ use async_std::io;
 #[derive(Default)]
 pub struct FailoverListener<State>(Vec<Box<dyn Listener<State>>>);
 
-impl<State: Clone + Send + Sync + 'static> FailoverListener<State> {
+impl<State> FailoverListener<State>
+where
+    State: Clone + Send + Sync + 'static,
+{
     /// creates a new FailoverListener
     pub fn new() -> Self {
         Self(vec![])
@@ -57,7 +60,10 @@ impl<State: Clone + Send + Sync + 'static> FailoverListener<State> {
     /// # std::mem::drop(tide::new().listen(listener)); // for the State generic
     /// # Ok(()) }
     /// ```
-    pub fn add<TL: ToListener<State>>(&mut self, listener: TL) -> io::Result<()> {
+    pub fn add<L>(&mut self, listener: L) -> io::Result<()>
+    where
+        L: ToListener<State>,
+    {
         self.0.push(Box::new(listener.to_listener()?));
         Ok(())
     }
@@ -73,14 +79,20 @@ impl<State: Clone + Send + Sync + 'static> FailoverListener<State> {
     ///         .with_listener(("localhost", 8081)),
     /// ).await?;
     /// #  Ok(()) }) }
-    pub fn with_listener<TL: ToListener<State>>(mut self, listener: TL) -> Self {
+    pub fn with_listener<L>(mut self, listener: L) -> Self
+    where
+        L: ToListener<State>,
+    {
         self.add(listener).expect("Unable to add listener");
         self
     }
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Listener<State> for FailoverListener<State> {
+impl<State> Listener<State> for FailoverListener<State>
+where
+    State: Clone + Send + Sync + 'static,
+{
     async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
         for listener in self.0.iter_mut() {
             let app = app.clone();

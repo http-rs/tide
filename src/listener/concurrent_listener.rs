@@ -55,7 +55,10 @@ impl<State: Clone + Send + Sync + 'static> ConcurrentListener<State> {
     /// # std::mem::drop(tide::new().listen(listener)); // for the State generic
     /// # Ok(()) }
     /// ```
-    pub fn add<TL: ToListener<State>>(&mut self, listener: TL) -> io::Result<()> {
+    pub fn add<L>(&mut self, listener: L) -> io::Result<()>
+    where
+        L: ToListener<State>,
+    {
         self.0.push(Box::new(listener.to_listener()?));
         Ok(())
     }
@@ -71,14 +74,20 @@ impl<State: Clone + Send + Sync + 'static> ConcurrentListener<State> {
     ///         .with_listener(async_std::net::TcpListener::bind("127.0.0.1:8081").await?),
     /// ).await?;
     /// #  Ok(()) }) }
-    pub fn with_listener<TL: ToListener<State>>(mut self, listener: TL) -> Self {
+    pub fn with_listener<L>(mut self, listener: L) -> Self
+    where
+        L: ToListener<State>,
+    {
         self.add(listener).expect("Unable to add listener");
         self
     }
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Listener<State> for ConcurrentListener<State> {
+impl<State> Listener<State> for ConcurrentListener<State>
+where
+    State: Clone + Send + Sync + 'static,
+{
     async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
         let mut futures_unordered = FuturesUnordered::new();
 

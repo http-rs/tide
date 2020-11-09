@@ -5,7 +5,10 @@ use crate::http::url::Url;
 use async_std::io;
 use std::net::ToSocketAddrs;
 
-impl<State: Clone + Send + Sync + 'static> ToListener<State> for Url {
+impl<State> ToListener<State> for Url
+where
+    State: Clone + Send + Sync + 'static,
+{
     type Listener = ParsedListener;
 
     fn to_listener(self) -> io::Result<Self::Listener> {
@@ -48,14 +51,20 @@ impl<State: Clone + Send + Sync + 'static> ToListener<State> for Url {
     }
 }
 
-impl<State: Clone + Send + Sync + 'static> ToListener<State> for String {
+impl<State> ToListener<State> for String
+where
+    State: Clone + Send + Sync + 'static,
+{
     type Listener = ParsedListener;
     fn to_listener(self) -> io::Result<Self::Listener> {
         ToListener::<State>::to_listener(self.as_str())
     }
 }
 
-impl<State: Clone + Send + Sync + 'static> ToListener<State> for &str {
+impl<State> ToListener<State> for &str
+where
+    State: Clone + Send + Sync + 'static,
+{
     type Listener = ParsedListener;
 
     fn to_listener(self) -> io::Result<Self::Listener> {
@@ -75,7 +84,10 @@ impl<State: Clone + Send + Sync + 'static> ToListener<State> for &str {
 }
 
 #[cfg(unix)]
-impl<State: Clone + Send + Sync + 'static> ToListener<State> for async_std::path::PathBuf {
+impl<State> ToListener<State> for async_std::path::PathBuf
+where
+    State: Clone + Send + Sync + 'static,
+{
     type Listener = UnixListener;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(UnixListener::from_path(self))
@@ -83,28 +95,40 @@ impl<State: Clone + Send + Sync + 'static> ToListener<State> for async_std::path
 }
 
 #[cfg(unix)]
-impl<State: Clone + Send + Sync + 'static> ToListener<State> for std::path::PathBuf {
+impl<State> ToListener<State> for std::path::PathBuf
+where
+    State: Clone + Send + Sync + 'static,
+{
     type Listener = UnixListener;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(UnixListener::from_path(self))
     }
 }
 
-impl<State: Clone + Send + Sync + 'static> ToListener<State> for async_std::net::TcpListener {
+impl<State> ToListener<State> for async_std::net::TcpListener
+where
+    State: Clone + Send + Sync + 'static,
+{
     type Listener = TcpListener;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(TcpListener::from_listener(self))
     }
 }
 
-impl<State: Clone + Send + Sync + 'static> ToListener<State> for std::net::TcpListener {
+impl<State> ToListener<State> for std::net::TcpListener
+where
+    State: Clone + Send + Sync + 'static,
+{
     type Listener = TcpListener;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(TcpListener::from_listener(self))
     }
 }
 
-impl<State: Clone + Send + Sync + 'static> ToListener<State> for (&str, u16) {
+impl<State> ToListener<State> for (&str, u16)
+where
+    State: Clone + Send + Sync + 'static,
+{
     type Listener = TcpListener;
 
     fn to_listener(self) -> io::Result<Self::Listener> {
@@ -113,8 +137,9 @@ impl<State: Clone + Send + Sync + 'static> ToListener<State> for (&str, u16) {
 }
 
 #[cfg(unix)]
-impl<State: Clone + Send + Sync + 'static> ToListener<State>
-    for async_std::os::unix::net::UnixListener
+impl<State> ToListener<State> for async_std::os::unix::net::UnixListener
+where
+    State: Clone + Send + Sync + 'static,
 {
     type Listener = UnixListener;
     fn to_listener(self) -> io::Result<Self::Listener> {
@@ -123,14 +148,20 @@ impl<State: Clone + Send + Sync + 'static> ToListener<State>
 }
 
 #[cfg(unix)]
-impl<State: Clone + Send + Sync + 'static> ToListener<State> for std::os::unix::net::UnixListener {
+impl<State> ToListener<State> for std::os::unix::net::UnixListener
+where
+    State: Clone + Send + Sync + 'static,
+{
     type Listener = UnixListener;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(UnixListener::from_listener(self))
     }
 }
 
-impl<State: Clone + Send + Sync + 'static> ToListener<State> for TcpListener {
+impl<State> ToListener<State> for TcpListener
+where
+    State: Clone + Send + Sync + 'static,
+{
     type Listener = Self;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(self)
@@ -138,42 +169,61 @@ impl<State: Clone + Send + Sync + 'static> ToListener<State> for TcpListener {
 }
 
 #[cfg(unix)]
-impl<State: Clone + Send + Sync + 'static> ToListener<State> for UnixListener {
+impl<State> ToListener<State> for UnixListener
+where
+    State: Clone + Send + Sync + 'static,
+{
     type Listener = Self;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(self)
     }
 }
 
-impl<State: Clone + Send + Sync + 'static> ToListener<State> for ConcurrentListener<State> {
+impl<State> ToListener<State> for ConcurrentListener<State>
+where
+    State: Clone + Send + Sync + 'static,
+{
     type Listener = Self;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(self)
     }
 }
 
-impl<State: Clone + Send + Sync + 'static> ToListener<State> for ParsedListener {
+impl<State> ToListener<State> for ParsedListener
+where
+    State: Clone + Send + Sync + 'static,
+{
     type Listener = Self;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(self)
     }
 }
 
-impl<State: Clone + Send + Sync + 'static> ToListener<State> for FailoverListener<State> {
+impl<State> ToListener<State> for FailoverListener<State>
+where
+    State: Clone + Send + Sync + 'static,
+{
     type Listener = Self;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(self)
     }
 }
 
-impl<State: Clone + Send + Sync + 'static> ToListener<State> for std::net::SocketAddr {
+impl<State> ToListener<State> for std::net::SocketAddr
+where
+    State: Clone + Send + Sync + 'static,
+{
     type Listener = TcpListener;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(TcpListener::from_addrs(vec![self]))
     }
 }
 
-impl<TL: ToListener<State>, State: Clone + Send + Sync + 'static> ToListener<State> for Vec<TL> {
+impl<L, State> ToListener<State> for Vec<L>
+where
+    L: ToListener<State>,
+    State: Clone + Send + Sync + 'static,
+{
     type Listener = ConcurrentListener<State>;
     fn to_listener(self) -> io::Result<Self::Listener> {
         let mut concurrent_listener = ConcurrentListener::new();
@@ -188,7 +238,7 @@ impl<TL: ToListener<State>, State: Clone + Send + Sync + 'static> ToListener<Sta
 mod parse_tests {
     use super::*;
 
-    fn listen<TL: ToListener<()>>(listener: TL) -> io::Result<TL::Listener> {
+    fn listen<L: ToListener<()>>(listener: L) -> io::Result<L::Listener> {
         listener.to_listener()
     }
 
