@@ -1,4 +1,4 @@
-use super::is_transient_error;
+use super::{is_transient_error, ListenInfo};
 
 use crate::listener::Listener;
 use crate::{log, Server};
@@ -7,61 +7,42 @@ use std::fmt::{self, Display, Formatter};
 
 use async_std::os::unix::net::{self, SocketAddr, UnixStream};
 use async_std::prelude::*;
-use async_std::{io, path::PathBuf, task};
+use async_std::{io, task};
+use async_std::path::PathBuf;
 
 /// This represents a tide [Listener](crate::listener::Listener) that
 /// wraps an [async_std::os::unix::net::UnixListener]. It is implemented as an
 /// enum in order to allow creation of a tide::listener::UnixListener
-/// from a [PathBuf] that has not yet been opened/bound OR from a bound
+/// from a [`PathBuf`] spec that has not yet been bound OR from a bound
 /// [async_std::os::unix::net::UnixListener].
 ///
 /// This is currently crate-visible only, and tide users are expected
 /// to create these through [ToListener](crate::ToListener) conversions.
-#[derive(Debug)]
-pub enum UnixListener {
-    FromPath(PathBuf, Option<net::UnixListener>),
-    FromListener(net::UnixListener),
+pub struct UnixListener<State> {
+    path: Option<PathBuf>,
+    listener: Option<net::UnixListener>,
+    server: Option<Server<State>>,
+    info: Option<ListenInfo>,
 }
 
-impl UnixListener {
+impl<State> UnixListener<State> {
     pub fn from_path(path: impl Into<PathBuf>) -> Self {
-        Self::FromPath(path.into(), None)
-    }
-
-    pub fn from_listener(listener: impl Into<net::UnixListener>) -> Self {
-        Self::FromListener(listener.into())
-    }
-
-    fn listener(&self) -> io::Result<&net::UnixListener> {
-        match self {
-            Self::FromPath(_, Some(listener)) => Ok(listener),
-            Self::FromListener(listener) => Ok(listener),
-            Self::FromPath(path, None) => Err(io::Error::new(
-                io::ErrorKind::AddrNotAvailable,
-                format!(
-                    "unable to connect to {}",
-                    path.to_str().unwrap_or("[unknown]")
-                ),
-            )),
+        Self {
+            path: Some(path.into()),
+            listener: None,
+            server: None,
+            info: None,
         }
     }
 
-    async fn connect(&mut self) -> io::Result<()> {
-        if let Self::FromPath(path, listener @ None) = self {
-            *listener = Some(net::UnixListener::bind(path).await?);
+    pub fn from_listener(unix_listener: impl Into<net::UnixListener>) -> Self {
+        Self {
+            path: None,
+            listener: Some(unix_listener.into()),
+            server: None,
+            info: None,
         }
-        Ok(())
     }
-}
-
-fn unix_socket_addr_to_string(result: io::Result<SocketAddr>) -> Option<String> {
-    result.ok().and_then(|addr| {
-        if let Some(pathname) = addr.as_pathname().and_then(|p| p.canonicalize().ok()) {
-            Some(format!("http+unix://{}", pathname.display()))
-        } else {
-            None
-        }
-    })
 }
 
 fn handle_unix<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: UnixStream) {
@@ -82,11 +63,39 @@ fn handle_unix<State: Clone + Send + Sync + 'static>(app: Server<State>, stream:
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Listener<State> for UnixListener {
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
-        self.connect().await?;
-        crate::log::info!("Server listening on {}", self);
-        let listener = self.listener()?;
+impl<State> Listener<State> for UnixListener<State>
+where
+    State: Clone + Send + Sync + 'static,
+{
+    async fn bind(&mut self, server: Server<State>) -> io::Result<()> {
+        assert!(self.server.is_none(), "`bind` should only be called once");
+        self.server = Some(server);
+
+        if let None = self.listener {
+            let path = self.path.take().expect("`bind` should only be called once");
+            let listener = net::UnixListener::bind(path).await?;
+            self.listener = Some(listener);
+        }
+
+        // Format the listen information.
+        let conn_string = format!("{}", self);
+        let transport = "uds".to_owned();
+        let tls = false;
+        self.info = Some(ListenInfo::new(conn_string, transport, tls));
+
+        Ok(())
+    }
+
+    async fn accept(&mut self) -> io::Result<()> {
+        let server = self
+            .server
+            .take()
+            .expect("`Listener::bind` must be called before `Listener::accept`");
+        let listener = self
+            .listener
+            .take()
+            .expect("`Listener::bind` must be called before `Listener::accept`");
+
         let mut incoming = listener.incoming();
 
         while let Some(stream) = incoming.next().await {
@@ -100,28 +109,60 @@ impl<State: Clone + Send + Sync + 'static> Listener<State> for UnixListener {
                 }
 
                 Ok(stream) => {
-                    handle_unix(app.clone(), stream);
+                    handle_unix(server.clone(), stream);
                 }
             };
         }
-
         Ok(())
+    }
+
+    fn info(&self) -> Vec<ListenInfo> {
+        match &self.info {
+            Some(info) => vec![info.clone()],
+            None => vec![],
+        }
     }
 }
 
-impl Display for UnixListener {
+impl<State> fmt::Debug for UnixListener<State> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::FromListener(l) | Self::FromPath(_, Some(l)) => write!(
-                f,
-                "{}",
-                unix_socket_addr_to_string(l.local_addr())
-                    .as_deref()
-                    .unwrap_or("http+unix://[unknown]")
-            ),
-            Self::FromPath(path, None) => {
-                write!(f, "http+unix://{}", path.to_str().unwrap_or("[unknown]"))
+        f.debug_struct("UnixListener")
+            .field(&"listener", &self.listener)
+            .field(&"path", &self.path)
+            .field(
+                &"server",
+                if self.server.is_some() {
+                    &"Some(Server<State>)"
+                } else {
+                    &"None"
+                },
+            )
+            .finish()
+    }
+}
+
+impl<State> Display for UnixListener<State> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match &self.listener {
+            Some(listener) => {
+                let path = listener.local_addr().expect("Could not get local path dir");
+                let pathname = path.as_pathname().and_then(|p| p.canonicalize().ok()).expect("Could not canonicalize path dir");
+                write!(f, "http+unix://{}", pathname.display())
             }
+            None => match &self.path {
+                Some(path) =>  write!(f, "http+unix://{}", path.display()),
+                None => write!(f, "Not listening. Did you forget to call `Listener::bind`?"),
+            },
         }
     }
+}
+
+fn unix_socket_addr_to_string(result: io::Result<SocketAddr>) -> Option<String> {
+    result.ok().and_then(|addr| {
+        if let Some(pathname) = addr.as_pathname().and_then(|p| p.canonicalize().ok()) {
+            Some(format!("http+unix://{}", pathname.display()))
+        } else {
+            None
+        }
+    })
 }

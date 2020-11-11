@@ -15,7 +15,7 @@ use std::fmt::{self, Debug, Display, Formatter};
 /// to create these through [ToListener](crate::ToListener) conversions.
 pub enum ParsedListener<State> {
     #[cfg(unix)]
-    Unix(UnixListener),
+    Unix(UnixListener<State>),
     Tcp(TcpListener<State>),
 }
 
@@ -23,7 +23,7 @@ impl<State> Debug for ParsedListener<State> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             #[cfg(unix)]
-            ParsedListener::Unix(unix) => Debug::fmt(tcp, f),
+            ParsedListener::Unix(unix) => Debug::fmt(unix, f),
             ParsedListener::Tcp(tcp) => Debug::fmt(tcp, f),
         }
     }

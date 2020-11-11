@@ -88,7 +88,7 @@ impl<State> ToListener<State> for async_std::path::PathBuf
 where
     State: Clone + Send + Sync + 'static,
 {
-    type Listener = UnixListener;
+    type Listener = UnixListener<State>;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(UnixListener::from_path(self))
     }
@@ -99,7 +99,7 @@ impl<State> ToListener<State> for std::path::PathBuf
 where
     State: Clone + Send + Sync + 'static,
 {
-    type Listener = UnixListener;
+    type Listener = UnixListener<State>;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(UnixListener::from_path(self))
     }
@@ -141,7 +141,7 @@ impl<State> ToListener<State> for async_std::os::unix::net::UnixListener
 where
     State: Clone + Send + Sync + 'static,
 {
-    type Listener = UnixListener;
+    type Listener = UnixListener<State>;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(UnixListener::from_listener(self))
     }
@@ -152,7 +152,7 @@ impl<State> ToListener<State> for std::os::unix::net::UnixListener
 where
     State: Clone + Send + Sync + 'static,
 {
-    type Listener = UnixListener;
+    type Listener = UnixListener<State>;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(UnixListener::from_listener(self))
     }
@@ -169,7 +169,7 @@ where
 }
 
 #[cfg(unix)]
-impl<State> ToListener<State> for UnixListener
+impl<State> ToListener<State> for UnixListener<State>
 where
     State: Clone + Send + Sync + 'static,
 {
@@ -273,24 +273,12 @@ mod parse_tests {
         #[test]
         fn str_url_to_unix_listener() {
             let listener = listen("http+unix:///var/run/tide/socket").unwrap();
-            assert!(matches!(
-                listener,
-                ParsedListener::Unix(UnixListener::FromPath(_, None))
-            ));
             assert_eq!("http+unix:///var/run/tide/socket", listener.to_string());
 
             let listener = listen("http+unix://./socket").unwrap();
-            assert!(matches!(
-                listener,
-                ParsedListener::Unix(UnixListener::FromPath(_, None))
-            ));
             assert_eq!("http+unix://./socket", listener.to_string());
 
             let listener = listen("http+unix://socket").unwrap();
-            assert!(matches!(
-                listener,
-                ParsedListener::Unix(UnixListener::FromPath(_, None))
-            ));
             assert_eq!("http+unix://socket", listener.to_string());
         }
 
