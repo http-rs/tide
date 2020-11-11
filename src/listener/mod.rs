@@ -14,8 +14,10 @@ mod unix_listener;
 
 use std::fmt::{Debug, Display};
 
-use crate::Server;
 use async_std::io;
+use async_trait::async_trait;
+
+use crate::Server;
 
 pub use concurrent_listener::ConcurrentListener;
 pub use failover_listener::FailoverListener;
@@ -28,27 +30,26 @@ pub(crate) use tcp_listener::TcpListener;
 #[cfg(all(unix, feature = "h1-server"))]
 pub(crate) use unix_listener::UnixListener;
 
-/// The Listener trait represents an implementation of http transport
-/// for a tide application. In order to provide a Listener to tide,
-/// you will also need to implement at least one [`ToListener`](crate::listener::ToListener) that
+/// The Listener trait represents an implementation of http transport for a tide
+/// application. In order to provide a Listener to tide, you will also need to
+/// implement at least one [`ToListener`](crate::listener::ToListener) that
 /// outputs your Listener type.
-#[async_trait::async_trait]
+#[async_trait]
 pub trait Listener<State>: Debug + Display + Send + Sync + 'static
 where
     State: Send + Sync + 'static,
 {
-    /// Bind the listener to the specified address.
+    /// Bind the listener. This starts the listening process by opening the
+    /// necessary network ports, but not yet accepting incoming connections. This
+    /// method must be called before `accept`.
     async fn bind(&mut self, app: Server<State>) -> io::Result<()>;
 
-    /// This is the primary entrypoint for the Listener trait. listen
-    /// is called exactly once, and is expected to spawn tasks for
-    /// each incoming connection.
-    ///
-    /// Accept a new incoming connection from this listener.
+    /// Start accepting incoming connections. This method must be called only
+    /// after `bind` has succeeded.
     async fn accept(&mut self) -> io::Result<()>;
 }
 
-#[async_trait::async_trait]
+#[async_trait]
 impl<L, State> Listener<State> for Box<L>
 where
     L: Listener<State>,
