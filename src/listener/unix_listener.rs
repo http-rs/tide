@@ -71,7 +71,7 @@ where
         assert!(self.server.is_none(), "`bind` should only be called once");
         self.server = Some(server);
 
-        if let None = self.listener {
+        if self.listener.is_none() {
             let path = self.path.take().expect("`bind` should only be called once");
             let listener = net::UnixListener::bind(path).await?;
             self.listener = Some(listener);

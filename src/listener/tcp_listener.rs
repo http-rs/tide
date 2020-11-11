@@ -70,7 +70,7 @@ where
         assert!(self.server.is_none(), "`bind` should only be called once");
         self.server = Some(server);
 
-        if let None = self.listener {
+        if self.listener.is_none() {
             let addrs = self
                 .addrs
                 .take()
