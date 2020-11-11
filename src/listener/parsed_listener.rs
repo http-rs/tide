@@ -1,6 +1,6 @@
 #[cfg(unix)]
 use super::UnixListener;
-use super::{Listener, TcpListener};
+use super::{ListenInfo, Listener, TcpListener};
 use crate::Server;
 
 use async_std::io;
@@ -57,6 +57,14 @@ where
             #[cfg(unix)]
             Self::Unix(u) => u.accept().await,
             Self::Tcp(t) => t.accept().await,
+        }
+    }
+
+    fn info(&self) -> Vec<ListenInfo> {
+        match self {
+            #[cfg(unix)]
+            ParsedListener::Unix(unix) => unix.info(),
+            ParsedListener::Tcp(tcp) => tcp.info(),
         }
     }
 }

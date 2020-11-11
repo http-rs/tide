@@ -5,6 +5,8 @@ use std::fmt::{self, Debug, Display, Formatter};
 
 use async_std::io;
 
+use crate::listener::ListenInfo;
+
 /// FailoverListener allows tide to attempt to listen in a sequential
 /// order to any number of ports/addresses. The first successful
 /// listener is used.
@@ -132,6 +134,16 @@ where
                 io::ErrorKind::AddrNotAvailable,
                 "unable to listen to any supplied listener spec",
             )),
+        }
+    }
+
+    fn info(&self) -> Vec<ListenInfo> {
+        match self.index {
+            Some(index) => match self.listeners.get(index) {
+                Some(Some(listener)) => listener.info(),
+                _ => vec![],
+            },
+            None => vec![],
         }
     }
 }

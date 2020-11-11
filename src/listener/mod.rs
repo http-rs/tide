@@ -47,6 +47,10 @@ where
     /// Start accepting incoming connections. This method must be called only
     /// after `bind` has succeeded.
     async fn accept(&mut self) -> io::Result<()>;
+
+    /// Expose information about the connection. This should always return valid
+    /// data after `bind` has succeeded.
+    fn info(&self) -> Vec<ListenInfo>;
 }
 
 #[async_trait]
@@ -62,6 +66,10 @@ where
     async fn accept(&mut self) -> io::Result<()> {
         self.as_mut().accept().await
     }
+
+    fn info(&self) -> Vec<ListenInfo> {
+        self.as_ref().info()
+    }
 }
 
 /// crate-internal shared logic used by tcp and unix listeners to
@@ -75,4 +83,51 @@ pub(crate) fn is_transient_error(e: &io::Error) -> bool {
         e.kind(),
         ConnectionRefused | ConnectionAborted | ConnectionReset
     )
+}
+
+/// Information about the `Listener`.
+///
+/// See [`Report`](../listener/trait.Report.html) for more.
+#[derive(Debug, Clone)]
+pub struct ListenInfo {
+    conn_string: String,
+    transport: String,
+    tls: bool,
+}
+
+impl ListenInfo {
+    /// Create a new instance of `ListenInfo`.
+    ///
+    /// This method should only be called when implementing a new Tide `listener`
+    /// strategy.
+    pub fn new(conn_string: String, transport: String, tls: bool) -> Self {
+        Self {
+            conn_string,
+            transport,
+            tls,
+        }
+    }
+
+    /// Get the connection string.
+    pub fn connection(&self) -> &str {
+        self.conn_string.as_str()
+    }
+
+    /// The underlying transport this connection listens on.
+    ///
+    /// Examples are: "tcp", "uds", etc.
+    pub fn transport(&self) -> &str {
+        self.transport.as_str()
+    }
+
+    /// Is the connection encrypted?
+    pub fn is_encrypted(&self) -> bool {
+        self.tls
+    }
+}
+
+impl Display for ListenInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.conn_string)
+    }
 }

@@ -1,4 +1,4 @@
-use super::is_transient_error;
+use super::{is_transient_error, ListenInfo};
 
 use crate::listener::Listener;
 use crate::{log, Server};
@@ -21,23 +21,7 @@ pub struct TcpListener<State> {
     addrs: Option<Vec<SocketAddr>>,
     listener: Option<net::TcpListener>,
     server: Option<Server<State>>,
-}
-
-impl<State> fmt::Debug for TcpListener<State> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("TcpListener")
-            .field(&"listener", &self.listener)
-            .field(&"addrs", &self.addrs)
-            .field(
-                &"server",
-                if self.server.is_some() {
-                    &"Some(Server<State>)"
-                } else {
-                    &"None"
-                },
-            )
-            .finish()
-    }
+    info: Option<ListenInfo>,
 }
 
 impl<State> TcpListener<State> {
@@ -46,6 +30,7 @@ impl<State> TcpListener<State> {
             addrs: Some(addrs),
             listener: None,
             server: None,
+            info: None,
         }
     }
 
@@ -54,6 +39,7 @@ impl<State> TcpListener<State> {
             addrs: None,
             listener: Some(tcp_listener.into()),
             server: None,
+            info: None,
         }
     }
 }
@@ -92,7 +78,13 @@ where
             let listener = net::TcpListener::bind(addrs.as_slice()).await?;
             self.listener = Some(listener);
         }
-        crate::log::info!("Server listening on {}", self);
+
+        // Format the listen information.
+        let conn_string = format!("{}", self);
+        let transport = "tcp".to_owned();
+        let tls = false;
+        self.info = Some(ListenInfo::new(conn_string, transport, tls));
+
         Ok(())
     }
 
@@ -124,6 +116,30 @@ where
             };
         }
         Ok(())
+    }
+
+    fn info(&self) -> Vec<ListenInfo> {
+        match &self.info {
+            Some(info) => vec![info.clone()],
+            None => vec![],
+        }
+    }
+}
+
+impl<State> fmt::Debug for TcpListener<State> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("TcpListener")
+            .field(&"listener", &self.listener)
+            .field(&"addrs", &self.addrs)
+            .field(
+                &"server",
+                if self.server.is_some() {
+                    &"Some(Server<State>)"
+                } else {
+                    &"None"
+                },
+            )
+            .finish()
     }
 }
 

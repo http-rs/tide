@@ -1,4 +1,4 @@
-use crate::listener::{Listener, ToListener};
+use crate::listener::{ListenInfo, Listener, ToListener};
 use crate::Server;
 
 use std::fmt::{self, Debug, Display, Formatter};
@@ -108,6 +108,14 @@ where
             result?;
         }
         Ok(())
+    }
+
+    fn info(&self) -> Vec<ListenInfo> {
+        self.listeners
+            .iter()
+            .map(|listener| listener.info().into_iter())
+            .flatten()
+            .collect()
     }
 }
 
