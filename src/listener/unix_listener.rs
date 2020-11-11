@@ -6,9 +6,9 @@ use crate::{log, Server};
 use std::fmt::{self, Display, Formatter};
 
 use async_std::os::unix::net::{self, SocketAddr, UnixStream};
+use async_std::path::PathBuf;
 use async_std::prelude::*;
 use async_std::{io, task};
-use async_std::path::PathBuf;
 
 /// This represents a tide [Listener](crate::listener::Listener) that
 /// wraps an [async_std::os::unix::net::UnixListener]. It is implemented as an
@@ -146,11 +146,14 @@ impl<State> Display for UnixListener<State> {
         match &self.listener {
             Some(listener) => {
                 let path = listener.local_addr().expect("Could not get local path dir");
-                let pathname = path.as_pathname().and_then(|p| p.canonicalize().ok()).expect("Could not canonicalize path dir");
+                let pathname = path
+                    .as_pathname()
+                    .and_then(|p| p.canonicalize().ok())
+                    .expect("Could not canonicalize path dir");
                 write!(f, "http+unix://{}", pathname.display())
             }
             None => match &self.path {
-                Some(path) =>  write!(f, "http+unix://{}", path.display()),
+                Some(path) => write!(f, "http+unix://{}", path.display()),
                 None => write!(f, "Not listening. Did you forget to call `Listener::bind`?"),
             },
         }
