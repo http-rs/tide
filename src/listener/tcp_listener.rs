@@ -56,17 +56,6 @@ impl<State> TcpListener<State> {
             server: None,
         }
     }
-
-    // fn listener(&self) -> io::Result<&net::TcpListener> {
-    //     if let Some(listener) = self.listener {
-    //         Ok(&listener)
-    //     } else {
-    //         Err(io::Error::new(
-    //             io::ErrorKind::AddrNotAvailable,
-    //             format!("unable to connect to {:?}", self.addrs.unwrap()),
-    //         ))
-    //     }
-    // }
 }
 
 fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: TcpStream) {
@@ -140,18 +129,19 @@ where
 
 impl<State> Display for TcpListener<State> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let http_fmt = |a| format!("http://{}", a);
         match &self.listener {
-            Some(listener) => write!(
-                f,
-                "{}",
-                listener
-                    .local_addr()
-                    .iter()
-                    .map(|a| format!("http://{}", a))
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            ),
-            None => write!(f, "Not listening. Did you forget to call `Listener::bind`?"),
+            Some(listener) => {
+                let addr = listener.local_addr().expect("Could not get local addr");
+                write!(f, "{}", http_fmt(&addr))
+            }
+            None => match &self.addrs {
+                Some(addrs) => {
+                    let addrs = addrs.iter().map(http_fmt).collect::<Vec<_>>().join(", ");
+                    write!(f, "{}", addrs)
+                }
+                None => write!(f, "Not listening. Did you forget to call `Listener::bind`?"),
+            },
         }
     }
 }

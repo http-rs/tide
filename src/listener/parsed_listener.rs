@@ -19,7 +19,7 @@ pub enum ParsedListener<State> {
     Tcp(TcpListener<State>),
 }
 
-impl<State> fmt::Debug for ParsedListener<State> {
+impl<State> Debug for ParsedListener<State> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             #[cfg(unix)]
