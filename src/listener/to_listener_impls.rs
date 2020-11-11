@@ -9,7 +9,7 @@ impl<State> ToListener<State> for Url
 where
     State: Clone + Send + Sync + 'static,
 {
-    type Listener = ParsedListener;
+    type Listener = ParsedListener<State>;
 
     fn to_listener(self) -> io::Result<Self::Listener> {
         match self.scheme() {
@@ -55,7 +55,7 @@ impl<State> ToListener<State> for String
 where
     State: Clone + Send + Sync + 'static,
 {
-    type Listener = ParsedListener;
+    type Listener = ParsedListener<State>;
     fn to_listener(self) -> io::Result<Self::Listener> {
         ToListener::<State>::to_listener(self.as_str())
     }
@@ -65,7 +65,7 @@ impl<State> ToListener<State> for &str
 where
     State: Clone + Send + Sync + 'static,
 {
-    type Listener = ParsedListener;
+    type Listener = ParsedListener<State>;
 
     fn to_listener(self) -> io::Result<Self::Listener> {
         if let Ok(socket_addrs) = self.to_socket_addrs() {
@@ -109,7 +109,7 @@ impl<State> ToListener<State> for async_std::net::TcpListener
 where
     State: Clone + Send + Sync + 'static,
 {
-    type Listener = TcpListener;
+    type Listener = TcpListener<State>;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(TcpListener::from_listener(self))
     }
@@ -119,7 +119,7 @@ impl<State> ToListener<State> for std::net::TcpListener
 where
     State: Clone + Send + Sync + 'static,
 {
-    type Listener = TcpListener;
+    type Listener = TcpListener<State>;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(TcpListener::from_listener(self))
     }
@@ -129,7 +129,7 @@ impl<State> ToListener<State> for (&str, u16)
 where
     State: Clone + Send + Sync + 'static,
 {
-    type Listener = TcpListener;
+    type Listener = TcpListener<State>;
 
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(TcpListener::from_addrs(self.to_socket_addrs()?.collect()))
@@ -158,7 +158,7 @@ where
     }
 }
 
-impl<State> ToListener<State> for TcpListener
+impl<State> ToListener<State> for TcpListener<State>
 where
     State: Clone + Send + Sync + 'static,
 {
@@ -189,7 +189,7 @@ where
     }
 }
 
-impl<State> ToListener<State> for ParsedListener
+impl<State> ToListener<State> for ParsedListener<State>
 where
     State: Clone + Send + Sync + 'static,
 {
@@ -213,7 +213,7 @@ impl<State> ToListener<State> for std::net::SocketAddr
 where
     State: Clone + Send + Sync + 'static,
 {
-    type Listener = TcpListener;
+    type Listener = TcpListener<State>;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(TcpListener::from_addrs(vec![self]))
     }
@@ -245,48 +245,24 @@ mod parse_tests {
     #[test]
     fn url_to_tcp_listener() {
         let listener = listen(Url::parse("http://localhost:8000").unwrap()).unwrap();
-        assert!(matches!(
-            listener,
-            ParsedListener::Tcp(TcpListener::FromAddrs(_, None))
-        ));
-        assert!(listener.to_string().contains("http://127.0.0.1:8000"));
 
+        assert!(listener.to_string().contains("http://127.0.0.1:8000"));
         let listener = listen(Url::parse("tcp://localhost:8000").unwrap()).unwrap();
-        assert!(matches!(
-            listener,
-            ParsedListener::Tcp(TcpListener::FromAddrs(_, None))
-        ));
         assert!(listener.to_string().contains("http://127.0.0.1:8000"));
 
         let listener = listen(Url::parse("http://127.0.0.1").unwrap()).unwrap();
-        assert!(matches!(
-            listener,
-            ParsedListener::Tcp(TcpListener::FromAddrs(_, None))
-        ));
         assert_eq!(listener.to_string(), "http://127.0.0.1:80");
     }
 
     #[test]
     fn str_url_to_tcp_listener() {
         let listener = listen("tcp://localhost:8000").unwrap();
-        assert!(matches!(
-            listener,
-            ParsedListener::Tcp(TcpListener::FromAddrs(_, None))
-        ));
         assert!(listener.to_string().contains("http://127.0.0.1:8000"));
 
         let listener = listen("tcp://localhost:8000").unwrap();
-        assert!(matches!(
-            listener,
-            ParsedListener::Tcp(TcpListener::FromAddrs(_, None))
-        ));
         assert!(listener.to_string().contains("http://127.0.0.1:8000"));
 
         let listener = listen("tcp://127.0.0.1").unwrap();
-        assert!(matches!(
-            listener,
-            ParsedListener::Tcp(TcpListener::FromAddrs(_, None))
-        ));
         assert_eq!(listener.to_string(), "http://127.0.0.1:80");
     }
 
@@ -366,24 +342,12 @@ mod parse_tests {
     #[test]
     fn str_to_socket_addr() {
         let listener = listen("127.0.0.1:1312").unwrap();
-        assert!(matches!(
-            listener,
-            ParsedListener::Tcp(TcpListener::FromAddrs(_, None))
-        ));
         assert_eq!("http://127.0.0.1:1312", listener.to_string());
 
         let listener = listen("[::1]:1312").unwrap();
-        assert!(matches!(
-            listener,
-            ParsedListener::Tcp(TcpListener::FromAddrs(_, None))
-        ));
         assert_eq!("http://[::1]:1312", listener.to_string());
 
         let listener = listen("localhost:3000").unwrap();
-        assert!(matches!(
-            listener,
-            ParsedListener::Tcp(TcpListener::FromAddrs(_, None))
-        ));
         assert!(listener.to_string().contains(":3000"));
     }
 

@@ -4,7 +4,7 @@ use super::{Listener, TcpListener};
 use crate::Server;
 
 use async_std::io;
-use std::fmt::{self, Display, Formatter};
+use std::fmt::{self, Debug, Display, Formatter};
 
 /// This is an enum that contains variants for each of the listeners
 /// that can be parsed from a string. This is used as the associated
@@ -13,14 +13,23 @@ use std::fmt::{self, Display, Formatter};
 ///
 /// This is currently crate-visible only, and tide users are expected
 /// to create these through [ToListener](crate::ToListener) conversions.
-#[derive(Debug)]
-pub enum ParsedListener {
+pub enum ParsedListener<State> {
     #[cfg(unix)]
     Unix(UnixListener),
-    Tcp(TcpListener),
+    Tcp(TcpListener<State>),
 }
 
-impl Display for ParsedListener {
+impl<State> fmt::Debug for ParsedListener<State> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            #[cfg(unix)]
+            ParsedListener::Unix(unix) => Debug::fmt(tcp, f),
+            ParsedListener::Tcp(tcp) => Debug::fmt(tcp, f),
+        }
+    }
+}
+
+impl<State> Display for ParsedListener<State> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             #[cfg(unix)]
@@ -31,22 +40,23 @@ impl Display for ParsedListener {
 }
 
 #[async_trait::async_trait]
-impl<State> Listener<State> for ParsedListener
+impl<State> Listener<State> for ParsedListener<State>
 where
     State: Clone + Send + Sync + 'static,
 {
-    async fn bind(&mut self) -> io::Result<()> {
+    async fn bind(&mut self, server: Server<State>) -> io::Result<()> {
         match self {
             #[cfg(unix)]
-            Self::Unix(u) => u.bind().await,
-            Self::Tcp(t) => t.bind().await,
+            Self::Unix(u) => u.bind(server).await,
+            Self::Tcp(t) => t.bind(server).await,
         }
     }
-    async fn accept(&mut self, app: Server<State>) -> io::Result<()> {
+
+    async fn accept(&mut self) -> io::Result<()> {
         match self {
             #[cfg(unix)]
-            Self::Unix(u) => u.accept(app).await,
-            Self::Tcp(t) => t.accept(app).await,
+            Self::Unix(u) => u.accept().await,
+            Self::Tcp(t) => t.accept().await,
         }
     }
 }

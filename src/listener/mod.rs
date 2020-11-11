@@ -12,6 +12,8 @@ mod to_listener_impls;
 #[cfg(all(unix, feature = "h1-server"))]
 mod unix_listener;
 
+use std::fmt::{Debug, Display};
+
 use crate::Server;
 use async_std::io;
 
@@ -31,18 +33,19 @@ pub(crate) use unix_listener::UnixListener;
 /// you will also need to implement at least one [`ToListener`](crate::listener::ToListener) that
 /// outputs your Listener type.
 #[async_trait::async_trait]
-pub trait Listener<State: 'static>:
-    std::fmt::Debug + std::fmt::Display + Send + Sync + 'static
+pub trait Listener<State>: Debug + Display + Send + Sync + 'static
+where
+    State: Send + Sync + 'static,
 {
     /// Bind the listener to the specified address.
-    async fn bind(&mut self) -> io::Result<()>;
+    async fn bind(&mut self, app: Server<State>) -> io::Result<()>;
 
     /// This is the primary entrypoint for the Listener trait. listen
     /// is called exactly once, and is expected to spawn tasks for
     /// each incoming connection.
     ///
     /// Accept a new incoming connection from this listener.
-    async fn accept(&mut self, app: Server<State>) -> io::Result<()>;
+    async fn accept(&mut self) -> io::Result<()>;
 }
 
 #[async_trait::async_trait]
@@ -51,12 +54,12 @@ where
     L: Listener<State>,
     State: Send + Sync + 'static,
 {
-    async fn bind(&mut self) -> io::Result<()> {
-        self.as_mut().bind().await
+    async fn bind(&mut self, app: Server<State>) -> io::Result<()> {
+        self.as_mut().bind(app).await
     }
 
-    async fn accept(&mut self, app: Server<State>) -> io::Result<()> {
-        self.as_mut().accept(app).await
+    async fn accept(&mut self) -> io::Result<()> {
+        self.as_mut().accept().await
     }
 }
 

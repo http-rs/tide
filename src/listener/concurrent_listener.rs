@@ -33,12 +33,14 @@ use futures_util::stream::{futures_unordered::FuturesUnordered, StreamExt};
 ///```
 
 #[derive(Default)]
-pub struct ConcurrentListener<State>(Vec<Box<dyn Listener<State>>>);
+pub struct ConcurrentListener<State> {
+    listeners: Vec<Box<dyn Listener<State>>>,
+}
 
 impl<State: Clone + Send + Sync + 'static> ConcurrentListener<State> {
     /// creates a new ConcurrentListener
     pub fn new() -> Self {
-        Self(vec![])
+        Self { listeners: vec![] }
     }
 
     /// Adds any [`ToListener`](crate::listener::ToListener) to this
@@ -59,7 +61,7 @@ impl<State: Clone + Send + Sync + 'static> ConcurrentListener<State> {
     where
         L: ToListener<State>,
     {
-        self.0.push(Box::new(listener.to_listener()?));
+        self.listeners.push(Box::new(listener.to_listener()?));
         Ok(())
     }
 
@@ -88,19 +90,18 @@ impl<State> Listener<State> for ConcurrentListener<State>
 where
     State: Clone + Send + Sync + 'static,
 {
-    async fn bind(&mut self) -> io::Result<()> {
-        for listener in self.0.iter_mut() {
-            listener.bind().await?;
+    async fn bind(&mut self, app: Server<State>) -> io::Result<()> {
+        for listener in self.listeners.iter_mut() {
+            listener.bind(app.clone()).await?;
         }
         Ok(())
     }
 
-    async fn accept(&mut self, app: Server<State>) -> io::Result<()> {
+    async fn accept(&mut self) -> io::Result<()> {
         let mut futures_unordered = FuturesUnordered::new();
 
-        for listener in self.0.iter_mut() {
-            let app = app.clone();
-            futures_unordered.push(listener.accept(app));
+        for listener in self.listeners.iter_mut() {
+            futures_unordered.push(listener.accept());
         }
 
         while let Some(result) = futures_unordered.next().await {
@@ -112,14 +113,14 @@ where
 
 impl<State> Debug for ConcurrentListener<State> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self.0)
+        write!(f, "{:?}", self.listeners)
     }
 }
 
 impl<State> Display for ConcurrentListener<State> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let string = self
-            .0
+            .listeners
             .iter()
             .map(|l| l.to_string())
             .collect::<Vec<_>>()

@@ -188,12 +188,23 @@ where
         self
     }
 
-    /// Asynchronously serve the app with the supplied listener. For more
-    /// details, see [Listener] and [ToListener]
+    // /// Asynchronously serve the app with the supplied listener. For more
+    // /// details, see [Listener] and [ToListener]
     pub async fn listen<L: ToListener<State>>(self, listener: L) -> io::Result<()> {
         let mut listener = listener.to_listener()?;
-        listener.bind().await?;
-        listener.accept(self).await
+        listener.bind(self).await?;
+        listener.accept().await?;
+        Ok(())
+    }
+
+    /// Asynchronously bind the listener.
+    pub async fn bind<L: ToListener<State>>(
+        self,
+        listener: L,
+    ) -> io::Result<<L as ToListener<State>>::Listener> {
+        let mut listener = listener.to_listener()?;
+        listener.bind(self).await?;
+        Ok(listener)
     }
 
     /// Respond to a `Request` with a `Response`.

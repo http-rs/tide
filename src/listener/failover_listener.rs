@@ -98,10 +98,10 @@ impl<State> Listener<State> for FailoverListener<State>
 where
     State: Clone + Send + Sync + 'static,
 {
-    async fn bind(&mut self) -> io::Result<()> {
+    async fn bind(&mut self, app: Server<State>) -> io::Result<()> {
         for (index, listener) in self.listeners.iter_mut().enumerate() {
             let listener = listener.as_deref_mut().expect("bind called twice");
-            match listener.bind().await {
+            match listener.bind(app.clone()).await {
                 Ok(_) => {
                     self.index = Some(index);
                     return Ok(());
@@ -121,11 +121,11 @@ where
         ))
     }
 
-    async fn accept(&mut self, app: Server<State>) -> io::Result<()> {
+    async fn accept(&mut self) -> io::Result<()> {
         match self.index {
             Some(index) => {
                 let mut listener = self.listeners[index].take().expect("accept called twice");
-                listener.accept(app).await?;
+                listener.accept().await?;
                 Ok(())
             }
             None => Err(io::Error::new(
