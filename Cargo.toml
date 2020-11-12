@@ -31,8 +31,6 @@ logger = ["femme"]
 docs = ["unstable"]
 sessions = ["async-session", "cookies"]
 unstable = []
-# DO NOT USE. Only exists to expose internals so they can be benchmarked.
-__internal__bench = []
 
 [dependencies]
 async-h1 = { version = "2.1.2", optional = true }

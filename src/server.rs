@@ -213,9 +213,10 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     /// #
     /// # Ok(()) }
     /// ```
-    pub async fn respond<R>(&self, req: impl Into<http_types::Request>) -> http_types::Result<R>
+    pub async fn respond<Req, Res>(&self, req: Req) -> http_types::Result<Res>
     where
-        R: From<http_types::Response>,
+        Req: Into<http_types::Request>,
+        Res: From<http_types::Response>,
     {
         let req = req.into();
         let Self {

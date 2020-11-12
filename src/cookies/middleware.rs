@@ -29,7 +29,7 @@ pub(crate) struct CookiesMiddleware;
 
 impl CookiesMiddleware {
     /// Creates a new `CookiesMiddleware`.
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
 }

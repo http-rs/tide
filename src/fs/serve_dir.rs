@@ -6,7 +6,7 @@ use async_std::path::PathBuf as AsyncPathBuf;
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 
-pub struct ServeDir {
+pub(crate) struct ServeDir {
     prefix: String,
     dir: PathBuf,
 }
