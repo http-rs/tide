@@ -61,6 +61,16 @@ where
     }
 }
 
+impl<State> ToListener<State> for &String
+where
+    State: Clone + Send + Sync + 'static,
+{
+    type Listener = ParsedListener<State>;
+    fn to_listener(self) -> io::Result<Self::Listener> {
+        ToListener::<State>::to_listener(self.as_str())
+    }
+}
+
 impl<State> ToListener<State> for &str
 where
     State: Clone + Send + Sync + 'static,
@@ -122,6 +132,26 @@ where
     type Listener = TcpListener<State>;
     fn to_listener(self) -> io::Result<Self::Listener> {
         Ok(TcpListener::from_listener(self))
+    }
+}
+
+impl<State> ToListener<State> for (String, u16)
+where
+    State: Clone + Send + Sync + 'static,
+{
+    type Listener = TcpListener<State>;
+    fn to_listener(self) -> io::Result<Self::Listener> {
+        ToListener::<State>::to_listener((self.0.as_str(), self.1))
+    }
+}
+
+impl<State> ToListener<State> for (&String, u16)
+where
+    State: Clone + Send + Sync + 'static,
+{
+    type Listener = TcpListener<State>;
+    fn to_listener(self) -> io::Result<Self::Listener> {
+        ToListener::<State>::to_listener((self.0.as_str(), self.1))
     }
 }
 
@@ -349,5 +379,15 @@ mod parse_tests {
 
         let err = listen("🌊").unwrap_err();
         assert_eq!(err.to_string(), "unable to parse listener from `🌊`");
+    }
+
+    #[test]
+    fn to_listener_impls_compile() {
+        listen("127.0.0.1:80").unwrap();
+        listen(String::from("127.0.0.1:80")).unwrap();
+        listen(&String::from("127.0.0.1:80")).unwrap();
+        listen(("127.0.0.1", 80)).unwrap();
+        listen((String::from("127.0.0.1"), 80)).unwrap();
+        listen((&String::from("127.0.0.1"), 80)).unwrap();
     }
 }
