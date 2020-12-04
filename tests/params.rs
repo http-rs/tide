@@ -20,7 +20,7 @@ async fn test_missing_param() -> tide::Result<()> {
 #[async_std::test]
 async fn hello_world_parametrized() -> Result<()> {
     async fn greet(req: tide::Request<()>) -> Result<impl Into<Response>> {
-        let body = format!("{} says hello", req.param("name").unwrap_or("nori"));
+        let body = format!("{} says hello", req.param("name").unwrap_or("nori".to_string()));
         Ok(Response::builder(200).body(body))
     }
 
@@ -35,5 +35,12 @@ async fn hello_world_parametrized() -> Result<()> {
     let req = http_types::Request::new(Method::Get, Url::parse("http://example.com/iron")?);
     let mut res: http_types::Response = server.respond(req).await?;
     assert_eq!(res.body_string().await?, "iron says hello");
+
+    let req = http_types::Request::new(Method::Get, Url::parse("http://example.com/nori%26iron")?);
+    let mut res: http_types::Response = server.respond(req).await?;
+    assert_eq!(res.body_string().await?, "nori&iron says hello");
+
+    Ok(())
+}
     Ok(())
 }

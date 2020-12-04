@@ -1,5 +1,6 @@
 use async_std::io::{self, prelude::*};
 use async_std::task::{Context, Poll};
+use percent_encoding::percent_decode_str;
 use route_recognizer::Params;
 
 use std::ops::Index;
@@ -282,7 +283,7 @@ impl<State> Request<State> {
     /// use tide::{Request, Result};
     ///
     /// async fn greet(req: Request<()>) -> Result<String> {
-    ///     let name = req.param("name").unwrap_or("world");
+    ///     let name = req.param("name").unwrap_or("world".to_string());
     ///     Ok(format!("Hello, {}!", name))
     /// }
     ///
@@ -293,11 +294,12 @@ impl<State> Request<State> {
     /// #
     /// # Ok(()) })}
     /// ```
-    pub fn param(&self, key: &str) -> crate::Result<&str> {
+    pub fn param(&self, key: &str) -> crate::Result<String> {
         self.route_params
             .iter()
             .rev()
             .find_map(|params| params.find(key))
+            .map(|param| percent_decode_str(param).decode_utf8_lossy().into())
             .ok_or_else(|| format_err!("Param \"{}\" not found", key.to_string()))
     }
 
