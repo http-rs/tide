@@ -99,3 +99,30 @@ fn json() -> tide::Result<()> {
         server.race(client).await
     })
 }
+
+#[test]
+fn echo_req_url_server() -> tide::Result<()> {
+    task::block_on(async {
+        let port = test_utils::find_port().await;
+        let server = task::spawn(async move {
+            let mut app = tide::new();
+            app.at("/")
+                .get(|req: tide::Request<()>| async move { Ok(req.url().to_string()) });
+
+            app.listen(("localhost", port)).await?;
+            Result::<(), http_types::Error>::Ok(())
+        });
+
+        let client = task::spawn(async move {
+            task::sleep(Duration::from_millis(100)).await;
+            let string = surf::get(format!("http://localhost:{}/?foo=bar", port))
+                .recv_string()
+                .await
+                .unwrap();
+            assert_eq!(string, format!("http://localhost:{}/?foo=bar", port));
+            Ok(())
+        });
+
+        server.race(client).await
+    })
+}

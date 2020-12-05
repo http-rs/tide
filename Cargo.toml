@@ -33,7 +33,7 @@ sessions = ["async-session", "cookies"]
 unstable = []
 
 [dependencies]
-async-h1 = { version = "2.1.2", optional = true }
+async-h1 = { version = "~2.1.4", optional = true }
 async-session  = { version = "2.0.1", optional = true }
 async-sse = "4.0.1"
 async-std = { version = "1.6.5", features = ["unstable"] }
