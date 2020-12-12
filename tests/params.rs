@@ -20,7 +20,10 @@ async fn test_missing_param() -> tide::Result<()> {
 #[async_std::test]
 async fn hello_world_parametrized() -> Result<()> {
     async fn greet(req: tide::Request<()>) -> Result<impl Into<Response>> {
-        let body = format!("{} says hello", req.param("name").unwrap_or("nori".to_string()));
+        let body = format!(
+            "{} says hello",
+            req.param("name").unwrap_or_else(|_| "nori".to_string())
+        );
         Ok(Response::builder(200).body(body))
     }
 
@@ -64,7 +67,10 @@ async fn multi_segment_parameter() -> Result<()> {
     assert_eq!(res.body_string().await?, "one/two");
 
     // And it should percent-decode in between the slashes
-    let req = http_types::Request::new(Method::Get, Url::parse("http://example.com/one/two%20three")?);
+    let req = http_types::Request::new(
+        Method::Get,
+        Url::parse("http://example.com/one/two%20three")?,
+    );
     let mut res: http_types::Response = server.respond(req).await?;
     assert_eq!(res.body_string().await?, "one/two three");
 

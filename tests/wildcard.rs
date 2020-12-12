@@ -24,7 +24,7 @@ async fn add_two(req: Request<()>) -> Result<String, tide::Error> {
 
 async fn echo_path(req: Request<()>) -> Result<String, tide::Error> {
     match req.param("path") {
-        Ok(path) => Ok(path.into()),
+        Ok(path) => Ok(path),
         Err(mut err) => {
             err.set_status(StatusCode::BadRequest);
             Err(err)
