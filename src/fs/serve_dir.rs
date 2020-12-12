@@ -2,7 +2,7 @@ use crate::log;
 use crate::{Body, Endpoint, Request, Response, Result, StatusCode};
 
 use async_std::path::PathBuf as AsyncPathBuf;
-
+use percent_encoding::percent_decode_str;
 use std::path::{Path, PathBuf};
 use std::{ffi::OsStr, io};
 
@@ -27,8 +27,9 @@ where
         let path = req.url().path();
         let path = path.strip_prefix(&self.prefix).unwrap();
         let path = path.trim_start_matches('/');
+        let path: String = percent_decode_str(path).decode_utf8_lossy().into();
         let mut file_path = self.dir.clone();
-        for p in Path::new(path) {
+        for p in Path::new(&path) {
             if p == OsStr::new(".") {
                 continue;
             } else if p == OsStr::new("..") {
