@@ -2,7 +2,6 @@
 
 use async_std::io;
 use async_std::sync::Arc;
-use async_std::task::JoinHandle;
 
 #[cfg(feature = "cookies")]
 use crate::cookies;
