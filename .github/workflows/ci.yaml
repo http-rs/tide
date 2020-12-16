@@ -56,7 +56,7 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: check
-        args: --benches --features __internal__bench
+        args: --benches
 
     - name: tests
       uses: actions-rs/cargo@v1

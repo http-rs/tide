@@ -5,6 +5,8 @@ use std::fmt::{self, Debug, Display, Formatter};
 
 use async_std::io;
 
+use crate::listener::ListenInfo;
+
 /// FailoverListener allows tide to attempt to listen in a sequential
 /// order to any number of ports/addresses. The first successful
 /// listener is used.
@@ -31,14 +33,22 @@ use async_std::io;
 ///    })
 ///}
 ///```
-
 #[derive(Default)]
-pub struct FailoverListener<State>(Vec<Box<dyn Listener<State>>>);
+pub struct FailoverListener<State> {
+    listeners: Vec<Option<Box<dyn Listener<State>>>>,
+    index: Option<usize>,
+}
 
-impl<State: Clone + Send + Sync + 'static> FailoverListener<State> {
+impl<State> FailoverListener<State>
+where
+    State: Clone + Send + Sync + 'static,
+{
     /// creates a new FailoverListener
     pub fn new() -> Self {
-        Self(vec![])
+        Self {
+            listeners: vec![],
+            index: None,
+        }
     }
 
     /// Adds any [`ToListener`](crate::listener::ToListener) to this
@@ -57,8 +67,11 @@ impl<State: Clone + Send + Sync + 'static> FailoverListener<State> {
     /// # std::mem::drop(tide::new().listen(listener)); // for the State generic
     /// # Ok(()) }
     /// ```
-    pub fn add<TL: ToListener<State>>(&mut self, listener: TL) -> io::Result<()> {
-        self.0.push(Box::new(listener.to_listener()?));
+    pub fn add<L>(&mut self, listener: L) -> io::Result<()>
+    where
+        L: ToListener<State>,
+    {
+        self.listeners.push(Some(Box::new(listener.to_listener()?)));
         Ok(())
     }
 
@@ -73,21 +86,30 @@ impl<State: Clone + Send + Sync + 'static> FailoverListener<State> {
     ///         .with_listener(("localhost", 8081)),
     /// ).await?;
     /// #  Ok(()) }) }
-    pub fn with_listener<TL: ToListener<State>>(mut self, listener: TL) -> Self {
+    pub fn with_listener<L>(mut self, listener: L) -> Self
+    where
+        L: ToListener<State>,
+    {
         self.add(listener).expect("Unable to add listener");
         self
     }
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Listener<State> for FailoverListener<State> {
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
-        for listener in self.0.iter_mut() {
-            let app = app.clone();
-            match listener.listen(app).await {
-                Ok(_) => return Ok(()),
+impl<State> Listener<State> for FailoverListener<State>
+where
+    State: Clone + Send + Sync + 'static,
+{
+    async fn bind(&mut self, app: Server<State>) -> io::Result<()> {
+        for (index, listener) in self.listeners.iter_mut().enumerate() {
+            let listener = listener.as_deref_mut().expect("bind called twice");
+            match listener.bind(app.clone()).await {
+                Ok(_) => {
+                    self.index = Some(index);
+                    return Ok(());
+                }
                 Err(e) => {
-                    crate::log::info!("unable to listen", {
+                    crate::log::info!("unable to bind", {
                         listener: listener.to_string(),
                         error: e.to_string()
                     });
@@ -100,20 +122,47 @@ impl<State: Clone + Send + Sync + 'static> Listener<State> for FailoverListener<
             "unable to bind to any supplied listener spec",
         ))
     }
+
+    async fn accept(&mut self) -> io::Result<()> {
+        match self.index {
+            Some(index) => {
+                let mut listener = self.listeners[index].take().expect("accept called twice");
+                listener.accept().await?;
+                Ok(())
+            }
+            None => Err(io::Error::new(
+                io::ErrorKind::AddrNotAvailable,
+                "unable to listen to any supplied listener spec",
+            )),
+        }
+    }
+
+    fn info(&self) -> Vec<ListenInfo> {
+        match self.index {
+            Some(index) => match self.listeners.get(index) {
+                Some(Some(listener)) => listener.info(),
+                _ => vec![],
+            },
+            None => vec![],
+        }
+    }
 }
 
 impl<State> Debug for FailoverListener<State> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self.0)
+        write!(f, "{:?}", self.listeners)
     }
 }
 
 impl<State> Display for FailoverListener<State> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let string = self
-            .0
+            .listeners
             .iter()
-            .map(|l| l.to_string())
+            .map(|l| match l {
+                Some(l) => l.to_string(),
+                None => String::new(),
+            })
             .collect::<Vec<_>>()
             .join(", ");
 

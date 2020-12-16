@@ -4,7 +4,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use crate::endpoint::MiddlewareEndpoint;
-use crate::fs::ServeDir;
+use crate::fs::{ServeDir, ServeFile};
 use crate::log;
 use crate::{router::Router, Endpoint, Middleware};
 
@@ -127,7 +127,7 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
     /// #[async_std::main]
     /// async fn main() -> Result<(), std::io::Error> {
     ///     let mut app = tide::new();
-    ///     app.at("/public/images").serve_dir("images/")?;
+    ///     app.at("/images").serve_dir("public/images/")?;
     ///     app.listen("127.0.0.1:8080").await?;
     ///     Ok(())
     /// }
@@ -137,6 +137,15 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
         let dir = dir.as_ref().to_owned().canonicalize()?;
         let prefix = self.path().to_string();
         self.at("*").get(ServeDir::new(prefix, dir));
+        Ok(())
+    }
+
+    /// Serve a static file.
+    ///
+    /// The file will be streamed from disk, and a mime type will be determined
+    /// based on magic bytes. Similar to serve_dir
+    pub fn serve_file(&mut self, file: impl AsRef<Path>) -> io::Result<()> {
+        self.get(ServeFile::init(file)?);
         Ok(())
     }
 

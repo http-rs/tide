@@ -53,9 +53,10 @@
 //! See more examples in the [examples](https://github.com/http-rs/tide/tree/main/examples) directory.
 
 #![cfg_attr(feature = "docs", feature(doc_cfg))]
-// #![warn(missing_docs)]
-#![warn(missing_debug_implementations, rust_2018_idioms)]
-#![doc(test(attr(deny(rust_2018_idioms, warnings))))]
+#![forbid(unsafe_code)]
+#![deny(missing_debug_implementations, nonstandard_style)]
+#![warn(missing_docs, unreachable_pub, future_incompatible, rust_2018_idioms)]
+#![doc(test(attr(deny(warnings))))]
 #![doc(test(attr(allow(unused_extern_crates, unused_variables))))]
 #![doc(html_favicon_url = "https://yoshuawuyts.com/assets/http-rs/favicon.ico")]
 #![doc(html_logo_url = "https://yoshuawuyts.com/assets/http-rs/logo-rounded.png")]
@@ -70,11 +71,7 @@ mod request;
 mod response;
 mod response_builder;
 mod route;
-
-#[cfg(not(feature = "__internal__bench"))]
 mod router;
-#[cfg(feature = "__internal__bench")]
-pub mod router;
 mod server;
 
 pub mod convert;
@@ -97,7 +94,6 @@ pub use response_builder::ResponseBuilder;
 pub use route::Route;
 pub use server::Server;
 
-#[doc(inline)]
 pub use http_types::{self as http, Body, Error, Status, StatusCode};
 
 /// Create a new Tide server.

@@ -1,4 +1,4 @@
-use super::is_transient_error;
+use super::{is_transient_error, ListenInfo};
 
 use crate::listener::Listener;
 use crate::{log, Server};
@@ -17,37 +17,30 @@ use async_std::{io, task};
 ///
 /// This is currently crate-visible only, and tide users are expected
 /// to create these through [ToListener](crate::ToListener) conversions.
-#[derive(Debug)]
-pub enum TcpListener {
-    FromListener(net::TcpListener),
-    FromAddrs(Vec<SocketAddr>, Option<net::TcpListener>),
+pub struct TcpListener<State> {
+    addrs: Option<Vec<SocketAddr>>,
+    listener: Option<net::TcpListener>,
+    server: Option<Server<State>>,
+    info: Option<ListenInfo>,
 }
 
-impl TcpListener {
+impl<State> TcpListener<State> {
     pub fn from_addrs(addrs: Vec<SocketAddr>) -> Self {
-        Self::FromAddrs(addrs, None)
+        Self {
+            addrs: Some(addrs),
+            listener: None,
+            server: None,
+            info: None,
+        }
     }
 
     pub fn from_listener(tcp_listener: impl Into<net::TcpListener>) -> Self {
-        Self::FromListener(tcp_listener.into())
-    }
-
-    fn listener(&self) -> io::Result<&net::TcpListener> {
-        match self {
-            Self::FromAddrs(_, Some(listener)) => Ok(listener),
-            Self::FromListener(listener) => Ok(listener),
-            Self::FromAddrs(addrs, None) => Err(io::Error::new(
-                io::ErrorKind::AddrNotAvailable,
-                format!("unable to connect to {:?}", addrs),
-            )),
+        Self {
+            addrs: None,
+            listener: Some(tcp_listener.into()),
+            server: None,
+            info: None,
         }
-    }
-
-    async fn connect(&mut self) -> io::Result<()> {
-        if let Self::FromAddrs(addrs, listener @ None) = self {
-            *listener = Some(net::TcpListener::bind(addrs.as_slice()).await?);
-        }
-        Ok(())
     }
 }
 
@@ -69,11 +62,41 @@ fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: 
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Listener<State> for TcpListener {
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
-        self.connect().await?;
-        let listener = self.listener()?;
-        crate::log::info!("Server listening on {}", self);
+impl<State> Listener<State> for TcpListener<State>
+where
+    State: Clone + Send + Sync + 'static,
+{
+    async fn bind(&mut self, server: Server<State>) -> io::Result<()> {
+        assert!(self.server.is_none(), "`bind` should only be called once");
+        self.server = Some(server);
+
+        if self.listener.is_none() {
+            let addrs = self
+                .addrs
+                .take()
+                .expect("`bind` should only be called once");
+            let listener = net::TcpListener::bind(addrs.as_slice()).await?;
+            self.listener = Some(listener);
+        }
+
+        // Format the listen information.
+        let conn_string = format!("{}", self);
+        let transport = "tcp".to_owned();
+        let tls = false;
+        self.info = Some(ListenInfo::new(conn_string, transport, tls));
+
+        Ok(())
+    }
+
+    async fn accept(&mut self) -> io::Result<()> {
+        let server = self
+            .server
+            .take()
+            .expect("`Listener::bind` must be called before `Listener::accept`");
+        let listener = self
+            .listener
+            .take()
+            .expect("`Listener::bind` must be called before `Listener::accept`");
 
         let mut incoming = listener.incoming();
 
@@ -88,35 +111,53 @@ impl<State: Clone + Send + Sync + 'static> Listener<State> for TcpListener {
                 }
 
                 Ok(stream) => {
-                    handle_tcp(app.clone(), stream);
+                    handle_tcp(server.clone(), stream);
                 }
             };
         }
         Ok(())
     }
+
+    fn info(&self) -> Vec<ListenInfo> {
+        match &self.info {
+            Some(info) => vec![info.clone()],
+            None => vec![],
+        }
+    }
 }
 
-impl Display for TcpListener {
+impl<State> fmt::Debug for TcpListener<State> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::FromListener(l) | Self::FromAddrs(_, Some(l)) => write!(
-                f,
-                "http://{}",
-                l.local_addr()
-                    .ok()
-                    .map(|a| a.to_string())
-                    .as_deref()
-                    .unwrap_or("[unknown]")
-            ),
-            Self::FromAddrs(addrs, None) => write!(
-                f,
-                "{}",
-                addrs
-                    .iter()
-                    .map(|a| format!("http://{}", a))
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            ),
+        f.debug_struct("TcpListener")
+            .field(&"listener", &self.listener)
+            .field(&"addrs", &self.addrs)
+            .field(
+                &"server",
+                if self.server.is_some() {
+                    &"Some(Server<State>)"
+                } else {
+                    &"None"
+                },
+            )
+            .finish()
+    }
+}
+
+impl<State> Display for TcpListener<State> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let http_fmt = |a| format!("http://{}", a);
+        match &self.listener {
+            Some(listener) => {
+                let addr = listener.local_addr().expect("Could not get local addr");
+                write!(f, "{}", http_fmt(&addr))
+            }
+            None => match &self.addrs {
+                Some(addrs) => {
+                    let addrs = addrs.iter().map(http_fmt).collect::<Vec<_>>().join(", ");
+                    write!(f, "{}", addrs)
+                }
+                None => write!(f, "Not listening. Did you forget to call `Listener::bind`?"),
+            },
         }
     }
 }

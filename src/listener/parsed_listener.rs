@@ -1,10 +1,10 @@
 #[cfg(unix)]
 use super::UnixListener;
-use super::{Listener, TcpListener};
+use super::{ListenInfo, Listener, TcpListener};
 use crate::Server;
 
 use async_std::io;
-use std::fmt::{self, Display, Formatter};
+use std::fmt::{self, Debug, Display, Formatter};
 
 /// This is an enum that contains variants for each of the listeners
 /// that can be parsed from a string. This is used as the associated
@@ -13,14 +13,23 @@ use std::fmt::{self, Display, Formatter};
 ///
 /// This is currently crate-visible only, and tide users are expected
 /// to create these through [ToListener](crate::ToListener) conversions.
-#[derive(Debug)]
-pub enum ParsedListener {
+pub enum ParsedListener<State> {
     #[cfg(unix)]
-    Unix(UnixListener),
-    Tcp(TcpListener),
+    Unix(UnixListener<State>),
+    Tcp(TcpListener<State>),
 }
 
-impl Display for ParsedListener {
+impl<State> Debug for ParsedListener<State> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            #[cfg(unix)]
+            ParsedListener::Unix(unix) => Debug::fmt(unix, f),
+            ParsedListener::Tcp(tcp) => Debug::fmt(tcp, f),
+        }
+    }
+}
+
+impl<State> Display for ParsedListener<State> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             #[cfg(unix)]
@@ -31,12 +40,31 @@ impl Display for ParsedListener {
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Listener<State> for ParsedListener {
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
+impl<State> Listener<State> for ParsedListener<State>
+where
+    State: Clone + Send + Sync + 'static,
+{
+    async fn bind(&mut self, server: Server<State>) -> io::Result<()> {
         match self {
             #[cfg(unix)]
-            Self::Unix(u) => u.listen(app).await,
-            Self::Tcp(t) => t.listen(app).await,
+            Self::Unix(u) => u.bind(server).await,
+            Self::Tcp(t) => t.bind(server).await,
+        }
+    }
+
+    async fn accept(&mut self) -> io::Result<()> {
+        match self {
+            #[cfg(unix)]
+            Self::Unix(u) => u.accept().await,
+            Self::Tcp(t) => t.accept().await,
+        }
+    }
+
+    fn info(&self) -> Vec<ListenInfo> {
+        match self {
+            #[cfg(unix)]
+            ParsedListener::Unix(unix) => unix.info(),
+            ParsedListener::Tcp(tcp) => tcp.info(),
         }
     }
 }

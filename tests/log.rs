@@ -16,7 +16,7 @@ async fn test_server_listen(logger: &mut logtest::Logger) {
     let port = test_utils::find_port().await;
     let app = tide::new();
     let res = app
-        .listen(("localhost", port))
+        .listen(("127.0.0.1", port))
         .timeout(Duration::from_millis(60))
         .await;
     assert!(res.is_err());
@@ -26,7 +26,7 @@ async fn test_server_listen(logger: &mut logtest::Logger) {
         .unwrap();
     assert_eq!(
         record.args(),
-        format!("Server listening on http://[::1]:{}", port)
+        format!("Server listening on http://127.0.0.1:{}", port)
     );
 }
 

@@ -130,10 +130,13 @@ team. Use at your own risk.</sup>
 
 ### Middleware
 * [tide-compress](https://github.com/Fishrock123/tide-compress)
+* [tide-sqlx](https://github.com/eaze/tide-sqlx) - _SQLx pooled connections & transactions_
 * [tide-trace](https://github.com/no9/tide-trace)
 * [tide-tracing](https://github.com/ethanboxx/tide-tracing)
 * [opentelemetry-tide](https://github.com/asaaki/opentelemetry-tide)
 * [driftwood](https://github.com/jbr/driftwood) http logging middleware
+* [tide-compressed-sse](https://github.com/Yarn/tide_compressed_sse)
+* [tide-websockets](https://github.com/http-rs/tide-websockets)
 
 ### Session Stores
 * [async-redis-session](https://github.com/jbr/async-redis-session)

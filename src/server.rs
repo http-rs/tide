@@ -67,7 +67,10 @@ impl Default for Server<()> {
     }
 }
 
-impl<State: Clone + Send + Sync + 'static> Server<State> {
+impl<State> Server<State>
+where
+    State: Clone + Send + Sync + 'static,
+{
     /// Create a new Tide server with shared application scoped state.
     ///
     /// Application scoped state is useful for storing items
@@ -185,9 +188,69 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
         self
     }
 
-    /// Asynchronously serve the app with the supplied listener. For more details, see [Listener] and [ToListener]
-    pub async fn listen<TL: ToListener<State>>(self, listener: TL) -> io::Result<()> {
-        listener.to_listener()?.listen(self).await
+    /// Asynchronously serve the app with the supplied listener.
+    ///
+    /// This is a shorthand for calling `Server::bind`, logging the `ListenInfo`
+    /// instances from `Listener::info`, and then calling `Listener::accept`.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use async_std::task::block_on;
+    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
+    /// #
+    /// let mut app = tide::new();
+    /// app.at("/").get(|_| async { Ok("Hello, world!") });
+    /// app.listen("127.0.0.1:8080").await?;
+    /// #
+    /// # Ok(()) }) }
+    /// ```
+    pub async fn listen<L: ToListener<State>>(self, listener: L) -> io::Result<()> {
+        let mut listener = listener.to_listener()?;
+        listener.bind(self).await?;
+        for info in listener.info().iter() {
+            log::info!("Server listening on {}", info);
+        }
+        listener.accept().await?;
+        Ok(())
+    }
+
+    /// Asynchronously bind the listener.
+    ///
+    /// Bind the listener. This starts the listening process by opening the
+    /// necessary network ports, but not yet accepting incoming connections.
+    /// `Listener::listen` should be called after this to start accepting
+    /// connections.
+    ///
+    /// When calling `Listener::info` multiple `ListenInfo` instances may be
+    /// returned. This is useful when using for example `ConcurrentListener`
+    /// which enables a single server to listen on muliple ports.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use async_std::task::block_on;
+    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
+    /// #
+    /// use tide::prelude::*;
+    ///
+    /// let mut app = tide::new();
+    /// app.at("/").get(|_| async { Ok("Hello, world!") });
+    /// let mut listener = app.bind("127.0.0.1:8080").await?;
+    /// for info in listener.info().iter() {
+    ///     println!("Server listening on {}", info);
+    /// }
+    /// listener.accept().await?;
+    /// #
+    /// # Ok(()) }) }
+    /// ```
+    pub async fn bind<L: ToListener<State>>(
+        self,
+        listener: L,
+    ) -> io::Result<<L as ToListener<State>>::Listener> {
+        let mut listener = listener.to_listener()?;
+        listener.bind(self).await?;
+        Ok(listener)
     }
 
     /// Respond to a `Request` with a `Response`.
@@ -213,9 +276,10 @@ impl<State: Clone + Send + Sync + 'static> Server<State> {
     /// #
     /// # Ok(()) }
     /// ```
-    pub async fn respond<R>(&self, req: impl Into<http_types::Request>) -> http_types::Result<R>
+    pub async fn respond<Req, Res>(&self, req: Req) -> http_types::Result<Res>
     where
-        R: From<http_types::Response>,
+        Req: Into<http_types::Request>,
+        Res: From<http_types::Response>,
     {
         let req = req.into();
         let Self {

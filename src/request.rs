@@ -264,8 +264,7 @@ impl<State> Request<State> {
 
     /// Extract and parse a route parameter by name.
     ///
-    /// Returns the results of parsing the parameter according to the inferred
-    /// output type `T`.
+    /// Returns the parameter as a `&str`, borrowed from this `Request`.
     ///
     /// The name should *not* include the leading `:` or the trailing `*` (if
     /// any).
