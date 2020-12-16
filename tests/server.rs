@@ -6,6 +6,7 @@ use std::time::Duration;
 use serde::{Deserialize, Serialize};
 use tide::{Body, CancelationToken, Request};
 
+// Note: Async tests are now supported. Refactor to avoid tast::block_on?
 #[test]
 fn hello_world() -> tide::Result<()> {
 
