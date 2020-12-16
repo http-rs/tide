@@ -61,6 +61,7 @@
 #![doc(html_favicon_url = "https://yoshuawuyts.com/assets/http-rs/favicon.ico")]
 #![doc(html_logo_url = "https://yoshuawuyts.com/assets/http-rs/logo-rounded.png")]
 
+mod cancelation_token;
 #[cfg(feature = "cookies")]
 mod cookies;
 mod endpoint;
@@ -85,6 +86,7 @@ pub mod utils;
 #[cfg(feature = "sessions")]
 pub mod sessions;
 
+pub use cancelation_token::CancelationToken;
 pub use endpoint::Endpoint;
 pub use middleware::{Middleware, Next};
 pub use redirect::Redirect;
