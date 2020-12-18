@@ -4,7 +4,9 @@ on:
   pull_request:
   push:
     branches:
-      - master
+      - main
+      - staging
+      - trying
 
 env:
   RUSTFLAGS: -Dwarnings
@@ -31,7 +33,7 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: check
-        args: --all --bins --examples
+        args: --workspace --bins --examples --tests
 
     - name: check avoid-dev-deps
       uses: actions-rs/cargo@v1
@@ -44,13 +46,13 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: check
-        args: --all --bins --examples --tests --features unstable
+        args: --workspace --bins --examples --tests --features unstable
 
     - name: check no-default-features
       uses: actions-rs/cargo@v1
       with:
         command: check
-        args: --no-default-features
+        args: --no-default-features --workspace --bins --examples --tests
 
     - name: check benches
       uses: actions-rs/cargo@v1
@@ -62,35 +64,28 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --all
+        args: --workspace
 
     - name: tests unstable
       uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --all --features unstable
+        args: --workspace --features unstable
 
-  check_fmt_and_docs:
+  check_fmt_clippy_docs:
     name: Checking fmt, clippy, and docs
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
 
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: nightly
-        override: true
-
-    - name: setup
-      run: |
-        rustup component add clippy rustfmt
-        rustc --version
-
     - name: clippy
-      run: cargo clippy --tests --examples -- -D warnings
+      run: cargo clippy --workspace --bins --examples --tests -- -D warnings
+    
+    - name: clippy benches
+      run: cargo clippy --workspace --benches --features __internal__bench -- -D warnings
 
     - name: fmt
       run: cargo fmt --all -- --check
 
     - name: Docs
-      run: cargo doc --no-deps --features unstable
+      run: cargo doc --no-deps
