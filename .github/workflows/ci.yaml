@@ -76,11 +76,6 @@ jobs:
     steps:
     - uses: actions/checkout@master
 
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: nightly
-        override: true
-
     - name: setup
       run: |
         rustup component add clippy rustfmt
@@ -93,4 +88,4 @@ jobs:
       run: cargo fmt --all -- --check
 
     - name: Docs
-      run: cargo doc --no-deps --features unstable
+      run: cargo doc --no-deps
