@@ -53,8 +53,9 @@ runtime. After running `cargo init` add the following lines to your
 
 ```toml
 # Example, use the version numbers you need
-tide = "0.14.0"
-async-std = { version = "1.6.0", features = ["attributes"] }
+tide = "0.15.0"
+async-std = { version = "1.8.0", features = ["attributes"] }
+serde = { version = "1.0", features = ["derive"] }
 ```
 
 ## Examples
