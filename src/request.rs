@@ -2,6 +2,7 @@ use async_std::io::{self, prelude::*};
 use async_std::task::{Context, Poll};
 use route_recognizer::Params;
 
+use std::sync::{Arc,RwLock};
 use std::ops::Index;
 use std::pin::Pin;
 
@@ -500,10 +501,13 @@ impl<State> Request<State> {
     /// This method will panic if a tide::sessions:SessionMiddleware has not
     /// been run.
     #[cfg(feature = "sessions")]
-    pub fn session(&self) -> &crate::sessions::Session {
-        self.ext::<crate::sessions::Session>().expect(
+    pub fn session(&self) -> std::sync::RwLockReadGuard<crate::sessions::Session> {
+        let lock = self.ext::<Arc<RwLock<crate::sessions::Session>>>().expect(
             "request session not initialized, did you enable tide::sessions::SessionMiddleware?",
-        )
+        );
+        let guard = lock.read().unwrap();
+
+        guard
     }
 
     /// Retrieves a mutable reference to the current session.
@@ -513,10 +517,13 @@ impl<State> Request<State> {
     /// This method will panic if a tide::sessions:SessionMiddleware has not
     /// been run.
     #[cfg(feature = "sessions")]
-    pub fn session_mut(&mut self) -> &mut crate::sessions::Session {
-        self.ext_mut().expect(
+    pub fn session_mut(&mut self) -> std::sync::RwLockWriteGuard<crate::sessions::Session> {
+        let lock = self.ext::<Arc<RwLock<crate::sessions::Session>>>().expect(
             "request session not initialized, did you enable tide::sessions::SessionMiddleware?",
-        )
+        );
+        let guard = lock.write().unwrap();
+
+        guard
     }
 
     /// Get the length of the body stream, if it has been set.
