@@ -2,9 +2,9 @@ use async_std::io::{self, prelude::*};
 use async_std::task::{Context, Poll};
 use route_recognizer::Params;
 
-use std::sync::{Arc,RwLock};
 use std::ops::Index;
 use std::pin::Pin;
+use std::sync::{Arc, RwLock};
 
 #[cfg(feature = "cookies")]
 use crate::cookies::CookieData;

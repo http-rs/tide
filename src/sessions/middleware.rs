@@ -6,7 +6,7 @@ use crate::http::{
 use crate::{utils::async_trait, Middleware, Next, Request};
 use std::time::Duration;
 
-use std::sync::{Arc,RwLock};
+use std::sync::{Arc, RwLock};
 
 use async_session::{
     base64,
@@ -94,7 +94,7 @@ where
 
         let secure_cookie = request.url().scheme() == "https";
 
-        let  session_lock = Arc::new(RwLock::new(session));
+        let session_lock = Arc::new(RwLock::new(session));
         request.set_ext(session_lock.clone());
 
         let mut response = next.run(request).await;
