@@ -153,30 +153,24 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
     pub fn method(&mut self, method: http_types::Method, ep: impl Endpoint<State>) -> &mut Self {
         if self.prefix {
             let ep = StripPrefixEndpoint::new(ep);
-            let (ep1, ep2): (Box<dyn Endpoint<_>>, Box<dyn Endpoint<_>>) =
-                if self.middleware.is_empty() {
-                    let ep = Box::new(ep);
-                    (ep.clone(), ep)
-                } else {
-                    let ep = Box::new(MiddlewareEndpoint::wrap_with_middleware(
-                        ep,
-                        &self.middleware,
-                    ));
-                    (ep.clone(), ep)
-                };
-            self.router.add(&self.path, method, ep1);
+
+            self.router.add(
+                &self.path,
+                method,
+                MiddlewareEndpoint::wrap_with_middleware(ep.clone(), &self.middleware),
+            );
             let wildcard = self.at("*--tide-path-rest");
-            wildcard.router.add(&wildcard.path, method, ep2);
+            wildcard.router.add(
+                &wildcard.path,
+                method,
+                MiddlewareEndpoint::wrap_with_middleware(ep, &wildcard.middleware),
+            );
         } else {
-            let ep: Box<dyn Endpoint<_>> = if self.middleware.is_empty() {
-                Box::new(ep)
-            } else {
-                Box::new(MiddlewareEndpoint::wrap_with_middleware(
-                    ep,
-                    &self.middleware,
-                ))
-            };
-            self.router.add(&self.path, method, ep);
+            self.router.add(
+                &self.path,
+                method,
+                MiddlewareEndpoint::wrap_with_middleware(ep, &self.middleware),
+            );
         }
         self
     }
@@ -187,30 +181,21 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
     pub fn all(&mut self, ep: impl Endpoint<State>) -> &mut Self {
         if self.prefix {
             let ep = StripPrefixEndpoint::new(ep);
-            let (ep1, ep2): (Box<dyn Endpoint<_>>, Box<dyn Endpoint<_>>) =
-                if self.middleware.is_empty() {
-                    let ep = Box::new(ep);
-                    (ep.clone(), ep)
-                } else {
-                    let ep = Box::new(MiddlewareEndpoint::wrap_with_middleware(
-                        ep,
-                        &self.middleware,
-                    ));
-                    (ep.clone(), ep)
-                };
-            self.router.add_all(&self.path, ep1);
+
+            self.router.add_all(
+                &self.path,
+                MiddlewareEndpoint::wrap_with_middleware(ep.clone(), &self.middleware),
+            );
             let wildcard = self.at("*--tide-path-rest");
-            wildcard.router.add_all(&wildcard.path, ep2);
+            wildcard.router.add_all(
+                &wildcard.path,
+                MiddlewareEndpoint::wrap_with_middleware(ep, &wildcard.middleware),
+            );
         } else {
-            let ep: Box<dyn Endpoint<_>> = if self.middleware.is_empty() {
-                Box::new(ep)
-            } else {
-                Box::new(MiddlewareEndpoint::wrap_with_middleware(
-                    ep,
-                    &self.middleware,
-                ))
-            };
-            self.router.add_all(&self.path, ep);
+            self.router.add_all(
+                &self.path,
+                MiddlewareEndpoint::wrap_with_middleware(ep, &self.middleware),
+            );
         }
         self
     }
