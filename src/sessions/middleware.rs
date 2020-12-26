@@ -99,7 +99,7 @@ where
 
         let mut response = next.run(request).await;
 
-        let session = (*session_lock.read().unwrap()).clone();
+        let session = Arc::try_unwrap(session_lock).unwrap().into_inner().unwrap();
 
         if session.is_destroyed() {
             if let Err(e) = self.store.destroy_session(session).await {
