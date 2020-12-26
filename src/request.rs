@@ -505,9 +505,8 @@ impl<State> Request<State> {
         let lock = self.ext::<Arc<RwLock<crate::sessions::Session>>>().expect(
             "request session not initialized, did you enable tide::sessions::SessionMiddleware?",
         );
-        let guard = lock.read().unwrap();
 
-        guard
+        lock.read().unwrap()
     }
 
     /// Retrieves a mutable reference to the current session.
@@ -521,9 +520,8 @@ impl<State> Request<State> {
         let lock = self.ext::<Arc<RwLock<crate::sessions::Session>>>().expect(
             "request session not initialized, did you enable tide::sessions::SessionMiddleware?",
         );
-        let guard = lock.write().unwrap();
 
-        guard
+        lock.write().unwrap()
     }
 
     /// Get the length of the body stream, if it has been set.
