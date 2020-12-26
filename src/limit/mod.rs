@@ -1,4 +1,4 @@
 //! HTTP rate, size, and load limiting middleware.
-mod load;
+mod load_shedder;
 
-pub use load::LoadShedMiddleware;
+pub use load_shedder::LoadShedder;

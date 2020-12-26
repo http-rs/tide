@@ -3,6 +3,7 @@
 use crate::{Middleware, Next, Request, Response};
 
 use async_std::sync::{Arc, RwLock};
+use http_types::headers::RETRY_AFTER;
 use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
@@ -39,12 +40,23 @@ use pid_lite::Controller;
 /// firewalls. Beyond that there are many kinds of rate limiters, and
 /// [Stripe has an excellent blog post](https://stripe.com/blog/rate-limiters)
 /// listing which exist and how to reason about them.
-#[derive(Debug)]
-pub struct LoadShedMiddleware {
-    inner: RwLock<Inner>,
+///
+/// # Updating limits at runtime
+///
+/// Some systems may be employing an external control plane to configure the
+/// limits and will want to be able to configure the load shed target too. This
+/// can be done by cloning the instantiated middleware, and calling `set_target`
+/// on it in response to a command from the control plane. This will update the
+/// limit shared by all instances of the middleware immediately.
+#[derive(Debug, Clone)]
+pub struct LoadShedder {
+    inner: Arc<RwLock<Inner>>,
     /// The current amount of requests in flight.
     counter: Arc<()>,
-    // TODO: create another Arc to count how many instance of this middleware exist.
+    /// The number of middleware instances in use. This number is substracted
+    /// from the `counter` to arrive at the correct number of requests currently
+    /// in flight.
+    instance_count: Arc<()>,
 }
 
 #[derive(Debug)]
@@ -54,33 +66,38 @@ struct Inner {
     /// The target number of concurrent requests we can have before we start
     /// shedding load.
     current_target: f64,
+    /// The last time at which the counter was updated.
     last_time: Instant,
 }
 
-impl LoadShedMiddleware {
+impl LoadShedder {
     /// Create a new instance of `LoadShedMiddleware`.
     ///
     /// `target` defines the desired amount of concurrent requests we want to
-    /// reach in order to optimize throughput on this service.
-    pub fn new(target: f64) -> Self {
+    /// reach in order to optimize throughput on this service. By default the
+    /// middleware is configured with the following tuning:
+    /// - `p_gain`: `0.5`
+    /// - `i_gain`: `0.1
+    /// - `d_gain`: `0.2`
+    pub fn new(target: usize) -> Self {
         Self::with_gain(target, 0.5, 0.1, 0.2)
     }
 
     /// Create a new instance of `LoadShedMiddleware` with custom tuning parameters.
-    /// TODO: pass a callback so it can be "dark applied".
-    /// TODO: consider "dark applying" a first-class mode that we should enable
-    /// TODO: apply `log` logs.
-    pub fn with_gain(target: f64, p_gain: f64, i_gain: f64, d_gain: f64) -> Self {
-        let current_target = 0.0;
+    // TODO: pass a callback so it can be "dark applied".
+    // TODO: consider "dark applying" a first-class mode that we should enable
+    pub fn with_gain(target: usize, p_gain: f64, i_gain: f64, d_gain: f64) -> Self {
+        let target = target as f64;
         let mut controller = Controller::new(target, p_gain, i_gain, d_gain);
-        let _correction = controller.update(current_target);
+        let correction = controller.update(0.0);
         Self {
-            inner: RwLock::new(Inner {
+            inner: Arc::new(RwLock::new(Inner {
                 controller,
-                current_target,
+                current_target: correction,
                 last_time: Instant::now(),
-            }),
+            })),
             counter: Arc::new(()),
+            instance_count: Arc::new(()),
         }
     }
 
@@ -98,33 +115,34 @@ impl LoadShedMiddleware {
 }
 
 #[async_trait]
-impl<State: Clone + Send + Sync + 'static> Middleware<State> for LoadShedMiddleware {
+impl<State: Clone + Send + Sync + 'static> Middleware<State> for LoadShedder {
     async fn handle(&self, req: Request<State>, next: Next<'_, State>) -> crate::Result {
         // Init the middleware's request state.
+        let instance_count = Arc::strong_count(&self.instance_count);
         let count_guard = self.counter.clone();
-        let current_count = Arc::strong_count(&count_guard);
+        let current_count = Arc::strong_count(&count_guard) - instance_count;
 
         // Update the PID controller if needed.
         let now = Instant::now();
         let last_time = self.inner.read().await.last_time;
-        let elapsed = now.duration_since(last_time);
-        drop(last_time);
-        if elapsed > Duration::from_secs(1) {
+        if now.duration_since(last_time) > Duration::from_secs(1) {
             let mut guard = self.inner.write().await;
             guard.last_time = now;
-            let correction = guard.controller.update(current_count as f64);
-            guard.current_target += correction;
+            guard.current_target += guard.controller.update(current_count as f64);
         }
 
         // Check whether a 503 should be returned.
         let guard = self.inner.read().await;
         if current_count > guard.current_target as usize {
-            println!(
-                "Load shedding middleware engaged. target count: {}, current count: {}",
+            log::error!(
+                "Load shedding middleware engaged. target count: {}, current target: {}, current count: {}",
                 guard.controller.target(),
+                guard.current_target,
                 current_count
             );
-            return Ok(Response::new(503));
+            // TODO: apply `Retry-After` header.
+            let res = Response::builder(503).header(RETRY_AFTER, "2");
+            return Ok(res.into());
         }
 
         // Finish running the request.
