@@ -38,17 +38,18 @@ async-session  = { version = "2.0.1", optional = true }
 async-sse = "4.0.1"
 async-std = { version = "1.6.5", features = ["unstable"] }
 async-trait = "0.1.41"
+exponential-backoff = "1.0.0"
 femme = { version = "2.1.1", optional = true }
 futures-util = "0.3.6"
 http-client = { version = "6.1.0", default-features = false }
 http-types = "2.5.0"
 kv-log-macro = "1.0.7"
 log = { version = "0.4.11", features = ["std"] }
+pid-lite = "1.1.0"
 pin-project-lite = "0.1.10"
 route-recognizer = "0.2.0"
 serde = "1.0.117"
 serde_json = "1.0.59"
-pid-lite = "1.1.0"
 
 [dev-dependencies]
 async-std = { version = "1.6.5", features = ["unstable", "attributes"] }

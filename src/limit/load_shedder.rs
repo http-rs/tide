@@ -7,9 +7,18 @@ use http_types::headers::RETRY_AFTER;
 use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
+use exponential_backoff::Backoff;
 use pid_lite::Controller;
 
+const SESSION_KEY: &str = "load_shedder::backoff_attempt";
+const RETRIES: u32 = 28;
+const MIN_RETRY: Duration = Duration::from_secs(2);
+const MAX_RETRY: Duration = Duration::from_secs(12);
+
 /// Proportional request rejection based on load metrics.
+///
+/// This middleware requires the session middleware to be enabled in order to
+/// track the exponential backoff value per-client.
 ///
 /// # What is this purpose of this?
 ///
@@ -116,11 +125,12 @@ impl LoadShedder {
 
 #[async_trait]
 impl<State: Clone + Send + Sync + 'static> Middleware<State> for LoadShedder {
-    async fn handle(&self, req: Request<State>, next: Next<'_, State>) -> crate::Result {
+    async fn handle(&self, mut req: Request<State>, next: Next<'_, State>) -> crate::Result {
         // Init the middleware's request state.
         let instance_count = Arc::strong_count(&self.instance_count);
         let count_guard = self.counter.clone();
         let current_count = Arc::strong_count(&count_guard) - instance_count;
+        let session = req.session_mut();
 
         // Update the PID controller if needed.
         let now = Instant::now();
@@ -140,10 +150,16 @@ impl<State: Clone + Send + Sync + 'static> Middleware<State> for LoadShedder {
                 guard.current_target,
                 current_count
             );
-            // TODO: apply `Retry-After` header.
-            let res = Response::builder(503).header(RETRY_AFTER, "2");
+
+            let backoff = Backoff::new(RETRIES, MIN_RETRY, MAX_RETRY);
+            let attempt = session.get::<u32>(SESSION_KEY).unwrap_or(0);
+            let dur = backoff.next(attempt).unwrap(); // Safe because no max backoff is set.
+            session.insert(SESSION_KEY, attempt + 1)?;
+            let res = Response::builder(503).header(RETRY_AFTER, format!("{}", dur.as_secs()));
             return Ok(res.into());
         }
+
+        session.remove(SESSION_KEY);
 
         // Finish running the request.
         let res = next.run(req).await;
