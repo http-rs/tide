@@ -1,5 +1,5 @@
 #[async_std::main]
-async fn main() -> Result<(), std::io::Error> {
+async fn main() -> std::io::Result<()> {
     tide::log::start();
     let mut app = tide::new();
     app.at("/").get(|_| async { Ok("Hello, world!") });
