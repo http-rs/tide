@@ -3,6 +3,19 @@ use tide::{http::mime, Body, Response, StatusCode};
 use async_graphql::{EmptyMutation, EmptySubscription, Schema};
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 
+/// query example for async-graphql
+///
+/// # simple query for users
+///
+/// ```
+/// {
+///   allUsers {
+///     id
+///     firstName
+///   }
+/// }
+/// ```
+
 struct User {
     id: Option<u16>,
     first_name: String,
