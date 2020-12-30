@@ -501,7 +501,7 @@ impl<State> Request<State> {
     /// This method will panic if a tide::sessions:SessionMiddleware has not
     /// been run.
     #[cfg(feature = "sessions")]
-    pub fn session(&self) -> std::sync::RwLockReadGuard<crate::sessions::Session> {
+    pub fn session(&self) -> std::sync::RwLockReadGuard<'_, crate::sessions::Session> {
         let lock = self.ext::<Arc<RwLock<crate::sessions::Session>>>().expect(
             "request session not initialized, did you enable tide::sessions::SessionMiddleware?",
         );
@@ -516,7 +516,7 @@ impl<State> Request<State> {
     /// This method will panic if a tide::sessions:SessionMiddleware has not
     /// been run.
     #[cfg(feature = "sessions")]
-    pub fn session_mut(&mut self) -> std::sync::RwLockWriteGuard<crate::sessions::Session> {
+    pub fn session_mut(&mut self) -> std::sync::RwLockWriteGuard<'_, crate::sessions::Session> {
         let lock = self.ext::<Arc<RwLock<crate::sessions::Session>>>().expect(
             "request session not initialized, did you enable tide::sessions::SessionMiddleware?",
         );
