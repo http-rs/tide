@@ -1,10 +1,10 @@
 use async_std::sync::{Arc, RwLock};
 
-use tide::{Request, Response, Body, StatusCode};
 use tide::http::mime;
+use tide::{Body, Request, Response, StatusCode};
 
-use async_graphql::{EmptySubscription, Schema, Context};
-use async_graphql::http::{receive_json, playground_source, GraphQLPlaygroundConfig};
+use async_graphql::http::{playground_source, receive_json, GraphQLPlaygroundConfig};
+use async_graphql::{Context, EmptySubscription, Schema};
 
 /// query example for async-graphql
 ///
@@ -18,7 +18,7 @@ use async_graphql::http::{receive_json, playground_source, GraphQLPlaygroundConf
 ///   }
 /// }
 /// ```
-/// 
+///
 /// # simple mutation: addUser
 ///
 /// ```
@@ -44,7 +44,7 @@ use async_graphql::http::{receive_json, playground_source, GraphQLPlaygroundConf
 #[derive(Clone)]
 struct User {
     id: Option<u16>,
-    first_name: String
+    first_name: String,
 }
 
 #[async_graphql::Object]
@@ -81,9 +81,18 @@ pub struct QueryRoot;
 impl QueryRoot {
     /// Get all Users: macro vec!
     async fn all_users1(&self) -> Vec<User> {
-        let user1 = User { id: Some(12), first_name: "Alice".to_string() };
-        let user2 = User { id: Some(22), first_name: "Jack".to_string() };
-        let user3 = User { id: Some(32), first_name: "Tom".to_string() };
+        let user1 = User {
+            id: Some(12),
+            first_name: "Alice".to_string(),
+        };
+        let user2 = User {
+            id: Some(22),
+            first_name: "Jack".to_string(),
+        };
+        let user3 = User {
+            id: Some(32),
+            first_name: "Tom".to_string(),
+        };
 
         vec![user1, user2, user3]
     }
@@ -118,7 +127,7 @@ pub struct State(Schema<QueryRoot, MutationRoot, EmptySubscription>);
 async fn handle_graphql(req: Request<State>) -> tide::Result<impl Into<Response>> {
     let schema = req.state().0.clone();
     let gql_resp = schema.execute(receive_json(req).await?).await;
-    
+
     let mut resp = Response::new(StatusCode::Ok);
     resp.set_body(Body::from_json(&gql_resp)?);
 
@@ -141,13 +150,13 @@ async fn main() -> Result<(), std::io::Error> {
     let schema = Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .data(Users::default())
         .finish();
-        
+
     let mut app = tide::with_state(State(schema));
 
     app.at("/graphql").post(handle_graphql);
     app.at("/graphiql").get(handle_playground);
-    
+
     app.listen("127.0.0.1:8080").await?;
-    
+
     Ok(())
 }
