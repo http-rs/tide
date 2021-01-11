@@ -43,7 +43,7 @@ futures-util = "0.3.6"
 http-client = { version = "6.1.0", default-features = false }
 http-types = "2.5.0"
 kv-log-macro = "1.0.7"
-log = { version = "0.4.11", features = ["std"] }
+log = { version = "0.4.13", features = ["kv_unstable_std"] }
 pin-project-lite = "0.1.10"
 route-recognizer = "0.2.0"
 serde = "1.0.117"
