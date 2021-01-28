@@ -25,7 +25,7 @@ rustdoc-args = ["--cfg", "feature=\"docs\""]
 
 [features]
 default = ["h1-server", "cookies", "logger", "sessions"]
-cookies = []
+cookies = ["http-types/cookies"]
 h1-server = ["async-h1"]
 logger = ["femme"]
 docs = ["unstable"]
@@ -41,7 +41,7 @@ async-trait = "0.1.41"
 femme = { version = "2.1.1", optional = true }
 futures-util = "0.3.6"
 http-client = { version = "6.1.0", default-features = false }
-http-types = "2.5.0"
+http-types = { version = "2.10.0", default-features = false, features = ["fs"] }
 kv-log-macro = "1.0.7"
 log = { version = "0.4.11", features = ["std"] }
 pin-project-lite = "0.2.0"
