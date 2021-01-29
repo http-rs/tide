@@ -11,7 +11,6 @@ Repository.
 
 - [Code of Conduct](#code-of-conduct)
 - [Bad Actors](#bad-actors)
-- [Developer Certificate of Origin](#developer-certificate-of-origin)
 
 ## Code of Conduct
 The project has a [Code of Conduct](./CODE_OF_CONDUCT.md) that *all*
