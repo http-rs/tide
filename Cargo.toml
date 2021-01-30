@@ -1,6 +1,6 @@
 [package]
 name = "tide"
-version = "0.15.0"
+version = "0.16.0"
 description = "A minimal and pragmatic Rust web application framework built for rapid development"
 authors = [
     "Aaron Turon <aturon@mozilla.com>",
