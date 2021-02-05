@@ -1,3 +1,6 @@
+// WARNING: Don't not use it in production!
+// This is just an example, so there is much more to a correct secure reverse proxy implementation.
+//
 // Example: HTTP GET to http://localhost:8080/http-rs/tide
 // $ curl "http://localhost:8080/http-rs/tide"
 // I'll show the Tide page at GitHub
