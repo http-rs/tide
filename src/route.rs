@@ -127,7 +127,7 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
     /// #[async_std::main]
     /// async fn main() -> Result<(), std::io::Error> {
     ///     let mut app = tide::new();
-    ///     app.at("/images").serve_dir("public/images/")?;
+    ///     app.at("/images/*").serve_dir("public/images/")?;
     ///     app.listen("127.0.0.1:8080").await?;
     ///     Ok(())
     /// }
@@ -136,7 +136,7 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
         // Verify path exists, return error if it doesn't.
         let dir = dir.as_ref().to_owned().canonicalize()?;
         let prefix = self.path().to_string();
-        self.at("*").get(ServeDir::new(prefix, dir));
+        self.get(ServeDir::new(prefix, dir));
         Ok(())
     }
 
