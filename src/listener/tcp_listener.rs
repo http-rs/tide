@@ -46,6 +46,7 @@ impl<State> TcpListener<State> {
 
 fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: TcpStream) {
     task::spawn(async move {
+        stream.set_nodelay(app.tcp_nodelay()).ok();
         let local_addr = stream.local_addr().ok();
         let peer_addr = stream.peer_addr().ok();
 
