@@ -114,7 +114,7 @@ where
                 Arc::new(log::LogMiddleware::new()),
             ]),
             state,
-            tcp_nodelay: false,
+            tcp_nodelay: true,
         }
     }
 
