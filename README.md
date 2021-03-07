@@ -149,7 +149,11 @@ team. Use at your own risk.</sup>
 * [tide-example](https://github.com/jbr/tide-example) (sqlx + askama)
 * [playground-tide-mongodb](https://github.com/yoshuawuyts/playground-tide-mongodb)
 * [tide-morth-example](https://github.com/No9/tide-morth-example/)
-* [tide-async-graphql-mongodb-boilerplate](https://github.com/zzy/tide-async-graphql-mongodb)
+* [tide-graphql-mongodb](https://github.com/zzy/tide-graphql-mongodb)
+  - Clean boilerplate for graphql services using tide, rhai, async-graphql, surf, graphql-client, handlebars-rust, jsonwebtoken, and mongodb.
+  - Graphql Services: User register, Salt and hash a password with PBKDF2 , Sign in， JSON web token authentication, Change password， Profile Update, User's query & mutation, and Project's query & mutation.
+  - Web Application: Client request, bring & parse GraphQL data, Render data to template engine(handlebars-rust)， Define custom helper with Rhai scripting language.
+
 
 ## Contributing
 Want to join us? Check out our [The "Contributing" section of the
