@@ -154,7 +154,7 @@ team. Use at your own risk.</sup>
   - Graphql Services: User register, Salt and hash a password with PBKDF2 , Sign in， JSON web token authentication, Change password， Profile Update, User's query & mutation, and Project's query & mutation.
   - Web Application: Client request, bring & parse GraphQL data, Render data to template engine(handlebars-rust)， Define custom helper with Rhai scripting language.
 * [surf](https://github.com/zzy/surf)
-  - The Blog built on pure Rust and Tide stack, generated from [tide-graphql-mongodb](https://github.com/zzy/tide-graphql-mongodb).
+  - The Blog built on pure Rust and Tide stack, generated from [tide-graphql-mongodb](https://github.com/zzy/tide-graphql-mongodb), demo site: https://blog.budshome.com.
   - Backend for graphql services using tide, async-graphql, jsonwebtoken, mongodb and so on.
   - Frontend for web application using tide, rhai, surf, graphql_client, handlebars-rust, cookie and so on.
 
