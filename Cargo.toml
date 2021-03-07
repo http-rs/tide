@@ -56,10 +56,10 @@ juniper = "0.14.2"
 lazy_static = "1.4.0"
 logtest = "2.0.0"
 portpicker = "0.1.0"
-serde = { version = "1.0.117", features = ["derive"] }
-surf = { version = "2.0.0", default-features = false, features = ["h1-client"] }
+serde = { version = "1.0.124", features = ["derive"] }
+surf = { version = "2.2.0", default-features = false, features = ["h1-client"] }
 tempfile = "3.1.0"
-async-graphql = "2.4.3"
+async-graphql = "2.5.10"
 
 [[test]]
 name = "cookies"
