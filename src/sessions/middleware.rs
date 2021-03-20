@@ -172,7 +172,7 @@ impl<Store: SessionStore> SessionMiddleware<Store> {
             cookie_path: "/".into(),
             cookie_name: "tide.sid".into(),
             cookie_domain: None,
-            same_site_policy: SameSite::Strict,
+            same_site_policy: SameSite::Lax,
             session_ttl: Some(Duration::from_secs(24 * 60 * 60)),
             key: Key::derive_from(secret),
         }
@@ -218,7 +218,7 @@ impl<Store: SessionStore> SessionMiddleware<Store> {
     }
 
     /// Sets the same site policy for the session cookie. Defaults to
-    /// SameSite::Strict. See [incrementally better
+    /// SameSite::Lax. See [incrementally better
     /// cookies](https://tools.ietf.org/html/draft-west-cookie-incrementalism-01)
     /// for more information about this setting
     pub fn with_same_site_policy(mut self, policy: SameSite) -> Self {
