@@ -149,6 +149,7 @@ team. Use at your own risk.</sup>
 * [tide-example](https://github.com/jbr/tide-example) (sqlx + askama)
 * [playground-tide-mongodb](https://github.com/yoshuawuyts/playground-tide-mongodb)
 * [tide-morth-example](https://github.com/No9/tide-morth-example/)
+* [broker](https://github.com/apibillme/broker/) (backend as a service)
 * [tide-basic-crud](https://github.com/pepoviola/tide-basic-crud) (sqlx + tera)
 * [tide-graphql-mongodb](https://github.com/zzy/tide-graphql-mongodb)
   - Clean boilerplate for graphql services using tide, rhai, async-graphql, surf, graphql-client, handlebars-rust, jsonwebtoken, and mongodb.
@@ -159,7 +160,6 @@ team. Use at your own risk.</sup>
   - Backend for graphql services using tide, async-graphql, jsonwebtoken, mongodb and so on.
   - Frontend for web application using tide, rhai, surf, graphql_client, handlebars-rust, cookie and so on.
 * [tide-server-example](https://github.com/Lomect/tide-server-example)
-
 
 ## Contributing
 Want to join us? Check out our [The "Contributing" section of the
