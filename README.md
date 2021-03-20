@@ -157,6 +157,8 @@ team. Use at your own risk.</sup>
   - The Blog built on Tide stack, generated from [tide-graphql-mongodb](https://github.com/zzy/tide-graphql-mongodb).
   - Backend for graphql services using tide, async-graphql, jsonwebtoken, mongodb and so on.
   - Frontend for web application using tide, rhai, surf, graphql_client, handlebars-rust, cookie and so on.
+* [tide-server-example](https://github.com/Lomect/tide-server-example)
+
 
 ## Contributing
 Want to join us? Check out our [The "Contributing" section of the
