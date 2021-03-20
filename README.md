@@ -149,6 +149,7 @@ team. Use at your own risk.</sup>
 * [tide-example](https://github.com/jbr/tide-example) (sqlx + askama)
 * [playground-tide-mongodb](https://github.com/yoshuawuyts/playground-tide-mongodb)
 * [tide-morth-example](https://github.com/No9/tide-morth-example/)
+* [broker](https://github.com/apibillme/broker/) (backend as a service)
 
 ## Contributing
 Want to join us? Check out our [The "Contributing" section of the
