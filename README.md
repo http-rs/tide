@@ -113,7 +113,7 @@ does not constitute an endorsement or recommendation from the tide
 team. Use at your own risk.</sup>
 
 ### Listeners
-* [tide-rustls](https://github.com/http-rs/tide-rustls) tls for tide based on async-tls/rustls
+* [tide-rustls](https://github.com/http-rs/tide-rustls) TLS for tide based on async-rustls
 
 ### Template engines
 * [tide-tera](https://github.com/jbr/tide-tera)
