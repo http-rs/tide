@@ -114,6 +114,7 @@ team. Use at your own risk.</sup>
 
 ### Listeners
 * [tide-rustls](https://github.com/http-rs/tide-rustls) TLS for tide based on async-rustls
+* [tide-acme](https://github.com/http-rs/tide-acme) HTTPS for tide with automatic certificates, via Let's Encrypt and ACME tls-alpn-01 challenges
 
 ### Template engines
 * [tide-tera](https://github.com/jbr/tide-tera)
