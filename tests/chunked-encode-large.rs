@@ -71,7 +71,7 @@ async fn chunked_large() -> Result<(), http_types::Error> {
     let server = task::spawn(async move {
         let mut app = tide::new();
         app.at("/")
-            .get(|_| async { Ok(Body::from_reader(Cursor::new(TEXT), None)) });
+            .get(|_, _| async { Ok(Body::from_reader(Cursor::new(TEXT), None)) });
         app.listen(("localhost", port)).await?;
         Result::<(), http_types::Error>::Ok(())
     });

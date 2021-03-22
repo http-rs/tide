@@ -1,7 +1,7 @@
 use std::io::ErrorKind;
 
 use tide::utils::After;
-use tide::{Body, Request, Response, Result, StatusCode};
+use tide::{Body, Response, Result, StatusCode};
 
 #[async_std::main]
 async fn main() -> Result<()> {
@@ -22,7 +22,7 @@ async fn main() -> Result<()> {
     }));
 
     app.at("/")
-        .get(|_req: Request<_>| async { Ok(Body::from_file("./does-not-exist").await?) });
+        .get(|_, _| async { Ok(Body::from_file("./does-not-exist").await?) });
 
     app.listen("127.0.0.1:8080").await?;
 

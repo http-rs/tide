@@ -12,7 +12,7 @@ fn hello_world() -> tide::Result<()> {
         let port = test_utils::find_port().await;
         let server = task::spawn(async move {
             let mut app = tide::new();
-            app.at("/").get(move |mut req: Request<()>| async move {
+            app.at("/").get(move |mut req: Request, _state| async move {
                 assert_eq!(req.body_string().await.unwrap(), "nori".to_string());
                 assert!(req.local_addr().unwrap().contains(&port.to_string()));
                 assert!(req.peer_addr().is_some());
@@ -43,7 +43,7 @@ fn echo_server() -> tide::Result<()> {
         let port = test_utils::find_port().await;
         let server = task::spawn(async move {
             let mut app = tide::new();
-            app.at("/").get(|req| async move { Ok(req) });
+            app.at("/").get(|req, _| async move { Ok(req) });
 
             app.listen(("localhost", port)).await?;
             Result::<(), http_types::Error>::Ok(())
@@ -75,7 +75,7 @@ fn json() -> tide::Result<()> {
         let port = test_utils::find_port().await;
         let server = task::spawn(async move {
             let mut app = tide::new();
-            app.at("/").get(|mut req: Request<()>| async move {
+            app.at("/").get(|mut req: Request, _state| async move {
                 let mut counter: Counter = req.body_json().await.unwrap();
                 assert_eq!(counter.count, 0);
                 counter.count = 1;

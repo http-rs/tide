@@ -27,20 +27,20 @@ const BASE64_DIGEST_LEN: usize = 44;
 ///     b"we recommend you use std::env::var(\"TIDE_SECRET\").unwrap().as_bytes() instead of a fixed value"
 /// ));
 ///
-/// app.with(tide::utils::Before(|mut request: tide::Request<()>| async move {
-///     let session = request.session_mut();
+/// app.with(tide::utils::Before(|mut req: tide::Request, state: ()| async move {
+///     let session = req.session_mut();
 ///     let visits: usize = session.get("visits").unwrap_or_default();
 ///     session.insert("visits", visits + 1).unwrap();
-///     request
+///     (req, state)
 /// }));
 ///
-/// app.at("/").get(|req: tide::Request<()>| async move {
+/// app.at("/").get(|req: tide::Request, _| async move {
 ///     let visits: usize = req.session().get("visits").unwrap();
 ///     Ok(format!("you have visited this website {} times", visits))
 /// });
 ///
 /// app.at("/reset")
-///     .get(|mut req: tide::Request<()>| async move {
+///     .get(|mut req: tide::Request, _| async move {
 ///         req.session_mut().destroy();
 ///         Ok(tide::Redirect::new("/"))
 ///      });
@@ -79,8 +79,8 @@ where
     Store: SessionStore,
     State: Clone + Send + Sync + 'static,
 {
-    async fn handle(&self, mut request: Request<State>, next: Next<'_, State>) -> crate::Result {
-        let cookie = request.cookie(&self.cookie_name);
+    async fn handle(&self, mut req: Request, state: State, next: Next<'_, State>) -> crate::Result {
+        let cookie = req.cookie(&self.cookie_name);
         let cookie_value = cookie
             .clone()
             .and_then(|cookie| self.verify_signature(cookie.value()).ok());
@@ -91,10 +91,10 @@ where
             session.expire_in(ttl);
         }
 
-        let secure_cookie = request.url().scheme() == "https";
-        request.set_ext(session.clone());
+        let secure_cookie = req.url().scheme() == "https";
+        req.set_ext(session.clone());
 
-        let mut response = next.run(request).await;
+        let mut response = next.run(req, state).await;
 
         if session.is_destroyed() {
             if let Err(e) = self.store.destroy_session(session).await {

@@ -23,22 +23,17 @@ pin_project_lite::pin_project! {
     /// Requests also provide *extensions*, a type map primarily used for low-level
     /// communication between middleware and endpoints.
     #[derive(Debug)]
-    pub struct Request<State> {
-        pub(crate) state: State,
+    pub struct Request {
         #[pin]
         pub(crate) req: http::Request,
         pub(crate) route_params: Vec<Params>,
     }
 }
 
-impl<State> Request<State> {
+impl Request {
     /// Create a new `Request`.
-    pub(crate) fn new(state: State, req: http_types::Request, route_params: Vec<Params>) -> Self {
-        Self {
-            state,
-            req,
-            route_params,
-        }
+    pub(crate) fn new(req: http_types::Request, route_params: Vec<Params>) -> Self {
+        Self { req, route_params }
     }
 
     /// Access the request's HTTP method.
@@ -52,7 +47,7 @@ impl<State> Request<State> {
     /// use tide::Request;
     ///
     /// let mut app = tide::new();
-    /// app.at("/").get(|req: Request<()>| async move {
+    /// app.at("/").get(|req: Request, _| async move {
     ///     assert_eq!(req.method(), http_types::Method::Get);
     ///     Ok("")
     /// });
@@ -76,7 +71,7 @@ impl<State> Request<State> {
     /// use tide::Request;
     ///
     /// let mut app = tide::new();
-    /// app.at("/").get(|req: Request<()>| async move {
+    /// app.at("/").get(|req: Request, _| async move {
     ///     assert_eq!(req.url(), &"/".parse::<tide::http::Url>().unwrap());
     ///     Ok("")
     /// });
@@ -100,7 +95,7 @@ impl<State> Request<State> {
     /// use tide::Request;
     ///
     /// let mut app = tide::new();
-    /// app.at("/").get(|req: Request<()>| async move {
+    /// app.at("/").get(|req: Request, _| async move {
     ///     assert_eq!(req.version(), Some(http_types::Version::Http1_1));
     ///     Ok("")
     /// });
@@ -171,7 +166,7 @@ impl<State> Request<State> {
     /// use tide::Request;
     ///
     /// let mut app = tide::new();
-    /// app.at("/").get(|req: Request<()>| async move {
+    /// app.at("/").get(|req: Request, _| async move {
     ///     assert_eq!(req.header("X-Forwarded-For").unwrap(), "127.0.0.1");
     ///     Ok("")
     /// });
@@ -256,12 +251,6 @@ impl<State> Request<State> {
         self.req.ext_mut().insert(val)
     }
 
-    #[must_use]
-    ///  Access application scoped state.
-    pub fn state(&self) -> &State {
-        &self.state
-    }
-
     /// Extract and parse a route parameter by name.
     ///
     /// Returns the parameter as a `&str`, borrowed from this `Request`.
@@ -281,7 +270,7 @@ impl<State> Request<State> {
     /// #
     /// use tide::{Request, Result};
     ///
-    /// async fn greet(req: Request<()>) -> Result<String> {
+    /// async fn greet(req: Request, _state: ()) -> Result<String> {
     ///     let name = req.param("name").unwrap_or("world");
     ///     Ok(format!("Hello, {}!", name))
     /// }
@@ -323,7 +312,7 @@ impl<State> Request<State> {
     ///         }
     ///     }
     /// }
-    /// app.at("/pages").post(|req: tide::Request<()>| async move {
+    /// app.at("/pages").post(|req: tide::Request, _| async move {
     ///     let page: Page = req.query()?;
     ///     Ok(format!("page {}, with {} items", page.offset, page.size))
     /// });
@@ -387,7 +376,7 @@ impl<State> Request<State> {
     /// use tide::Request;
     ///
     /// let mut app = tide::new();
-    /// app.at("/").get(|mut req: Request<()>| async move {
+    /// app.at("/").get(|mut req: Request, _state |async move {
     ///     let _body: Vec<u8> = req.body_bytes().await.unwrap();
     ///     Ok("")
     /// });
@@ -421,7 +410,7 @@ impl<State> Request<State> {
     /// use tide::Request;
     ///
     /// let mut app = tide::new();
-    /// app.at("/").get(|mut req: Request<()>| async move {
+    /// app.at("/").get(|mut req: Request, _state |async move {
     ///     let _body: String = req.body_string().await.unwrap();
     ///     Ok("")
     /// });
@@ -461,7 +450,7 @@ impl<State> Request<State> {
     ///   legs: u8
     /// }
     ///
-    /// app.at("/").post(|mut req: tide::Request<()>| async move {
+    /// app.at("/").post(|mut req: tide::Request, _| async move {
     ///     let animal: Animal = req.body_form().await?;
     ///     Ok(format!(
     ///         "hello, {}! i've put in an order for {} shoes",
@@ -536,31 +525,31 @@ impl<State> Request<State> {
     }
 }
 
-impl<State> AsRef<http::Request> for Request<State> {
+impl AsRef<http::Request> for Request {
     fn as_ref(&self) -> &http::Request {
         &self.req
     }
 }
 
-impl<State> AsMut<http::Request> for Request<State> {
+impl AsMut<http::Request> for Request {
     fn as_mut(&mut self) -> &mut http::Request {
         &mut self.req
     }
 }
 
-impl<State> AsRef<http::Headers> for Request<State> {
+impl AsRef<http::Headers> for Request {
     fn as_ref(&self) -> &http::Headers {
         self.req.as_ref()
     }
 }
 
-impl<State> AsMut<http::Headers> for Request<State> {
+impl AsMut<http::Headers> for Request {
     fn as_mut(&mut self) -> &mut http::Headers {
         self.req.as_mut()
     }
 }
 
-impl<State> Read for Request<State> {
+impl Read for Request {
     fn poll_read(
         self: Pin<&mut Self>,
         cx: &mut Context<'_>,
@@ -570,21 +559,21 @@ impl<State> Read for Request<State> {
     }
 }
 
-impl<State> Into<http::Request> for Request<State> {
+impl Into<http::Request> for Request {
     fn into(self) -> http::Request {
         self.req
     }
 }
 
-impl<State: Default> Into<Request<State>> for http_types::Request {
-    fn into(self) -> Request<State> {
-        Request::new(State::default(), self, Vec::<Params>::new())
+impl Into<Request> for http_types::Request {
+    fn into(self) -> Request {
+        Request::new(self, vec![])
     }
 }
 
 // NOTE: From cannot be implemented for this conversion because `State` needs to
 // be constrained by a type.
-impl<State: Clone + Send + Sync + 'static> Into<Response> for Request<State> {
+impl Into<Response> for Request {
     fn into(mut self) -> Response {
         let mut res = Response::new(StatusCode::Ok);
         res.set_body(self.take_body());
@@ -592,7 +581,7 @@ impl<State: Clone + Send + Sync + 'static> Into<Response> for Request<State> {
     }
 }
 
-impl<State> IntoIterator for Request<State> {
+impl IntoIterator for Request {
     type Item = (HeaderName, HeaderValues);
     type IntoIter = http_types::headers::IntoIter;
 
@@ -603,7 +592,7 @@ impl<State> IntoIterator for Request<State> {
     }
 }
 
-impl<'a, State> IntoIterator for &'a Request<State> {
+impl<'a> IntoIterator for &'a Request {
     type Item = (&'a HeaderName, &'a HeaderValues);
     type IntoIter = http_types::headers::Iter<'a>;
 
@@ -613,7 +602,7 @@ impl<'a, State> IntoIterator for &'a Request<State> {
     }
 }
 
-impl<'a, State> IntoIterator for &'a mut Request<State> {
+impl<'a> IntoIterator for &'a mut Request {
     type Item = (&'a HeaderName, &'a mut HeaderValues);
     type IntoIter = http_types::headers::IterMut<'a>;
 
@@ -623,7 +612,7 @@ impl<'a, State> IntoIterator for &'a mut Request<State> {
     }
 }
 
-impl<State> Index<HeaderName> for Request<State> {
+impl Index<HeaderName> for Request {
     type Output = HeaderValues;
 
     /// Returns a reference to the value corresponding to the supplied name.
@@ -637,7 +626,7 @@ impl<State> Index<HeaderName> for Request<State> {
     }
 }
 
-impl<State> Index<&str> for Request<State> {
+impl Index<&str> for Request {
     type Output = HeaderValues;
 
     /// Returns a reference to the value corresponding to the supplied name.

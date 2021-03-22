@@ -276,9 +276,8 @@ where
     State: Clone + Send + Sync + 'static,
     E: Endpoint<State>,
 {
-    async fn call(&self, req: crate::Request<State>) -> crate::Result {
+    async fn call(&self, req: crate::Request, state: State) -> crate::Result {
         let crate::Request {
-            state,
             mut req,
             route_params,
         } = req;
@@ -287,11 +286,7 @@ where
         req.url_mut().set_path(&rest);
 
         self.0
-            .call(crate::Request {
-                state,
-                req,
-                route_params,
-            })
+            .call(crate::Request::new(req, route_params), state)
             .await
     }
 }

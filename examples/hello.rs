@@ -2,7 +2,7 @@
 async fn main() -> Result<(), std::io::Error> {
     tide::log::start();
     let mut app = tide::new();
-    app.at("/").get(|_| async { Ok("Hello, world!") });
+    app.at("/").get(|_, _| async { Ok("Hello, world!") });
     app.listen("127.0.0.1:8080").await?;
     Ok(())
 }

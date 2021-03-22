@@ -41,7 +41,7 @@ async fn json_content_type() -> tide::Result<()> {
     use tide::Body;
 
     let mut app = tide::new();
-    app.at("/json_content_type").get(|_| async {
+    app.at("/json_content_type").get(|_, _| async {
         let mut map = BTreeMap::new();
         map.insert(Some("a"), 2);
         map.insert(Some("b"), 4);

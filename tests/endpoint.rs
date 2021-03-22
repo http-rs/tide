@@ -4,7 +4,7 @@ use tide::Response;
 #[async_std::test]
 async fn should_accept_boxed_endpoints() {
     fn endpoint() -> Box<dyn tide::Endpoint<()>> {
-        Box::new(|_| async { Ok("hello world") })
+        Box::new(|_, _| async { Ok("hello world") })
     }
 
     let mut app = tide::Server::new();

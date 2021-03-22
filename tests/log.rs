@@ -34,7 +34,7 @@ async fn test_only_log_once(logger: &mut logtest::Logger) -> tide::Result<()> {
     let mut app = tide::new();
     app.at("/").nest({
         let mut app = tide::new();
-        app.at("/").get(|_| async { Ok("nested") });
+        app.at("/").get(|_, _| async { Ok("nested") });
         app
     });
     assert!(app.get("/").await?.status().is_success());

@@ -12,7 +12,7 @@ async fn main() -> tide::Result<()> {
     tide::log::start();
     let mut app = tide::new();
 
-    app.at("/submit").post(|mut req: Request<()>| async move {
+    app.at("/submit").post(|mut req: Request, _| async move {
         let cat: Cat = req.body_json().await?;
         println!("cat name: {}", cat.name);
 
@@ -23,7 +23,7 @@ async fn main() -> tide::Result<()> {
         Ok(Body::from_json(&cat)?)
     });
 
-    app.at("/animals").get(|_| async {
+    app.at("/animals").get(|_, _| async {
         Ok(json!({
             "meta": { "count": 2 },
             "animals": [

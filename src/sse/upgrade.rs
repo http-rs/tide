@@ -9,16 +9,16 @@ use async_std::io::BufReader;
 use async_std::task;
 
 /// Upgrade an existing HTTP connection to an SSE connection.
-pub fn upgrade<F, Fut, State>(req: Request<State>, handler: F) -> Response
+pub fn upgrade<F, Fut, State>(req: Request, state: State, handler: F) -> Response
 where
     State: Clone + Send + Sync + 'static,
-    F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
+    F: Fn(Request, State, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + 'static,
 {
     let (sender, encoder) = async_sse::encode();
     task::spawn(async move {
         let sender = Sender::new(sender);
-        if let Err(err) = handler(req, sender).await {
+        if let Err(err) = handler(req, state, sender).await {
             log::error!("SSE handler error: {:?}", err);
         }
     });
