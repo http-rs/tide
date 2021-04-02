@@ -25,7 +25,9 @@ where
 {
     async fn call(&self, req: Request<State>) -> Result {
         let path = req.url().path();
-        let path = path.strip_prefix(&self.prefix).unwrap();
+        let path = path
+            .strip_prefix(&self.prefix.trim_end_matches('*'))
+            .unwrap();
         let path = path.trim_start_matches('/');
         let mut file_path = self.dir.clone();
         for p in Path::new(path) {
