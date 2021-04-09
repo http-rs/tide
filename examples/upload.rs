@@ -31,7 +31,7 @@ async fn main() -> Result<(), IoError> {
 
     // To test this example:
     // $ cargo run --example upload
-    // $ curl -T ./README.md locahost:8080 # this writes the file to a temp directory
+    // $ curl -T ./README.md localhost:8080 # this writes the file to a temp directory
     // $ curl localhost:8080/README.md # this reads the file from the same temp directory
 
     app.at(":file")
