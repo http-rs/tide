@@ -52,19 +52,6 @@ impl<State> TcpListener<State> {
     }
 
     /// Set the TCP_NODELAY option for tcp connections.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// # use async_std::task::block_on;
-    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
-    /// #
-    /// let mut app = tide::new();
-    /// app.at("/").get(|_| async { Ok("Hello, world!") });
-    /// app.listen("127.0.0.1:8080").await?;
-    /// #
-    /// # Ok(()) }) }
-    /// ```
     pub fn set_tcp_nodelay(&mut self, tcp_nodelay: bool) -> &mut Self {
         self.tcp_nodelay = tcp_nodelay;
         self
