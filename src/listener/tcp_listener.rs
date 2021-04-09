@@ -22,6 +22,7 @@ pub struct TcpListener<State> {
     listener: Option<net::TcpListener>,
     server: Option<Server<State>>,
     info: Option<ListenInfo>,
+    tcp_nodelay: bool,
 }
 
 impl<State> TcpListener<State> {
@@ -31,6 +32,7 @@ impl<State> TcpListener<State> {
             listener: None,
             server: None,
             info: None,
+            tcp_nodelay: true,
         }
     }
 
@@ -40,13 +42,38 @@ impl<State> TcpListener<State> {
             listener: Some(tcp_listener.into()),
             server: None,
             info: None,
+            tcp_nodelay: true,
         }
+    }
+
+    /// Gets the value of the TCP_NODELAY option for tcp connections.
+    pub fn tcp_nodelay(&self) -> bool {
+        self.tcp_nodelay
+    }
+
+    /// Set the TCP_NODELAY option for tcp connections.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use async_std::task::block_on;
+    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
+    /// #
+    /// let mut app = tide::new();
+    /// app.at("/").get(|_| async { Ok("Hello, world!") });
+    /// app.listen("127.0.0.1:8080").await?;
+    /// #
+    /// # Ok(()) }) }
+    /// ```
+    pub fn set_tcp_nodelay(&mut self, tcp_nodelay: bool) -> &mut Self {
+        self.tcp_nodelay = tcp_nodelay;
+        self
     }
 }
 
-fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: TcpStream) {
+fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: TcpStream, tcp_nodelay: bool) {
     task::spawn(async move {
-        stream.set_nodelay(app.tcp_nodelay()).ok();
+        stream.set_nodelay(tcp_nodelay).ok();
         let local_addr = stream.local_addr().ok();
         let peer_addr = stream.peer_addr().ok();
 
@@ -112,7 +139,7 @@ where
                 }
 
                 Ok(stream) => {
-                    handle_tcp(server.clone(), stream);
+                    handle_tcp(server.clone(), stream, self.tcp_nodelay);
                 }
             };
         }

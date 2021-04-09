@@ -38,7 +38,6 @@ pub struct Server<State> {
     /// We don't use a Mutex around the Vec here because adding a middleware during execution should be an error.
     #[allow(clippy::rc_buffer)]
     middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
-    tcp_nodelay: bool,
 }
 
 impl Server<()> {
@@ -114,7 +113,6 @@ where
                 Arc::new(log::LogMiddleware::new()),
             ]),
             state,
-            tcp_nodelay: true,
         }
     }
 
@@ -288,7 +286,6 @@ where
             router,
             state,
             middleware,
-            tcp_nodelay: _tcp_nodelay,
         } = self.clone();
 
         let method = req.method().to_owned();
@@ -320,31 +317,6 @@ where
     pub fn state(&self) -> &State {
         &self.state
     }
-
-    /// Gets the value of the TCP_NODELAY option for tcp connections.
-    pub fn tcp_nodelay(&self) -> bool {
-        self.tcp_nodelay
-    }
-
-    /// Set the TCP_NODELAY option for tcp connections.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// # use async_std::task::block_on;
-    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
-    /// #
-    /// let mut app = tide::new();
-    /// app.at("/").get(|_| async { Ok("Hello, world!") });
-    /// app.set_tcp_nodelay(true);
-    /// app.listen("127.0.0.1:8080").await?;
-    /// #
-    /// # Ok(()) }) }
-    /// ```
-    pub fn set_tcp_nodelay(&mut self, tcp_nodelay: bool) -> &mut Self {
-        self.tcp_nodelay = tcp_nodelay;
-        self
-    }
 }
 
 impl<State: Send + Sync + 'static> std::fmt::Debug for Server<State> {
@@ -359,7 +331,6 @@ impl<State: Clone> Clone for Server<State> {
             router: self.router.clone(),
             state: self.state.clone(),
             middleware: self.middleware.clone(),
-            tcp_nodelay: self.tcp_nodelay,
         }
     }
 }
