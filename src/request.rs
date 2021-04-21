@@ -570,20 +570,21 @@ impl<State> Read for Request<State> {
     }
 }
 
+#[allow(clippy::from_over_into)]
 impl<State> Into<http::Request> for Request<State> {
     fn into(self) -> http::Request {
         self.req
     }
 }
 
+#[allow(clippy::from_over_into)]
 impl<State: Default> Into<Request<State>> for http_types::Request {
     fn into(self) -> Request<State> {
         Request::new(State::default(), self, Vec::<Params>::new())
     }
 }
 
-// NOTE: From cannot be implemented for this conversion because `State` needs to
-// be constrained by a type.
+#[allow(clippy::from_over_into)]
 impl<State: Clone + Send + Sync + 'static> Into<Response> for Request<State> {
     fn into(mut self) -> Response {
         let mut res = Response::new(StatusCode::Ok);

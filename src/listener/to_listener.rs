@@ -57,5 +57,6 @@ pub trait ToListener<State: Clone + Send + Sync + 'static> {
     /// listener does not initiate a connection. An Err return
     /// indicates an unsuccessful conversion to a listener, not an
     /// unsuccessful bind attempt.
+    #[allow(clippy::wrong_self_convention)]
     fn to_listener(self) -> io::Result<Self::Listener>;
 }

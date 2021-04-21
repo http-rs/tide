@@ -356,6 +356,7 @@ impl AsMut<http::Headers> for Response {
     }
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<http::Response> for Response {
     fn into(self) -> http_types::Response {
         self.res

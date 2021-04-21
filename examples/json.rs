@@ -20,7 +20,7 @@ async fn main() -> tide::Result<()> {
             name: "chashu".into(),
         };
 
-        Ok(Body::from_json(&cat)?)
+        Body::from_json(&cat)
     });
 
     app.at("/animals").get(|_| async {

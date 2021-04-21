@@ -77,6 +77,7 @@ impl ResponseBuilder {
     }
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<Response> for ResponseBuilder {
     fn into(self) -> Response {
         self.build()

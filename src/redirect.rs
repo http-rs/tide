@@ -96,12 +96,14 @@ where
     }
 }
 
+#[allow(clippy::from_over_into)]
 impl<T: AsRef<str>> Into<Response> for Redirect<T> {
     fn into(self) -> Response {
         (&self).into()
     }
 }
 
+#[allow(clippy::from_over_into)]
 impl<T: AsRef<str>> Into<Response> for &Redirect<T> {
     fn into(self) -> Response {
         let mut res = Response::new(self.status);

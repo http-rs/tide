@@ -79,7 +79,7 @@ fn json() -> tide::Result<()> {
                 let mut counter: Counter = req.body_json().await.unwrap();
                 assert_eq!(counter.count, 0);
                 counter.count = 1;
-                Ok(Body::from_json(&counter)?)
+                Body::from_json(&counter)
             });
             app.listen(("localhost", port)).await?;
             Result::<(), http_types::Error>::Ok(())
