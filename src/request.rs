@@ -302,54 +302,41 @@ impl<State> Request<State> {
     }
 
     /// Parse the URL query component into a struct, using [serde_qs](https://docs.rs/serde_qs). To
-    /// get the entire query as an unparsed string, use `request.url().query()`
+    /// get the entire query as an unparsed string, use `request.url().query()`.
     ///
-    /// ```rust
-    /// # fn main() -> Result<(), std::io::Error> { async_std::task::block_on(async {
-    /// use tide::prelude::*;
-    /// let mut app = tide::new();
+    /// # Examples
+    ///
+    /// ```
+    /// use std::collections::HashMap;
+    /// use tide::http::{self, convert::Deserialize};
+    /// use tide::Request;
+    ///
+    /// // An owned structure:
     ///
     /// #[derive(Deserialize)]
-    /// #[serde(default)]
-    /// struct Page {
-    ///     size: u8,
-    ///     offset: u8,
+    /// struct Index {
+    ///     page: u32,
+    ///     selections: HashMap<String, String>,
     /// }
-    /// impl Default for Page {
-    ///     fn default() -> Self {
-    ///         Self {
-    ///             size: 25,
-    ///             offset: 0,
-    ///         }
-    ///     }
+    ///
+    /// let req: Request<()> = http::Request::get("https://httpbin.org/get?page=2&selections[width]=narrow&selections[height]=tall").into();
+    /// let Index { page, selections } = req.query().unwrap();
+    /// assert_eq!(page, 2);
+    /// assert_eq!(selections["width"], "narrow");
+    /// assert_eq!(selections["height"], "tall");
+    ///
+    /// // Using borrows:
+    ///
+    /// #[derive(Deserialize)]
+    /// struct Query<'q> {
+    ///     format: &'q str,
     /// }
-    /// app.at("/pages").post(|req: tide::Request<()>| async move {
-    ///     let page: Page = req.query()?;
-    ///     Ok(format!("page {}, with {} items", page.offset, page.size))
-    /// });
     ///
-    /// # if false {
-    /// app.listen("localhost:8000").await?;
-    /// # }
-    ///
-    /// // $ curl localhost:8000/pages
-    /// // page 0, with 25 items
-    ///
-    /// // $ curl localhost:8000/pages?offset=1
-    /// // page 1, with 25 items
-    ///
-    /// // $ curl localhost:8000/pages?offset=2&size=50
-    /// // page 2, with 50 items
-    ///
-    /// // $ curl localhost:8000/pages?size=5000
-    /// // failed with reason: number too large to fit in target type
-    ///
-    /// // $ curl localhost:8000/pages?size=all
-    /// // failed with reason: invalid digit found in string
-    /// # Ok(()) })}
+    /// let req: Request<()> = http::Request::get("https://httpbin.org/get?format=bananna").into();
+    /// let Query { format } = req.query().unwrap();
+    /// assert_eq!(format, "bananna");
     /// ```
-
-    pub fn query<T: serde::de::DeserializeOwned>(&self) -> crate::Result<T> {
+    pub fn query<'de, T: serde::de::Deserialize<'de>>(&'de self) -> crate::Result<T> {
         self.req.query()
     }
 
