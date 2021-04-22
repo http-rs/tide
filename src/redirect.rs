@@ -96,18 +96,16 @@ where
     }
 }
 
-#[allow(clippy::from_over_into)]
-impl<T: AsRef<str>> Into<Response> for Redirect<T> {
-    fn into(self) -> Response {
-        (&self).into()
+impl<T: AsRef<str>> From<Redirect<T>> for Response {
+    fn from(redirect: Redirect<T>) -> Response {
+        redirect.into()
     }
 }
 
-#[allow(clippy::from_over_into)]
-impl<T: AsRef<str>> Into<Response> for &Redirect<T> {
-    fn into(self) -> Response {
-        let mut res = Response::new(self.status);
-        res.insert_header(LOCATION, self.location.as_ref());
+impl<T: AsRef<str>> From<&Redirect<T>> for Response {
+    fn from(redirect: &Redirect<T>) -> Response {
+        let mut res = Response::new(redirect.status);
+        res.insert_header(LOCATION, redirect.location.as_ref());
         res
     }
 }
