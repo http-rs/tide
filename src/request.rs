@@ -570,25 +570,22 @@ impl<State> Read for Request<State> {
     }
 }
 
-#[allow(clippy::from_over_into)]
-impl<State> Into<http::Request> for Request<State> {
-    fn into(self) -> http::Request {
-        self.req
+impl<State> From<Request<State>> for http::Request {
+    fn from(request: Request<State>) -> http::Request {
+        request.req
     }
 }
 
-#[allow(clippy::from_over_into)]
-impl<State: Default> Into<Request<State>> for http_types::Request {
-    fn into(self) -> Request<State> {
-        Request::new(State::default(), self, Vec::<Params>::new())
+impl<State: Default> From<http_types::Request> for Request<State> {
+    fn from(request: http_types::Request) -> Request<State> {
+        Request::new(State::default(), request, Vec::<Params>::new())
     }
 }
 
-#[allow(clippy::from_over_into)]
-impl<State: Clone + Send + Sync + 'static> Into<Response> for Request<State> {
-    fn into(mut self) -> Response {
+impl<State: Clone + Send + Sync + 'static> From<Request<State>> for Response {
+    fn from(mut request: Request<State>) -> Response {
         let mut res = Response::new(StatusCode::Ok);
-        res.set_body(self.take_body());
+        res.set_body(request.take_body());
         res
     }
 }

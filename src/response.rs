@@ -301,7 +301,7 @@ impl Response {
     /// Sets the response's error, overwriting any existing error.
     ///
     /// This is particularly useful for middleware which would like to notify further
-    /// middleware that an error has occured without overwriting the existing response.
+    /// middleware that an error has occurred without overwriting the existing response.
     pub fn set_error(&mut self, error: impl Into<Error>) {
         self.error = Some(error.into());
     }
@@ -356,10 +356,9 @@ impl AsMut<http::Headers> for Response {
     }
 }
 
-#[allow(clippy::from_over_into)]
-impl Into<http::Response> for Response {
-    fn into(self) -> http_types::Response {
-        self.res
+impl From<Response> for http::Response {
+    fn from(response: Response) -> http_types::Response {
+        response.res
     }
 }
 
