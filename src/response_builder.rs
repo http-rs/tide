@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 use crate::http::headers::{HeaderName, ToHeaderValues};
 use crate::http::{Body, Mime, StatusCode};
 use crate::Response;
@@ -53,6 +55,9 @@ impl ResponseBuilder {
     }
 
     /// Sets the Content-Type header on the response.
+    ///
+    /// # Examples
+    ///
     /// ```
     /// # use tide::{http::mime, Response};
     /// let response = Response::builder(200).content_type(mime::HTML).build();
@@ -64,6 +69,9 @@ impl ResponseBuilder {
     }
 
     /// Sets the body of the response.
+    ///
+    /// # Examples
+    ///
     /// ```
     /// # async_std::task::block_on(async move {
     /// # use tide::{Response, convert::json};
@@ -74,6 +82,107 @@ impl ResponseBuilder {
     pub fn body(mut self, body: impl Into<Body>) -> Self {
         self.0.set_body(body);
         self
+    }
+
+    /// Pass JSON as the response body.
+    ///
+    /// # Mime
+    ///
+    /// The `Content-Type` is set to `application/json`.
+    ///
+    /// # Errors
+    ///
+    /// This method will return an error if the provided data could not be serialized to JSON.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use serde::{Deserialize, Serialize};
+    /// # use tide::Response;
+    /// # #[async_std::main]
+    /// # async fn main() -> tide::Result<()> {
+    /// #[derive(Deserialize, Serialize)]
+    /// struct Ip {
+    ///     ip: String
+    /// }
+    ///
+    /// let data = &Ip { ip: "129.0.0.1".into() };
+    /// let res = Response::builder(200).body_json(data)?.build();
+    /// assert_eq!(res.status(), 200);
+    /// # Ok(()) }
+    /// ```
+    pub fn body_json(self, json: &impl Serialize) -> crate::Result<Self> {
+        Ok(self.body(Body::from_json(json)?))
+    }
+
+    /// Pass a string as the response body.
+    ///
+    /// # Mime
+    ///
+    /// The `Content-Type` is set to `text/plain; charset=utf-8`.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use tide::Response;
+    /// # #[async_std::main]
+    /// # async fn main() -> tide::Result<()> {
+    /// let data = "hello world".to_string();
+    /// let res = Response::builder(200).body_string(data).build();
+    /// assert_eq!(res.status(), 200);
+    /// # Ok(()) }
+    /// ```
+    pub fn body_string(self, string: String) -> Self {
+        self.body(Body::from_string(string))
+    }
+
+    /// Pass bytes as the response body.
+    ///
+    /// # Mime
+    ///
+    /// The `Content-Type` is set to `application/octet-stream`.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use tide::Response;
+    /// # #[async_std::main]
+    /// # async fn main() -> tide::Result<()> {
+    /// let data = b"hello world".to_owned();
+    /// let res = Response::builder(200).body_bytes(data).build();
+    /// assert_eq!(res.status(), 200);
+    /// # Ok(()) }
+    /// ```
+    pub fn body_bytes(self, bytes: impl AsRef<[u8]>) -> Self {
+        self.body(Body::from(bytes.as_ref()))
+    }
+
+    /// Pass a file as the response body.
+    ///
+    /// # Mime
+    ///
+    /// The `Content-Type` is set based on the file extension using [`mime_guess`] if the operation was
+    /// successful. If `path` has no extension, or its extension has no known MIME type mapping,
+    /// then `None` is returned.
+    ///
+    /// [`mime_guess`]: https://docs.rs/mime_guess
+    ///
+    /// # Errors
+    ///
+    /// This method will return an error if the file couldn't be read.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use tide::Response;
+    /// # #[async_std::main]
+    /// # async fn main() -> tide::Result<()> {
+    /// let res = Response::builder(200).body_file("./archive.tgz").await?.build();
+    /// assert_eq!(res.status(), 200);
+    /// # Ok(()) }
+    /// ```
+    pub async fn body_file(self, path: impl AsRef<std::path::Path>) -> std::io::Result<Self> {
+        Ok(self.body(Body::from_file(path).await?))
     }
 }
 
