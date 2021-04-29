@@ -2,6 +2,8 @@ use std::convert::TryInto;
 use std::fmt::{Debug, Display};
 use std::ops::Index;
 
+use serde::Serialize;
+
 use crate::http::cookies::Cookie;
 use crate::http::headers::{self, HeaderName, HeaderValues, ToHeaderValues};
 use crate::http::{self, Body, Error, Mime, StatusCode};
@@ -227,6 +229,109 @@ impl Response {
     /// ```
     pub fn swap_body(&mut self, body: &mut Body) {
         self.res.swap_body(body)
+    }
+
+    /// Pass JSON as the response body.
+    ///
+    /// # Mime
+    ///
+    /// The `Content-Type` is set to `application/json`.
+    ///
+    /// # Errors
+    ///
+    /// This method will return an error if the provided data could not be serialized to JSON.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use serde::{Deserialize, Serialize};
+    /// # use tide::Response;
+    /// # #[async_std::main]
+    /// # async fn main() -> tide::Result<()> {
+    /// #[derive(Deserialize, Serialize)]
+    /// struct Ip {
+    ///     ip: String
+    /// }
+    ///
+    /// let data = &Ip { ip: "129.0.0.1".into() };
+    /// let mut res = Response::new(200);
+    /// res.body_json(data)?;
+    /// # Ok(()) }
+    /// ```
+    pub fn body_json(&mut self, json: &impl Serialize) -> crate::Result<()> {
+        self.res.set_body(Body::from_json(json)?);
+        Ok(())
+    }
+
+    /// Pass a string as the response body.
+    ///
+    /// # Mime
+    ///
+    /// The `Content-Type` is set to `text/plain; charset=utf-8`.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use tide::Response;
+    /// # #[async_std::main]
+    /// # async fn main() -> tide::Result<()> {
+    /// let data = "hello world".to_string();
+    /// let mut res = Response::new(200);
+    /// res.body_string(data);
+    /// # Ok(()) }
+    /// ```
+    pub fn body_string(&mut self, string: String) {
+        self.res.set_body(Body::from_string(string));
+    }
+
+    /// Pass bytes as the request body.
+    ///
+    /// # Mime
+    ///
+    /// The `Content-Type` is set to `application/octet-stream`.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use tide::Response;
+    /// # #[async_std::main]
+    /// # async fn main() -> tide::Result<()> {
+    /// let data = b"hello world".to_owned();
+    /// let mut res = Response::new(200);
+    /// res.body_bytes(data);
+    /// # Ok(()) }
+    /// ```
+    pub fn body_bytes(&mut self, bytes: impl AsRef<[u8]>) {
+        self.set_body(Body::from(bytes.as_ref()));
+    }
+
+    /// Pass a file as the response body.
+    ///
+    /// # Mime
+    ///
+    /// The `Content-Type` is set based on the file extension using [`mime_guess`] if the operation was
+    /// successful. If `path` has no extension, or its extension has no known MIME type mapping,
+    /// then `None` is returned.
+    ///
+    /// [`mime_guess`]: https://docs.rs/mime_guess
+    ///
+    /// # Errors
+    ///
+    /// This method will return an error if the file couldn't be read.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use tide::Response;
+    /// # #[async_std::main]
+    /// # async fn main() -> tide::Result<()> {
+    /// let mut res = Response::new(200);
+    /// res.body_file("./archive.tgz").await?;
+    /// # Ok(()) }
+    /// ```
+    pub async fn body_file(&mut self, path: impl AsRef<std::path::Path>) -> std::io::Result<()> {
+        self.set_body(Body::from_file(path).await?);
+        Ok(())
     }
 
     /// Insert cookie in the cookie jar.
