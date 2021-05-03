@@ -64,8 +64,7 @@ Create an HTTP server that receives a JSON body, validates it, and responds
 with a confirmation message.
 
 ```rust
-use tide::Request;
-use tide::prelude::*;
+use tide::{Body, Request, Response, prelude::*, utils::After};
 
 #[derive(Debug, Deserialize)]
 struct Animal {
@@ -77,21 +76,24 @@ struct Animal {
 async fn main() -> tide::Result<()> {
     tide::log::start();
     let mut app = tide::new();
+    app.with(After(err_handler));
     app.at("/orders/shoes").post(order_shoes);
     app.listen("127.0.0.1:8080").await?;
     Ok(())
 }
 
 async fn order_shoes(mut req: Request<()>) -> tide::Result {
-    let r: tide::Result<Animal> = req.body_json().await;
-    match r {
-        Ok(a) => Ok(format!("Hello, {}! I've put in an order for {} shoes", a.name, a.legs).into()),
-        Err(e) => {
-            let mut r = tide::Response::new(e.status());
-            r.set_body(format!("Error: {:?}", e));
-            Ok(r)
-        }
+    let Animal { name, legs } = req.body_json().await?;
+    Ok(format!("Hello, {}! I've put in an order for {} shoes", name, legs).into())
+}
+
+async fn err_handler(res: Response) -> tide::Result {
+    if let Some(e) = res.error() {
+        let mut r = Response::new(e.status());
+        r.set_body(Body::from_string(format!("Error: {:?}", e)));
+        return Ok(r);
     }
+    Ok(res)
 }
 ```
 
