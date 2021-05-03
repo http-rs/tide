@@ -75,6 +75,7 @@ struct Animal {
 
 #[async_std::main]
 async fn main() -> tide::Result<()> {
+    tide::log::start();
     let mut app = tide::new();
     app.at("/orders/shoes").post(order_shoes);
     app.listen("127.0.0.1:8080").await?;
@@ -82,8 +83,15 @@ async fn main() -> tide::Result<()> {
 }
 
 async fn order_shoes(mut req: Request<()>) -> tide::Result {
-    let Animal { name, legs } = req.body_json().await?;
-    Ok(format!("Hello, {}! I've put in an order for {} shoes", name, legs).into())
+    let r: tide::Result<Animal> = req.body_json().await;
+    match r {
+        Ok(a) => Ok(format!("Hello, {}! I've put in an order for {} shoes", a.name, a.legs).into()),
+        Err(e) => {
+            let mut r = tide::Response::new(e.status());
+            r.set_body(format!("Error: {:?}", e));
+            Ok(r)
+        }
+    }
 }
 ```
 
@@ -92,7 +100,7 @@ $ curl localhost:8080/orders/shoes -d '{ "name": "Chashu", "legs": 4 }'
 Hello, Chashu! I've put in an order for 4 shoes
 
 $ curl localhost:8080/orders/shoes -d '{ "name": "Mary Millipede", "legs": 750 }'
-number too large to fit in target type
+Error: invalid value: integer `750`, expected u8 at line 1 column 39
 ```
 
 See more examples in the [examples](https://github.com/http-rs/tide/tree/main/examples) directory.
