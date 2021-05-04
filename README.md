@@ -64,7 +64,7 @@ Create an HTTP server that receives a JSON body, validates it, and responds
 with a confirmation message.
 
 ```rust
-use tide::{Body, Request, Response, prelude::*, utils::After};
+use tide::{prelude::*, utils::After, Request, Response};
 
 #[derive(Debug, Deserialize)]
 struct Animal {
@@ -90,7 +90,7 @@ async fn order_shoes(mut req: Request<()>) -> tide::Result {
 async fn err_handler(res: Response) -> tide::Result {
     if let Some(e) = res.error() {
         let mut r = Response::new(e.status());
-        r.set_body(Body::from_string(format!("Error: {:?}", e)));
+        r.body_string(format!("Error: {:?}", e));
         return Ok(r);
     }
     Ok(res)
