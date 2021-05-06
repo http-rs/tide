@@ -25,7 +25,7 @@ use crate::{Endpoint, Request, Route};
 ///
 /// - Middleware extends the base Tide framework with additional request or
 /// response processing, such as compression, default headers, or logging. To
-/// add middleware to an app, use the [`Server::middleware`] method.
+/// add middleware to an app, use the [`Server::with`] method.
 pub struct Server<State> {
     router: Arc<Router<State>>,
     state: State,
