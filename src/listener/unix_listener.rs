@@ -161,11 +161,10 @@ impl<State> Display for UnixListener<State> {
 }
 
 fn unix_socket_addr_to_string(result: io::Result<SocketAddr>) -> Option<String> {
-    result.ok().and_then(|addr| {
-        if let Some(pathname) = addr.as_pathname().and_then(|p| p.canonicalize().ok()) {
-            Some(format!("http+unix://{}", pathname.display()))
-        } else {
-            None
-        }
-    })
+    result
+        .ok()
+        .as_ref()
+        .and_then(SocketAddr::as_pathname)
+        .and_then(|p| p.canonicalize().ok())
+        .map(|pathname| format!("http+unix://{}", pathname.display()))
 }
