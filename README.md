@@ -89,9 +89,15 @@ async fn order_shoes(mut req: Request<()>) -> tide::Result {
 
 ```sh
 $ curl localhost:8080/orders/shoes -d '{ "name": "Chashu", "legs": 4 }'
+```
+```text
 Hello, Chashu! I've put in an order for 4 shoes
+```
 
+```sh
 $ curl localhost:8080/orders/shoes -d '{ "name": "Mary Millipede", "legs": 750 }'
+```
+```text
 number too large to fit in target type
 ```
 
