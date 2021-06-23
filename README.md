@@ -93,6 +93,7 @@ $ curl localhost:8080/orders/shoes -d '{ "name": "Chashu", "legs": 4 }'
 ```text
 Hello, Chashu! I've put in an order for 4 shoes
 ```
+
 ```sh
 $ curl localhost:8080/orders/shoes -d '{ "name": "Mary Millipede", "legs": 750 }'
 ```
@@ -141,7 +142,7 @@ team. Use at your own risk.</sup>
 * [tide-trace](https://github.com/no9/tide-trace)
 * [tide-tracing](https://github.com/ethanboxx/tide-tracing)
 * [opentelemetry-tide](https://github.com/asaaki/opentelemetry-tide)
-* [driftwood](https://github.com/jbr/driftwood) http logging middleware
+* [driftwood](https://github.com/jbr/driftwood) http logging middlewareHopefulFire-patch-1
 * [tide-compressed-sse](https://github.com/Yarn/tide_compressed_sse)
 * [tide-websockets](https://github.com/http-rs/tide-websockets)
 
