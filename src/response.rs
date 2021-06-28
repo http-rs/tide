@@ -4,11 +4,13 @@ use std::ops::Index;
 
 use serde::Serialize;
 
+#[cfg(feature = "cookies")]
 use crate::http::cookies::Cookie;
 use crate::http::headers::{self, HeaderName, HeaderValues, ToHeaderValues};
 use crate::http::{self, Body, Error, Mime, StatusCode};
 use crate::ResponseBuilder;
 
+#[cfg(feature = "cookies")]
 #[derive(Debug)]
 pub(crate) enum CookieEvent {
     Added(Cookie<'static>),
@@ -20,7 +22,7 @@ pub(crate) enum CookieEvent {
 pub struct Response {
     pub(crate) res: http::Response,
     pub(crate) error: Option<Error>,
-    // tracking here
+    #[cfg(feature = "cookies")]
     pub(crate) cookie_events: Vec<CookieEvent>,
 }
 
@@ -36,6 +38,7 @@ impl Response {
         Self {
             res,
             error: None,
+            #[cfg(feature = "cookies")]
             cookie_events: vec![],
         }
     }
@@ -335,6 +338,7 @@ impl Response {
     }
 
     /// Insert cookie in the cookie jar.
+    #[cfg(feature = "cookies")]
     pub fn insert_cookie(&mut self, cookie: Cookie<'static>) {
         self.cookie_events.push(CookieEvent::Added(cookie));
     }
@@ -359,6 +363,7 @@ impl Response {
     /// [`Request::cookie`](crate::Request::cookie).
     ///
     /// [section 5.3 step 11 of RFC 6265]: https://tools.ietf.org/html/rfc6265#section-5.3
+    #[cfg(feature = "cookies")]
     pub fn remove_cookie(&mut self, cookie: Cookie<'static>) {
         self.cookie_events.push(CookieEvent::Removed(cookie));
     }
@@ -432,6 +437,7 @@ impl Response {
         Self {
             res,
             error: None,
+            #[cfg(feature = "cookies")]
             cookie_events: vec![],
         }
     }
@@ -488,6 +494,7 @@ impl From<Error> for Response {
         Self {
             res: http::Response::new(err.status()),
             error: Some(err),
+            #[cfg(feature = "cookies")]
             cookie_events: vec![],
         }
     }
@@ -498,6 +505,7 @@ impl From<http::Response> for Response {
         Self {
             res,
             error: None,
+            #[cfg(feature = "cookies")]
             cookie_events: vec![],
         }
     }
