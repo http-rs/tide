@@ -143,6 +143,12 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
     /// Each file will be streamed from disk, and a mime type will be determined
     /// based on magic bytes.
     ///
+    /// # Security
+    ///
+    /// This handler ensures no folders outside the specified folder can be
+    /// served, and attempts to access any path outside this folder (no matter
+    /// if it exists or not) will return `StatusCode::Forbidden` to the caller.
+    ///
     /// # Examples
     ///
     /// Serve the contents of the local directory `./public/images/*` from
