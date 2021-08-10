@@ -98,6 +98,31 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
 
     /// Nest a [`Server`] at the current path.
     ///
+    /// # Note
+    ///
+    /// The outer server *always* have precedence when disambiguating
+    /// overlapping paths. For example in the following example `/hello` will
+    /// return "Unexpected" to the client
+    ///
+    /// ```no_run
+    /// #[async_std::main]
+    /// async fn main() -> Result<(), std::io::Error> {
+    ///     let mut app = tide::new();
+    ///     app.at("/hello").nest({
+    ///         let mut example = tide::with_state("world");
+    ///         example
+    ///             .at("/")
+    ///             .get(|req: tide::Request<&'static str>| async move {
+    ///                 Ok(format!("Hello {state}!", state = req.state()))
+    ///             });
+    ///         example
+    ///     });
+    ///     app.at("/*").get(|_| async { Ok("Unexpected") });
+    ///     app.listen("127.0.0.1:8080").await?;
+    ///     Ok(())
+    /// }
+    /// ```
+    ///
     /// [`Server`]: struct.Server.html
     pub fn nest<InnerState>(&mut self, service: crate::Server<InnerState>) -> &mut Self
     where
