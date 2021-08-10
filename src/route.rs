@@ -120,9 +120,9 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
     ///
     /// # Security
     /// 
-    /// This handler ensures no folders outside the requested folder can be served,
-    /// and attempts to access such files will return `StatusCode::Forbidden` to the
-    /// caller.
+    /// This handler ensures no folders outside the specified folder can be
+    /// served, and attempts to access any path outside this folder (no matter
+    /// if it exists or not) will return `StatusCode::Forbidden` to the caller.
     ///
     /// # Examples
     ///
