@@ -129,10 +129,10 @@ where
 impl<State> fmt::Debug for TcpListener<State> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("TcpListener")
-            .field(&"listener", &self.listener)
-            .field(&"addrs", &self.addrs)
+            .field("listener", &self.listener)
+            .field("addrs", &self.addrs)
             .field(
-                &"server",
+                "server",
                 if self.server.is_some() {
                     &"Some(Server<State>)"
                 } else {

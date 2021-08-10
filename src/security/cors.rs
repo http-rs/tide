@@ -146,7 +146,7 @@ impl<State: Clone + Send + Sync + 'static> Middleware<State> for CorsMiddleware 
         let origins = origins.unwrap();
         let origin = origins.last();
 
-        if !self.is_valid_origin(&origin) {
+        if !self.is_valid_origin(origin) {
             return Ok(http_types::Response::new(StatusCode::Unauthorized).into());
         }
 
@@ -159,7 +159,7 @@ impl<State: Clone + Send + Sync + 'static> Middleware<State> for CorsMiddleware 
 
         response.insert_header(
             headers::ACCESS_CONTROL_ALLOW_ORIGIN,
-            self.response_origin(&origin),
+            self.response_origin(origin),
         );
 
         if let Some(allow_credentials) = &self.allow_credentials {

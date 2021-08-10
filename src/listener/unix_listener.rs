@@ -127,10 +127,10 @@ where
 impl<State> fmt::Debug for UnixListener<State> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("UnixListener")
-            .field(&"listener", &self.listener)
-            .field(&"path", &self.path)
+            .field("listener", &self.listener)
+            .field("path", &self.path)
             .field(
-                &"server",
+                "server",
                 if self.server.is_some() {
                     &"Some(Server<State>)"
                 } else {

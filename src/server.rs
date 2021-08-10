@@ -289,7 +289,7 @@ where
         } = self.clone();
 
         let method = req.method().to_owned();
-        let Selection { endpoint, params } = router.route(&req.url().path(), method);
+        let Selection { endpoint, params } = router.route(req.url().path(), method);
         let route_params = vec![params];
         let req = Request::new(state, req, route_params);
 
