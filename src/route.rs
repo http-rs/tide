@@ -100,7 +100,7 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
     ///
     /// # Note
     ///
-    /// The outer server *always* have precedence when disambiguating
+    /// The outer server *always* has precedence when disambiguating
     /// overlapping paths. For example in the following example `/hello` will
     /// return "Unexpected" to the client
     ///
