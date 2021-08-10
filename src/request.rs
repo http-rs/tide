@@ -27,13 +27,17 @@ pin_project_lite::pin_project! {
         pub(crate) state: State,
         #[pin]
         pub(crate) req: http::Request,
-        pub(crate) route_params: Vec<Captures>,
+        pub(crate) route_params: Vec<Captures<'static, 'static>>,
     }
 }
 
 impl<State> Request<State> {
     /// Create a new `Request`.
-    pub(crate) fn new(state: State, req: http_types::Request, route_params: Vec<Captures>) -> Self {
+    pub(crate) fn new(
+        state: State,
+        req: http_types::Request,
+        route_params: Vec<Captures<'static, 'static>>,
+    ) -> Self {
         Self {
             state,
             req,
