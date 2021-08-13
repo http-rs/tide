@@ -132,6 +132,7 @@ team. Use at your own risk.</sup>
 
 ### Auth
 * [tide-http-auth](https://github.com/chrisdickinson/tide-http-auth)
+* [tide-openidconnect](https://github.com/malyn/tide-openidconnect)
 
 ### Testing
 * [tide-testing](https://github.com/jbr/tide-testing)
@@ -145,6 +146,7 @@ team. Use at your own risk.</sup>
 * [driftwood](https://github.com/jbr/driftwood) http logging middleware
 * [tide-compressed-sse](https://github.com/Yarn/tide_compressed_sse)
 * [tide-websockets](https://github.com/http-rs/tide-websockets)
+* [tide-csrf](https://github.com/malyn/tide-csrf)
 
 ### Session Stores
 * [async-redis-session](https://github.com/jbr/async-redis-session)
