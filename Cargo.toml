@@ -47,7 +47,7 @@ log = { version = "0.4.13", features = ["kv_unstable_std"] }
 pin-project-lite = "0.2.0"
 serde = "1.0.117"
 serde_json = "1.0.59"
-routefinder = "0.3.1"
+routefinder = "0.4.0"
 
 [dev-dependencies]
 async-std = { version = "1.6.5", features = ["unstable", "attributes"] }
