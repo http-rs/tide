@@ -6,7 +6,8 @@ pub async fn find_port() -> u16 {
     pick_unused_port().expect("No ports free")
 }
 
-use surf::{Client, RequestBuilder};
+use std::convert::TryInto;
+use surf::{Client, Config, RequestBuilder};
 
 /// Trait that adds test request capabilities to tide [`Server`]s
 pub trait ServerTestingExt {
@@ -61,8 +62,9 @@ pub trait ServerTestingExt {
 
 impl<State: Clone + Send + Sync + Unpin + 'static> ServerTestingExt for tide::Server<State> {
     fn client(&self) -> Client {
-        let mut client = Client::with_http_client(self.clone());
-        client.set_base_url(tide::http::Url::parse("http://example.com").unwrap());
-        client
+        let config = Config::new()
+            .set_http_client(self.clone())
+            .set_base_url(tide::http::Url::parse("http://example.com").unwrap());
+        config.try_into().unwrap()
     }
 }
