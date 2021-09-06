@@ -97,15 +97,42 @@ where
 }
 
 impl<T: AsRef<str>> From<Redirect<T>> for Response {
-    fn from(redirect: Redirect<T>) -> Response {
-        redirect.into()
+    fn from(redirect: Redirect<T>) -> Self {
+        Response::builder(redirect.status)
+            .header(LOCATION, redirect.location.as_ref())
+            .build()
     }
 }
 
 impl<T: AsRef<str>> From<&Redirect<T>> for Response {
     fn from(redirect: &Redirect<T>) -> Response {
-        let mut res = Response::new(redirect.status);
-        res.insert_header(LOCATION, redirect.location.as_ref());
-        res
+        Response::builder(redirect.status)
+            .header(LOCATION, redirect.location.as_ref())
+            .build()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::*;
+
+    #[test]
+    fn smoke() {
+        let redirect = Redirect::new("https://example.com");
+        let res: Response = redirect.clone().into();
+        assert_eq!(res.status(), StatusCode::Found);
+
+        let redirect = Redirect::temporary("https://example.com");
+        let res: Response = redirect.clone().into();
+        assert_eq!(res.status(), StatusCode::TemporaryRedirect);
+
+        let redirect = Redirect::permanent("https://example.com");
+        let res: Response = redirect.clone().into();
+        assert_eq!(res.status(), StatusCode::PermanentRedirect);
+
+        let redirect = Redirect::see_other("https://example.com");
+        let res: Response = redirect.clone().into();
+        assert_eq!(res.status(), StatusCode::SeeOther);
     }
 }
