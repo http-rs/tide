@@ -56,7 +56,7 @@ impl<T: AsRef<str>> Redirect<T> {
 
     /// Creates an endpoint that represents a permanent redirect to `location`.
     ///
-    /// Uses status code 301 Permanent Redirect.
+    /// Uses status code 308 Permanent Redirect.
     pub fn permanent(location: T) -> Self {
         Self {
             status: StatusCode::PermanentRedirect,
