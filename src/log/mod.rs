@@ -26,11 +26,23 @@ pub use femme::LevelFilter;
 
 pub use middleware::LogMiddleware;
 
-/// Start logging.
+/// Start logging. If RUST_LOG environment variable set will read that otherwise will default to Info.
 #[cfg(feature = "logger")]
 pub fn start() {
-    femme::start();
-    crate::log::info!("Logger started", { level: "Info" });
+    match std::env::var("RUST_LOG") {
+        None => with_level(LevelFilter::Info),
+        Some(log_level) => {
+            match log_level {
+                "off" => with_level(LevelFilter::Off)
+                "error" => with_level(LevelFilter::Error),
+                "warn" => with_level(LevelFilter::Warn),
+                "info" => with_level(LevelFilter::Info),
+                "trace" => with_level(LevelFilter::Trace),
+                _ => with_level(LevelFilter::Info)
+            }
+        }
+    }
+
 }
 
 /// Start logging with a log level.
