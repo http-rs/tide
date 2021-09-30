@@ -30,10 +30,10 @@ pub use middleware::LogMiddleware;
 #[cfg(feature = "logger")]
 pub fn start() {
     match std::env::var("RUST_LOG") {
-        None => with_level(LevelFilter::Info),
-        Some(log_level) => {
-            match log_level {
-                "off" => with_level(LevelFilter::Off)
+        Err(_) => with_level(LevelFilter::Info),
+        Ok(log_level) => {
+            match log_level.as_str() {
+                "off" => with_level(LevelFilter::Off),
                 "error" => with_level(LevelFilter::Error),
                 "warn" => with_level(LevelFilter::Warn),
                 "info" => with_level(LevelFilter::Info),
