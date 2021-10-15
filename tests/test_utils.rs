@@ -59,7 +59,9 @@ pub trait ServerTestingExt {
     }
 }
 
-impl<State: Clone + Send + Sync + Unpin + 'static> ServerTestingExt for tide::Server<State> {
+impl<ServerState: Clone + Send + Sync + Unpin + 'static> ServerTestingExt
+    for tide::Server<ServerState>
+{
     fn client(&self) -> Client {
         let mut client = Client::with_http_client(self.clone());
         client.set_base_url(tide::http::Url::parse("http://example.com").unwrap());

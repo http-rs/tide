@@ -1,19 +1,19 @@
 use tide::http::Cookie;
-use tide::{Request, Response, StatusCode};
+use tide::{Request, Response, State, StatusCode};
 
 /// Tide will use the the `Cookies`'s `Extract` implementation to build this parameter.
 ///
-async fn retrieve_cookie(req: Request, _state: ()) -> tide::Result<String> {
+async fn retrieve_cookie(req: Request, _: State<()>) -> tide::Result<String> {
     Ok(format!("hello cookies: {:?}", req.cookie("hello").unwrap()))
 }
 
-async fn insert_cookie(_req: Request, _state: ()) -> tide::Result {
+async fn insert_cookie(_req: Request, _: State<()>) -> tide::Result {
     let mut res = Response::new(StatusCode::Ok);
     res.insert_cookie(Cookie::new("hello", "world"));
     Ok(res)
 }
 
-async fn remove_cookie(_req: Request, _state: ()) -> tide::Result {
+async fn remove_cookie(_req: Request, _: State<()>) -> tide::Result {
     let mut res = Response::new(StatusCode::Ok);
     res.remove_cookie(Cookie::named("hello"));
     Ok(res)

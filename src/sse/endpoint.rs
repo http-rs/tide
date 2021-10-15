@@ -1,6 +1,6 @@
 use crate::http::{mime, Body, StatusCode};
-use crate::log;
 use crate::sse::Sender;
+use crate::{log, State};
 use crate::{Endpoint, Request, Response, Result};
 
 use async_std::future::Future;
@@ -11,10 +11,10 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 /// Create an endpoint that can handle SSE connections.
-pub fn endpoint<F, Fut, State>(handler: F) -> SseEndpoint<F, Fut, State>
+pub fn endpoint<F, Fut, ServerState>(handler: F) -> SseEndpoint<F, Fut, ServerState>
 where
-    State: Clone + Send + Sync + 'static,
-    F: Fn(Request, State, Sender) -> Fut + Send + Sync + 'static,
+    ServerState: Clone + Send + Sync + 'static,
+    F: Fn(Request, State<ServerState>, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + 'static,
 {
     SseEndpoint {
@@ -25,24 +25,24 @@ where
 
 /// An endpoint that can handle SSE connections.
 #[derive(Debug)]
-pub struct SseEndpoint<F, Fut, State>
+pub struct SseEndpoint<F, Fut, ServerState>
 where
-    State: Clone + Send + Sync + 'static,
-    F: Fn(Request, State, Sender) -> Fut + Send + Sync + 'static,
+    ServerState: Clone + Send + Sync + 'static,
+    F: Fn(Request, State<ServerState>, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + 'static,
 {
     handler: Arc<F>,
-    __state: PhantomData<State>,
+    __state: PhantomData<ServerState>,
 }
 
 #[async_trait::async_trait]
-impl<F, Fut, State> Endpoint<State> for SseEndpoint<F, Fut, State>
+impl<F, Fut, ServerState> Endpoint<ServerState> for SseEndpoint<F, Fut, ServerState>
 where
-    State: Clone + Send + Sync + 'static,
-    F: Fn(Request, State, Sender) -> Fut + Send + Sync + 'static,
+    ServerState: Clone + Send + Sync + 'static,
+    F: Fn(Request, State<ServerState>, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + 'static,
 {
-    async fn call(&self, req: Request, state: State) -> Result<Response> {
+    async fn call(&self, req: Request, state: State<ServerState>) -> Result<Response> {
         let handler = self.handler.clone();
         let (sender, encoder) = async_sse::encode();
         task::spawn(async move {

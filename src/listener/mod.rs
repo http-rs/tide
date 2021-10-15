@@ -31,13 +31,13 @@ pub(crate) use unix_listener::UnixListener;
 /// you will also need to implement at least one [`ToListener`](crate::listener::ToListener) that
 /// outputs your Listener type.
 #[async_trait::async_trait]
-pub trait Listener<State: 'static>:
+pub trait Listener<ServerState: 'static>:
     std::fmt::Debug + std::fmt::Display + Send + Sync + 'static
 {
     /// This is the primary entrypoint for the Listener trait. listen
     /// is called exactly once, and is expected to spawn tasks for
     /// each incoming connection.
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()>;
+    async fn listen(&mut self, app: Server<ServerState>) -> io::Result<()>;
 }
 
 /// crate-internal shared logic used by tcp and unix listeners to

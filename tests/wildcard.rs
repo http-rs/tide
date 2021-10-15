@@ -2,7 +2,7 @@ mod test_utils;
 use test_utils::ServerTestingExt;
 use tide::{Error, Request, StatusCode};
 
-async fn add_one(req: Request, _state: ()) -> Result<String, tide::Error> {
+async fn add_one(req: Request, _state: tide::State<()>) -> Result<String, tide::Error> {
     let num: i64 = req
         .param("num")?
         .parse()
@@ -10,7 +10,7 @@ async fn add_one(req: Request, _state: ()) -> Result<String, tide::Error> {
     Ok((num + 1).to_string())
 }
 
-async fn add_two(req: Request, _state: ()) -> Result<String, tide::Error> {
+async fn add_two(req: Request, _state: tide::State<()>) -> Result<String, tide::Error> {
     let one: i64 = req
         .param("one")?
         .parse()
@@ -22,7 +22,7 @@ async fn add_two(req: Request, _state: ()) -> Result<String, tide::Error> {
     Ok((one + two).to_string())
 }
 
-async fn echo_path(req: Request, _state: ()) -> Result<String, tide::Error> {
+async fn echo_path(req: Request, _state: tide::State<()>) -> Result<String, tide::Error> {
     match req.param("path") {
         Ok(path) => Ok(path.into()),
         Err(mut err) => {

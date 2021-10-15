@@ -3,7 +3,7 @@ use tide::{self, Request, Response, Result};
 
 #[async_std::test]
 async fn test_missing_param() -> tide::Result<()> {
-    async fn greet(req: Request, _state: ()) -> Result<Response> {
+    async fn greet(req: Request, _state: tide::State<()>) -> Result<Response> {
         assert_eq!(req.param("name")?, "Param \"name\" not found");
         Ok(Response::new(200))
     }
@@ -19,7 +19,7 @@ async fn test_missing_param() -> tide::Result<()> {
 
 #[async_std::test]
 async fn hello_world_parametrized() -> Result<()> {
-    async fn greet(req: tide::Request, _state: ()) -> Result<impl Into<Response>> {
+    async fn greet(req: tide::Request, _state: tide::State<()>) -> Result<impl Into<Response>> {
         let body = format!("{} says hello", req.param("name").unwrap_or("nori"));
         Ok(Response::builder(200).body(body))
     }

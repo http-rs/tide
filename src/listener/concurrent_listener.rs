@@ -33,9 +33,9 @@ use futures_util::stream::{futures_unordered::FuturesUnordered, StreamExt};
 ///```
 
 #[derive(Default)]
-pub struct ConcurrentListener<State>(Vec<Box<dyn Listener<State>>>);
+pub struct ConcurrentListener<ServerState>(Vec<Box<dyn Listener<ServerState>>>);
 
-impl<State: Clone + Send + Sync + 'static> ConcurrentListener<State> {
+impl<ServerState: Clone + Send + Sync + 'static> ConcurrentListener<ServerState> {
     /// creates a new ConcurrentListener
     pub fn new() -> Self {
         Self(vec![])
@@ -55,7 +55,7 @@ impl<State: Clone + Send + Sync + 'static> ConcurrentListener<State> {
     /// # std::mem::drop(tide::new().listen(listener)); // for the State generic
     /// # Ok(()) }
     /// ```
-    pub fn add<TL: ToListener<State>>(&mut self, listener: TL) -> io::Result<()> {
+    pub fn add<TL: ToListener<ServerState>>(&mut self, listener: TL) -> io::Result<()> {
         self.0.push(Box::new(listener.to_listener()?));
         Ok(())
     }
@@ -71,15 +71,17 @@ impl<State: Clone + Send + Sync + 'static> ConcurrentListener<State> {
     ///         .with_listener(async_std::net::TcpListener::bind("127.0.0.1:8081").await?),
     /// ).await?;
     /// #  Ok(()) }) }
-    pub fn with_listener<TL: ToListener<State>>(mut self, listener: TL) -> Self {
+    pub fn with_listener<TL: ToListener<ServerState>>(mut self, listener: TL) -> Self {
         self.add(listener).expect("Unable to add listener");
         self
     }
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Listener<State> for ConcurrentListener<State> {
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
+impl<ServerState: Clone + Send + Sync + 'static> Listener<ServerState>
+    for ConcurrentListener<ServerState>
+{
+    async fn listen(&mut self, app: Server<ServerState>) -> io::Result<()> {
         let mut futures_unordered = FuturesUnordered::new();
 
         for listener in self.0.iter_mut() {
@@ -94,13 +96,13 @@ impl<State: Clone + Send + Sync + 'static> Listener<State> for ConcurrentListene
     }
 }
 
-impl<State> Debug for ConcurrentListener<State> {
+impl<ServerState> Debug for ConcurrentListener<ServerState> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.0)
     }
 }
 
-impl<State> Display for ConcurrentListener<State> {
+impl<ServerState> Display for ConcurrentListener<ServerState> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let string = self
             .0

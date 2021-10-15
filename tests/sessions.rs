@@ -8,6 +8,7 @@ use tide::{
     http::{cookies as cookie, headers::HeaderValue, Response},
     sessions::{MemoryStore, SessionMiddleware},
     utils::Before,
+    State,
 };
 #[derive(Clone, Debug, Default, PartialEq)]
 struct SessionData {
@@ -22,11 +23,13 @@ async fn test_basic_sessions() -> tide::Result<()> {
         b"12345678901234567890123456789012345",
     ));
 
-    app.with(Before(|mut req: tide::Request, state: ()| async move {
-        let visits: usize = req.session().get("visits").unwrap_or_default();
-        req.session_mut().insert("visits", visits + 1).unwrap();
-        (req, state)
-    }));
+    app.with(Before(
+        |mut req: tide::Request, state: tide::State<()>| async move {
+            let visits: usize = req.session().get("visits").unwrap_or_default();
+            req.session_mut().insert("visits", visits + 1).unwrap();
+            (req, state)
+        },
+    ));
 
     app.at("/").get(|req: tide::Request, _| async move {
         let visits: usize = req.session().get("visits").unwrap();
@@ -132,11 +135,13 @@ async fn test_session_destruction() -> tide::Result<()> {
         b"12345678901234567890123456789012345",
     ));
 
-    app.with(Before(|mut req: tide::Request, state: ()| async move {
-        let visits: usize = req.session().get("visits").unwrap_or_default();
-        req.session_mut().insert("visits", visits + 1).unwrap();
-        (req, state)
-    }));
+    app.with(Before(
+        |mut req: tide::Request, state: State<()>| async move {
+            let visits: usize = req.session().get("visits").unwrap_or_default();
+            req.session_mut().insert("visits", visits + 1).unwrap();
+            (req, state)
+        },
+    ));
 
     app.at("/").get(|req: tide::Request, _| async move {
         let visits: usize = req.session().get("visits").unwrap();

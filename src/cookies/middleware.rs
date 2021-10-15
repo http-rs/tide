@@ -1,5 +1,5 @@
 use crate::response::CookieEvent;
-use crate::{Middleware, Next, Request};
+use crate::{Middleware, Next, Request, State};
 use async_trait::async_trait;
 
 use crate::http::cookies::{Cookie, CookieJar, Delta};
@@ -35,19 +35,27 @@ impl CookiesMiddleware {
 }
 
 #[async_trait]
-impl<State: Clone + Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
-    async fn handle(&self, mut ctx: Request, state: State, next: Next<'_, State>) -> crate::Result {
-        let cookie_jar = if let Some(cookie_data) = ctx.ext::<CookieData>() {
+impl<ServerState> Middleware<ServerState> for CookiesMiddleware
+where
+    ServerState: Clone + Send + Sync + 'static,
+{
+    async fn handle(
+        &self,
+        mut req: Request,
+        state: State<ServerState>,
+        next: Next<'_, ServerState>,
+    ) -> crate::Result {
+        let cookie_jar = if let Some(cookie_data) = req.ext::<CookieData>() {
             cookie_data.content.clone()
         } else {
-            let cookie_data = CookieData::from_request(&ctx, &state);
+            let cookie_data = CookieData::from_request(&req, &state);
             // no cookie data in ext context, so we try to create it
             let content = cookie_data.content.clone();
-            ctx.set_ext(cookie_data);
+            req.set_ext(cookie_data);
             content
         };
 
-        let mut res = next.run(ctx, state).await;
+        let mut res = next.run(req, state).await;
 
         // Don't do anything if there are no cookies.
         if res.cookie_events.is_empty() {

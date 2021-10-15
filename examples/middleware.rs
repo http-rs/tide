@@ -22,12 +22,14 @@ impl UserDatabase {
     }
 }
 
+type State = tide::State<UserDatabase>;
+
 // This is an example of a function middleware that uses the
 // application state. Because it depends on a specific request state,
 // it would likely be closely tied to a specific application
 fn user_loader<'a>(
     mut request: Request,
-    state: UserDatabase,
+    state: State,
     next: Next<'a, UserDatabase>,
 ) -> Pin<Box<dyn Future<Output = Result> + Send + 'a>> {
     Box::pin(async {
@@ -62,8 +64,15 @@ impl RequestCounterMiddleware {
 struct RequestCount(usize);
 
 #[tide::utils::async_trait]
-impl<State: Clone + Send + Sync + 'static> Middleware<State> for RequestCounterMiddleware {
-    async fn handle(&self, mut req: Request, state: State, next: Next<'_, State>) -> Result {
+impl<ServerState: Clone + Send + Sync + 'static> Middleware<ServerState>
+    for RequestCounterMiddleware
+{
+    async fn handle(
+        &self,
+        mut req: Request,
+        state: tide::State<ServerState>,
+        next: Next<'_, ServerState>,
+    ) -> Result {
         let count = self.requests_counted.fetch_add(1, Ordering::Relaxed);
         tide::log::trace!("request counter", { count: count });
         req.set_ext(RequestCount(count));
@@ -115,7 +124,7 @@ async fn main() -> Result<()> {
 
     app.with(user_loader);
     app.with(RequestCounterMiddleware::new(0));
-    app.with(Before(|mut req: Request, state: UserDatabase| async move {
+    app.with(Before(|mut req: Request, state: State| async move {
         req.set_ext(std::time::Instant::now());
         (req, state)
     }));

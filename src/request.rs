@@ -269,7 +269,7 @@ impl Request {
     /// #
     /// use tide::{Request, Result};
     ///
-    /// async fn greet(req: Request, _state: ()) -> Result<String> {
+    /// async fn greet(req: Request, _state: tide::State<()>) -> Result<String> {
     ///     let name = req.param("name").unwrap_or("world");
     ///     Ok(format!("Hello, {}!", name))
     /// }

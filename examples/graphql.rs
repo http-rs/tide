@@ -74,7 +74,7 @@ lazy_static! {
     static ref SCHEMA: Schema = Schema::new(QueryRoot {}, MutationRoot {});
 }
 
-async fn handle_graphql(mut request: Request, state: State) -> tide::Result {
+async fn handle_graphql(mut request: Request, state: tide::State<State>) -> tide::Result {
     let query: GraphQLRequest = request.body_json().await?;
     let response = query.execute(&SCHEMA, &state);
     let status = if response.is_ok() {
@@ -88,7 +88,10 @@ async fn handle_graphql(mut request: Request, state: State) -> tide::Result {
         .build())
 }
 
-async fn handle_graphiql(_: Request, _state: State) -> tide::Result<impl Into<Response>> {
+async fn handle_graphiql(
+    _: Request,
+    _state: tide::State<State>,
+) -> tide::Result<impl Into<Response>> {
     Ok(Response::builder(200)
         .body(graphiql::graphiql_source("/graphql"))
         .content_type(mime::HTML))

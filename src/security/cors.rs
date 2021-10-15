@@ -2,7 +2,7 @@ use http_types::headers::{HeaderValue, HeaderValues};
 use http_types::{headers, Method, StatusCode};
 
 use crate::middleware::{Middleware, Next};
-use crate::{Request, Result};
+use crate::{Request, Result, State};
 
 /// Middleware for CORS
 ///
@@ -133,8 +133,13 @@ impl CorsMiddleware {
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Middleware<State> for CorsMiddleware {
-    async fn handle(&self, req: Request, state: State, next: Next<'_, State>) -> Result {
+impl<ServerState: Clone + Send + Sync + 'static> Middleware<ServerState> for CorsMiddleware {
+    async fn handle(
+        &self,
+        req: Request,
+        state: State<ServerState>,
+        next: Next<'_, ServerState>,
+    ) -> Result {
         // TODO: how should multiple origin values be handled?
         let origins = req.header(&headers::ORIGIN).cloned();
 

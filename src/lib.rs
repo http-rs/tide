@@ -37,7 +37,7 @@
 //!     Ok(())
 //! }
 //!
-//! async fn order_shoes(mut req: Request, _state: ()) -> tide::Result {
+//! async fn order_shoes(mut req: Request, _state: tide::State<()>) -> tide::Result {
 //!     let Animal { name, legs } = req.body_json().await?;
 //!     Ok(format!("Hello, {}! I've put in an order for {} shoes", name, legs).into())
 //! }
@@ -69,6 +69,7 @@ mod request;
 mod response;
 mod response_builder;
 mod route;
+mod state;
 
 #[cfg(not(feature = "__internal__bench"))]
 mod router;
@@ -95,6 +96,7 @@ pub use response::Response;
 pub use response_builder::ResponseBuilder;
 pub use route::Route;
 pub use server::Server;
+pub use state::State;
 
 #[doc(inline)]
 pub use http_types::{self as http, Body, Error, Status, StatusCode};
@@ -143,16 +145,16 @@ pub fn new() -> server::Server<()> {
 ///
 /// // Initialize the application with state.
 /// let mut app = tide::with_state(state);
-/// app.at("/").get(|req: Request, state: State| async move {
+/// app.at("/").get(|req: Request, state: State<ServerState>| async move {
 ///     Ok(format!("Hello, {}!", &state.name))
 /// });
 /// app.listen("127.0.0.1:8080").await?;
 /// #
 /// # Ok(()) }) }
 /// ```
-pub fn with_state<State>(state: State) -> server::Server<State>
+pub fn with_state<ServerState>(state: ServerState) -> server::Server<ServerState>
 where
-    State: Clone + Send + Sync + 'static,
+    ServerState: Clone + Send + Sync + 'static,
 {
     Server::with_state(state)
 }

@@ -24,6 +24,8 @@ impl TempDirState {
     }
 }
 
+type State = tide::State<TempDirState>;
+
 #[async_std::main]
 async fn main() -> Result<(), IoError> {
     tide::log::start();
@@ -35,7 +37,7 @@ async fn main() -> Result<(), IoError> {
     // $ curl localhost:8080/README.md # this reads the file from the same temp directory
 
     app.at(":file")
-        .put(|req: Request, state: TempDirState| async move {
+        .put(|req: Request, state: State| async move {
             let path = req.param("file")?;
             let fs_path = state.path().join(path);
 
@@ -54,7 +56,7 @@ async fn main() -> Result<(), IoError> {
 
             Ok(json!({ "bytes": bytes_written }))
         })
-        .get(|req: Request, state: TempDirState| async move {
+        .get(|req: Request, state: State| async move {
             let path = req.param("file")?;
             let fs_path = state.path().join(path);
 

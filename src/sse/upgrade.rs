@@ -1,5 +1,5 @@
 use crate::http::{mime, Body, StatusCode};
-use crate::log;
+use crate::{log, State};
 use crate::{Request, Response, Result};
 
 use super::Sender;
@@ -9,10 +9,10 @@ use async_std::io::BufReader;
 use async_std::task;
 
 /// Upgrade an existing HTTP connection to an SSE connection.
-pub fn upgrade<F, Fut, State>(req: Request, state: State, handler: F) -> Response
+pub fn upgrade<F, Fut, ServerState>(req: Request, state: State<ServerState>, handler: F) -> Response
 where
-    State: Clone + Send + Sync + 'static,
-    F: Fn(Request, State, Sender) -> Fut + Send + Sync + 'static,
+    ServerState: Clone + Send + Sync + 'static,
+    F: Fn(Request, State<ServerState>, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + 'static,
 {
     let (sender, encoder) = async_sse::encode();

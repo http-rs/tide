@@ -1,7 +1,10 @@
 use super::{Session, SessionStore};
-use crate::http::{
-    cookies::{Cookie, Key, SameSite},
-    format_err,
+use crate::{
+    http::{
+        cookies::{Cookie, Key, SameSite},
+        format_err,
+    },
+    State,
 };
 use crate::{utils::async_trait, Middleware, Next, Request};
 use std::time::Duration;
@@ -27,7 +30,7 @@ const BASE64_DIGEST_LEN: usize = 44;
 ///     b"we recommend you use std::env::var(\"TIDE_SECRET\").unwrap().as_bytes() instead of a fixed value"
 /// ));
 ///
-/// app.with(tide::utils::Before(|mut req: tide::Request, state: ()| async move {
+/// app.with(tide::utils::Before(|mut req: tide::Request, state: tide::State<()>| async move {
 ///     let session = req.session_mut();
 ///     let visits: usize = session.get("visits").unwrap_or_default();
 ///     session.insert("visits", visits + 1).unwrap();
@@ -72,12 +75,17 @@ impl<Store: SessionStore> std::fmt::Debug for SessionMiddleware<Store> {
 }
 
 #[async_trait]
-impl<Store, State> Middleware<State> for SessionMiddleware<Store>
+impl<Store, ServerState> Middleware<ServerState> for SessionMiddleware<Store>
 where
     Store: SessionStore,
-    State: Clone + Send + Sync + 'static,
+    ServerState: Clone + Send + Sync + 'static,
 {
-    async fn handle(&self, mut req: Request, state: State, next: Next<'_, State>) -> crate::Result {
+    async fn handle(
+        &self,
+        mut req: Request,
+        state: State<ServerState>,
+        next: Next<'_, ServerState>,
+    ) -> crate::Result {
         let cookie = req.cookie(&self.cookie_name);
         let cookie_value = cookie
             .clone()

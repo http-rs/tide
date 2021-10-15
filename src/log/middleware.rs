@@ -1,4 +1,4 @@
-use crate::log;
+use crate::{log, State};
 use crate::{Middleware, Next, Request};
 
 /// Log all incoming requests and responses.
@@ -28,11 +28,11 @@ impl LogMiddleware {
     }
 
     /// Log a request and a response.
-    async fn log<'a, State: Clone + Send + Sync + 'static>(
+    async fn log<'a, ServerState: Clone + Send + Sync + 'static>(
         &'a self,
         mut req: Request,
-        state: State,
-        next: Next<'a, State>,
+        state: State<ServerState>,
+        next: Next<'a, ServerState>,
     ) -> crate::Result {
         if req.ext::<LogMiddlewareHasBeenRun>().is_some() {
             return Ok(next.run(req, state).await);
@@ -95,8 +95,13 @@ impl LogMiddleware {
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Middleware<State> for LogMiddleware {
-    async fn handle(&self, req: Request, state: State, next: Next<'_, State>) -> crate::Result {
+impl<ServerState: Clone + Send + Sync + 'static> Middleware<ServerState> for LogMiddleware {
+    async fn handle(
+        &self,
+        req: Request,
+        state: State<ServerState>,
+        next: Next<'_, ServerState>,
+    ) -> crate::Result {
         self.log(req, state, next).await
     }
 }

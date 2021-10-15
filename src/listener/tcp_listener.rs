@@ -51,7 +51,10 @@ impl TcpListener {
     }
 }
 
-fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: TcpStream) {
+fn handle_tcp<ServerState: Clone + Send + Sync + 'static>(
+    app: Server<ServerState>,
+    stream: TcpStream,
+) {
     task::spawn(async move {
         let local_addr = stream.local_addr().ok();
         let peer_addr = stream.peer_addr().ok();
@@ -69,8 +72,8 @@ fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: 
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Listener<State> for TcpListener {
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
+impl<ServerState: Clone + Send + Sync + 'static> Listener<ServerState> for TcpListener {
+    async fn listen(&mut self, app: Server<ServerState>) -> io::Result<()> {
         self.connect().await?;
         let listener = self.listener()?;
         crate::log::info!("Server listening on {}", self);

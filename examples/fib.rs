@@ -1,4 +1,4 @@
-use tide::Request;
+use tide::{Request, State};
 
 fn fib(n: usize) -> usize {
     if n == 0 || n == 1 {
@@ -8,7 +8,7 @@ fn fib(n: usize) -> usize {
     }
 }
 
-async fn fibsum(req: Request, _state: ()) -> tide::Result<String> {
+async fn fibsum(req: Request, _state: State<()>) -> tide::Result<String> {
     use std::time::Instant;
     let n: usize = req.param("n")?.parse().unwrap_or(0);
     // Start a stopwatch

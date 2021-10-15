@@ -9,19 +9,19 @@ use crate::{Request, Response, StatusCode};
 /// Internally, we have a separate state machine per http method; indexing
 /// by the method first allows the table itself to be more efficient.
 #[allow(missing_debug_implementations)]
-pub struct Router<State> {
-    method_map: HashMap<http_types::Method, MethodRouter<Box<DynEndpoint<State>>>>,
-    all_method_router: MethodRouter<Box<DynEndpoint<State>>>,
+pub struct Router<ServerState> {
+    method_map: HashMap<http_types::Method, MethodRouter<Box<DynEndpoint<ServerState>>>>,
+    all_method_router: MethodRouter<Box<DynEndpoint<ServerState>>>,
 }
 
 /// The result of routing a URL
 #[allow(missing_debug_implementations)]
-pub struct Selection<'a, State> {
-    pub(crate) endpoint: &'a DynEndpoint<State>,
+pub struct Selection<'a, ServerState> {
+    pub(crate) endpoint: &'a DynEndpoint<ServerState>,
     pub(crate) params: Params,
 }
 
-impl<State: Clone + Send + Sync + 'static> Router<State> {
+impl<ServerState: Clone + Send + Sync + 'static> Router<ServerState> {
     pub fn new() -> Self {
         Router {
             method_map: HashMap::default(),
@@ -29,18 +29,23 @@ impl<State: Clone + Send + Sync + 'static> Router<State> {
         }
     }
 
-    pub fn add(&mut self, path: &str, method: http_types::Method, ep: Box<DynEndpoint<State>>) {
+    pub fn add(
+        &mut self,
+        path: &str,
+        method: http_types::Method,
+        ep: Box<DynEndpoint<ServerState>>,
+    ) {
         self.method_map
             .entry(method)
             .or_insert_with(MethodRouter::new)
             .add(path, ep)
     }
 
-    pub fn add_all(&mut self, path: &str, ep: Box<DynEndpoint<State>>) {
+    pub fn add_all(&mut self, path: &str, ep: Box<DynEndpoint<ServerState>>) {
         self.all_method_router.add(path, ep)
     }
 
-    pub fn route(&self, path: &str, method: http_types::Method) -> Selection<'_, State> {
+    pub fn route(&self, path: &str, method: http_types::Method) -> Selection<'_, ServerState> {
         if let Some(Match { handler, params }) = self
             .method_map
             .get(&method)
@@ -81,16 +86,16 @@ impl<State: Clone + Send + Sync + 'static> Router<State> {
     }
 }
 
-async fn not_found_endpoint<State: Clone + Send + Sync + 'static>(
+async fn not_found_endpoint<ServerState: Send + Sync + 'static>(
     _req: Request,
-    _: State,
+    _: ServerState,
 ) -> crate::Result {
     Ok(Response::new(StatusCode::NotFound))
 }
 
-async fn method_not_allowed<State: Clone + Send + Sync + 'static>(
+async fn method_not_allowed<ServerState: Send + Sync + 'static>(
     _req: Request,
-    _: State,
+    _: ServerState,
 ) -> crate::Result {
     Ok(Response::new(StatusCode::MethodNotAllowed))
 }

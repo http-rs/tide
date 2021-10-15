@@ -1,16 +1,19 @@
 use std::future::Future;
 use std::pin::Pin;
-use tide::http::{self, url::Url, Method};
+use tide::{
+    http::{self, url::Url, Method},
+    State,
+};
 
 mod test_utils;
 
-fn auth_middleware<'a, State>(
+fn auth_middleware<'a, ServerState>(
     req: tide::Request,
-    state: State,
-    next: tide::Next<'a, State>,
+    state: State<ServerState>,
+    next: tide::Next<'a, ServerState>,
 ) -> Pin<Box<dyn Future<Output = tide::Result> + 'a + Send>>
 where
-    State: Clone + Send + Sync + 'static,
+    ServerState: Clone + Send + Sync + 'static,
 {
     let authenticated = match req.header("X-Auth") {
         Some(header) => header == "secret_key",
@@ -26,7 +29,10 @@ where
     })
 }
 
-async fn echo_path<State>(req: tide::Request, _state: State) -> tide::Result<String> {
+async fn echo_path<ServerState>(
+    req: tide::Request,
+    _state: State<ServerState>,
+) -> tide::Result<String> {
     Ok(req.url().path().to_string())
 }
 

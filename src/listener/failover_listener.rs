@@ -33,9 +33,9 @@ use async_std::io;
 ///```
 
 #[derive(Default)]
-pub struct FailoverListener<State>(Vec<Box<dyn Listener<State>>>);
+pub struct FailoverListener<ServerState>(Vec<Box<dyn Listener<ServerState>>>);
 
-impl<State: Clone + Send + Sync + 'static> FailoverListener<State> {
+impl<ServerState: Clone + Send + Sync + 'static> FailoverListener<ServerState> {
     /// creates a new FailoverListener
     pub fn new() -> Self {
         Self(vec![])
@@ -57,7 +57,7 @@ impl<State: Clone + Send + Sync + 'static> FailoverListener<State> {
     /// # std::mem::drop(tide::new().listen(listener)); // for the State generic
     /// # Ok(()) }
     /// ```
-    pub fn add<TL: ToListener<State>>(&mut self, listener: TL) -> io::Result<()> {
+    pub fn add<TL: ToListener<ServerState>>(&mut self, listener: TL) -> io::Result<()> {
         self.0.push(Box::new(listener.to_listener()?));
         Ok(())
     }
@@ -73,15 +73,17 @@ impl<State: Clone + Send + Sync + 'static> FailoverListener<State> {
     ///         .with_listener(("localhost", 8081)),
     /// ).await?;
     /// #  Ok(()) }) }
-    pub fn with_listener<TL: ToListener<State>>(mut self, listener: TL) -> Self {
+    pub fn with_listener<TL: ToListener<ServerState>>(mut self, listener: TL) -> Self {
         self.add(listener).expect("Unable to add listener");
         self
     }
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Listener<State> for FailoverListener<State> {
-    async fn listen(&mut self, app: Server<State>) -> io::Result<()> {
+impl<ServerState: Clone + Send + Sync + 'static> Listener<ServerState>
+    for FailoverListener<ServerState>
+{
+    async fn listen(&mut self, app: Server<ServerState>) -> io::Result<()> {
         for listener in self.0.iter_mut() {
             let app = app.clone();
             match listener.listen(app).await {
@@ -102,13 +104,13 @@ impl<State: Clone + Send + Sync + 'static> Listener<State> for FailoverListener<
     }
 }
 
-impl<State> Debug for FailoverListener<State> {
+impl<ServerState> Debug for FailoverListener<ServerState> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.0)
     }
 }
 
-impl<State> Display for FailoverListener<State> {
+impl<ServerState> Display for FailoverListener<ServerState> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let string = self
             .0

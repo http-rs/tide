@@ -1,4 +1,4 @@
-use crate::log;
+use crate::{log, State};
 use crate::{Body, Endpoint, Request, Response, Result, StatusCode};
 
 use async_std::path::PathBuf as AsyncPathBuf;
@@ -19,11 +19,11 @@ impl ServeDir {
 }
 
 #[async_trait::async_trait]
-impl<State> Endpoint<State> for ServeDir
+impl<ServerState> Endpoint<ServerState> for ServeDir
 where
-    State: Clone + Send + Sync + 'static,
+    ServerState: Clone + Send + Sync + 'static,
 {
-    async fn call(&self, req: Request, _state: State) -> Result {
+    async fn call(&self, req: Request, _state: State<ServerState>) -> Result {
         let path = req.url().path();
         let path = path.trim_start_matches(&self.prefix);
         let path = path.trim_start_matches('/');
@@ -90,7 +90,7 @@ mod test {
 
         let req = request("static/foo");
 
-        let res = serve_dir.call(req, ()).await.unwrap();
+        let res = serve_dir.call(req, State::new(())).await.unwrap();
         let mut res: crate::http::Response = res.into();
 
         assert_eq!(res.status(), 200);
@@ -104,7 +104,7 @@ mod test {
 
         let req = request("static/bar");
 
-        let res = serve_dir.call(req, ()).await.unwrap();
+        let res = serve_dir.call(req, State::new(())).await.unwrap();
         let res: crate::http::Response = res.into();
 
         assert_eq!(res.status(), 404);

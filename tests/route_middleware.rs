@@ -2,7 +2,7 @@ mod test_utils;
 use http_types::headers::HeaderName;
 use std::convert::TryInto;
 use test_utils::ServerTestingExt;
-use tide::Middleware;
+use tide::{Middleware, State};
 
 #[derive(Debug)]
 struct TestMiddleware(HeaderName, &'static str);
@@ -14,12 +14,12 @@ impl TestMiddleware {
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Middleware<State> for TestMiddleware {
+impl<ServerState: Clone + Send + Sync + 'static> Middleware<ServerState> for TestMiddleware {
     async fn handle(
         &self,
         req: tide::Request,
-        state: State,
-        next: tide::Next<'_, State>,
+        state: State<ServerState>,
+        next: tide::Next<'_, ServerState>,
     ) -> tide::Result<tide::Response> {
         let mut res = next.run(req, state).await;
         res.insert_header(self.0.clone(), self.1);
@@ -27,7 +27,10 @@ impl<State: Clone + Send + Sync + 'static> Middleware<State> for TestMiddleware 
     }
 }
 
-async fn echo_path<State>(req: tide::Request, _state: State) -> tide::Result<String> {
+async fn echo_path<ServerState>(
+    req: tide::Request,
+    _state: State<ServerState>,
+) -> tide::Result<String> {
     Ok(req.url().path().to_string())
 }
 
