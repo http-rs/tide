@@ -188,6 +188,14 @@ where
         self
     }
 
+    /// Reset the middleware chain for the current server, if any.
+    pub fn reset_middleware(&mut self) -> &mut Self {
+        let m = Arc::get_mut(&mut self.middleware)
+            .expect("Registering middleware is not possible after the Server has started");
+        m.clear();
+        self
+    }
+
     /// Asynchronously serve the app with the supplied listener.
     ///
     /// This is a shorthand for calling `Server::bind`, logging the `ListenInfo`
