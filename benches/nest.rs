@@ -15,7 +15,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     let mut appz = tide::new();
     appz.at("/z").get(|_| async { Ok("Z") });
-    
+
     let mut appy = tide::new();
     appy.at("/y").nest(appz);
 
