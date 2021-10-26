@@ -79,6 +79,10 @@ required-features = ["sessions"]
 name = "router"
 harness = false
 
+[[bench]]
+name = "nest"
+harness = false
+
 [[example]]
 name = "cookies"
 required-features = ["cookies"]
