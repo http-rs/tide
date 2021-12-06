@@ -184,13 +184,7 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
     pub fn method(&mut self, method: http_types::Method, ep: impl Endpoint<State>) -> &mut Self {
         if self.prefix {
             let ep = StripPrefixEndpoint::new(ep);
-
-            self.router.add(
-                &self.path,
-                method,
-                MiddlewareEndpoint::wrap_with_middleware(ep.clone(), &self.middleware),
-            );
-            let wildcard = self.at("*--tide-path-rest");
+            let wildcard = self.at("*");
             wildcard.router.add(
                 &wildcard.path,
                 method,
@@ -212,12 +206,7 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
     pub fn all(&mut self, ep: impl Endpoint<State>) -> &mut Self {
         if self.prefix {
             let ep = StripPrefixEndpoint::new(ep);
-
-            self.router.add_all(
-                &self.path,
-                MiddlewareEndpoint::wrap_with_middleware(ep.clone(), &self.middleware),
-            );
-            let wildcard = self.at("*--tide-path-rest");
+            let wildcard = self.at("*");
             wildcard.router.add_all(
                 &wildcard.path,
                 MiddlewareEndpoint::wrap_with_middleware(ep, &wildcard.middleware),
@@ -314,7 +303,12 @@ where
             route_params,
         } = req;
 
-        let rest = crate::request::rest(&route_params).unwrap_or("");
+        let rest = route_params
+            .iter()
+            .rev()
+            .find_map(|captures| captures.wildcard())
+            .unwrap_or_default();
+
         req.url_mut().set_path(rest);
 
         self.0
