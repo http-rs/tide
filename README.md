@@ -150,7 +150,7 @@ team. Use at your own risk.</sup>
 
 ### Session Stores
 * [async-redis-session](https://github.com/jbr/async-redis-session)
-* [async-sqlx-session](https://github.com/jbr/async-sqlx-session) (sqlite and postgres currently)
+* [async-sqlx-session](https://github.com/jbr/async-sqlx-session) (sqlite, mysql, postgres, ...)
 * [async-mongodb-session](https://github.com/yoshuawuyts/async-mongodb-session/)
 
 ### Example applications
