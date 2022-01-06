@@ -51,7 +51,7 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
         }
 
         Route {
-            router: &mut self.router,
+            router: self.router,
             path: p,
             middleware: self.middleware.clone(),
             prefix: false,
