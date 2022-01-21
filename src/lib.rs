@@ -27,7 +27,7 @@
 //! #[derive(Debug, Deserialize)]
 //! struct Animal {
 //!     name: String,
-//!     legs: u8,
+//!     legs: u16,
 //! }
 //!
 //! #[async_std::main]
