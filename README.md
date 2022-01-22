@@ -98,7 +98,7 @@ Hello, Chashu! I've put in an order for 4 shoes
 $ curl localhost:8080/orders/shoes -d '{ "name": "Mary Millipede", "legs": 750 }'
 ```
 ```text
-number too large to fit in target type
+Hello, Mary Millipede! I've put in an order for 750 shoes
 ```
 
 See more examples in the [examples](https://github.com/http-rs/tide/tree/main/examples) directory.
