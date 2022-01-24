@@ -56,6 +56,27 @@ where
 ///     }
 /// }));
 /// ```
+///
+/// # 404 handling
+///
+/// When a path cannot be resolved, a 404 error is returned.
+/// This response can be caught in the `After` handler, and will have set the `Request<State>` as an extension value.
+///
+/// Note that you *must* match the `State` type of your request. e.g. if you use `tide::with_state(MyState { .. })`, you must match on `res.ext::<Request<MyState>>()`.
+///
+/// ```rust
+/// use tide::{utils, http, Response, Request};
+///
+/// let mut app = tide::new();
+/// app.with(utils::After(|res: Response| async move {
+///     if res.status() == http::StatusCode::NotFound {
+///         if let Some(request) = res.ext::<Request<()>>() {
+///             tide::log::info!("404 happened on URL {:?}", request.url());
+///         }
+///     }
+///     Ok(res)
+/// }));
+/// ```
 #[derive(Debug)]
 pub struct After<F>(pub F);
 #[async_trait]
