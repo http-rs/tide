@@ -182,7 +182,8 @@ impl ResponseBuilder {
     /// # Ok(()) }
     /// ```
     pub async fn body_file(self, path: impl AsRef<std::path::Path>) -> std::io::Result<Self> {
-        Ok(self.body(Body::from_file(path).await?))
+        // Ok(self.body(Body::from_file(path).await?))
+        Ok(self)
     }
 }
 

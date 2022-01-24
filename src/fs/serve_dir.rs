@@ -47,14 +47,15 @@ where
             log::warn!("Unauthorized attempt to read: {:?}", file_path);
             Ok(Response::new(StatusCode::Forbidden))
         } else {
-            match Body::from_file(&file_path).await {
-                Ok(body) => Ok(Response::builder(StatusCode::Ok).body(body).build()),
-                Err(e) if e.kind() == io::ErrorKind::NotFound => {
-                    log::warn!("File not found: {:?}", &file_path);
-                    Ok(Response::new(StatusCode::NotFound))
-                }
-                Err(e) => Err(e.into()),
-            }
+            // match Body::from_file(&file_path).await {
+            //     Ok(body) => Ok(Response::builder(StatusCode::Ok).body(body).build()),
+            //     Err(e) if e.kind() == io::ErrorKind::NotFound => {
+            //         log::warn!("File not found: {:?}", &file_path);
+            //         Ok(Response::new(StatusCode::NotFound))
+            //     }
+            //     Err(e) => Err(e.into()),
+            // }
+            Ok(Response::new(StatusCode::NotFound))
         }
     }
 }

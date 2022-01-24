@@ -333,7 +333,7 @@ impl Response {
     /// # Ok(()) }
     /// ```
     pub async fn body_file(&mut self, path: impl AsRef<std::path::Path>) -> std::io::Result<()> {
-        self.set_body(Body::from_file(path).await?);
+        // self.set_body(Body::from_file(path).await?);
         Ok(())
     }
 
