@@ -16,12 +16,12 @@ where
     Fut: Future<Output = Result<()>> + Send + 'static,
 {
     let (sender, encoder) = async_sse::encode();
-    // task::spawn(async move {
-    //     let sender = Sender::new(sender);
-    //     if let Err(err) = handler(req, sender).await {
-    //         log::error!("SSE handler error: {:?}", err);
-    //     }
-    // });
+    task::spawn(async move {
+        let sender = Sender::new(sender);
+        if let Err(err) = handler(req, sender).await {
+            log::error!("SSE handler error: {:?}", err);
+        }
+    });
 
     // Perform the handshake as described here:
     // https://html.spec.whatwg.org/multipage/server-sent-events.html#sse-processing-model
