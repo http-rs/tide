@@ -4,6 +4,8 @@ use std::ops::Index;
 
 use serde::Serialize;
 
+use cfg_if::cfg_if;
+
 #[cfg(feature = "cookies")]
 use crate::http::cookies::Cookie;
 use crate::http::headers::{self, HeaderName, HeaderValues, ToHeaderValues};
@@ -333,7 +335,12 @@ impl Response {
     /// # Ok(()) }
     /// ```
     pub async fn body_file(&mut self, path: impl AsRef<std::path::Path>) -> std::io::Result<()> {
-        // self.set_body(Body::from_file(path).await?);
+        cfg_if! {
+            if #[cfg(not(feature = "wasm"))] {
+                self.set_body(Body::from_file(path).await?);
+            }
+        }
+
         Ok(())
     }
 

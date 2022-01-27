@@ -2,9 +2,16 @@ use std::fmt::Debug;
 use std::io;
 use std::path::Path;
 use std::sync::Arc;
+use cfg_if::cfg_if;
+
+cfg_if! {
+    if #[cfg(not(feature = "wasm"))] {
+        use crate::fs::{ServeDir, ServeFile};
+    }
+}
+
 
 use crate::endpoint::MiddlewareEndpoint;
-use crate::fs::{ServeDir, ServeFile};
 use crate::log;
 use crate::{router::Router, Endpoint, Middleware};
 
@@ -163,6 +170,7 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
     ///     Ok(())
     /// }
     /// ```
+    #[cfg(not(feature = "wasm"))]
     pub fn serve_dir(&mut self, dir: impl AsRef<Path>) -> io::Result<()> {
         // Verify path exists, return error if it doesn't.
         let dir = dir.as_ref().to_owned().canonicalize()?;
@@ -175,6 +183,7 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
     ///
     /// The file will be streamed from disk, and a mime type will be determined
     /// based on magic bytes. Similar to serve_dir
+    #[cfg(not(feature = "wasm"))]
     pub fn serve_file(&mut self, file: impl AsRef<Path>) -> io::Result<()> {
         self.get(ServeFile::init(file)?);
         Ok(())
