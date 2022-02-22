@@ -169,6 +169,7 @@ team. Use at your own risk.</sup>
   - Backend for graphql services using tide, async-graphql, jsonwebtoken, mongodb and so on.
   - Frontend for web application using tide, rhai, surf, graphql_client, handlebars-rust, cookie and so on.
 * [tide-server-example](https://github.com/Lomect/tide-server-example)
+* [yew-ssr-tide](https://github.com/zzy/yew-ssr-tide) - This example demonstrates yew server-side rendering with tide & surf.
 
 ## Contributing
 Want to join us? Check out our [The "Contributing" section of the
