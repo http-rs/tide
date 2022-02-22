@@ -1,0 +1,13 @@
+.DS_Store
+*~
+*.swp
+
+Cargo.lock
+target
+*.rs.bk
+
+.env
+examples
+files
+
+__pycache__

@@ -1,0 +1,12 @@
+[package]
+name = "yew-ssr-tide"
+version = "0.0.1"
+edition = "2021"
+
+[dependencies]
+async-std = { version = "1.10.0", features = ["attributes"] }
+tide = { path = "../../"}
+yew = { path = "../../../../crates/yew/packages/yew", features = ["ssr"] } # Change this to your path
+
+surf = "2.3.2"
+serde = { version = "1.0.136", features = ["derive"] }
