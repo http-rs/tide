@@ -4,7 +4,6 @@ use std::ops::Index;
 
 use serde::Serialize;
 
-use cfg_if::cfg_if;
 
 #[cfg(feature = "cookies")]
 use crate::http::cookies::Cookie;
@@ -334,12 +333,9 @@ impl Response {
     /// res.body_file("./archive.tgz").await?;
     /// # Ok(()) }
     /// ```
+    #[cfg(not(feature = "wasm"))]
     pub async fn body_file(&mut self, path: impl AsRef<std::path::Path>) -> std::io::Result<()> {
-        cfg_if! {
-            if #[cfg(not(feature = "wasm"))] {
-                self.set_body(Body::from_file(path).await?);
-            }
-        }
+        self.set_body(Body::from_file(path).await?);
 
         Ok(())
     }

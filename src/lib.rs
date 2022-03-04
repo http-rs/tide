@@ -66,6 +66,7 @@
 #[cfg(feature = "cookies")]
 mod cookies;
 mod endpoint;
+#[cfg(not(feature = "wasm"))]
 mod fs;
 mod middleware;
 mod redirect;
@@ -81,6 +82,7 @@ pub mod listener;
 pub mod log;
 pub mod prelude;
 pub mod security;
+#[cfg(not(feature = "wasm"))]
 pub mod sse;
 pub mod utils;
 

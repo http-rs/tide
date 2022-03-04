@@ -5,7 +5,6 @@ use crate::http::{Body, Mime, StatusCode};
 use crate::Response;
 use std::convert::TryInto;
 
-use cfg_if::cfg_if;
 
 #[derive(Debug)]
 
@@ -183,14 +182,9 @@ impl ResponseBuilder {
     /// assert_eq!(res.status(), 200);
     /// # Ok(()) }
     /// ```
+    #[cfg(not(feature = "wasm"))]
     pub async fn body_file(self, path: impl AsRef<std::path::Path>) -> std::io::Result<Self> {
-        cfg_if! {
-        if #[cfg(feature = "wasm")] {
-            return Ok(self.body(Body::empty()))
-        } else {
-                Ok(self.body(Body::from_file(path).await?))
-            }
-        }
+         Ok(self.body(Body::from_file(path).await?))
     }
 }
 

@@ -25,9 +25,6 @@
 //! app.listen("localhost:8080").await?;
 //! # Ok(()) }) }
 //! ```
-use cfg_if::cfg_if;
-cfg_if! {
-    if #[cfg(not(feature = "wasm"))] {
 mod endpoint;
 mod sender;
 mod upgrade;
@@ -35,6 +32,3 @@ mod upgrade;
 pub use endpoint::{endpoint, SseEndpoint};
 pub use sender::Sender;
 pub use upgrade::upgrade;
-    }
-}
-
