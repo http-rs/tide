@@ -5,7 +5,6 @@ use crate::http::{Body, Mime, StatusCode};
 use crate::Response;
 use std::convert::TryInto;
 
-
 #[derive(Debug)]
 
 /// Response Builder
@@ -184,7 +183,7 @@ impl ResponseBuilder {
     /// ```
     #[cfg(not(feature = "wasm"))]
     pub async fn body_file(self, path: impl AsRef<std::path::Path>) -> std::io::Result<Self> {
-         Ok(self.body(Body::from_file(path).await?))
+        Ok(self.body(Body::from_file(path).await?))
     }
 }
 

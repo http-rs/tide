@@ -3,9 +3,9 @@ use std::io;
 use std::path::Path;
 use std::sync::Arc;
 
+use crate::endpoint::MiddlewareEndpoint;
 #[cfg(not(feature = "wasm"))]
 use crate::fs::{ServeDir, ServeFile};
-use crate::endpoint::MiddlewareEndpoint;
 use crate::log;
 use crate::{router::Router, Endpoint, Middleware};
 
