@@ -69,7 +69,7 @@ impl<State> Request<State> {
         self.req.method()
     }
 
-    /// Access the request's full URI method.
+    /// Get a reference to request's URI.
     ///
     /// # Examples
     ///
