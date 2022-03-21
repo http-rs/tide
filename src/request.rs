@@ -93,6 +93,12 @@ impl<State> Request<State> {
         self.req.url()
     }
 
+    /// Get a mutable reference to request's URI.
+    #[must_use]
+    pub fn url_mut(&mut self) -> &mut Url {
+        self.req.url_mut()
+    }
+
     /// Access the request's HTTP version.
     ///
     /// # Examples
