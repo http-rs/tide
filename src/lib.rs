@@ -81,11 +81,12 @@ pub mod listener;
 pub mod log;
 pub mod prelude;
 pub mod security;
-pub mod sse;
 pub mod utils;
 
 #[cfg(feature = "sessions")]
 pub mod sessions;
+#[cfg(feature = "sse")]
+pub mod sse;
 
 pub use endpoint::Endpoint;
 pub use middleware::{Middleware, Next};
