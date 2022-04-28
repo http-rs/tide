@@ -113,8 +113,7 @@ where
     fn info(&self) -> Vec<ListenInfo> {
         self.listeners
             .iter()
-            .map(|listener| listener.info().into_iter())
-            .flatten()
+            .flat_map(|listener| listener.info().into_iter())
             .collect()
     }
 }
