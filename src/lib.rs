@@ -32,7 +32,9 @@
 //!
 //! #[async_std::main]
 //! async fn main() -> tide::Result<()> {
+//!     tide::log::start();
 //!     let mut app = tide::new();
+//!     app.with(tide::log::LogMiddleware::new());
 //!     app.at("/orders/shoes").post(order_shoes);
 //!     app.listen("127.0.0.1:8080").await?;
 //!     Ok(())
@@ -81,11 +83,12 @@ pub mod listener;
 pub mod log;
 pub mod prelude;
 pub mod security;
-pub mod sse;
 pub mod utils;
 
 #[cfg(feature = "sessions")]
 pub mod sessions;
+#[cfg(feature = "sse")]
+pub mod sse;
 
 pub use endpoint::Endpoint;
 pub use middleware::{Middleware, Next};
