@@ -11,6 +11,7 @@ use async_session::{
     hmac::{Hmac, Mac, NewMac},
     sha2::Sha256,
 };
+use kv_log_macro::error;
 
 const BASE64_DIGEST_LEN: usize = 44;
 
@@ -98,7 +99,7 @@ where
 
         if session.is_destroyed() {
             if let Err(e) = self.store.destroy_session(session).await {
-                crate::log::error!("unable to destroy session", { error: e.to_string() });
+                error!("unable to destroy session", { error: e.to_string() });
             }
 
             if let Some(mut cookie) = cookie {

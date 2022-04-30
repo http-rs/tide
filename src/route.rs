@@ -5,8 +5,9 @@ use std::sync::Arc;
 
 use crate::endpoint::MiddlewareEndpoint;
 use crate::fs::{ServeDir, ServeFile};
-use crate::log;
 use crate::{router::Router, Endpoint, Middleware};
+
+use kv_log_macro::trace;
 
 /// A handle to a route.
 ///
@@ -81,7 +82,7 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
     where
         M: Middleware<State>,
     {
-        log::trace!(
+        trace!(
             "Adding middleware {} to route {:?}",
             middleware.name(),
             self.path

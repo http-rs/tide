@@ -2,11 +2,11 @@
 
 use async_std::io;
 use async_std::sync::Arc;
+use kv_log_macro::{info, trace};
 
 #[cfg(feature = "cookies")]
 use crate::cookies;
 use crate::listener::{Listener, ToListener};
-use crate::log;
 use crate::middleware::{Middleware, Next};
 use crate::router::{Router, Selection};
 use crate::{Endpoint, Request, Route};
@@ -179,7 +179,7 @@ where
     where
         M: Middleware<State>,
     {
-        log::trace!("Adding middleware {}", middleware.name());
+        trace!("Adding middleware {}", middleware.name());
         let m = Arc::get_mut(&mut self.middleware)
             .expect("Registering middleware is not possible after the Server has started");
         m.push(Arc::new(middleware));
@@ -207,7 +207,7 @@ where
         let mut listener = listener.to_listener()?;
         listener.bind(self).await?;
         for info in listener.info().iter() {
-            log::info!("Server listening on {}", info);
+            info!("Server listening on {}", info);
         }
         listener.accept().await?;
         Ok(())

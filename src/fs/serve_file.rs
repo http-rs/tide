@@ -1,10 +1,10 @@
-use crate::log;
 use crate::{Body, Endpoint, Request, Response, Result, StatusCode};
 use std::io;
 use std::path::Path;
 
 use async_std::path::PathBuf as AsyncPathBuf;
 use async_trait::async_trait;
+use kv_log_macro::warn;
 
 pub(crate) struct ServeFile {
     path: AsyncPathBuf,
@@ -26,7 +26,7 @@ impl<State: Clone + Send + Sync + 'static> Endpoint<State> for ServeFile {
         match Body::from_file(&self.path).await {
             Ok(body) => Ok(Response::builder(StatusCode::Ok).body(body).build()),
             Err(e) if e.kind() == io::ErrorKind::NotFound => {
-                log::warn!("File not found: {:?}", &self.path);
+                warn!("File not found: {:?}", &self.path);
                 Ok(Response::new(StatusCode::NotFound))
             }
             Err(e) => Err(e.into()),

@@ -1,7 +1,7 @@
-use crate::log;
 use crate::{Body, Endpoint, Request, Response, Result, StatusCode};
 
 use async_std::path::PathBuf as AsyncPathBuf;
+use kv_log_macro::{info, warn};
 
 use std::path::{Path, PathBuf};
 use std::{ffi::OsStr, io};
@@ -40,17 +40,17 @@ where
             }
         }
 
-        log::info!("Requested file: {:?}", file_path);
+        info!("Requested file: {:?}", file_path);
 
         let file_path = AsyncPathBuf::from(file_path);
         if !file_path.starts_with(&self.dir) {
-            log::warn!("Unauthorized attempt to read: {:?}", file_path);
+            warn!("Unauthorized attempt to read: {:?}", file_path);
             Ok(Response::new(StatusCode::Forbidden))
         } else {
             match Body::from_file(&file_path).await {
                 Ok(body) => Ok(Response::builder(StatusCode::Ok).body(body).build()),
                 Err(e) if e.kind() == io::ErrorKind::NotFound => {
-                    log::warn!("File not found: {:?}", &file_path);
+                    warn!("File not found: {:?}", &file_path);
                     Ok(Response::new(StatusCode::NotFound))
                 }
                 Err(e) => Err(e.into()),
