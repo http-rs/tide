@@ -109,8 +109,6 @@ where
             middleware: Arc::new(vec![
                 #[cfg(feature = "cookies")]
                 Arc::new(cookies::CookiesMiddleware::new()),
-                #[cfg(feature = "logger")]
-                Arc::new(log::LogMiddleware::new()),
             ]),
             state,
         }
@@ -224,7 +222,7 @@ where
     ///
     /// When calling `Listener::info` multiple `ListenInfo` instances may be
     /// returned. This is useful when using for example `ConcurrentListener`
-    /// which enables a single server to listen on muliple ports.
+    /// which enables a single server to listen on multiple ports.
     ///
     /// # Examples
     ///
