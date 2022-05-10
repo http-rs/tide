@@ -3,9 +3,7 @@ use crate::{Middleware, Next, Request};
 
 /// Log all incoming requests and responses.
 ///
-/// This middleware is enabled by default in Tide. In the case of
-/// nested applications, this middleware will only run once for each
-/// request.
+/// In the case of nested applications, this middleware will only run once for each request.
 ///
 /// # Examples
 ///
