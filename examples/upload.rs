@@ -3,7 +3,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use async_std::{fs::OpenOptions, io};
-use tempfile::TempDir;
+use tempfile::{Builder, TempDir};
 use tide::prelude::*;
 use tide::{Body, Request, Response, StatusCode};
 
@@ -15,7 +15,7 @@ struct TempDirState {
 impl TempDirState {
     fn try_new() -> Result<Self, IoError> {
         Ok(Self {
-            tempdir: Arc::new(tempfile::tempdir()?),
+            tempdir: Arc::new(Builder::new().prefix("tide-upload-example-").tempdir()?),
         })
     }
 
