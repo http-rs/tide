@@ -24,7 +24,7 @@ features = ["docs"]
 rustdoc-args = ["--cfg", "feature=\"docs\""]
 
 [features]
-default = ["h1-server", "cookies", "logger", "sessions"]
+default = ["h1-server"]
 cookies = ["http-types/cookies"]
 h1-server = ["async-h1"]
 logger = ["femme"]
@@ -50,6 +50,7 @@ pin-project-lite = "0.2.0"
 serde = "1.0.117"
 serde_json = "1.0.59"
 routefinder = "0.5.0"
+regex = "1.5.5"
 
 [dev-dependencies]
 async-std = { version = "1.6.5", features = ["unstable", "attributes"] }

@@ -1,5 +1,7 @@
 use http_types::headers::{HeaderValue, HeaderValues};
 use http_types::{headers, Method, StatusCode};
+use regex::Regex;
+use std::hash::Hash;
 
 use crate::middleware::{Middleware, Next};
 use crate::{Request, Result};
@@ -128,6 +130,7 @@ impl CorsMiddleware {
             Origin::Any => true,
             Origin::Exact(s) => s == &origin,
             Origin::List(list) => list.contains(&origin),
+            Origin::Match(regex) => regex.is_match(&origin),
         }
     }
 }
@@ -187,7 +190,7 @@ impl Default for CorsMiddleware {
 }
 
 /// `allow_origin` enum
-#[derive(Clone, Debug, Hash, PartialEq)]
+#[derive(Clone, Debug)]
 pub enum Origin {
     /// Wildcard. Accept all origin requests
     Any,
@@ -195,6 +198,8 @@ pub enum Origin {
     Exact(String),
     /// Set multiple allow_origin targets
     List(Vec<String>),
+    /// Set a regex allow_origin targets
+    Match(Regex),
 }
 
 impl From<String> for Origin {
@@ -222,6 +227,12 @@ impl From<Vec<String>> for Origin {
     }
 }
 
+impl From<Regex> for Origin {
+    fn from(regex: Regex) -> Self {
+        Self::Match(regex)
+    }
+}
+
 impl From<Vec<&str>> for Origin {
     fn from(list: Vec<&str>) -> Self {
         Self::from(
@@ -229,6 +240,28 @@ impl From<Vec<&str>> for Origin {
                 .map(|s| (*s).to_string())
                 .collect::<Vec<String>>(),
         )
+    }
+}
+
+impl PartialEq for Origin {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Exact(this), Self::Exact(other)) => this == other,
+            (Self::List(this), Self::List(other)) => this == other,
+            (Self::Match(this), Self::Match(other)) => this.to_string() == other.to_string(),
+            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+        }
+    }
+}
+
+impl Hash for Origin {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        match self {
+            Self::Any => core::mem::discriminant(self).hash(state),
+            Self::Exact(s) => s.hash(state),
+            Self::List(list) => list.hash(state),
+            Self::Match(regex) => regex.to_string().hash(state),
+        }
     }
 }
 
@@ -303,6 +336,23 @@ mod test {
         app.with(
             CorsMiddleware::new()
                 .allow_origin(Origin::from(ALLOW_ORIGIN))
+                .allow_credentials(false)
+                .allow_methods(ALLOW_METHODS.parse::<HeaderValue>().unwrap())
+                .expose_headers(EXPOSE_HEADER.parse::<HeaderValue>().unwrap()),
+        );
+        let res: crate::http::Response = app.respond(request()).await.unwrap();
+
+        assert_eq!(res.status(), 200);
+        assert_eq!(res[headers::ACCESS_CONTROL_ALLOW_ORIGIN], ALLOW_ORIGIN);
+    }
+
+    #[async_std::test]
+    async fn regex_cors_middleware() {
+        let regex = Regex::new(r"e[xzs]a.*le.com*").unwrap();
+        let mut app = app();
+        app.with(
+            CorsMiddleware::new()
+                .allow_origin(Origin::from(regex))
                 .allow_credentials(false)
                 .allow_methods(ALLOW_METHODS.parse::<HeaderValue>().unwrap())
                 .expose_headers(EXPOSE_HEADER.parse::<HeaderValue>().unwrap()),
@@ -395,5 +445,35 @@ mod test {
         let res: crate::http::Response = app.respond(request()).await.unwrap();
         assert_eq!(res.status(), 400);
         assert_eq!(res[headers::ACCESS_CONTROL_ALLOW_ORIGIN], ALLOW_ORIGIN);
+    }
+
+    #[cfg(test)]
+    mod origin {
+        use super::super::Origin;
+        use regex::Regex;
+
+        #[test]
+        fn transitive() {
+            let regex = Regex::new(r"e[xzs]a.*le.com*").unwrap();
+            let x = Origin::from(regex.clone());
+            let y = Origin::from(regex.clone());
+            let z = Origin::from(regex);
+            assert!(x == y && y == z && x == z);
+        }
+
+        #[test]
+        fn symetrical() {
+            let regex = Regex::new(r"e[xzs]a.*le.com*").unwrap();
+            let x = Origin::from(regex.clone());
+            let y = Origin::from(regex);
+            assert!(x == y && y == x);
+        }
+
+        #[test]
+        fn reflexive() {
+            let regex = Regex::new(r"e[xzs]a.*le.com*").unwrap();
+            let x = Origin::from(regex);
+            assert!(x == x);
+        }
     }
 }
