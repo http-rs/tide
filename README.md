@@ -133,6 +133,7 @@ team. Use at your own risk.</sup>
 ### Auth
 * [tide-http-auth](https://github.com/chrisdickinson/tide-http-auth)
 * [tide-openidconnect](https://github.com/malyn/tide-openidconnect)
+* [tide-jwt](htps://github.com/nyxtom/tide-jwt)
 
 ### Testing
 * [tide-testing](https://github.com/jbr/tide-testing)
