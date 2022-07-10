@@ -422,9 +422,15 @@ impl Response {
         self.res.ext().get()
     }
 
-    /// Set a response scoped extension value.
-    pub fn insert_ext<T: Send + Sync + 'static>(&mut self, val: T) {
-        self.res.ext_mut().insert(val);
+    /// Get a mutable reference to value stored in response extensions.
+    #[must_use]
+    pub fn ext_mut<T: Send + Sync + 'static>(&mut self) -> Option<&mut T> {
+        self.res.ext_mut().get_mut()
+    }
+
+    /// Set a response extension value.
+    pub fn set_ext<T: Send + Sync + 'static>(&mut self, val: T) -> Option<T> {
+        self.res.ext_mut().insert(val)
     }
 
     /// Create a `tide::Response` from a type that can be converted into an
