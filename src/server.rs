@@ -366,7 +366,9 @@ impl<InnerState: Clone + Sync + Send + 'static> Endpoint for Server<InnerState> 
     }
 }
 
+/// Request extension trait that returns a reference to the State
 pub trait RequestState<State: Clone + Sync + Send + 'static> {
+    /// Extends the Request to be able to return a <State>
     fn state(&self) -> &State;
 }
 
