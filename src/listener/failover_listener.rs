@@ -15,7 +15,7 @@ use crate::listener::ListenInfo;
 /// ```rust
 /// fn main() -> Result<(), std::io::Error> {
 ///    async_std::task::block_on(async {
-///        tide::log::start();
+///        // tide::log::start();
 ///        let mut app = tide::new();
 ///        app.at("/").get(|_| async { Ok("Hello, world!") });
 ///

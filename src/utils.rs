@@ -16,7 +16,7 @@ use std::future::Future;
 /// use std::time::Instant;
 ///
 /// let mut app = tide::new();
-/// app.with(utils::Before(|mut request: Request<()>| async move {
+/// app.with(utils::Before(|mut request: Request| async move {
 ///     request.set_ext(Instant::now());
 ///     request
 /// }));
@@ -28,10 +28,10 @@ pub struct Before<F>(pub F);
 impl<State, F, Fut> Middleware<State> for Before<F>
 where
     State: Clone + Send + Sync + 'static,
-    F: Fn(Request<State>) -> Fut + Send + Sync + 'static,
-    Fut: Future<Output = Request<State>> + Send + Sync + 'static,
+    F: Fn(Request) -> Fut + Send + Sync + 'static,
+    Fut: Future<Output = Request> + Send + Sync + 'static,
 {
-    async fn handle(&self, request: Request<State>, next: Next<'_, State>) -> crate::Result {
+    async fn handle(&self, request: Request, next: Next<'_, State>) -> crate::Result {
         let request = (self.0)(request).await;
         Ok(next.run(request).await)
     }
@@ -65,7 +65,7 @@ where
     F: Fn(Response) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = crate::Result> + Send + Sync + 'static,
 {
-    async fn handle(&self, request: Request<State>, next: Next<'_, State>) -> crate::Result {
+    async fn handle(&self, request: Request, next: Next<'_, State>) -> crate::Result {
         let response = next.run(request).await;
         (self.0)(response).await
     }

@@ -23,7 +23,7 @@ use crate::{Middleware, Request, Response};
 /// A simple endpoint that is invoked on a `GET` request and returns a `String`:
 ///
 /// ```no_run
-/// async fn hello(_req: tide::Request<()>) -> tide::Result<String> {
+/// async fn hello(_req: tide::Request) -> tide::Result<String> {
 ///     Ok(String::from("hello"))
 /// }
 ///
@@ -35,7 +35,7 @@ use crate::{Middleware, Request, Response};
 ///
 /// ```no_run
 /// # use core::future::Future;
-/// fn hello(_req: tide::Request<()>) -> impl Future<Output = tide::Result<String>> {
+/// fn hello(_req: tide::Request) -> impl Future<Output = tide::Result<String>> {
 ///     async_std::future::ready(Ok(String::from("hello")))
 /// }
 ///
@@ -45,22 +45,21 @@ use crate::{Middleware, Request, Response};
 ///
 /// Tide routes will also accept endpoints with `Fn` signatures of this form, but using the `async` keyword has better ergonomics.
 #[async_trait]
-pub trait Endpoint<State: Clone + Send + Sync + 'static>: Send + Sync + 'static {
+pub trait Endpoint: Send + Sync + 'static {
     /// Invoke the endpoint within the given context
-    async fn call(&self, req: Request<State>) -> crate::Result;
+    async fn call(&self, req: Request) -> crate::Result;
 }
 
-pub(crate) type DynEndpoint<State> = dyn Endpoint<State>;
+pub(crate) type DynEndpoint = dyn Endpoint;
 
 #[async_trait]
-impl<State, F, Fut, Res> Endpoint<State> for F
+impl<F, Fut, Res> Endpoint for F
 where
-    State: Clone + Send + Sync + 'static,
-    F: Send + Sync + 'static + Fn(Request<State>) -> Fut,
+    F: Send + Sync + 'static + Fn(Request) -> Fut,
     Fut: Future<Output = Result<Res>> + Send + 'static,
     Res: Into<Response> + 'static,
 {
-    async fn call(&self, req: Request<State>) -> crate::Result {
+    async fn call(&self, req: Request) -> crate::Result {
         let fut = (self)(req);
         let res = fut.await?;
         Ok(res.into())
@@ -94,12 +93,12 @@ impl<E, State> std::fmt::Debug for MiddlewareEndpoint<E, State> {
 impl<E, State> MiddlewareEndpoint<E, State>
 where
     State: Clone + Send + Sync + 'static,
-    E: Endpoint<State>,
+    E: Endpoint,
 {
     pub(crate) fn wrap_with_middleware(
         ep: E,
         middleware: &[Arc<dyn Middleware<State>>],
-    ) -> Box<dyn Endpoint<State> + Send + Sync + 'static> {
+    ) -> Box<dyn Endpoint + Send + Sync + 'static> {
         if middleware.is_empty() {
             Box::new(ep)
         } else {
@@ -112,12 +111,12 @@ where
 }
 
 #[async_trait]
-impl<E, State> Endpoint<State> for MiddlewareEndpoint<E, State>
+impl<E, State> Endpoint for MiddlewareEndpoint<E, State>
 where
     State: Clone + Send + Sync + 'static,
-    E: Endpoint<State>,
+    E: Endpoint,
 {
-    async fn call(&self, req: Request<State>) -> crate::Result {
+    async fn call(&self, req: Request) -> crate::Result {
         let next = Next {
             endpoint: &self.endpoint,
             next_middleware: &self.middleware,
@@ -127,8 +126,8 @@ where
 }
 
 #[async_trait]
-impl<State: Clone + Send + Sync + 'static> Endpoint<State> for Box<dyn Endpoint<State>> {
-    async fn call(&self, request: Request<State>) -> crate::Result {
+impl Endpoint for Box<dyn Endpoint> {
+    async fn call(&self, request: Request) -> crate::Result {
         self.as_ref().call(request).await
     }
 }

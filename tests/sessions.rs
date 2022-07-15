@@ -22,13 +22,13 @@ async fn test_basic_sessions() -> tide::Result<()> {
         b"12345678901234567890123456789012345",
     ));
 
-    app.with(Before(|mut request: tide::Request<()>| async move {
+    app.with(Before(|mut request: tide::Request| async move {
         let visits: usize = request.session().get("visits").unwrap_or_default();
         request.session_mut().insert("visits", visits + 1).unwrap();
         request
     }));
 
-    app.at("/").get(|req: tide::Request<()>| async move {
+    app.at("/").get(|req: tide::Request| async move {
         let visits: usize = req.session().get("visits").unwrap();
         Ok(format!("you have visited this website {} times", visits))
     });
@@ -70,14 +70,14 @@ async fn test_customized_sessions() -> tide::Result<()> {
     );
 
     app.at("/").get(|_| async { Ok("/") });
-    app.at("/nested").get(|req: tide::Request<()>| async move {
+    app.at("/nested").get(|req: tide::Request| async move {
         Ok(format!(
             "/nested {}",
             req.session().get::<usize>("visits").unwrap_or_default()
         ))
     });
     app.at("/nested/incr")
-        .get(|mut req: tide::Request<()>| async move {
+        .get(|mut req: tide::Request| async move {
             let mut visits: usize = req.session().get("visits").unwrap_or_default();
             visits += 1;
             req.session_mut().insert("visits", visits)?;
@@ -135,22 +135,21 @@ async fn test_session_destruction() -> tide::Result<()> {
         b"12345678901234567890123456789012345",
     ));
 
-    app.with(Before(|mut request: tide::Request<()>| async move {
+    app.with(Before(|mut request: tide::Request| async move {
         let visits: usize = request.session().get("visits").unwrap_or_default();
         request.session_mut().insert("visits", visits + 1).unwrap();
         request
     }));
 
-    app.at("/").get(|req: tide::Request<()>| async move {
+    app.at("/").get(|req: tide::Request| async move {
         let visits: usize = req.session().get("visits").unwrap();
         Ok(format!("you have visited this website {} times", visits))
     });
 
-    app.at("/logout")
-        .post(|mut req: tide::Request<()>| async move {
-            req.session_mut().destroy();
-            Ok(Response::new(200))
-        });
+    app.at("/logout").post(|mut req: tide::Request| async move {
+        req.session_mut().destroy();
+        Ok(Response::new(200))
+    });
 
     let response = app.get("/").await?;
     let cookies = Cookies::from_response(&response);

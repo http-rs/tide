@@ -27,7 +27,7 @@ use crate::{Endpoint, Request, Route};
 /// response processing, such as compression, default headers, or logging. To
 /// add middleware to an app, use the [`Server::with`] method.
 pub struct Server<State> {
-    router: Arc<Router<State>>,
+    router: Arc<Router>,
     state: State,
     /// Holds the middleware stack.
     ///
@@ -81,7 +81,7 @@ where
     /// # use async_std::task::block_on;
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
-    /// use tide::Request;
+    /// use tide::{Request, RequestState};
     ///
     /// /// The shared application state.
     /// #[derive(Clone)]
@@ -94,9 +94,15 @@ where
     ///     name: "Nori".to_string()
     /// };
     ///
+    /// impl RequestState<State> for Request {
+    ///     fn state(&self) -> &State {
+    ///         self.ext::<State>().unwrap()
+    ///     }
+    /// }
+    ///
     /// // Initialize the application with state.
     /// let mut app = tide::with_state(state);
-    /// app.at("/").get(|req: Request<State>| async move {
+    /// app.at("/").get(|req: Request| async move {
     ///     Ok(format!("Hello, {}!", &req.state().name))
     /// });
     /// app.listen("127.0.0.1:8080").await?;
@@ -289,7 +295,7 @@ where
         let method = req.method().to_owned();
         let Selection { endpoint, params } = router.route(req.url().path(), method);
         let route_params = vec![params];
-        let req = Request::new(state, req, route_params);
+        let req = Request::with_state(state, req, route_params);
 
         let next = Next {
             endpoint,
@@ -334,10 +340,8 @@ impl<State: Clone> Clone for Server<State> {
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Sync + Send + 'static, InnerState: Clone + Sync + Send + 'static>
-    Endpoint<State> for Server<InnerState>
-{
-    async fn call(&self, req: Request<State>) -> crate::Result {
+impl<InnerState: Clone + Sync + Send + 'static> Endpoint for Server<InnerState> {
+    async fn call(&self, req: Request) -> crate::Result {
         let Request {
             req,
             mut route_params,
@@ -351,7 +355,7 @@ impl<State: Clone + Sync + Send + 'static, InnerState: Clone + Sync + Send + 'st
 
         let Selection { endpoint, params } = router.route(&path, method);
         route_params.push(params);
-        let req = Request::new(state, req, route_params);
+        let req = Request::with_state(state, req, route_params);
 
         let next = Next {
             endpoint,
@@ -360,6 +364,10 @@ impl<State: Clone + Sync + Send + 'static, InnerState: Clone + Sync + Send + 'st
 
         Ok(next.run(req).await)
     }
+}
+
+pub trait RequestState<State: Clone + Sync + Send + 'static> {
+    fn state(&self) -> &State;
 }
 
 #[crate::utils::async_trait]

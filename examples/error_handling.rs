@@ -5,7 +5,7 @@ use tide::{Body, Request, Response, Result, StatusCode};
 
 #[async_std::main]
 async fn main() -> Result<()> {
-    tide::log::start();
+    // tide::log::start();
     let mut app = tide::new();
     app.with(tide::log::LogMiddleware::new());
 
@@ -23,7 +23,7 @@ async fn main() -> Result<()> {
     }));
 
     app.at("/")
-        .get(|_req: Request<_>| async { Ok(Body::from_file("./does-not-exist").await?) });
+        .get(|_req: Request| async { Ok(Body::from_file("./does-not-exist").await?) });
 
     app.listen("127.0.0.1:8080").await?;
 

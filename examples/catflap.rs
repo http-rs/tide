@@ -2,7 +2,7 @@
 #[async_std::main]
 async fn main() -> Result<(), std::io::Error> {
     use std::{env, net::TcpListener, os::unix::io::FromRawFd};
-    tide::log::start();
+    // tide::log::start();
     let mut app = tide::new();
     app.with(tide::log::LogMiddleware::new());
     app.at("/").get(|_| async { Ok(CHANGE_THIS_TEXT) });

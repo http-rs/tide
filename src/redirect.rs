@@ -28,7 +28,7 @@ use crate::{Endpoint, Request, Response};
 /// # use tide::{Response, Redirect, Request, StatusCode};
 /// # fn next_product() -> Option<String> { None }
 /// # #[allow(dead_code)]
-/// async fn route_handler(request: Request<()>) -> tide::Result {
+/// async fn route_handler(request: Request) -> tide::Result {
 ///     if let Some(product_url) = next_product() {
 ///         Ok(Redirect::new(product_url).into())
 ///     } else {
@@ -86,12 +86,11 @@ impl<T: AsRef<str>> Redirect<T> {
 }
 
 #[async_trait::async_trait]
-impl<State, T> Endpoint<State> for Redirect<T>
+impl<T> Endpoint for Redirect<T>
 where
-    State: Clone + Send + Sync + 'static,
     T: AsRef<str> + Send + Sync + 'static,
 {
-    async fn call(&self, _req: Request<State>) -> crate::Result<Response> {
+    async fn call(&self, _req: Request) -> crate::Result<Response> {
         Ok(self.into())
     }
 }

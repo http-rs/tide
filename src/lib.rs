@@ -32,7 +32,7 @@
 //!
 //! #[async_std::main]
 //! async fn main() -> tide::Result<()> {
-//!     tide::log::start();
+//!     // tide::log::start();
 //!     let mut app = tide::new();
 //!     app.with(tide::log::LogMiddleware::new());
 //!     app.at("/orders/shoes").post(order_shoes);
@@ -40,7 +40,7 @@
 //!     Ok(())
 //! }
 //!
-//! async fn order_shoes(mut req: Request<()>) -> tide::Result {
+//! async fn order_shoes(mut req: Request) -> tide::Result {
 //!     let Animal { name, legs } = req.body_json().await?;
 //!     Ok(format!("Hello, {}! I've put in an order for {} shoes", name, legs).into())
 //! }
@@ -97,6 +97,7 @@ pub use request::Request;
 pub use response::Response;
 pub use response_builder::ResponseBuilder;
 pub use route::Route;
+pub use server::RequestState;
 pub use server::Server;
 
 pub use http_types::{self as http, Body, Error, Status, StatusCode};
@@ -130,7 +131,7 @@ pub fn new() -> server::Server<()> {
 /// # use async_std::task::block_on;
 /// # fn main() -> Result<(), std::io::Error> { block_on(async {
 /// #
-/// use tide::Request;
+/// use tide::{Request, RequestState};
 ///
 /// /// The shared application state.
 /// #[derive(Clone)]
@@ -143,9 +144,15 @@ pub fn new() -> server::Server<()> {
 ///     name: "Nori".to_string()
 /// };
 ///
+/// impl RequestState<State> for Request {
+///     fn state(&self) -> &State {
+///         self.ext::<State>().unwrap()
+///     }
+/// }
+///
 /// // Initialize the application with state.
 /// let mut app = tide::with_state(state);
-/// app.at("/").get(|req: Request<State>| async move {
+/// app.at("/").get(|req: Request| async move {
 ///     Ok(format!("Hello, {}!", &req.state().name))
 /// });
 /// app.listen("127.0.0.1:8080").await?;

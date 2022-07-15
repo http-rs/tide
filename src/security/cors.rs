@@ -137,7 +137,7 @@ impl CorsMiddleware {
 
 #[async_trait::async_trait]
 impl<State: Clone + Send + Sync + 'static> Middleware<State> for CorsMiddleware {
-    async fn handle(&self, req: Request<State>, next: Next<'_, State>) -> Result {
+    async fn handle(&self, req: Request, next: Next<'_, State>) -> Result {
         // TODO: how should multiple origin values be handled?
         let origins = req.header(&headers::ORIGIN).cloned();
 

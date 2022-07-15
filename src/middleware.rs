@@ -12,7 +12,7 @@ use std::pin::Pin;
 #[async_trait]
 pub trait Middleware<State>: Send + Sync + 'static {
     /// Asynchronously handle the request, and return a response.
-    async fn handle(&self, request: Request<State>, next: Next<'_, State>) -> crate::Result;
+    async fn handle(&self, request: Request, next: Next<'_, State>) -> crate::Result;
 
     /// Set the middleware's name. By default it uses the type signature.
     fn name(&self) -> &str {
@@ -28,11 +28,11 @@ where
         + Sync
         + 'static
         + for<'a> Fn(
-            Request<State>,
+            Request,
             Next<'a, State>,
         ) -> Pin<Box<dyn Future<Output = crate::Result> + 'a + Send>>,
 {
-    async fn handle(&self, req: Request<State>, next: Next<'_, State>) -> crate::Result {
+    async fn handle(&self, req: Request, next: Next<'_, State>) -> crate::Result {
         (self)(req, next).await
     }
 }
@@ -40,13 +40,13 @@ where
 /// The remainder of a middleware chain, including the endpoint.
 #[allow(missing_debug_implementations)]
 pub struct Next<'a, State> {
-    pub(crate) endpoint: &'a DynEndpoint<State>,
+    pub(crate) endpoint: &'a DynEndpoint,
     pub(crate) next_middleware: &'a [Arc<dyn Middleware<State>>],
 }
 
 impl<State: Clone + Send + Sync + 'static> Next<'_, State> {
     /// Asynchronously execute the remaining middleware chain.
-    pub async fn run(mut self, req: Request<State>) -> Response {
+    pub async fn run(mut self, req: Request) -> Response {
         if let Some((current, next)) = self.next_middleware.split_first() {
             self.next_middleware = next;
             match current.handle(req, self).await {

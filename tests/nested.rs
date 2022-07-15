@@ -1,5 +1,6 @@
 mod test_utils;
 use test_utils::ServerTestingExt;
+use tide::RequestState;
 
 #[async_std::test]
 async fn nested() -> tide::Result<()> {
@@ -18,7 +19,7 @@ async fn nested() -> tide::Result<()> {
 
 #[async_std::test]
 async fn nested_middleware() -> tide::Result<()> {
-    let echo_path = |req: tide::Request<()>| async move { Ok(req.url().path().to_string()) };
+    let echo_path = |req: tide::Request| async move { Ok(req.url().path().to_string()) };
     let mut app = tide::new();
     let mut inner_app = tide::new();
     inner_app.with(tide::utils::After(|mut res: tide::Response| async move {
@@ -61,4 +62,10 @@ async fn nested_with_different_state() -> tide::Result<()> {
     assert_eq!(outer.get("/foo").recv_string().await?, "the number is 42");
     assert_eq!(outer.get("/").recv_string().await?, "Hello, world!");
     Ok(())
+}
+
+impl RequestState<i32> for tide::Request {
+    fn state(&self) -> &i32 {
+        self.ext::<i32>().unwrap()
+    }
 }

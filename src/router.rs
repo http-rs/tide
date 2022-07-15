@@ -9,12 +9,12 @@ use crate::{Request, Response, StatusCode};
 /// Internally, we have a separate state machine per http method; indexing
 /// by the method first allows the table itself to be more efficient.
 #[allow(missing_debug_implementations)]
-pub(crate) struct Router<State> {
-    method_map: HashMap<http_types::Method, MethodRouter<Box<DynEndpoint<State>>>>,
-    all_method_router: MethodRouter<Box<DynEndpoint<State>>>,
+pub(crate) struct Router {
+    method_map: HashMap<http_types::Method, MethodRouter<Box<DynEndpoint>>>,
+    all_method_router: MethodRouter<Box<DynEndpoint>>,
 }
 
-impl<State> std::fmt::Debug for Router<State> {
+impl std::fmt::Debug for Router {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Router")
             .field("method_map", &self.method_map)
@@ -24,12 +24,12 @@ impl<State> std::fmt::Debug for Router<State> {
 }
 
 /// The result of routing a URL
-pub(crate) struct Selection<'a, State> {
-    pub(crate) endpoint: &'a DynEndpoint<State>,
+pub(crate) struct Selection<'a> {
+    pub(crate) endpoint: &'a DynEndpoint,
     pub(crate) params: Captures<'static, 'static>,
 }
 
-impl<State: Clone + Send + Sync + 'static> Router<State> {
+impl Router {
     pub(crate) fn new() -> Self {
         Router {
             method_map: HashMap::default(),
@@ -37,12 +37,7 @@ impl<State: Clone + Send + Sync + 'static> Router<State> {
         }
     }
 
-    pub(crate) fn add(
-        &mut self,
-        path: &str,
-        method: http_types::Method,
-        ep: Box<DynEndpoint<State>>,
-    ) {
+    pub(crate) fn add(&mut self, path: &str, method: http_types::Method, ep: Box<DynEndpoint>) {
         self.method_map
             .entry(method)
             .or_insert_with(MethodRouter::new)
@@ -50,11 +45,11 @@ impl<State: Clone + Send + Sync + 'static> Router<State> {
             .unwrap()
     }
 
-    pub(crate) fn add_all(&mut self, path: &str, ep: Box<DynEndpoint<State>>) {
+    pub(crate) fn add_all(&mut self, path: &str, ep: Box<DynEndpoint>) {
         self.all_method_router.add(path, ep).unwrap()
     }
 
-    pub(crate) fn route(&self, path: &str, method: http_types::Method) -> Selection<'_, State> {
+    pub(crate) fn route(&self, path: &str, method: http_types::Method) -> Selection<'_> {
         if let Some(m) = self
             .method_map
             .get(&method)
@@ -95,14 +90,10 @@ impl<State: Clone + Send + Sync + 'static> Router<State> {
     }
 }
 
-async fn not_found_endpoint<State: Clone + Send + Sync + 'static>(
-    _req: Request<State>,
-) -> crate::Result {
+async fn not_found_endpoint(_req: Request) -> crate::Result {
     Ok(Response::new(StatusCode::NotFound))
 }
 
-async fn method_not_allowed<State: Clone + Send + Sync + 'static>(
-    _req: Request<State>,
-) -> crate::Result {
+async fn method_not_allowed(_req: Request) -> crate::Result {
     Ok(Response::new(StatusCode::MethodNotAllowed))
 }

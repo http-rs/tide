@@ -3,7 +3,7 @@ use tide::{http, Result, Server};
 use std::fs::{self, File};
 use std::io::Write;
 
-fn api() -> Box<dyn tide::Endpoint<()>> {
+fn api() -> Box<dyn tide::Endpoint> {
     Box::new(|_| async { Ok("api") })
 }
 

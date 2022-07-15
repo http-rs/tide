@@ -5,7 +5,7 @@ use tide::http::{self, url::Url, Method};
 mod test_utils;
 
 fn auth_middleware<'a>(
-    request: tide::Request<()>,
+    request: tide::Request,
     next: tide::Next<'a, ()>,
 ) -> Pin<Box<dyn Future<Output = tide::Result> + 'a + Send>> {
     let authenticated = match request.header("X-Auth") {
@@ -22,7 +22,7 @@ fn auth_middleware<'a>(
     })
 }
 
-async fn echo_path<State>(req: tide::Request<State>) -> tide::Result<String> {
+async fn echo_path(req: tide::Request) -> tide::Result<String> {
     Ok(req.url().path().to_string())
 }
 

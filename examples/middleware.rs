@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use tide::http::mime;
 use tide::utils::{After, Before};
-use tide::{Middleware, Next, Request, Response, Result, StatusCode};
+use tide::{Middleware, Next, Request, RequestState, Response, Result, StatusCode};
 
 #[derive(Debug)]
 struct User {
@@ -26,7 +26,7 @@ impl UserDatabase {
 // application state. Because it depends on a specific request state,
 // it would likely be closely tied to a specific application
 fn user_loader<'a>(
-    mut request: Request<UserDatabase>,
+    mut request: Request,
     next: Next<'a, UserDatabase>,
 ) -> Pin<Box<dyn Future<Output = Result> + Send + 'a>> {
     Box::pin(async {
@@ -62,7 +62,7 @@ struct RequestCount(usize);
 
 #[tide::utils::async_trait]
 impl<State: Clone + Send + Sync + 'static> Middleware<State> for RequestCounterMiddleware {
-    async fn handle(&self, mut req: Request<State>, next: Next<'_, State>) -> Result {
+    async fn handle(&self, mut req: Request, next: Next<'_, State>) -> Result {
         let count = self.requests_counted.fetch_add(1, Ordering::Relaxed);
         tide::log::trace!("request counter", { count: count });
         req.set_ext(RequestCount(count));
@@ -91,7 +91,7 @@ const INTERNAL_SERVER_ERROR_HTML_PAGE: &str = "<html><body>
 
 #[async_std::main]
 async fn main() -> Result<()> {
-    tide::log::start();
+    // tide::log::start();
     let mut app = tide::with_state(UserDatabase::default());
 
     app.with(After(|response: Response| async move {
@@ -114,12 +114,12 @@ async fn main() -> Result<()> {
 
     app.with(user_loader);
     app.with(RequestCounterMiddleware::new(0));
-    app.with(Before(|mut request: Request<UserDatabase>| async move {
+    app.with(Before(|mut request: Request| async move {
         request.set_ext(std::time::Instant::now());
         request
     }));
 
-    app.at("/").get(|req: Request<_>| async move {
+    app.at("/").get(|req: Request| async move {
         let count: &RequestCount = req.ext().unwrap();
         let user: &User = req.ext().unwrap();
 
@@ -131,4 +131,10 @@ async fn main() -> Result<()> {
 
     app.listen("127.0.0.1:8080").await?;
     Ok(())
+}
+
+impl RequestState<UserDatabase> for Request {
+    fn state(&self) -> &UserDatabase {
+        self.ext::<UserDatabase>().unwrap()
+    }
 }
