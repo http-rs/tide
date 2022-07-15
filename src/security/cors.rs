@@ -462,6 +462,7 @@ mod test {
         }
 
         #[test]
+        #[allow(clippy::nonminimal_bool)]
         fn symetrical() {
             let regex = Regex::new(r"e[xzs]a.*le.com*").unwrap();
             let x = Origin::from(regex.clone());
