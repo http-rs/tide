@@ -27,7 +27,7 @@ impl UserDatabase {
 // it would likely be closely tied to a specific application
 fn user_loader<'a>(
     mut request: Request,
-    next: Next<'a, UserDatabase>,
+    next: Next<'a>,
 ) -> Pin<Box<dyn Future<Output = Result> + Send + 'a>> {
     Box::pin(async {
         if let Some(user) = request.state().find_user().await {
@@ -61,8 +61,8 @@ impl RequestCounterMiddleware {
 struct RequestCount(usize);
 
 #[tide::utils::async_trait]
-impl<State: Clone + Send + Sync + 'static> Middleware<State> for RequestCounterMiddleware {
-    async fn handle(&self, mut req: Request, next: Next<'_, State>) -> Result {
+impl Middleware for RequestCounterMiddleware {
+    async fn handle(&self, mut req: Request, next: Next<'_>) -> Result {
         let count = self.requests_counted.fetch_add(1, Ordering::Relaxed);
         tide::log::trace!("request counter", { count: count });
         req.set_ext(RequestCount(count));

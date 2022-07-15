@@ -6,7 +6,7 @@ mod test_utils;
 
 fn auth_middleware<'a>(
     request: tide::Request,
-    next: tide::Next<'a, ()>,
+    next: tide::Next<'a>,
 ) -> Pin<Box<dyn Future<Output = tide::Result> + 'a + Send>> {
     let authenticated = match request.header("X-Auth") {
         Some(header) => header == "secret_key",

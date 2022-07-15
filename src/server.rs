@@ -37,7 +37,7 @@ pub struct Server<State> {
     /// The inner Arc-s allow MiddlewareEndpoint-s to be cloned internally.
     /// We don't use a Mutex around the Vec here because adding a middleware during execution should be an error.
     #[allow(clippy::rc_buffer)]
-    middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
+    middleware: Arc<Vec<Arc<dyn Middleware>>>,
 }
 
 impl Server<()> {
@@ -166,7 +166,7 @@ where
     /// There is no fallback route matching, i.e. either a resource is a full
     /// match or not, which means that the order of adding resources has no
     /// effect.
-    pub fn at<'a>(&'a mut self, path: &str) -> Route<'a, State> {
+    pub fn at<'a>(&'a mut self, path: &str) -> Route<'a> {
         let router = Arc::get_mut(&mut self.router)
             .expect("Registering routes is not possible after the Server has started");
         Route::new(router, path.to_owned())
@@ -183,7 +183,7 @@ where
     /// order in which it is applied.
     pub fn with<M>(&mut self, middleware: M) -> &mut Self
     where
-        M: Middleware<State>,
+        M: Middleware,
     {
         log::trace!("Adding middleware {}", middleware.name());
         let m = Arc::get_mut(&mut self.middleware)

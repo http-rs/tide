@@ -66,12 +66,12 @@ where
     }
 }
 
-pub(crate) struct MiddlewareEndpoint<E, State> {
+pub(crate) struct MiddlewareEndpoint<E> {
     endpoint: E,
-    middleware: Vec<Arc<dyn Middleware<State>>>,
+    middleware: Vec<Arc<dyn Middleware>>,
 }
 
-impl<E: Clone, State> Clone for MiddlewareEndpoint<E, State> {
+impl<E: Clone> Clone for MiddlewareEndpoint<E> {
     fn clone(&self) -> Self {
         Self {
             endpoint: self.endpoint.clone(),
@@ -80,7 +80,7 @@ impl<E: Clone, State> Clone for MiddlewareEndpoint<E, State> {
     }
 }
 
-impl<E, State> std::fmt::Debug for MiddlewareEndpoint<E, State> {
+impl<E> std::fmt::Debug for MiddlewareEndpoint<E> {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             fmt,
@@ -90,14 +90,13 @@ impl<E, State> std::fmt::Debug for MiddlewareEndpoint<E, State> {
     }
 }
 
-impl<E, State> MiddlewareEndpoint<E, State>
+impl<E> MiddlewareEndpoint<E>
 where
-    State: Clone + Send + Sync + 'static,
     E: Endpoint,
 {
     pub(crate) fn wrap_with_middleware(
         ep: E,
-        middleware: &[Arc<dyn Middleware<State>>],
+        middleware: &[Arc<dyn Middleware>],
     ) -> Box<dyn Endpoint + Send + Sync + 'static> {
         if middleware.is_empty() {
             Box::new(ep)
@@ -111,9 +110,8 @@ where
 }
 
 #[async_trait]
-impl<E, State> Endpoint for MiddlewareEndpoint<E, State>
+impl<E> Endpoint for MiddlewareEndpoint<E>
 where
-    State: Clone + Send + Sync + 'static,
     E: Endpoint,
 {
     async fn call(&self, req: Request) -> crate::Result {

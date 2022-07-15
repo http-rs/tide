@@ -14,11 +14,11 @@ impl TestMiddleware {
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Middleware<State> for TestMiddleware {
+impl Middleware for TestMiddleware {
     async fn handle(
         &self,
         req: tide::Request,
-        next: tide::Next<'_, State>,
+        next: tide::Next<'_>,
     ) -> tide::Result<tide::Response> {
         let mut res = next.run(req).await;
         res.insert_header(self.0.clone(), self.1);

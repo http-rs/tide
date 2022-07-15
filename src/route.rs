@@ -17,10 +17,10 @@ use crate::{router::Router, Endpoint, Middleware};
 ///
 /// [`Server::at`]: ./struct.Server.html#method.at
 #[allow(missing_debug_implementations)]
-pub struct Route<'a, State> {
+pub struct Route<'a> {
     router: &'a mut Router,
     path: String,
-    middleware: Vec<Arc<dyn Middleware<State>>>,
+    middleware: Vec<Arc<dyn Middleware>>,
     /// Indicates whether the path of current route is treated as a prefix. Set by
     /// [`strip_prefix`].
     ///
@@ -28,8 +28,8 @@ pub struct Route<'a, State> {
     prefix: bool,
 }
 
-impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
-    pub(crate) fn new(router: &'a mut Router, path: String) -> Route<'a, State> {
+impl<'a> Route<'a> {
+    pub(crate) fn new(router: &'a mut Router, path: String) -> Route<'a> {
         Route {
             router,
             path,
@@ -39,7 +39,7 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
     }
 
     /// Extend the route with the given `path`.
-    pub fn at<'b>(&'b mut self, path: &str) -> Route<'b, State> {
+    pub fn at<'b>(&'b mut self, path: &str) -> Route<'b> {
         let mut p = self.path.clone();
 
         if !p.ends_with('/') && !path.starts_with('/') {
@@ -79,7 +79,7 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
     /// Apply the given middleware to the current route.
     pub fn with<M>(&mut self, middleware: M) -> &mut Self
     where
-        M: Middleware<State>,
+        M: Middleware,
     {
         log::trace!(
             "Adding middleware {} to route {:?}",
@@ -126,7 +126,6 @@ impl<'a, State: Clone + Send + Sync + 'static> Route<'a, State> {
     /// [`Server`]: struct.Server.html
     pub fn nest<InnerState>(&mut self, service: crate::Server<InnerState>) -> &mut Self
     where
-        State: Clone + Send + Sync + 'static,
         InnerState: Clone + Send + Sync + 'static,
     {
         let prefix = self.prefix;
