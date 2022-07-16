@@ -67,8 +67,8 @@ where
 }
 
 pub(crate) struct MiddlewareEndpoint<E> {
-    endpoint: E,
-    middleware: Vec<Arc<dyn Middleware>>,
+    endpoint: Arc<E>,
+    middleware: Arc<Vec<Arc<dyn Middleware>>>,
 }
 
 impl<E: Clone> Clone for MiddlewareEndpoint<E> {
@@ -96,14 +96,14 @@ where
 {
     pub(crate) fn wrap_with_middleware(
         ep: E,
-        middleware: &[Arc<dyn Middleware>],
-    ) -> Box<dyn Endpoint + Send + Sync + 'static> {
+        middleware: Vec<Arc<dyn Middleware>>,
+    ) -> Arc<dyn Endpoint + Send + Sync + 'static> {
         if middleware.is_empty() {
-            Box::new(ep)
+            Arc::new(ep)
         } else {
-            Box::new(Self {
-                endpoint: ep,
-                middleware: middleware.to_vec(),
+            Arc::new(Self {
+                endpoint: Arc::new(ep),
+                middleware: Arc::new(middleware),
             })
         }
     }
@@ -115,10 +115,7 @@ where
     E: Endpoint,
 {
     async fn call(&self, req: Request) -> crate::Result {
-        let next = Next {
-            endpoint: &self.endpoint,
-            next_middleware: &self.middleware,
-        };
+        let next = Next::new(self.endpoint.clone(), self.middleware.clone());
         Ok(next.run(req).await)
     }
 }

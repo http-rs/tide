@@ -26,7 +26,7 @@ impl LogMiddleware {
     }
 
     /// Log a request and a response.
-    async fn log<'a>(&'a self, mut req: Request, next: Next<'a>) -> crate::Result {
+    async fn log(&self, mut req: Request, next: Next) -> crate::Result {
         if req.ext::<LogMiddlewareHasBeenRun>().is_some() {
             return Ok(next.run(req).await);
         }
@@ -91,7 +91,7 @@ impl LogMiddleware {
 
 #[async_trait::async_trait]
 impl Middleware for LogMiddleware {
-    async fn handle(&self, req: Request, next: Next<'_>) -> crate::Result {
+    async fn handle(&self, req: Request, next: Next) -> crate::Result {
         self.log(req, next).await
     }
 }

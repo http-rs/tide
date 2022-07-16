@@ -25,10 +25,7 @@ impl UserDatabase {
 // This is an example of a function middleware that uses the
 // application state. Because it depends on a specific request state,
 // it would likely be closely tied to a specific application
-fn user_loader<'a>(
-    mut request: Request,
-    next: Next<'a>,
-) -> Pin<Box<dyn Future<Output = Result> + Send + 'a>> {
+fn user_loader(mut request: Request, next: Next) -> Pin<Box<dyn Future<Output = Result> + Send>> {
     Box::pin(async {
         if let Some(user) = request.state().find_user().await {
             tide::log::trace!("user loaded", {user: user.name});
@@ -62,7 +59,7 @@ struct RequestCount(usize);
 
 #[tide::utils::async_trait]
 impl Middleware for RequestCounterMiddleware {
-    async fn handle(&self, mut req: Request, next: Next<'_>) -> Result {
+    async fn handle(&self, mut req: Request, next: Next) -> Result {
         let count = self.requests_counted.fetch_add(1, Ordering::Relaxed);
         tide::log::trace!("request counter", { count: count });
         req.set_ext(RequestCount(count));

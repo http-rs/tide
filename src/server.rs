@@ -297,11 +297,7 @@ where
         let route_params = vec![params];
         let req = Request::with_state(state, req, route_params);
 
-        let next = Next {
-            endpoint,
-            next_middleware: &middleware,
-        };
-
+        let next = Next::new(endpoint, middleware);
         let res = next.run(req).await;
         let res: http_types::Response = res.into();
         Ok(res.into())
@@ -357,11 +353,7 @@ impl<InnerState: Clone + Sync + Send + 'static> Endpoint for Server<InnerState> 
         route_params.push(params);
         let req = Request::with_state(state, req, route_params);
 
-        let next = Next {
-            endpoint,
-            next_middleware: &middleware,
-        };
-
+        let next = Next::new(endpoint, middleware);
         Ok(next.run(req).await)
     }
 }

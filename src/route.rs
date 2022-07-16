@@ -187,13 +187,13 @@ impl<'a> Route<'a> {
             wildcard.router.add(
                 &wildcard.path,
                 method,
-                MiddlewareEndpoint::wrap_with_middleware(ep, &wildcard.middleware),
+                MiddlewareEndpoint::wrap_with_middleware(ep, wildcard.middleware.clone()),
             );
         } else {
             self.router.add(
                 &self.path,
                 method,
-                MiddlewareEndpoint::wrap_with_middleware(ep, &self.middleware),
+                MiddlewareEndpoint::wrap_with_middleware(ep, self.middleware.clone()),
             );
         }
         self
@@ -208,12 +208,12 @@ impl<'a> Route<'a> {
             let wildcard = self.at("*");
             wildcard.router.add_all(
                 &wildcard.path,
-                MiddlewareEndpoint::wrap_with_middleware(ep, &wildcard.middleware),
+                MiddlewareEndpoint::wrap_with_middleware(ep, wildcard.middleware.clone()),
             );
         } else {
             self.router.add_all(
                 &self.path,
-                MiddlewareEndpoint::wrap_with_middleware(ep, &self.middleware),
+                MiddlewareEndpoint::wrap_with_middleware(ep, self.middleware.clone()),
             );
         }
         self
