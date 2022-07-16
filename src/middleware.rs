@@ -5,7 +5,6 @@ use std::sync::Arc;
 use crate::{Endpoint, Request, Response};
 use async_trait::async_trait;
 use std::future::Future;
-use std::pin::Pin;
 
 /// Middleware that wraps around the remaining middleware chain.
 #[async_trait]
@@ -20,15 +19,16 @@ pub trait Middleware: Send + Sync + 'static {
 }
 
 #[async_trait]
-impl<F> Middleware for F
+impl<F, Fut, Res> Middleware for F
 where
-    F: Send
-        + Sync
-        + 'static
-        + Fn(Request, Next) -> Pin<Box<dyn Future<Output = crate::Result> + Send>>,
+    F: Send + Sync + 'static + Fn(Request, Next) -> Fut,
+    Fut: Future<Output = crate::Result<Res>> + Send + 'static,
+    Res: Into<Response> + 'static,
 {
     async fn handle(&self, req: Request, next: Next) -> crate::Result {
-        (self)(req, next).await
+        let fut = (self)(req, next);
+        let res = fut.await?;
+        Ok(res.into())
     }
 }
 

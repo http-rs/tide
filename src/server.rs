@@ -181,10 +181,7 @@ where
     ///
     /// Middleware can only be added at the "top level" of an application, and is processed in the
     /// order in which it is applied.
-    pub fn with<M>(&mut self, middleware: M) -> &mut Self
-    where
-        M: Middleware,
-    {
+    pub fn with(&mut self, middleware: impl Middleware) -> &mut Self {
         log::trace!("Adding middleware {}", middleware.name());
         let m = Arc::get_mut(&mut self.middleware)
             .expect("Registering middleware is not possible after the Server has started");
