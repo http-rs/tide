@@ -77,10 +77,7 @@ impl<'a> Route<'a> {
     }
 
     /// Apply the given middleware to the current route.
-    pub fn with<M>(&mut self, middleware: M) -> &mut Self
-    where
-        M: Middleware,
-    {
+    pub fn with(&mut self, middleware: impl Middleware) -> &mut Self {
         log::trace!(
             "Adding middleware {} to route {:?}",
             middleware.name(),
