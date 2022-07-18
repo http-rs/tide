@@ -9,7 +9,7 @@ use crate::listener::{Listener, ToListener};
 use crate::log;
 use crate::middleware::{Middleware, Next};
 use crate::router::{Router, Selection};
-use crate::state::State;
+use crate::state::StateMiddleware;
 use crate::{Endpoint, Request, Route};
 
 /// An HTTP server.
@@ -29,7 +29,6 @@ use crate::{Endpoint, Request, Route};
 /// add middleware to an app, use the [`Server::with`] method.
 pub struct Server {
     router: Arc<Router>,
-    state: Arc<State>,
     /// Holds the middleware stack.
     ///
     /// Note(Fishrock123): We do actually want this structure.
@@ -39,6 +38,12 @@ pub struct Server {
     /// We don't use a Mutex around the Vec here because adding a middleware during execution should be an error.
     #[allow(clippy::rc_buffer)]
     middleware: Arc<Vec<Arc<dyn Middleware>>>,
+}
+
+impl Default for Server {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Server {
@@ -58,17 +63,15 @@ impl Server {
     /// ```
     #[must_use]
     pub fn new() -> Self {
-        Self::with_state(())
+        Self {
+            router: Arc::new(Router::new()),
+            middleware: Arc::new(vec![
+                #[cfg(feature = "cookies")]
+                Arc::new(cookies::CookiesMiddleware::new()),
+            ]),
+        }
     }
-}
 
-impl Default for Server {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Server {
     /// Create a new Tide server with shared application scoped state.
     ///
     /// Application scoped state is useful for storing items
@@ -93,7 +96,8 @@ impl Server {
     /// };
     ///
     /// // Initialize the application with state.
-    /// let mut app = tide::with_state(state);
+    /// let mut app = tide::new();
+    /// app.with_state(state);
     /// app.at("/").get(|req: Request| async move {
     ///     Ok(format!("Hello, {}!", &req.state::<State>().name))
     /// });
@@ -101,15 +105,8 @@ impl Server {
     /// #
     /// # Ok(()) }) }
     /// ```
-    pub fn with_state<S: Send + Sync + 'static>(state: S) -> Self {
-        Self {
-            router: Arc::new(Router::new()),
-            middleware: Arc::new(vec![
-                #[cfg(feature = "cookies")]
-                Arc::new(cookies::CookiesMiddleware::new()),
-            ]),
-            state: Arc::new(State::with(state)),
-        }
+    pub fn with_state<S: Clone + Send + Sync + 'static>(&mut self, state: S) {
+        self.with(StateMiddleware::new(state));
     }
 
     /// Add a new route at the given `path`, relative to root.
@@ -276,27 +273,11 @@ impl Server {
         let method = req.method().to_owned();
         let Selection { endpoint, params } = self.router.route(req.url().path(), method);
         let route_params = vec![params];
-        let req = Request::with_state(self.state.clone(), req, route_params);
-
+        let req = Request::new(req, route_params);
         let next = Next::new(endpoint, self.middleware.clone());
         let res = next.run(req).await;
         let res: http_types::Response = res.into();
         Ok(res.into())
-    }
-
-    /// Gets a reference to the server's state. This is useful for testing and nesting:
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// # #[derive(Clone)] struct SomeAppState;
-    /// let mut app = tide::with_state(SomeAppState);
-    /// let mut admin = tide::with_state(app.state().clone());
-    /// admin.at("/").get(|_| async { Ok("nested app with cloned state") });
-    /// app.at("/").nest(admin);
-    /// ```
-    pub fn state(&self) -> &Arc<State> {
-        &self.state
     }
 }
 
@@ -304,7 +285,6 @@ impl Clone for Server {
     fn clone(&self) -> Self {
         Self {
             router: self.router.clone(),
-            state: self.state.clone(),
             middleware: self.middleware.clone(),
         }
     }
@@ -329,8 +309,7 @@ impl Endpoint for Server {
 
         let Selection { endpoint, params } = self.router.route(&path, method);
         route_params.push(params);
-        let req = Request::with_state(self.state.clone(), req, route_params);
-
+        let req = Request::new(req, route_params);
         let next = Next::new(endpoint, self.middleware.clone());
         Ok(next.run(req).await)
     }

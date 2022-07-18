@@ -99,7 +99,7 @@ pub use response::Response;
 pub use response_builder::ResponseBuilder;
 pub use route::Route;
 pub use server::Server;
-pub use state::State;
+pub use state::StateMiddleware;
 
 pub use http_types::{self as http, Body, Error, Status, StatusCode};
 
@@ -158,7 +158,9 @@ pub fn with_state<State>(state: State) -> server::Server
 where
     State: Clone + Send + Sync + 'static,
 {
-    Server::with_state(state)
+    let mut server = Server::new();
+    server.with_state(state);
+    server
 }
 
 /// A specialized Result type for Tide.

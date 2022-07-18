@@ -292,7 +292,6 @@ where
         let crate::Request {
             mut req,
             route_params,
-            app_state,
         } = req;
 
         let rest = route_params
@@ -303,12 +302,6 @@ where
 
         req.url_mut().set_path(rest);
 
-        self.0
-            .call(crate::Request {
-                req,
-                route_params,
-                app_state,
-            })
-            .await
+        self.0.call(crate::Request { req, route_params }).await
     }
 }

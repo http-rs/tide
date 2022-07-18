@@ -96,7 +96,7 @@ async fn handle_graphiql(_: Request) -> tide::Result<impl Into<Response>> {
 
 #[async_std::main]
 async fn main() -> std::io::Result<()> {
-    let mut app = Server::with_state(State {
+    let mut app = tide::with_state(State {
         users: Arc::new(RwLock::new(Vec::new())),
     });
     app.at("/").get(Redirect::permanent("/graphiql"));
