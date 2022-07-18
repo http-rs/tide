@@ -2,7 +2,7 @@ use std::sync::{Arc, RwLock};
 
 use juniper::{http::graphiql, http::GraphQLRequest, RootNode};
 use lazy_static::lazy_static;
-use tide::{http::mime, Body, Redirect, Request, Response, Server, StatusCode};
+use tide::{http::mime, Body, Redirect, Request, Response, StatusCode};
 
 #[derive(Clone)]
 struct User {
