@@ -41,8 +41,7 @@ impl Request {
 
     /// Returns the current app state
     pub fn state<T: Send + Sync + 'static>(&self) -> &T {
-        &self
-            .ext::<T>()
+        self.ext::<T>()
             .expect("request state not set for type, did you call app.with_state?")
     }
 

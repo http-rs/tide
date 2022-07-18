@@ -435,8 +435,7 @@ impl Response {
 
     /// Returns the current app state set from StateMiddleware
     pub fn state<T: Send + Sync + 'static>(&self) -> &T {
-        &self
-            .ext::<T>()
+        self.ext::<T>()
             .expect("response state not set for type, did you call app.with_state?")
     }
 

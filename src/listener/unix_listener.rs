@@ -25,7 +25,7 @@ pub struct UnixListener {
     info: Option<ListenInfo>,
 }
 
-impl<'server> UnixListener {
+impl UnixListener {
     pub fn from_path(path: impl Into<PathBuf>) -> Self {
         Self {
             path: Some(path.into()),
