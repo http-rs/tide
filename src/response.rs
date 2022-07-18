@@ -433,6 +433,13 @@ impl Response {
         self.res.ext_mut().insert(val)
     }
 
+    /// Returns the current app state set from StateMiddleware
+    pub fn state<T: Send + Sync + 'static>(&self) -> &T {
+        &self
+            .ext::<T>()
+            .expect("response state not set for type, did you call app.with_state?")
+    }
+
     /// Create a `tide::Response` from a type that can be converted into an
     /// `http_types::Response`.
     pub fn from_res<T>(value: T) -> Self
