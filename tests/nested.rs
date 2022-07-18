@@ -48,16 +48,13 @@ async fn nested_middleware() -> tide::Result<()> {
     Ok(())
 }
 
-#[derive(Clone, Debug)]
-struct Num(i32);
-
 #[async_std::test]
 async fn nested_with_different_state() -> tide::Result<()> {
     let mut outer = tide::new();
-    let mut inner = tide::with_state(Num(42));
+    let mut inner = tide::with_state(42);
     inner.at("/").get(|req: Request| async move {
-        let num = req.state::<Num>().0;
-        println!("{:?}", req.state::<Num>());
+        let num = req.state::<i32>();
+        println!("{:?}", req.state::<i32>());
         Ok(format!("the number is {}", num))
     });
     outer.at("/").get(|_| async { Ok("Hello, world!") });
