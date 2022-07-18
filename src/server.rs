@@ -9,6 +9,7 @@ use crate::listener::{Listener, ToListener};
 use crate::log;
 use crate::middleware::{Middleware, Next};
 use crate::router::{Router, Selection};
+use crate::state::State;
 use crate::{Endpoint, Request, Route};
 
 /// An HTTP server.
@@ -26,9 +27,9 @@ use crate::{Endpoint, Request, Route};
 /// - Middleware extends the base Tide framework with additional request or
 /// response processing, such as compression, default headers, or logging. To
 /// add middleware to an app, use the [`Server::with`] method.
-pub struct Server<State> {
+pub struct Server {
     router: Arc<Router>,
-    state: State,
+    state: Arc<State>,
     /// Holds the middleware stack.
     ///
     /// Note(Fishrock123): We do actually want this structure.
@@ -40,7 +41,7 @@ pub struct Server<State> {
     middleware: Arc<Vec<Arc<dyn Middleware>>>,
 }
 
-impl Server<()> {
+impl Server {
     /// Create a new Tide server.
     ///
     /// # Examples
@@ -61,16 +62,13 @@ impl Server<()> {
     }
 }
 
-impl Default for Server<()> {
+impl Default for Server {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<State> Server<State>
-where
-    State: Clone + Send + Sync + 'static,
-{
+impl Server {
     /// Create a new Tide server with shared application scoped state.
     ///
     /// Application scoped state is useful for storing items
@@ -81,7 +79,7 @@ where
     /// # use async_std::task::block_on;
     /// # fn main() -> Result<(), std::io::Error> { block_on(async {
     /// #
-    /// use tide::{Request, RequestState};
+    /// use tide::{Request};
     ///
     /// /// The shared application state.
     /// #[derive(Clone)]
@@ -94,29 +92,23 @@ where
     ///     name: "Nori".to_string()
     /// };
     ///
-    /// impl RequestState<State> for Request {
-    ///     fn state(&self) -> &State {
-    ///         self.ext::<State>().unwrap()
-    ///     }
-    /// }
-    ///
     /// // Initialize the application with state.
     /// let mut app = tide::with_state(state);
     /// app.at("/").get(|req: Request| async move {
-    ///     Ok(format!("Hello, {}!", &req.state().name))
+    ///     Ok(format!("Hello, {}!", &req.state::<State>().name))
     /// });
     /// app.listen("127.0.0.1:8080").await?;
     /// #
     /// # Ok(()) }) }
     /// ```
-    pub fn with_state(state: State) -> Self {
+    pub fn with_state<S: Send + Sync + 'static>(state: S) -> Self {
         Self {
             router: Arc::new(Router::new()),
             middleware: Arc::new(vec![
                 #[cfg(feature = "cookies")]
                 Arc::new(cookies::CookiesMiddleware::new()),
             ]),
-            state,
+            state: Arc::new(State::with(state)),
         }
     }
 
@@ -206,7 +198,7 @@ where
     /// #
     /// # Ok(()) }) }
     /// ```
-    pub async fn listen<L: ToListener<State>>(self, listener: L) -> io::Result<()> {
+    pub async fn listen<L: ToListener>(self, listener: L) -> io::Result<()> {
         let mut listener = listener.to_listener()?;
         listener.bind(self).await?;
         for info in listener.info().iter() {
@@ -245,10 +237,7 @@ where
     /// #
     /// # Ok(()) }) }
     /// ```
-    pub async fn bind<L: ToListener<State>>(
-        self,
-        listener: L,
-    ) -> io::Result<<L as ToListener<State>>::Listener> {
+    pub async fn bind<L: ToListener>(self, listener: L) -> io::Result<<L as ToListener>::Listener> {
         let mut listener = listener.to_listener()?;
         listener.bind(self).await?;
         Ok(listener)
@@ -283,18 +272,13 @@ where
         Res: From<http_types::Response>,
     {
         let req = req.into();
-        let Self {
-            router,
-            state,
-            middleware,
-        } = self.clone();
 
         let method = req.method().to_owned();
-        let Selection { endpoint, params } = router.route(req.url().path(), method);
+        let Selection { endpoint, params } = self.router.route(req.url().path(), method);
         let route_params = vec![params];
-        let req = Request::with_state(state, req, route_params);
+        let req = Request::with_state(self.state.clone(), req, route_params);
 
-        let next = Next::new(endpoint, middleware);
+        let next = Next::new(endpoint, self.middleware.clone());
         let res = next.run(req).await;
         let res: http_types::Response = res.into();
         Ok(res.into())
@@ -311,18 +295,12 @@ where
     /// admin.at("/").get(|_| async { Ok("nested app with cloned state") });
     /// app.at("/").nest(admin);
     /// ```
-    pub fn state(&self) -> &State {
+    pub fn state(&self) -> &Arc<State> {
         &self.state
     }
 }
 
-impl<State: Send + Sync + 'static> std::fmt::Debug for Server<State> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Server").finish()
-    }
-}
-
-impl<State: Clone> Clone for Server<State> {
+impl Clone for Server {
     fn clone(&self) -> Self {
         Self {
             router: self.router.clone(),
@@ -332,8 +310,14 @@ impl<State: Clone> Clone for Server<State> {
     }
 }
 
+impl std::fmt::Debug for Server {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Server").finish()
+    }
+}
+
 #[async_trait::async_trait]
-impl<InnerState: Clone + Sync + Send + 'static> Endpoint for Server<InnerState> {
+impl Endpoint for Server {
     async fn call(&self, req: Request) -> crate::Result {
         let Request {
             req,
@@ -342,27 +326,18 @@ impl<InnerState: Clone + Sync + Send + 'static> Endpoint for Server<InnerState> 
         } = req;
         let path = req.url().path().to_owned();
         let method = req.method().to_owned();
-        let router = self.router.clone();
-        let middleware = self.middleware.clone();
-        let state = self.state.clone();
 
-        let Selection { endpoint, params } = router.route(&path, method);
+        let Selection { endpoint, params } = self.router.route(&path, method);
         route_params.push(params);
-        let req = Request::with_state(state, req, route_params);
+        let req = Request::with_state(self.state.clone(), req, route_params);
 
-        let next = Next::new(endpoint, middleware);
+        let next = Next::new(endpoint, self.middleware.clone());
         Ok(next.run(req).await)
     }
 }
 
-/// Request extension trait that returns a reference to the State
-pub trait RequestState<State: Clone + Sync + Send + 'static> {
-    /// Extends the Request to be able to return a <State>
-    fn state(&self) -> &State;
-}
-
 #[crate::utils::async_trait]
-impl<State: Clone + Send + Sync + Unpin + 'static> http_client::HttpClient for Server<State> {
+impl http_client::HttpClient for Server {
     async fn send(&self, req: crate::http::Request) -> crate::http::Result<crate::http::Response> {
         self.respond(req).await
     }

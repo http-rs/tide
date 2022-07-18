@@ -17,14 +17,14 @@ use async_std::{io, task};
 ///
 /// This is currently crate-visible only, and tide users are expected
 /// to create these through [ToListener](crate::ToListener) conversions.
-pub struct TcpListener<State> {
+pub struct TcpListener {
     addrs: Option<Vec<SocketAddr>>,
     listener: Option<net::TcpListener>,
-    server: Option<Server<State>>,
+    server: Option<Server>,
     info: Option<ListenInfo>,
 }
 
-impl<State> TcpListener<State> {
+impl TcpListener {
     pub fn from_addrs(addrs: Vec<SocketAddr>) -> Self {
         Self {
             addrs: Some(addrs),
@@ -44,7 +44,7 @@ impl<State> TcpListener<State> {
     }
 }
 
-fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: TcpStream) {
+fn handle_tcp(app: Server, stream: TcpStream) {
     task::spawn(async move {
         let local_addr = stream.local_addr().ok();
         let peer_addr = stream.peer_addr().ok();
@@ -62,11 +62,8 @@ fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: 
 }
 
 #[async_trait::async_trait]
-impl<State> Listener<State> for TcpListener<State>
-where
-    State: Clone + Send + Sync + 'static,
-{
-    async fn bind(&mut self, server: Server<State>) -> io::Result<()> {
+impl Listener for TcpListener {
+    async fn bind(&mut self, server: Server) -> io::Result<()> {
         assert!(self.server.is_none(), "`bind` should only be called once");
         self.server = Some(server);
 
@@ -126,7 +123,7 @@ where
     }
 }
 
-impl<State> fmt::Debug for TcpListener<State> {
+impl fmt::Debug for TcpListener {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("TcpListener")
             .field("listener", &self.listener)
@@ -143,7 +140,7 @@ impl<State> fmt::Debug for TcpListener<State> {
     }
 }
 
-impl<State> Display for TcpListener<State> {
+impl Display for TcpListener {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let http_fmt = |a| format!("http://{}", a);
         match &self.listener {

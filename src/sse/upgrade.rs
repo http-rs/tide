@@ -9,9 +9,8 @@ use async_std::io::BufReader;
 use async_std::task;
 
 /// Upgrade an existing HTTP connection to an SSE connection.
-pub fn upgrade<F, Fut, State>(req: Request, handler: F) -> Response
+pub fn upgrade<F, Fut>(req: Request, handler: F) -> Response
 where
-    State: Clone + Send + Sync + 'static,
     F: Fn(Request, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + 'static,
 {

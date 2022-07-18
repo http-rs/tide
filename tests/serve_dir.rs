@@ -7,7 +7,7 @@ fn api() -> Box<dyn tide::Endpoint> {
     Box::new(|_| async { Ok("api") })
 }
 
-fn app(tempdir: &tempfile::TempDir) -> Result<Server<()>> {
+fn app(tempdir: &tempfile::TempDir) -> Result<Server> {
     let static_dir = tempdir.path().join("static");
     fs::create_dir(&static_dir)?;
 

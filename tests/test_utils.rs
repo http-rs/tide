@@ -60,7 +60,7 @@ pub trait ServerTestingExt {
     }
 }
 
-impl<State: Clone + Send + Sync + Unpin + 'static> ServerTestingExt for tide::Server<State> {
+impl ServerTestingExt for tide::Server {
     fn client(&self) -> Client {
         let config = Config::new()
             .set_http_client(self.clone())

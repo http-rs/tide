@@ -13,13 +13,13 @@ use std::fmt::{self, Debug, Display, Formatter};
 ///
 /// This is currently crate-visible only, and tide users are expected
 /// to create these through [ToListener](crate::ToListener) conversions.
-pub enum ParsedListener<State> {
+pub enum ParsedListener {
     #[cfg(unix)]
-    Unix(UnixListener<State>),
-    Tcp(TcpListener<State>),
+    Unix(UnixListener),
+    Tcp(TcpListener),
 }
 
-impl<State> Debug for ParsedListener<State> {
+impl Debug for ParsedListener {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             #[cfg(unix)]
@@ -29,7 +29,7 @@ impl<State> Debug for ParsedListener<State> {
     }
 }
 
-impl<State> Display for ParsedListener<State> {
+impl Display for ParsedListener {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             #[cfg(unix)]
@@ -40,11 +40,8 @@ impl<State> Display for ParsedListener<State> {
 }
 
 #[async_trait::async_trait]
-impl<State> Listener<State> for ParsedListener<State>
-where
-    State: Clone + Send + Sync + 'static,
-{
-    async fn bind(&mut self, server: Server<State>) -> io::Result<()> {
+impl Listener for ParsedListener {
+    async fn bind(&mut self, server: Server) -> io::Result<()> {
         match self {
             #[cfg(unix)]
             Self::Unix(u) => u.bind(server).await,

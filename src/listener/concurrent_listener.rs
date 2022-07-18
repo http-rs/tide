@@ -33,11 +33,11 @@ use futures_util::stream::{futures_unordered::FuturesUnordered, StreamExt};
 ///```
 
 #[derive(Default)]
-pub struct ConcurrentListener<State> {
-    listeners: Vec<Box<dyn Listener<State>>>,
+pub struct ConcurrentListener {
+    listeners: Vec<Box<dyn Listener>>,
 }
 
-impl<State: Clone + Send + Sync + 'static> ConcurrentListener<State> {
+impl ConcurrentListener {
     /// creates a new ConcurrentListener
     pub fn new() -> Self {
         Self { listeners: vec![] }
@@ -59,7 +59,7 @@ impl<State: Clone + Send + Sync + 'static> ConcurrentListener<State> {
     /// ```
     pub fn add<L>(&mut self, listener: L) -> io::Result<()>
     where
-        L: ToListener<State>,
+        L: ToListener,
     {
         self.listeners.push(Box::new(listener.to_listener()?));
         Ok(())
@@ -78,7 +78,7 @@ impl<State: Clone + Send + Sync + 'static> ConcurrentListener<State> {
     /// #  Ok(()) }) }
     pub fn with_listener<L>(mut self, listener: L) -> Self
     where
-        L: ToListener<State>,
+        L: ToListener,
     {
         self.add(listener).expect("Unable to add listener");
         self
@@ -86,11 +86,8 @@ impl<State: Clone + Send + Sync + 'static> ConcurrentListener<State> {
 }
 
 #[async_trait::async_trait]
-impl<State> Listener<State> for ConcurrentListener<State>
-where
-    State: Clone + Send + Sync + 'static,
-{
-    async fn bind(&mut self, app: Server<State>) -> io::Result<()> {
+impl Listener for ConcurrentListener {
+    async fn bind(&mut self, app: Server) -> io::Result<()> {
         for listener in self.listeners.iter_mut() {
             listener.bind(app.clone()).await?;
         }
@@ -118,13 +115,13 @@ where
     }
 }
 
-impl<State> Debug for ConcurrentListener<State> {
+impl Debug for ConcurrentListener {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.listeners)
     }
 }
 
-impl<State> Display for ConcurrentListener<State> {
+impl Display for ConcurrentListener {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let string = self
             .listeners

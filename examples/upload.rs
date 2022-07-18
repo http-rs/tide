@@ -5,7 +5,7 @@ use std::sync::Arc;
 use async_std::{fs::OpenOptions, io};
 use tempfile::TempDir;
 use tide::prelude::*;
-use tide::{Body, Request, RequestState, Response, StatusCode};
+use tide::{Body, Request, Response, StatusCode};
 
 #[derive(Clone)]
 struct TempDirState {
@@ -24,12 +24,6 @@ impl TempDirState {
     }
 }
 
-impl RequestState<TempDirState> for Request {
-    fn state(&self) -> &TempDirState {
-        self.ext::<TempDirState>().unwrap()
-    }
-}
-
 #[async_std::main]
 async fn main() -> Result<(), IoError> {
     // tide::log::start();
@@ -44,7 +38,7 @@ async fn main() -> Result<(), IoError> {
     app.at(":file")
         .put(|req: Request| async move {
             let path = req.param("file")?;
-            let state = req.state();
+            let state = req.state::<TempDirState>();
             let fs_path = state.path().join(path);
 
             let file = OpenOptions::new()
@@ -64,7 +58,7 @@ async fn main() -> Result<(), IoError> {
         })
         .get(|req: Request| async move {
             let path = req.param("file")?;
-            let fs_path = req.state().path().join(path);
+            let fs_path = req.state::<TempDirState>().path().join(path);
 
             if let Ok(body) = Body::from_file(fs_path).await {
                 Ok(body.into())

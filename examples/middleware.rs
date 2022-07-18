@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use tide::http::mime;
 use tide::utils::{After, Before};
-use tide::{Middleware, Next, Request, RequestState, Response, Result, StatusCode};
+use tide::{Middleware, Next, Request, Response, Result, StatusCode};
 
 #[derive(Debug)]
 struct User {
@@ -24,7 +24,7 @@ impl UserDatabase {
 // application state. Because it depends on a specific request state,
 // it would likely be closely tied to a specific application
 async fn user_loader(mut request: Request, next: Next) -> Result {
-    if let Some(user) = request.state().find_user().await {
+    if let Some(user) = request.state::<UserDatabase>().find_user().await {
         tide::log::trace!("user loaded", {user: user.name});
         request.set_ext(user);
         Ok(next.run(request).await)
@@ -124,10 +124,4 @@ async fn main() -> Result<()> {
 
     app.listen("127.0.0.1:8080").await?;
     Ok(())
-}
-
-impl RequestState<UserDatabase> for Request {
-    fn state(&self) -> &UserDatabase {
-        self.ext::<UserDatabase>().unwrap()
-    }
 }

@@ -34,15 +34,12 @@ use crate::listener::ListenInfo;
 ///}
 ///```
 #[derive(Default)]
-pub struct FailoverListener<State> {
-    listeners: Vec<Option<Box<dyn Listener<State>>>>,
+pub struct FailoverListener {
+    listeners: Vec<Option<Box<dyn Listener>>>,
     index: Option<usize>,
 }
 
-impl<State> FailoverListener<State>
-where
-    State: Clone + Send + Sync + 'static,
-{
+impl FailoverListener {
     /// creates a new FailoverListener
     pub fn new() -> Self {
         Self {
@@ -69,7 +66,7 @@ where
     /// ```
     pub fn add<L>(&mut self, listener: L) -> io::Result<()>
     where
-        L: ToListener<State>,
+        L: ToListener,
     {
         self.listeners.push(Some(Box::new(listener.to_listener()?)));
         Ok(())
@@ -88,7 +85,7 @@ where
     /// #  Ok(()) }) }
     pub fn with_listener<L>(mut self, listener: L) -> Self
     where
-        L: ToListener<State>,
+        L: ToListener,
     {
         self.add(listener).expect("Unable to add listener");
         self
@@ -96,11 +93,8 @@ where
 }
 
 #[async_trait::async_trait]
-impl<State> Listener<State> for FailoverListener<State>
-where
-    State: Clone + Send + Sync + 'static,
-{
-    async fn bind(&mut self, app: Server<State>) -> io::Result<()> {
+impl Listener for FailoverListener {
+    async fn bind(&mut self, app: Server) -> io::Result<()> {
         for (index, listener) in self.listeners.iter_mut().enumerate() {
             let listener = listener.as_deref_mut().expect("bind called twice");
             match listener.bind(app.clone()).await {
@@ -148,13 +142,13 @@ where
     }
 }
 
-impl<State> Debug for FailoverListener<State> {
+impl Debug for FailoverListener {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.listeners)
     }
 }
 
-impl<State> Display for FailoverListener<State> {
+impl Display for FailoverListener {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let string = self
             .listeners

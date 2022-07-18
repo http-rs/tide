@@ -47,9 +47,9 @@ use async_std::io;
 /// ```
 /// # Other implementations
 /// See below for additional provided implementations of ToListener.
-pub trait ToListener<State: Clone + Send + Sync + 'static> {
+pub trait ToListener {
     /// What listener are we converting into?
-    type Listener: Listener<State>;
+    type Listener: Listener;
 
     /// Transform self into a
     /// [`Listener`](crate::listener::Listener). Unless self is

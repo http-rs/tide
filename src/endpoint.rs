@@ -11,7 +11,7 @@ use crate::{Middleware, Request, Response};
 /// This trait is automatically implemented for `Fn` types, and so is rarely implemented
 /// directly by Tide users.
 ///
-/// In practice, endpoints are functions that take a `Request<State>` as an argument and
+/// In practice, endpoints are functions that take a `Request` as an argument and
 /// return a type `T` that implements `Into<Response>`.
 ///
 /// # Examples

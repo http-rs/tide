@@ -77,6 +77,7 @@ mod response_builder;
 mod route;
 mod router;
 mod server;
+mod state;
 
 pub mod convert;
 pub mod listener;
@@ -97,8 +98,8 @@ pub use request::Request;
 pub use response::Response;
 pub use response_builder::ResponseBuilder;
 pub use route::Route;
-pub use server::RequestState;
 pub use server::Server;
+pub use state::State;
 
 pub use http_types::{self as http, Body, Error, Status, StatusCode};
 
@@ -117,7 +118,7 @@ pub use http_types::{self as http, Body, Error, Status, StatusCode};
 /// # Ok(()) }) }
 /// ```
 #[must_use]
-pub fn new() -> server::Server<()> {
+pub fn new() -> server::Server {
     Server::new()
 }
 
@@ -131,7 +132,7 @@ pub fn new() -> server::Server<()> {
 /// # use async_std::task::block_on;
 /// # fn main() -> Result<(), std::io::Error> { block_on(async {
 /// #
-/// use tide::{Request, RequestState};
+/// use tide::{Request};
 ///
 /// /// The shared application state.
 /// #[derive(Clone)]
@@ -144,22 +145,16 @@ pub fn new() -> server::Server<()> {
 ///     name: "Nori".to_string()
 /// };
 ///
-/// impl RequestState<State> for Request {
-///     fn state(&self) -> &State {
-///         self.ext::<State>().unwrap()
-///     }
-/// }
-///
 /// // Initialize the application with state.
 /// let mut app = tide::with_state(state);
 /// app.at("/").get(|req: Request| async move {
-///     Ok(format!("Hello, {}!", &req.state().name))
+///     Ok(format!("Hello, {}!", &req.state::<State>().name))
 /// });
 /// app.listen("127.0.0.1:8080").await?;
 /// #
 /// # Ok(()) }) }
 /// ```
-pub fn with_state<State>(state: State) -> server::Server<State>
+pub fn with_state<State>(state: State) -> server::Server
 where
     State: Clone + Send + Sync + 'static,
 {

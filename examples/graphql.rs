@@ -2,7 +2,7 @@ use std::sync::{Arc, RwLock};
 
 use juniper::{http::graphiql, http::GraphQLRequest, RootNode};
 use lazy_static::lazy_static;
-use tide::{http::mime, Body, Redirect, Request, RequestState, Response, Server, StatusCode};
+use tide::{http::mime, Body, Redirect, Request, Response, Server, StatusCode};
 
 #[derive(Clone)]
 struct User {
@@ -76,7 +76,7 @@ lazy_static! {
 
 async fn handle_graphql(mut request: Request) -> tide::Result {
     let query: GraphQLRequest = request.body_json().await?;
-    let response = query.execute(&SCHEMA, request.state());
+    let response = query.execute(&SCHEMA, request.state::<State>());
     let status = if response.is_ok() {
         StatusCode::Ok
     } else {
@@ -104,10 +104,4 @@ async fn main() -> std::io::Result<()> {
     app.at("/graphiql").get(handle_graphiql);
     app.listen("0.0.0.0:8080").await?;
     Ok(())
-}
-
-impl RequestState<State> for Request {
-    fn state(&self) -> &State {
-        self.ext::<State>().unwrap()
-    }
 }

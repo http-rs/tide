@@ -121,10 +121,7 @@ impl<'a> Route<'a> {
     /// ```
     ///
     /// [`Server`]: struct.Server.html
-    pub fn nest<InnerState>(&mut self, service: crate::Server<InnerState>) -> &mut Self
-    where
-        InnerState: Clone + Send + Sync + 'static,
-    {
+    pub fn nest(&mut self, service: crate::Server) -> &mut Self {
         let prefix = self.prefix;
 
         self.prefix = true;
@@ -295,6 +292,7 @@ where
         let crate::Request {
             mut req,
             route_params,
+            app_state,
         } = req;
 
         let rest = route_params
@@ -305,6 +303,12 @@ where
 
         req.url_mut().set_path(rest);
 
-        self.0.call(crate::Request { req, route_params }).await
+        self.0
+            .call(crate::Request {
+                req,
+                route_params,
+                app_state,
+            })
+            .await
     }
 }

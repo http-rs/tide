@@ -74,10 +74,9 @@ impl<Store: SessionStore> std::fmt::Debug for SessionMiddleware<Store> {
 }
 
 #[async_trait]
-impl<Store, State> Middleware<State> for SessionMiddleware<Store>
+impl<Store> Middleware for SessionMiddleware<Store>
 where
     Store: SessionStore,
-    State: Clone + Send + Sync + 'static,
 {
     async fn handle(&self, mut request: Request, next: Next) -> crate::Result {
         let cookie = request.cookie(&self.cookie_name);

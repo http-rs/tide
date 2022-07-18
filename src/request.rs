@@ -4,6 +4,7 @@ use routefinder::Captures;
 
 use std::ops::Index;
 use std::pin::Pin;
+use std::sync::Arc;
 
 #[cfg(feature = "cookies")]
 use crate::cookies::CookieData;
@@ -12,7 +13,7 @@ use crate::http::cookies::Cookie;
 use crate::http::format_err;
 use crate::http::headers::{self, HeaderName, HeaderValues, ToHeaderValues};
 use crate::http::{self, Body, Method, Mime, StatusCode, Url, Version};
-use crate::Response;
+use crate::{Response, State};
 
 pin_project_lite::pin_project! {
     /// An HTTP request.
@@ -24,6 +25,7 @@ pin_project_lite::pin_project! {
     /// communication between middleware and endpoints.
     #[derive(Debug)]
     pub struct Request {
+        pub(crate) app_state: Arc<State>,
         #[pin]
         pub(crate) req: http::Request,
         pub(crate) route_params: Vec<Captures<'static, 'static>>,
@@ -36,18 +38,27 @@ impl Request {
         req: http_types::Request,
         route_params: Vec<Captures<'static, 'static>>,
     ) -> Self {
-        Self { req, route_params }
+        Self {
+            app_state: Arc::new(State::default()),
+            req,
+            route_params,
+        }
     }
 
     /// Create a new `Request`.
-    pub(crate) fn with_state<S: Clone + Send + Sync + 'static>(
-        state: S,
+    pub(crate) fn with_state(
+        state: Arc<State>,
         req: http_types::Request,
         route_params: Vec<Captures<'static, 'static>>,
     ) -> Self {
         let mut req = Request::new(req, route_params);
-        req.set_ext::<S>(state);
+        req.app_state = state;
         req
+    }
+
+    /// Returns the current app state
+    pub fn state<T: 'static>(&self) -> &T {
+        &self.app_state.get::<T>().unwrap()
     }
 
     /// Access the request's HTTP method.

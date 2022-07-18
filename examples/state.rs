@@ -1,8 +1,6 @@
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 
-use tide::RequestState;
-
 #[derive(Clone)]
 struct State {
     value: Arc<AtomicU32>,
@@ -22,21 +20,15 @@ async fn main() -> tide::Result<()> {
     let mut app = tide::with_state(State::new());
     app.with(tide::log::LogMiddleware::new());
     app.at("/").get(|req: tide::Request| async move {
-        let state = req.state();
+        let state = req.state::<State>();
         let value = state.value.load(Ordering::Relaxed);
         Ok(format!("{}\n", value))
     });
     app.at("/inc").get(|req: tide::Request| async move {
-        let state = req.state();
+        let state = req.state::<State>();
         let value = state.value.fetch_add(1, Ordering::Relaxed) + 1;
         Ok(format!("{}\n", value))
     });
     app.listen("127.0.0.1:8080").await?;
     Ok(())
-}
-
-impl RequestState<State> for tide::Request {
-    fn state(&self) -> &State {
-        self.ext::<State>().unwrap()
-    }
 }
