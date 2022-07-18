@@ -45,7 +45,7 @@ impl<'server> UnixListener {
     }
 }
 
-fn handle_unix<'listener>(app: Server, stream: UnixStream) {
+fn handle_unix(app: Server, stream: UnixStream) {
     task::spawn(async move {
         let local_addr = unix_socket_addr_to_string(stream.local_addr());
         let peer_addr = unix_socket_addr_to_string(stream.peer_addr());
