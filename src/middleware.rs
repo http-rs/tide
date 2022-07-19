@@ -42,10 +42,28 @@ pub struct Next {
 
 impl Next {
     /// Creates a new Next middleware with an arc to the endpoint and middleware
-    pub fn new(endpoint: Arc<dyn Endpoint>, middleware: Arc<Vec<Arc<dyn Middleware>>>) -> Self {
+    pub fn new(endpoint: impl Endpoint, middleware: Vec<Arc<dyn Middleware>>) -> Self {
         Self {
             cursor: 0,
-            endpoint,
+            endpoint: Arc::new(endpoint),
+            middleware: Arc::new(middleware),
+        }
+    }
+
+    /// Creates a new Next middleware from the given endpoint with empty middleware
+    pub fn from_endpoint(endpoint: impl Endpoint) -> Self {
+        Self {
+            cursor: 0,
+            endpoint: Arc::new(endpoint),
+            middleware: Arc::default(),
+        }
+    }
+
+    /// Creates a new Next middleware from an existing next middleware (as an endpoint)
+    pub fn from_next(endpoint: Next, middleware: Arc<Vec<Arc<dyn Middleware>>>) -> Self {
+        Self {
+            cursor: 0,
+            endpoint: Arc::new(endpoint),
             middleware,
         }
     }
@@ -63,6 +81,25 @@ impl Next {
                 Ok(response) => response,
                 Err(err) => err.into(),
             }
+        }
+    }
+}
+
+#[async_trait]
+impl Endpoint for Next {
+    async fn call(&self, req: Request) -> crate::Result {
+        let next = self.clone();
+        let response = next.run(req).await;
+        Ok(response)
+    }
+}
+
+impl Clone for Next {
+    fn clone(&self) -> Self {
+        Next {
+            cursor: 0,
+            endpoint: self.endpoint.clone(),
+            middleware: self.middleware.clone(),
         }
     }
 }

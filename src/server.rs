@@ -6,10 +6,10 @@ use async_std::sync::Arc;
 #[cfg(feature = "cookies")]
 use crate::cookies;
 use crate::listener::{Listener, ToListener};
-use crate::log;
-use crate::middleware::{Middleware, Next};
+use crate::middleware::Middleware;
 use crate::router::{Router, Selection};
 use crate::state::StateMiddleware;
+use crate::{log, Next};
 use crate::{Endpoint, Request, Route};
 
 /// An HTTP server.
@@ -271,10 +271,10 @@ impl Server {
         let req = req.into();
 
         let method = req.method().to_owned();
-        let Selection { endpoint, params } = self.router.route(req.url().path(), method);
+        let Selection { next, params } = self.router.route(req.url().path(), method);
         let route_params = vec![params];
         let req = Request::new(req, route_params);
-        let next = Next::new(endpoint, self.middleware.clone());
+        let next = Next::from_next(next, self.middleware.clone());
         let res = next.run(req).await;
         let res: http_types::Response = res.into();
         Ok(res.into())
@@ -307,10 +307,10 @@ impl Endpoint for Server {
         let path = req.url().path().to_owned();
         let method = req.method().to_owned();
 
-        let Selection { endpoint, params } = self.router.route(&path, method);
+        let Selection { next, params } = self.router.route(&path, method);
         route_params.push(params);
         let req = Request::new(req, route_params);
-        let next = Next::new(endpoint, self.middleware.clone());
+        let next = Next::from_next(next, self.middleware.clone());
         Ok(next.run(req).await)
     }
 }

@@ -3,9 +3,8 @@ use std::io;
 use std::path::Path;
 use std::sync::Arc;
 
-use crate::endpoint::MiddlewareEndpoint;
 use crate::fs::{ServeDir, ServeFile};
-use crate::log;
+use crate::{log, Next};
 use crate::{router::Router, Endpoint, Middleware};
 
 /// A handle to a route.
@@ -178,17 +177,11 @@ impl<'a> Route<'a> {
         if self.prefix {
             let ep = StripPrefixEndpoint::new(ep);
             let wildcard = self.at("*");
-            wildcard.router.add(
-                &wildcard.path,
-                method,
-                MiddlewareEndpoint::wrap_with_middleware(ep, wildcard.middleware.clone()),
-            );
+            let next = Next::new(ep, wildcard.middleware.clone());
+            wildcard.router.add(&wildcard.path, method, next);
         } else {
-            self.router.add(
-                &self.path,
-                method,
-                MiddlewareEndpoint::wrap_with_middleware(ep, self.middleware.clone()),
-            );
+            let next = Next::new(ep, self.middleware.clone());
+            self.router.add(&self.path, method, next);
         }
         self
     }
@@ -200,15 +193,11 @@ impl<'a> Route<'a> {
         if self.prefix {
             let ep = StripPrefixEndpoint::new(ep);
             let wildcard = self.at("*");
-            wildcard.router.add_all(
-                &wildcard.path,
-                MiddlewareEndpoint::wrap_with_middleware(ep, wildcard.middleware.clone()),
-            );
+            let next = Next::new(ep, wildcard.middleware.clone());
+            wildcard.router.add_all(&wildcard.path, next);
         } else {
-            self.router.add_all(
-                &self.path,
-                MiddlewareEndpoint::wrap_with_middleware(ep, self.middleware.clone()),
-            );
+            let next = Next::new(ep, self.middleware.clone());
+            self.router.add_all(&self.path, next);
         }
         self
     }

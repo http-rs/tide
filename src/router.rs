@@ -1,9 +1,7 @@
 use routefinder::{Captures, Router as MethodRouter};
 use std::collections::HashMap;
-use std::sync::Arc;
 
-use crate::endpoint::DynEndpoint;
-use crate::{Request, Response, StatusCode};
+use crate::{Next, Request, Response, StatusCode};
 
 /// The routing table used by `Server`
 ///
@@ -11,8 +9,8 @@ use crate::{Request, Response, StatusCode};
 /// by the method first allows the table itself to be more efficient.
 #[allow(missing_debug_implementations)]
 pub(crate) struct Router {
-    method_map: HashMap<http_types::Method, MethodRouter<Arc<DynEndpoint>>>,
-    all_method_router: MethodRouter<Arc<DynEndpoint>>,
+    method_map: HashMap<http_types::Method, MethodRouter<Next>>,
+    all_method_router: MethodRouter<Next>,
 }
 
 impl std::fmt::Debug for Router {
@@ -26,7 +24,7 @@ impl std::fmt::Debug for Router {
 
 /// The result of routing a URL
 pub(crate) struct Selection {
-    pub(crate) endpoint: Arc<DynEndpoint>,
+    pub(crate) next: Next,
     pub(crate) params: Captures<'static, 'static>,
 }
 
@@ -38,7 +36,7 @@ impl Router {
         }
     }
 
-    pub(crate) fn add(&mut self, path: &str, method: http_types::Method, ep: Arc<DynEndpoint>) {
+    pub(crate) fn add(&mut self, path: &str, method: http_types::Method, ep: Next) {
         self.method_map
             .entry(method)
             .or_insert_with(MethodRouter::new)
@@ -46,7 +44,7 @@ impl Router {
             .unwrap()
     }
 
-    pub(crate) fn add_all(&mut self, path: &str, ep: Arc<DynEndpoint>) {
+    pub(crate) fn add_all(&mut self, path: &str, ep: Next) {
         self.all_method_router.add(path, ep).unwrap()
     }
 
@@ -57,12 +55,12 @@ impl Router {
             .and_then(|r| r.best_match(path))
         {
             Selection {
-                endpoint: m.handler().to_owned(),
+                next: m.handler().clone(),
                 params: m.captures().into_owned(),
             }
         } else if let Some(m) = self.all_method_router.best_match(path) {
             Selection {
-                endpoint: m.handler().to_owned(),
+                next: m.handler().clone(),
                 params: m.captures().into_owned(),
             }
         } else if method == http_types::Method::Head {
@@ -79,12 +77,12 @@ impl Router {
             // If this `path` can be handled by a callback registered with a different HTTP method
             // should return 405 Method Not Allowed
             Selection {
-                endpoint: Arc::new(method_not_allowed),
+                next: Next::from_endpoint(method_not_allowed),
                 params: Captures::default(),
             }
         } else {
             Selection {
-                endpoint: Arc::new(not_found_endpoint),
+                next: Next::from_endpoint(not_found_endpoint),
                 params: Captures::default(),
             }
         }
