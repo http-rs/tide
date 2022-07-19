@@ -5,7 +5,7 @@
 //! ```no_run
 //! use tide::log;
 //!
-//! // log::start();
+//! log::start();
 //!
 //! log::info!("Hello cats");
 //! log::debug!("{} wants tuna", "Nori");
