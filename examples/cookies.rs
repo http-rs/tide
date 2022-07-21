@@ -21,7 +21,7 @@ async fn remove_cookie(_req: Request<()>) -> tide::Result {
 
 #[async_std::main]
 async fn main() -> Result<(), std::io::Error> {
-    tide::log::start();
+    femme::start();
     let mut app = tide::new();
     app.with(tide::log::LogMiddleware::new());
 

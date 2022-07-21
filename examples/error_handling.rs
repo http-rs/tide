@@ -5,7 +5,7 @@ use tide::{Body, Request, Response, Result, StatusCode};
 
 #[async_std::main]
 async fn main() -> Result<()> {
-    tide::log::start();
+    femme::start();
     let mut app = tide::new();
     app.with(tide::log::LogMiddleware::new());
 
