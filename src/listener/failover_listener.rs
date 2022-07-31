@@ -4,6 +4,7 @@ use crate::Server;
 use std::fmt::{self, Debug, Display, Formatter};
 
 use async_std::io;
+use kv_log_macro::info;
 
 use crate::listener::ListenInfo;
 
@@ -15,7 +16,6 @@ use crate::listener::ListenInfo;
 /// ```rust
 /// fn main() -> Result<(), std::io::Error> {
 ///    async_std::task::block_on(async {
-///        tide::log::start();
 ///        let mut app = tide::new();
 ///        app.at("/").get(|_| async { Ok("Hello, world!") });
 ///
@@ -103,7 +103,7 @@ impl Listener for FailoverListener {
                     return Ok(());
                 }
                 Err(e) => {
-                    crate::log::info!("unable to bind", {
+                    info!("unable to bind", {
                         listener: listener.to_string(),
                         error: e.to_string()
                     });

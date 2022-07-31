@@ -4,8 +4,9 @@ use std::path::Path;
 use std::sync::Arc;
 
 use crate::fs::{ServeDir, ServeFile};
-use crate::{log, Next};
-use crate::{router::Router, Endpoint, Middleware};
+use crate::{router::Router, Endpoint, Middleware, Next};
+
+use kv_log_macro::trace;
 
 /// A handle to a route.
 ///
@@ -77,7 +78,7 @@ impl<'a> Route<'a> {
 
     /// Apply the given middleware to the current route.
     pub fn with(&mut self, middleware: impl Middleware) -> &mut Self {
-        log::trace!(
+        trace!(
             "Adding middleware {} to route {:?}",
             middleware.name(),
             self.path

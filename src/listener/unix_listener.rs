@@ -1,7 +1,7 @@
 use super::{is_transient_error, ListenInfo};
 
 use crate::listener::Listener;
-use crate::{log, Server};
+use crate::Server;
 
 use std::fmt::{self, Display, Formatter};
 
@@ -9,6 +9,7 @@ use async_std::os::unix::net::{self, SocketAddr, UnixStream};
 use async_std::path::PathBuf;
 use async_std::prelude::*;
 use async_std::{io, task};
+use kv_log_macro::error;
 
 /// This represents a tide [Listener](crate::listener::Listener) that
 /// wraps an [async_std::os::unix::net::UnixListener]. It is implemented as an
@@ -57,7 +58,7 @@ fn handle_unix(app: Server, stream: UnixStream) {
         });
 
         if let Err(error) = fut.await {
-            log::error!("async-h1 error", { error: error.to_string() });
+            error!("async-h1 error", { error: error.to_string() });
         }
     });
 }
@@ -100,7 +101,7 @@ impl Listener for UnixListener {
                 Err(ref e) if is_transient_error(e) => continue,
                 Err(error) => {
                     let delay = std::time::Duration::from_millis(500);
-                    crate::log::error!("Error: {}. Pausing for {:?}.", error, delay);
+                    error!("Error: {}. Pausing for {:?}.", error, delay);
                     task::sleep(delay).await;
                     continue;
                 }

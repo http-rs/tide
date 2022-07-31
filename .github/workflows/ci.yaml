@@ -31,7 +31,7 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: check
-        args: --all --bins --examples
+        args: --all --bins --examples --features logger
 
     - name: check avoid-dev-deps
       uses: actions-rs/cargo@v1
@@ -44,7 +44,7 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: check
-        args: --all --bins --examples --tests --features unstable
+        args: --all --bins --examples --tests --features unstable,logger
 
     - name: check no-default-features
       uses: actions-rs/cargo@v1
@@ -62,13 +62,13 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --all
+        args: --all --features logger
 
     - name: tests unstable
       uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --all --features unstable
+        args: --all --features unstable,logger
 
   check_fmt_and_docs:
     name: Checking fmt, clippy, and docs
@@ -82,7 +82,7 @@ jobs:
         rustc --version
 
     - name: clippy
-      run: cargo clippy --tests --examples -- -D warnings
+      run: cargo clippy --tests --examples --features logger -- -D warnings
 
     - name: fmt
       run: cargo fmt --all -- --check

@@ -3,6 +3,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use async_std::{fs::OpenOptions, io};
+use kv_log_macro::info;
 use tempfile::TempDir;
 use tide::prelude::*;
 use tide::{Body, Request, Response, StatusCode};
@@ -26,7 +27,7 @@ impl TempDirState {
 
 #[async_std::main]
 async fn main() -> Result<(), IoError> {
-    tide::log::start();
+    femme::start();
     let mut app = tide::with_state(TempDirState::try_new()?);
     app.with(tide::log::LogMiddleware::new());
 
@@ -49,7 +50,7 @@ async fn main() -> Result<(), IoError> {
 
             let bytes_written = io::copy(req, file).await?;
 
-            tide::log::info!("file written", {
+            info!("file written", {
                 bytes: bytes_written,
                 path: fs_path.canonicalize()?.to_str()
             });
