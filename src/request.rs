@@ -2,7 +2,7 @@ use async_std::io::{self, prelude::*};
 use async_std::task::{Context, Poll};
 use routefinder::Captures;
 
-use std::ops::Index;
+use std::ops::{Deref, Index};
 use std::pin::Pin;
 
 #[cfg(feature = "cookies")]
@@ -12,6 +12,7 @@ use crate::http::cookies::Cookie;
 use crate::http::format_err;
 use crate::http::headers::{self, HeaderName, HeaderValues, ToHeaderValues};
 use crate::http::{self, Body, Method, Mime, StatusCode, Url, Version};
+use crate::route::MatchedRoute;
 use crate::Response;
 
 pin_project_lite::pin_project! {
@@ -264,6 +265,24 @@ impl<State> Request<State> {
     ///  Access application scoped state.
     pub fn state(&self) -> &State {
         &self.state
+    }
+
+    /// Get the matched route.
+    ///
+    /// Returns the route as a `&str`, borrowed from this `Request`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use tide::Request;
+    /// let mut app = tide::Server::new();
+    /// app.at("/route").get(|req: Request<()>| async move {
+    ///     let route = req.route().unwrap_or("No route found");
+    ///     Ok(route.to_string())
+    /// });
+    /// ```
+    pub fn route(&self) -> Option<&str> {
+        self.ext::<MatchedRoute>().map(|r| r.deref())
     }
 
     /// Extract and parse a route parameter by name.
