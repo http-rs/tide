@@ -47,6 +47,22 @@ impl<State> TcpListener<State> {
 
 fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: TcpStream) {
     task::spawn(async move {
+        // Set `TCP_NODELAY` on the `TcpStream` to disable Nagle's algorithm.
+        //
+        // Due to the way the `async-h1` crate writes HTTP responses to the `TcpStream` the head
+        // and body end up in separate write calls to the underlying socket.  If we're responding
+        // to more than one request received from the same `TcpStream` it means that we did two
+        // sends and then tried to read.  That read can take up to 500 milliseconds to complete due
+        // to bad interactions between Nagle's algorithm and delayed ACK.  (In practice this is 40
+        // ms on Linux.)
+        //
+        // Disabling Nagle's algorithm works around this until `async-h1` is fixed.
+        //
+        // https://github.com/http-rs/async-h1/issues/199
+        if let Err(err) = stream.set_nodelay(true) {
+            error!("Failed to set TCP_NODELAY: {}", err);
+        }
+
         let local_addr = stream.local_addr().ok();
         let peer_addr = stream.peer_addr().ok();
 
