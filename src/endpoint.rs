@@ -16,10 +16,6 @@ use crate::{Middleware, Request, Response};
 ///
 /// # Examples
 ///
-/// Endpoints are implemented as asynchronous functions that make use of language features
-/// currently only available in Rust Nightly. For this reason, we have to explicitly enable
-/// the attribute will be omitted in most of the documentation.
-///
 /// A simple endpoint that is invoked on a `GET` request and returns a `String`:
 ///
 /// ```no_run
