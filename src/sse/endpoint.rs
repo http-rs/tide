@@ -1,11 +1,11 @@
 use crate::http::{mime, Body, StatusCode};
-use crate::log;
 use crate::sse::Sender;
 use crate::{Endpoint, Request, Response, Result};
 
 use async_std::future::Future;
 use async_std::io::BufReader;
 use async_std::task;
+use kv_log_macro::error;
 
 use std::marker::PhantomData;
 use std::sync::Arc;
@@ -48,7 +48,7 @@ where
         task::spawn(async move {
             let sender = Sender::new(sender);
             if let Err(err) = handler(req, sender).await {
-                log::error!("SSE handler error: {:?}", err);
+                error!("SSE handler error: {:?}", err);
             }
         });
 
