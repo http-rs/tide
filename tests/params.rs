@@ -1,5 +1,5 @@
-use http_types::{self, Method, Url};
-use tide::{self, Request, Response, Result};
+use http_types::{self, Url};
+use tide::{self, Method, Request, Response, Result};
 
 #[async_std::test]
 async fn test_missing_param() -> tide::Result<()> {
