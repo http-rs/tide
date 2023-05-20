@@ -11,38 +11,33 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 /// Create an endpoint that can handle SSE connections.
-pub fn endpoint<F, Fut, State>(handler: F) -> SseEndpoint<F, Fut, State>
+pub fn endpoint<F, Fut>(handler: F) -> SseEndpoint<F, Fut>
 where
-    State: Clone + Send + Sync + 'static,
-    F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
+    F: Fn(Request, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + 'static,
 {
     SseEndpoint {
         handler: Arc::new(handler),
-        __state: PhantomData,
     }
 }
 
 /// An endpoint that can handle SSE connections.
 #[derive(Debug)]
-pub struct SseEndpoint<F, Fut, State>
+pub struct SseEndpoint<F, Fut>
 where
-    State: Clone + Send + Sync + 'static,
-    F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
+    F: Fn(Request, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + 'static,
 {
     handler: Arc<F>,
-    __state: PhantomData<State>,
 }
 
 #[async_trait::async_trait]
-impl<F, Fut, State> Endpoint<State> for SseEndpoint<F, Fut, State>
+impl<F, Fut> Endpoint for SseEndpoint<F, Fut>
 where
-    State: Clone + Send + Sync + 'static,
-    F: Fn(Request<State>, Sender) -> Fut + Send + Sync + 'static,
+    F: Fn(Request, Sender) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<()>> + Send + 'static,
 {
-    async fn call(&self, req: Request<State>) -> Result<Response> {
+    async fn call(&self, req: Request) -> Result<Response> {
         let handler = self.handler.clone();
         let (sender, encoder) = async_sse::encode();
         task::spawn(async move {

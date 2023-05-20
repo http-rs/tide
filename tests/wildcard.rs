@@ -2,7 +2,7 @@ mod test_utils;
 use test_utils::ServerTestingExt;
 use tide::{Error, Request, StatusCode};
 
-async fn add_one(req: Request<()>) -> Result<String, tide::Error> {
+async fn add_one(req: Request) -> Result<String, tide::Error> {
     let num: i64 = req
         .param("num")?
         .parse()
@@ -10,7 +10,7 @@ async fn add_one(req: Request<()>) -> Result<String, tide::Error> {
     Ok((num + 1).to_string())
 }
 
-async fn add_two(req: Request<()>) -> Result<String, tide::Error> {
+async fn add_two(req: Request) -> Result<String, tide::Error> {
     let one: i64 = req
         .param("one")?
         .parse()
@@ -22,14 +22,14 @@ async fn add_two(req: Request<()>) -> Result<String, tide::Error> {
     Ok((one + two).to_string())
 }
 
-async fn echo_param(req: Request<()>) -> tide::Result<tide::Response> {
+async fn echo_param(req: Request) -> tide::Result<tide::Response> {
     match req.param("param") {
         Ok(path) => Ok(path.into()),
         Err(_) => Ok(StatusCode::NotFound.into()),
     }
 }
 
-async fn echo_wildcard(req: Request<()>) -> tide::Result<tide::Response> {
+async fn echo_wildcard(req: Request) -> tide::Result<tide::Response> {
     match req.wildcard() {
         Some(path) => Ok(path.into()),
         None => Ok(StatusCode::NotFound.into()),

@@ -28,20 +28,20 @@ const BASE64_DIGEST_LEN: usize = 44;
 ///     b"we recommend you use std::env::var(\"TIDE_SECRET\").unwrap().as_bytes() instead of a fixed value"
 /// ));
 ///
-/// app.with(tide::utils::Before(|mut request: tide::Request<()>| async move {
+/// app.with(tide::utils::Before(|mut request: tide::Request| async move {
 ///     let session = request.session_mut();
 ///     let visits: usize = session.get("visits").unwrap_or_default();
 ///     session.insert("visits", visits + 1).unwrap();
 ///     request
 /// }));
 ///
-/// app.at("/").get(|req: tide::Request<()>| async move {
+/// app.at("/").get(|req: tide::Request| async move {
 ///     let visits: usize = req.session().get("visits").unwrap();
 ///     Ok(format!("you have visited this website {} times", visits))
 /// });
 ///
 /// app.at("/reset")
-///     .get(|mut req: tide::Request<()>| async move {
+///     .get(|mut req: tide::Request| async move {
 ///         req.session_mut().destroy();
 ///         Ok(tide::Redirect::new("/"))
 ///      });
@@ -77,12 +77,11 @@ impl<Store: SessionStore> std::fmt::Debug for SessionMiddleware<Store> {
 }
 
 #[async_trait]
-impl<Store, State> Middleware<State> for SessionMiddleware<Store>
+impl<Store> Middleware for SessionMiddleware<Store>
 where
     Store: SessionStore,
-    State: Clone + Send + Sync + 'static,
 {
-    async fn handle(&self, mut request: Request<State>, next: Next<'_, State>) -> crate::Result {
+    async fn handle(&self, mut request: Request, next: Next) -> crate::Result {
         let cookie = request.cookie(&self.cookie_name);
         let cookie_value = cookie
             .clone()

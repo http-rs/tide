@@ -136,8 +136,8 @@ impl CorsMiddleware {
 }
 
 #[async_trait::async_trait]
-impl<State: Clone + Send + Sync + 'static> Middleware<State> for CorsMiddleware {
-    async fn handle(&self, req: Request<State>, next: Next<'_, State>) -> Result {
+impl Middleware for CorsMiddleware {
+    async fn handle(&self, req: Request, next: Next) -> Result {
         // TODO: how should multiple origin values be handled?
         let origins = req.header(&headers::ORIGIN).cloned();
 
@@ -282,7 +282,7 @@ mod test {
             .unwrap()
     }
 
-    fn app() -> crate::Server<()> {
+    fn app() -> crate::Server {
         let mut app = crate::Server::new();
         app.at(ENDPOINT).get(|_| async { Ok("Hello World") });
 

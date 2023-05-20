@@ -19,11 +19,8 @@ impl ServeDir {
 }
 
 #[async_trait::async_trait]
-impl<State> Endpoint<State> for ServeDir
-where
-    State: Clone + Send + Sync + 'static,
-{
-    async fn call(&self, req: Request<State>) -> Result {
+impl Endpoint for ServeDir {
+    async fn call(&self, req: Request) -> Result {
         let path = req.url().path();
         let path = path
             .strip_prefix(&self.prefix.trim_end_matches('*'))
@@ -80,11 +77,11 @@ mod test {
         })
     }
 
-    fn request(path: &str) -> crate::Request<()> {
+    fn request(path: &str) -> crate::Request {
         let request = crate::http::Request::get(
             crate::http::Url::parse(&format!("http://localhost/{}", path)).unwrap(),
         );
-        crate::Request::new((), request, vec![])
+        crate::Request::new(request, vec![])
     }
 
     #[async_std::test]

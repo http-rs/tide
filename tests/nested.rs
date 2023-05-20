@@ -1,5 +1,6 @@
 mod test_utils;
 use test_utils::ServerTestingExt;
+use tide::Request;
 
 #[async_std::test]
 async fn nested() -> tide::Result<()> {
@@ -18,7 +19,7 @@ async fn nested() -> tide::Result<()> {
 
 #[async_std::test]
 async fn nested_middleware() -> tide::Result<()> {
-    let echo_path = |req: tide::Request<()>| async move { Ok(req.url().path().to_string()) };
+    let echo_path = |req: Request| async move { Ok(req.url().path().to_string()) };
     let mut app = tide::new();
     let mut inner_app = tide::new();
     inner_app.with(tide::utils::After(|mut res: tide::Response| async move {
@@ -51,8 +52,9 @@ async fn nested_middleware() -> tide::Result<()> {
 async fn nested_with_different_state() -> tide::Result<()> {
     let mut outer = tide::new();
     let mut inner = tide::with_state(42);
-    inner.at("/").get(|req: tide::Request<i32>| async move {
-        let num = req.state();
+    inner.at("/").get(|req: Request| async move {
+        let num = req.state::<i32>();
+        println!("{:?}", req.state::<i32>());
         Ok(format!("the number is {}", num))
     });
     outer.at("/").get(|_| async { Ok("Hello, world!") });

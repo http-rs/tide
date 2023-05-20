@@ -16,7 +16,7 @@ mod unix_tests {
 
             let server = task::spawn(async move {
                 let mut app = tide::new();
-                app.at("/").get(|req: tide::Request<()>| async move {
+                app.at("/").get(|req: tide::Request| async move {
                     Ok(req.local_addr().unwrap().to_string())
                 });
                 app.listen(sock_path).await?;

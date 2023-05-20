@@ -15,7 +15,7 @@ use std::sync::{Arc, RwLock};
 /// # use tide::{Request, Response, StatusCode};
 /// # use tide::http::cookies::Cookie;
 /// let mut app = tide::Server::new();
-/// app.at("/get").get(|req: Request<()>| async move {
+/// app.at("/get").get(|req: Request| async move {
 ///     Ok(req.cookie("testCookie").unwrap().value().to_string())
 /// });
 /// app.at("/set").get(|_| async {
@@ -35,8 +35,8 @@ impl CookiesMiddleware {
 }
 
 #[async_trait]
-impl<State: Clone + Send + Sync + 'static> Middleware<State> for CookiesMiddleware {
-    async fn handle(&self, mut ctx: Request<State>, next: Next<'_, State>) -> crate::Result {
+impl Middleware for CookiesMiddleware {
+    async fn handle(&self, mut ctx: Request, next: Next) -> crate::Result {
         let cookie_jar = if let Some(cookie_data) = ctx.ext::<CookieData>() {
             cookie_data.content.clone()
         } else {
@@ -112,7 +112,7 @@ impl LazyJar {
 }
 
 impl CookieData {
-    pub(crate) fn from_request<S>(req: &Request<S>) -> Self {
+    pub(crate) fn from_request(req: &Request) -> Self {
         let jar = if let Some(cookie_headers) = req.header(&headers::COOKIE) {
             let mut jar = CookieJar::new();
             for cookie_header in cookie_headers {

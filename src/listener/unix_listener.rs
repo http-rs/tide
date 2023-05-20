@@ -19,14 +19,14 @@ use kv_log_macro::error;
 ///
 /// This is currently crate-visible only, and tide users are expected
 /// to create these through [ToListener](crate::ToListener) conversions.
-pub struct UnixListener<State> {
+pub struct UnixListener {
     path: Option<PathBuf>,
     listener: Option<net::UnixListener>,
-    server: Option<Server<State>>,
+    server: Option<Server>,
     info: Option<ListenInfo>,
 }
 
-impl<State> UnixListener<State> {
+impl UnixListener {
     pub fn from_path(path: impl Into<PathBuf>) -> Self {
         Self {
             path: Some(path.into()),
@@ -46,7 +46,7 @@ impl<State> UnixListener<State> {
     }
 }
 
-fn handle_unix<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: UnixStream) {
+fn handle_unix(app: Server, stream: UnixStream) {
     task::spawn(async move {
         let local_addr = unix_socket_addr_to_string(stream.local_addr());
         let peer_addr = unix_socket_addr_to_string(stream.peer_addr());
@@ -64,11 +64,8 @@ fn handle_unix<State: Clone + Send + Sync + 'static>(app: Server<State>, stream:
 }
 
 #[async_trait::async_trait]
-impl<State> Listener<State> for UnixListener<State>
-where
-    State: Clone + Send + Sync + 'static,
-{
-    async fn bind(&mut self, server: Server<State>) -> io::Result<()> {
+impl Listener for UnixListener {
+    async fn bind(&mut self, server: Server) -> io::Result<()> {
         assert!(self.server.is_none(), "`bind` should only be called once");
         self.server = Some(server);
 
@@ -125,7 +122,7 @@ where
     }
 }
 
-impl<State> fmt::Debug for UnixListener<State> {
+impl fmt::Debug for UnixListener {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("UnixListener")
             .field("listener", &self.listener)
@@ -142,7 +139,7 @@ impl<State> fmt::Debug for UnixListener<State> {
     }
 }
 
-impl<State> Display for UnixListener<State> {
+impl Display for UnixListener {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match &self.listener {
             Some(listener) => {

@@ -2,17 +2,15 @@
 
 use std::sync::Arc;
 
-use crate::endpoint::DynEndpoint;
-use crate::{Request, Response};
+use crate::{Endpoint, Request, Response};
 use async_trait::async_trait;
 use std::future::Future;
-use std::pin::Pin;
 
 /// Middleware that wraps around the remaining middleware chain.
 #[async_trait]
-pub trait Middleware<State>: Send + Sync + 'static {
+pub trait Middleware: Send + Sync + 'static {
     /// Asynchronously handle the request, and return a response.
-    async fn handle(&self, request: Request<State>, next: Next<'_, State>) -> crate::Result;
+    async fn handle(&self, request: Request, next: Next) -> crate::Result;
 
     /// Set the middleware's name. By default it uses the type signature.
     fn name(&self) -> &str {
@@ -21,43 +19,87 @@ pub trait Middleware<State>: Send + Sync + 'static {
 }
 
 #[async_trait]
-impl<State, F> Middleware<State> for F
+impl<F, Fut, Res> Middleware for F
 where
-    State: Clone + Send + Sync + 'static,
-    F: Send
-        + Sync
-        + 'static
-        + for<'a> Fn(
-            Request<State>,
-            Next<'a, State>,
-        ) -> Pin<Box<dyn Future<Output = crate::Result> + 'a + Send>>,
+    F: Send + Sync + 'static + Fn(Request, Next) -> Fut,
+    Fut: Future<Output = crate::Result<Res>> + Send + 'static,
+    Res: Into<Response> + 'static,
 {
-    async fn handle(&self, req: Request<State>, next: Next<'_, State>) -> crate::Result {
-        (self)(req, next).await
+    async fn handle(&self, req: Request, next: Next) -> crate::Result {
+        let fut = (self)(req, next);
+        let res = fut.await?;
+        Ok(res.into())
     }
 }
 
 /// The remainder of a middleware chain, including the endpoint.
 #[allow(missing_debug_implementations)]
-pub struct Next<'a, State> {
-    pub(crate) endpoint: &'a DynEndpoint<State>,
-    pub(crate) next_middleware: &'a [Arc<dyn Middleware<State>>],
+pub struct Next {
+    cursor: usize,
+    endpoint: Arc<dyn Endpoint>,
+    middleware: Arc<Vec<Arc<dyn Middleware>>>,
 }
 
-impl<State: Clone + Send + Sync + 'static> Next<'_, State> {
+impl Next {
+    /// Creates a new Next middleware with an arc to the endpoint and middleware
+    pub fn new(endpoint: impl Endpoint, middleware: Vec<Arc<dyn Middleware>>) -> Self {
+        Self {
+            cursor: 0,
+            endpoint: Arc::new(endpoint),
+            middleware: Arc::new(middleware),
+        }
+    }
+
+    /// Creates a new Next middleware from the given endpoint with empty middleware
+    pub fn from_endpoint(endpoint: impl Endpoint) -> Self {
+        Self {
+            cursor: 0,
+            endpoint: Arc::new(endpoint),
+            middleware: Arc::default(),
+        }
+    }
+
+    /// Creates a new Next middleware from an existing next middleware (as an endpoint)
+    pub fn from_next(endpoint: Next, middleware: Arc<Vec<Arc<dyn Middleware>>>) -> Self {
+        Self {
+            cursor: 0,
+            endpoint: Arc::new(endpoint),
+            middleware,
+        }
+    }
+
     /// Asynchronously execute the remaining middleware chain.
-    pub async fn run(mut self, req: Request<State>) -> Response {
-        if let Some((current, next)) = self.next_middleware.split_first() {
-            self.next_middleware = next;
-            match current.handle(req, self).await {
-                Ok(request) => request,
+    pub async fn run(mut self, req: Request) -> Response {
+        if let Some(mid) = self.middleware.get(self.cursor) {
+            self.cursor += 1;
+            match mid.to_owned().handle(req, self).await {
+                Ok(response) => response,
                 Err(err) => err.into(),
             }
         } else {
             match self.endpoint.call(req).await {
-                Ok(request) => request,
+                Ok(response) => response,
                 Err(err) => err.into(),
             }
+        }
+    }
+}
+
+#[async_trait]
+impl Endpoint for Next {
+    async fn call(&self, req: Request) -> crate::Result {
+        let next = self.clone();
+        let response = next.run(req).await;
+        Ok(response)
+    }
+}
+
+impl Clone for Next {
+    fn clone(&self) -> Self {
+        Next {
+            cursor: 0,
+            endpoint: self.endpoint.clone(),
+            middleware: self.middleware.clone(),
         }
     }
 }

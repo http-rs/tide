@@ -6,7 +6,7 @@ async fn main() -> Result<(), std::io::Error> {
     let mut app = tide::new();
     app.with(tide::log::LogMiddleware::new());
 
-    app.at("/").get(|request: Request<_>| async move {
+    app.at("/").get(|request: Request| async move {
         Ok(format!(
             "Hi! You reached this app through: {}",
             request.local_addr().unwrap_or("an unknown port")

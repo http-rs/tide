@@ -21,8 +21,8 @@ impl ServeFile {
 }
 
 #[async_trait]
-impl<State: Clone + Send + Sync + 'static> Endpoint<State> for ServeFile {
-    async fn call(&self, _: Request<State>) -> Result {
+impl Endpoint for ServeFile {
+    async fn call(&self, _: Request) -> Result {
         match Body::from_file(&self.path).await {
             Ok(body) => Ok(Response::builder(StatusCode::Ok).body(body).build()),
             Err(e) if e.kind() == io::ErrorKind::NotFound => {
@@ -53,10 +53,10 @@ mod test {
         Ok(ServeFile::init(file_path)?)
     }
 
-    fn request(path: &str) -> crate::Request<()> {
+    fn request(path: &str) -> crate::Request {
         let request =
             crate::http::Request::get(Url::parse(&format!("http://localhost/{}", path)).unwrap());
-        crate::Request::new((), request, vec![])
+        crate::Request::new(request, vec![])
     }
 
     #[async_std::test]

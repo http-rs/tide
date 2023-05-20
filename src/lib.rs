@@ -38,7 +38,7 @@
 //!     Ok(())
 //! }
 //!
-//! async fn order_shoes(mut req: Request<()>) -> tide::Result {
+//! async fn order_shoes(mut req: Request) -> tide::Result {
 //!     let Animal { name, legs } = req.body_json().await?;
 //!     Ok(format!("Hello, {}! I've put in an order for {} shoes", name, legs).into())
 //! }
@@ -75,6 +75,7 @@ mod response_builder;
 mod route;
 mod router;
 mod server;
+mod state;
 
 pub mod convert;
 pub mod listener;
@@ -96,6 +97,7 @@ pub use response::Response;
 pub use response_builder::ResponseBuilder;
 pub use route::Route;
 pub use server::Server;
+pub use state::StateMiddleware;
 
 pub use http_types::{self as http, Body, Error, Status, StatusCode};
 
@@ -114,7 +116,7 @@ pub use http_types::{self as http, Body, Error, Status, StatusCode};
 /// # Ok(()) }) }
 /// ```
 #[must_use]
-pub fn new() -> server::Server<()> {
+pub fn new() -> server::Server {
     Server::new()
 }
 
@@ -128,7 +130,7 @@ pub fn new() -> server::Server<()> {
 /// # use async_std::task::block_on;
 /// # fn main() -> Result<(), std::io::Error> { block_on(async {
 /// #
-/// use tide::Request;
+/// use tide::{Request};
 ///
 /// /// The shared application state.
 /// #[derive(Clone)]
@@ -143,18 +145,20 @@ pub fn new() -> server::Server<()> {
 ///
 /// // Initialize the application with state.
 /// let mut app = tide::with_state(state);
-/// app.at("/").get(|req: Request<State>| async move {
-///     Ok(format!("Hello, {}!", &req.state().name))
+/// app.at("/").get(|req: Request| async move {
+///     Ok(format!("Hello, {}!", &req.state::<State>().name))
 /// });
 /// app.listen("127.0.0.1:8080").await?;
 /// #
 /// # Ok(()) }) }
 /// ```
-pub fn with_state<State>(state: State) -> server::Server<State>
+pub fn with_state<State>(state: State) -> server::Server
 where
     State: Clone + Send + Sync + 'static,
 {
-    Server::with_state(state)
+    let mut server = Server::new();
+    server.with_state(state);
+    server
 }
 
 /// A specialized Result type for Tide.

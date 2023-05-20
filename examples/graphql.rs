@@ -2,7 +2,7 @@ use std::sync::{Arc, RwLock};
 
 use juniper::{http::graphiql, http::GraphQLRequest, RootNode};
 use lazy_static::lazy_static;
-use tide::{http::mime, Body, Redirect, Request, Response, Server, StatusCode};
+use tide::{http::mime, Body, Redirect, Request, Response, StatusCode};
 
 #[derive(Clone)]
 struct User {
@@ -74,9 +74,9 @@ lazy_static! {
     static ref SCHEMA: Schema = Schema::new(QueryRoot {}, MutationRoot {});
 }
 
-async fn handle_graphql(mut request: Request<State>) -> tide::Result {
+async fn handle_graphql(mut request: Request) -> tide::Result {
     let query: GraphQLRequest = request.body_json().await?;
-    let response = query.execute(&SCHEMA, request.state());
+    let response = query.execute(&SCHEMA, request.state::<State>());
     let status = if response.is_ok() {
         StatusCode::Ok
     } else {
@@ -88,7 +88,7 @@ async fn handle_graphql(mut request: Request<State>) -> tide::Result {
         .build())
 }
 
-async fn handle_graphiql(_: Request<State>) -> tide::Result<impl Into<Response>> {
+async fn handle_graphiql(_: Request) -> tide::Result<impl Into<Response>> {
     Ok(Response::builder(200)
         .body(graphiql::graphiql_source("/graphql"))
         .content_type(mime::HTML))
@@ -96,7 +96,7 @@ async fn handle_graphiql(_: Request<State>) -> tide::Result<impl Into<Response>>
 
 #[async_std::main]
 async fn main() -> std::io::Result<()> {
-    let mut app = Server::with_state(State {
+    let mut app = tide::with_state(State {
         users: Arc::new(RwLock::new(Vec::new())),
     });
     app.at("/").get(Redirect::permanent("/graphiql"));

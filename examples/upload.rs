@@ -37,9 +37,10 @@ async fn main() -> Result<(), IoError> {
     // $ curl localhost:8080/README.md # this reads the file from the same temp directory
 
     app.at(":file")
-        .put(|req: Request<TempDirState>| async move {
+        .put(|req: Request| async move {
             let path = req.param("file")?;
-            let fs_path = req.state().path().join(path);
+            let state = req.state::<TempDirState>();
+            let fs_path = state.path().join(path);
 
             let file = OpenOptions::new()
                 .create(true)
@@ -56,9 +57,9 @@ async fn main() -> Result<(), IoError> {
 
             Ok(json!({ "bytes": bytes_written }))
         })
-        .get(|req: Request<TempDirState>| async move {
+        .get(|req: Request| async move {
             let path = req.param("file")?;
-            let fs_path = req.state().path().join(path);
+            let fs_path = req.state::<TempDirState>().path().join(path);
 
             if let Ok(body) = Body::from_file(fs_path).await {
                 Ok(body.into())

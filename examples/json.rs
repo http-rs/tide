@@ -13,7 +13,7 @@ async fn main() -> tide::Result<()> {
     let mut app = tide::new();
     app.with(tide::log::LogMiddleware::new());
 
-    app.at("/submit").post(|mut req: Request<()>| async move {
+    app.at("/submit").post(|mut req: Request| async move {
         let cat: Cat = req.body_json().await?;
         println!("cat name: {}", cat.name);
 

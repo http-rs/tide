@@ -19,13 +19,13 @@ async fn main() -> tide::Result<()> {
     femme::start();
     let mut app = tide::with_state(State::new());
     app.with(tide::log::LogMiddleware::new());
-    app.at("/").get(|req: tide::Request<State>| async move {
-        let state = req.state();
+    app.at("/").get(|req: tide::Request| async move {
+        let state = req.state::<State>();
         let value = state.value.load(Ordering::Relaxed);
         Ok(format!("{}\n", value))
     });
-    app.at("/inc").get(|req: tide::Request<State>| async move {
-        let state = req.state();
+    app.at("/inc").get(|req: tide::Request| async move {
+        let state = req.state::<State>();
         let value = state.value.fetch_add(1, Ordering::Relaxed) + 1;
         Ok(format!("{}\n", value))
     });
