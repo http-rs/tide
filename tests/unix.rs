@@ -5,7 +5,7 @@ mod unix_tests {
     use async_std::task;
     use http_types::{url::Url, Request};
     use std::time::Duration;
-    use tide::{Method};
+    use tide::Method;
     use tempfile::tempdir;
 
     #[test]
