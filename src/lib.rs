@@ -97,7 +97,7 @@ pub use response_builder::ResponseBuilder;
 pub use route::Route;
 pub use server::Server;
 
-pub use http_types::{self as http, Body, Error, Status, StatusCode};
+pub use http_types::{self as http, Body, Error, Method, Status, StatusCode};
 
 /// Create a new Tide server.
 ///

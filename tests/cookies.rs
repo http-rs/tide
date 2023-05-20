@@ -2,7 +2,7 @@ use async_std::prelude::*;
 use tide::http::cookies::Cookie;
 use tide::http::headers::{COOKIE, SET_COOKIE};
 
-use tide::{Request, Response, Server, StatusCode};
+use tide::{Method, Request, Response, Server, StatusCode};
 
 static COOKIE_NAME: &str = "testCookie";
 
@@ -46,7 +46,7 @@ fn app() -> crate::Server<()> {
 async fn make_request(endpoint: &str) -> http_types::Response {
     let app = app();
     let mut req = http_types::Request::new(
-        http_types::Method::Get,
+        Method::Get,
         http_types::url::Url::parse("http://example.com")
             .unwrap()
             .join(endpoint)
