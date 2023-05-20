@@ -35,7 +35,7 @@ pub(crate) use unix_listener::UnixListener;
 /// implement at least one [`ToListener`](crate::listener::ToListener) that
 /// outputs your Listener type.
 #[async_trait]
-pub trait Listener<State>: Debug + Display + Send + Sync + 'static
+pub trait Listener<State>: Debug + Display + Send + 'static
 where
     State: Send + Sync + 'static,
 {
