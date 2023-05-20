@@ -1,5 +1,4 @@
 use crate::http::{mime, Body, StatusCode};
-use crate::log;
 use crate::{Request, Response, Result};
 
 use super::Sender;
@@ -7,6 +6,7 @@ use super::Sender;
 use async_std::future::Future;
 use async_std::io::BufReader;
 use async_std::task;
+use kv_log_macro::error;
 
 /// Upgrade an existing HTTP connection to an SSE connection.
 pub fn upgrade<F, Fut, State>(req: Request<State>, handler: F) -> Response
@@ -19,7 +19,7 @@ where
     task::spawn(async move {
         let sender = Sender::new(sender);
         if let Err(err) = handler(req, sender).await {
-            log::error!("SSE handler error: {:?}", err);
+            error!("SSE handler error: {:?}", err);
         }
     });
 
