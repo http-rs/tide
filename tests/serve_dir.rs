@@ -12,7 +12,7 @@ fn app(tempdir: &tempfile::TempDir) -> Result<Server<()>> {
     fs::create_dir(&static_dir)?;
 
     let file_path = static_dir.join("foo");
-    let mut file = File::create(&file_path)?;
+    let mut file = File::create(file_path)?;
     write!(file, "Foobar")?;
 
     let mut app = Server::new();
