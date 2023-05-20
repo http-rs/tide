@@ -19,7 +19,7 @@ and then edit this file";
     if let Some(fd) = env::var("LISTEN_FD").ok().and_then(|fd| fd.parse().ok()) {
         app.listen(unsafe { TcpListener::from_raw_fd(fd) }).await?;
     } else {
-        println!("{} ({})", DOCS, file!());
+        println!(concat!("{} (", file!(), ")"), DOCS);
     }
     Ok(())
 }

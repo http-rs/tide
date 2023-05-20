@@ -26,7 +26,7 @@ where
     async fn call(&self, req: Request<State>) -> Result {
         let path = req.url().path();
         let path = path
-            .strip_prefix(&self.prefix.trim_end_matches('*'))
+            .strip_prefix(self.prefix.trim_end_matches('*'))
             .unwrap();
         let path = path.trim_start_matches('/');
         let mut file_path = self.dir.clone();
@@ -36,7 +36,7 @@ where
             } else if p == OsStr::new("..") {
                 file_path.pop();
             } else {
-                file_path.push(&p);
+                file_path.push(p);
             }
         }
 
@@ -71,7 +71,7 @@ mod test {
         fs::create_dir(&static_dir)?;
 
         let file_path = static_dir.join("foo");
-        let mut file = File::create(&file_path)?;
+        let mut file = File::create(file_path)?;
         write!(file, "Foobar")?;
 
         Ok(ServeDir {
