@@ -2,4 +2,4 @@
 
 ## Reporting a Vulnerability
 
-Please report security issues to `hi@jbr.me`
+Please report security issues to `security-2023 [at] yosh.is`
