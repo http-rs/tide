@@ -541,7 +541,7 @@ impl<State> Request<State> {
 
     /// Get the length of the body stream, if it has been set.
     ///
-    /// This value is set when passing a fixed-size object into as the body. E.g. a string, or a
+    /// This value is set when passing a fixed-size object as the body. E.g. a string, or a
     /// buffer. Consumers of this API should check this value to decide whether to use `Chunked`
     /// encoding, or set the response length.
     #[must_use]
