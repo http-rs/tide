@@ -45,7 +45,7 @@ impl<State: Clone + Send + Sync + 'static> Router<State> {
     ) {
         self.method_map
             .entry(method)
-            .or_insert_with(MethodRouter::new)
+            .or_default()
             .add(path, ep)
             .unwrap()
     }
