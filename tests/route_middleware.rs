@@ -1,6 +1,5 @@
 mod test_utils;
 use http_types::headers::HeaderName;
-use std::convert::TryInto;
 use test_utils::ServerTestingExt;
 use tide::Middleware;
 
@@ -9,7 +8,7 @@ struct TestMiddleware(HeaderName, &'static str);
 
 impl TestMiddleware {
     fn with_header_name(name: &'static str, value: &'static str) -> Self {
-        Self(name.try_into().unwrap(), value)
+        Self(name.into(), value)
     }
 }
 
