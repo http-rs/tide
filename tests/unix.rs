@@ -5,8 +5,8 @@ mod unix_tests {
     use async_std::task;
     use http_types::{url::Url, Request};
     use std::time::Duration;
-    use tide::Method;
     use tempfile::tempdir;
+    use tide::Method;
 
     #[test]
     fn hello_unix_world() -> Result<(), http_types::Error> {
