@@ -127,3 +127,24 @@ async fn subroute_not_nested() -> tide::Result<()> {
     assert_eq!(res["x-child"], "child");
     Ok(())
 }
+
+#[async_std::test]
+async fn app_middleware_reset() -> tide::Result<()> {
+    let mut app = tide::new();
+    app.at("/")
+        .with(TestMiddleware::with_header_name("X-Root", "root"))
+        .get(echo_path);
+    app.reset_middleware();
+    app.at("/foo")
+        .with(TestMiddleware::with_header_name("X-Foo", "foo"))
+        .get(echo_path);
+
+    let res = app.get("/foo").await?;
+    assert!(res.header("X-Root").is_none());
+    assert_eq!(res["X-Foo"], "foo");
+
+    let res = app.get("/").await?;
+    assert!(res.header("X-Foo").is_none());
+    assert_eq!(res["X-Root"], "root");
+    Ok(())
+}
