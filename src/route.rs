@@ -9,6 +9,18 @@ use crate::{router::Router, Endpoint, Middleware};
 
 use kv_log_macro::trace;
 
+/// Extension struct for storing the matched route in the request.
+#[derive(Debug)]
+pub(crate) struct MatchedRoute(pub(crate) String);
+
+impl std::ops::Deref for MatchedRoute {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 /// A handle to a route.
 ///
 /// All HTTP requests are made against resources. After using [`Server::at`] (or

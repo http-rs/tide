@@ -27,6 +27,7 @@ impl<State> std::fmt::Debug for Router<State> {
 pub(crate) struct Selection<'a, State> {
     pub(crate) endpoint: &'a DynEndpoint<State>,
     pub(crate) params: Captures<'static, 'static>,
+    pub(crate) matched_route: Option<String>,
 }
 
 impl<State: Clone + Send + Sync + 'static> Router<State> {
@@ -63,11 +64,13 @@ impl<State: Clone + Send + Sync + 'static> Router<State> {
             Selection {
                 endpoint: m.handler(),
                 params: m.captures().into_owned(),
+                matched_route: Some(m.route().to_string()),
             }
         } else if let Some(m) = self.all_method_router.best_match(path) {
             Selection {
                 endpoint: m.handler(),
                 params: m.captures().into_owned(),
+                matched_route: Some(m.route().to_string()),
             }
         } else if method == http_types::Method::Head {
             // If it is a HTTP HEAD request then check if there is a callback in the endpoints map
@@ -85,11 +88,13 @@ impl<State: Clone + Send + Sync + 'static> Router<State> {
             Selection {
                 endpoint: &method_not_allowed,
                 params: Captures::default(),
+                matched_route: None,
             }
         } else {
             Selection {
                 endpoint: &not_found_endpoint,
                 params: Captures::default(),
+                matched_route: None,
             }
         }
     }

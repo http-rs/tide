@@ -8,6 +8,7 @@ use kv_log_macro::{info, trace};
 use crate::cookies;
 use crate::listener::{Listener, ToListener};
 use crate::middleware::{Middleware, Next};
+use crate::route::MatchedRoute;
 use crate::router::{Router, Selection};
 use crate::{Endpoint, Request, Route};
 
@@ -287,9 +288,17 @@ where
         } = self.clone();
 
         let method = req.method().to_owned();
-        let Selection { endpoint, params } = router.route(req.url().path(), method);
+        let Selection {
+            endpoint,
+            params,
+            matched_route,
+        } = router.route(req.url().path(), method);
         let route_params = vec![params];
-        let req = Request::new(state, req, route_params);
+        let mut req = Request::new(state, req, route_params);
+
+        if let Some(route) = matched_route {
+            req.set_ext(MatchedRoute(route));
+        }
 
         let next = Next {
             endpoint,
@@ -349,9 +358,17 @@ impl<State: Clone + Sync + Send + 'static, InnerState: Clone + Sync + Send + 'st
         let middleware = self.middleware.clone();
         let state = self.state.clone();
 
-        let Selection { endpoint, params } = router.route(&path, method);
+        let Selection {
+            endpoint,
+            params,
+            matched_route,
+        } = router.route(&path, method);
         route_params.push(params);
-        let req = Request::new(state, req, route_params);
+        let mut req = Request::new(state, req, route_params);
+
+        if let Some(route) = matched_route {
+            req.set_ext(MatchedRoute(route));
+        }
 
         let next = Next {
             endpoint,
